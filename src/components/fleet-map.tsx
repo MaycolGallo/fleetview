@@ -20,6 +20,13 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
   useEffect(() => {
     if (!map) return;
 
+    // Define the arrow icon for the polyline
+    const arrowIcon = {
+      path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+      scale: 3,
+      strokeColor: '#FFC107',
+    };
+
     if (routePath) {
       if (polyline) {
         polyline.setPath(routePath);
@@ -30,6 +37,11 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
           strokeOpacity: 0.8,
           strokeWeight: 4,
           map: map,
+          icons: [{
+            icon: arrowIcon,
+            offset: '0',
+            repeat: '50px'
+          }],
         });
         setPolyline(newPolyline);
       }
