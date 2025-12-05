@@ -149,14 +149,14 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
       <div className="relative h-screen w-screen bg-background">
         <header className="absolute top-0 left-0 p-4 z-20">
           <div className="flex flex-col items-start gap-2">
-            <div className="rounded-lg shadow-md border border-border bg-card/90 backdrop-blur-sm p-1 flex flex-col gap-1">
+            <div className="rounded-lg shadow-md border border-zinc-700 bg-zinc-900/90 backdrop-blur-sm p-1 flex flex-col gap-1">
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg">
                             <PanelLeft />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent side="right" align="start" sideOffset={8} className="w-80 p-0 bg-card/95 backdrop-blur-sm">
+                    <PopoverContent side="right" align="start" sideOffset={8} className="w-80 p-0 bg-zinc-900/95 border-zinc-700 backdrop-blur-sm">
                        <div className="flex flex-col h-[60vh] max-h-[60vh]">
                           <div className="p-4">
                             <h2 className="font-semibold text-lg">Vehicles</h2>
