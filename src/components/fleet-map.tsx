@@ -52,16 +52,14 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
         setPolyline(null);
       }
     }
-  }, [map, routePath, polyline]);
-
-  useEffect(() => {
-    // Cleanup polyline when component unmounts
+    
+    // Cleanup effect
     return () => {
-        if (polyline) {
-            polyline.setMap(null);
-        }
-    }
-  },[polyline]);
+      if (polyline) {
+        polyline.setMap(null);
+      }
+    };
+  }, [map, routePath]);
 
   return null;
 }
