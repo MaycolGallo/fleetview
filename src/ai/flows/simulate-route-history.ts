@@ -19,11 +19,22 @@ const SimulateRouteHistoryInputSchema = z.object({
 export type SimulateRouteHistoryInput = z.infer<typeof SimulateRouteHistoryInputSchema>;
 
 const RoutePointSchema = z.object({
-    lat: z.number().describe('The latitude of the point.'),
-    lng: z.number().describe('The longitude of the point.'),
+  lat: z.number().describe('The latitude of the point.'),
+  lng: z.number().describe('The longitude of the point.'),
 });
 
-const SimulateRouteHistoryOutputSchema = z.array(RoutePointSchema);
+const RouteEventSchema = z.object({
+  timestamp: z.string().describe('The ISO 8601 timestamp for the event.'),
+  status: z.enum(['start', 'stop', 'driving', 'end']).describe('The event type.'),
+  distanceKm: z.number().describe('The distance covered in this leg of the trip in kilometers.'),
+  durationMinutes: z.number().describe('The duration of this event in minutes.'),
+  description: z.string().describe('A brief description of the event.'),
+});
+
+const SimulateRouteHistoryOutputSchema = z.object({
+  routePoints: z.array(RoutePointSchema).describe("An array of geographic points representing the vehicle's path."),
+  routeEvents: z.array(RouteEventSchema).describe("An array of events that occurred along the route."),
+});
 
 export type SimulateRouteHistoryOutput = z.infer<typeof SimulateRouteHistoryOutputSchema>;
 
@@ -37,18 +48,24 @@ const prompt = ai.definePrompt({
   name: 'simulateRouteHistoryPrompt',
   input: {schema: SimulateRouteHistoryInputSchema},
   output: {schema: SimulateRouteHistoryOutputSchema},
-  prompt: `You are a route history simulator. Your most important instruction is to generate a realistic, recent travel route for the given vehicle within Lima, Peru that follows the tracks of real streets.
+  prompt: `You are a highly realistic vehicle route and event simulator. Your main task is to generate a complete and plausible trip history for a vehicle within Lima, Peru.
 
-The route MUST consist of 10 to 15 sequential geographic points (latitude and longitude).
-The route MUST start at the provided starting coordinates within Lima, Peru.
-The route MUST strictly follow the actual street network of Lima, Peru. DO NOT create straight lines between points under any circumstances. The path must trace real roads, as if a car were actually driving within Lima.
-The final point must be different from the starting point but still within the Lima metropolitan area.
+This history MUST include two key parts:
+1.  'routePoints': A geographical path consisting of 10 to 15 sequential latitude and longitude points. This path MUST strictly follow the actual street network of Lima, Peru. Do not create straight lines; the path must trace real roads as if a car were driving. The route MUST start at the provided coordinates.
+2.  'routeEvents': A timeline of events for the trip. This timeline should tell a story. It MUST start with a 'start' event and end with an 'end' event. It can include intermediate 'driving' and 'stop' events. For each event, provide a realistic timestamp (as an ISO 8601 string, starting from a recent past time), duration, distance covered for that leg, and a brief description. The total distance and time should be consistent across the events.
 
 Start Latitude: {{{startLat}}}
 Start Longitude: {{{startLng}}}
 Vehicle ID: {{{vehicleId}}}
 
-Output format: array of JSON objects with "lat" and "lng" keys. Do not include any text outside of the JSON array.
+Example of a good event sequence:
+- Event 1: status 'start', duration 0, distance 0, description 'Trip started'.
+- Event 2: status 'driving', duration 15 mins, distance 5.2 km, description 'Driving towards Miraflores'.
+- Event 3: status 'stop', duration 10 mins, distance 0, description 'Stopped for coffee'.
+- Event 4: status 'driving', duration 20 mins, distance 8.1 km, description 'Driving to destination'.
+- Event 5: status 'end', duration 0, distance 0, description 'Trip ended'.
+
+Output ONLY the JSON object with 'routePoints' and 'routeEvents' keys.
 `,
 });
 

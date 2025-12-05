@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import type { Vehicle, VehicleStatus } from '@/lib/types';
+import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
 import { simulateVehicleTelemetry } from '@/ai/flows/simulate-vehicle-telemetry';
 import { simulateRouteHistory } from '@/ai/flows/simulate-route-history';
 import { FleetMap } from './fleet-map';
 import { VehicleFilters } from './vehicle-filters';
 import { VehicleDetailDialog } from './vehicle-detail-dialog';
+import { RouteHistorySheet } from './route-history-sheet';
 import { Button } from './ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +23,8 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [routeHistoryVehicle, setRouteHistoryVehicle] = useState<Vehicle | null>(null);
   const [routePath, setRoutePath] = useState<{ lat: number; lng: number }[] | null>(null);
+  const [routeEvents, setRouteEvents] = useState<RouteEvent[]>([]);
+  const [isRouteSheetOpen, setIsRouteSheetOpen] = useState(false);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
@@ -50,12 +53,14 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
     setIsLoadingRoute(true);
     setRouteHistoryVehicle(vehicle);
     try {
-      const route = await simulateRouteHistory({
+      const { routePoints, routeEvents } = await simulateRouteHistory({
         vehicleId: vehicle.vehicleId,
         startLat: vehicle.latitude,
         startLng: vehicle.longitude,
       });
-      setRoutePath(route);
+      setRoutePath(routePoints);
+      setRouteEvents(routeEvents);
+      setIsRouteSheetOpen(true);
     } catch (error) {
       console.error("Failed to fetch route history:", error);
       toast({
@@ -72,7 +77,9 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   const handleBackToFleet = () => {
     setRouteHistoryVehicle(null);
     setRoutePath(null);
+    setRouteEvents([]);
     setSelectedVehicle(null);
+    setIsRouteSheetOpen(false);
   };
 
   const filteredVehicles = useMemo(() => {
@@ -121,7 +128,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
         </div>
       </header>
       <main className="flex-1 relative">
-        <div className="absolute inset-0 z-10">
+        <div className="absolute inset-0 z-0">
           {(isLoadingRoute) && (
               <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-20">
                   <div className="flex items-center gap-2 text-foreground">
@@ -143,6 +150,12 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
           isOpen={!!selectedVehicle}
           onOpenChange={(isOpen) => !isOpen && handleDialogClose()}
           onShowRouteHistory={handleShowRouteHistory}
+        />
+        <RouteHistorySheet
+          isOpen={isRouteSheetOpen}
+          onOpenChange={setIsRouteSheetOpen}
+          events={routeEvents}
+          vehicle={routeHistoryVehicle}
         />
       </main>
     </div>

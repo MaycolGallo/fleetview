@@ -6,3 +6,11 @@ export interface Vehicle {
   longitude: number;
   status: VehicleStatus;
 }
+
+export interface RouteEvent {
+  timestamp: string;
+  status: 'start' | 'stop' | 'driving' | 'end';
+  distanceKm: number;
+  durationMinutes: number;
+  description: string;
+}
