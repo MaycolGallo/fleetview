@@ -28,6 +28,8 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   const [isRouteSheetOpen, setIsRouteSheetOpen] = useState(false);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const [routeSegmentToFit, setRouteSegmentToFit] = useState<{ lat: number; lng: number }[] | null>(null);
+  const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
+  const [highlightedSegment, setHighlightedSegment] = useState<{ lat: number; lng: number }[] | null>(null);
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -63,6 +65,9 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
       setRoutePath(routePoints);
       setRouteEvents(routeEvents);
       setIsRouteSheetOpen(true);
+      if (routePoints.length > 0) {
+        setRouteSegmentToFit(routePoints);
+      }
     } catch (error) {
       console.error("Failed to fetch route history:", error);
       toast({
@@ -83,6 +88,8 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
     setSelectedVehicle(null);
     setIsRouteSheetOpen(false);
     setRouteSegmentToFit(null);
+    setHighlightedSegment(null);
+    setSelectedSegmentIndex(null);
   };
 
   const filteredVehicles = useMemo(() => {
@@ -108,22 +115,35 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   };
   
   const handleSegmentSelect = (segmentIndex: number) => {
-    if (!routePath || !routeEvents) return;
-
-    // A simple heuristic to map events to points
-    const pointsPerEvent = Math.floor(routePath.length / routeEvents.length);
-    const startPointIndex = segmentIndex * pointsPerEvent;
-    const endPointIndex = Math.min((segmentIndex + 1) * pointsPerEvent, routePath.length -1);
-    
-    if (startPointIndex >= endPointIndex) {
-      if (routePath[startPointIndex]) {
-        setRouteSegmentToFit([routePath[startPointIndex]]);
-      }
+    if (selectedSegmentIndex === segmentIndex) {
+      // Deselect if clicking the same segment
+      setSelectedSegmentIndex(null);
+      setHighlightedSegment(null);
+      setRouteSegmentToFit(routePath); // Fit entire route
       return;
     }
 
-    const segmentPoints = routePath.slice(startPointIndex, endPointIndex + 1);
-    setRouteSegmentToFit(segmentPoints);
+    setSelectedSegmentIndex(segmentIndex);
+    if (!routePath || !routeEvents) return;
+
+    // A simple heuristic to map events to points
+    const pointsPerEvent = routeEvents.length > 1 ? Math.floor((routePath.length -1) / (routeEvents.length -1)) : routePath.length;
+    const startPointIndex = segmentIndex * pointsPerEvent;
+    const endPointIndex = (segmentIndex === routeEvents.length - 1) 
+      ? routePath.length -1
+      : (segmentIndex + 1) * pointsPerEvent;
+
+    let segmentPoints: { lat: number; lng: number }[] = [];
+    if (startPointIndex >= endPointIndex) {
+      if (routePath[startPointIndex]) {
+        segmentPoints = [routePath[startPointIndex]];
+      }
+    } else {
+      segmentPoints = routePath.slice(startPointIndex, endPointIndex + 1);
+    }
+
+    setRouteSegmentToFit(segmentPoints.length > 0 ? segmentPoints : null);
+    setHighlightedSegment(segmentPoints.length > 1 ? segmentPoints : null);
   };
 
 
@@ -158,6 +178,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
             onVehicleSelect={handleVehicleSelect}
             selectedVehicle={routeHistoryVehicle || selectedVehicle}
             routePath={routePath}
+            highlightedSegment={highlightedSegment}
             routeSegmentToFit={routeSegmentToFit}
           />
         </div>
@@ -180,6 +201,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
           events={routeEvents}
           vehicle={routeHistoryVehicle}
           onSegmentSelect={handleSegmentSelect}
+          selectedSegmentIndex={selectedSegmentIndex}
         />
       </main>
     </div>

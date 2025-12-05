@@ -12,34 +12,45 @@ interface FleetMapProps {
   onVehicleSelect: (vehicle: Vehicle) => void;
   selectedVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[] | null;
+  highlightedSegment: { lat: number; lng: number }[] | null;
   routeSegmentToFit: { lat: number; lng: number }[] | null;
 }
 
-function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[] }) {
+function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { lat: number; lng: number }[], color: string, weight: number, zIndex?: number }) {
   const map = useMap();
   const [polyline, setPolyline] = useState<google.maps.Polyline | null>(null);
 
   useEffect(() => {
     if (!map) return;
 
-    // Define the arrow icon for the polyline
     const arrowIcon = {
       path: 'M 0,-1 0,1',
       strokeOpacity: 1,
       scale: 3,
-      strokeColor: '#FFC107',
+      strokeColor: color,
     };
 
     if (routePath && routePath.length > 0) {
       if (polyline) {
         polyline.setPath(routePath);
+        polyline.setOptions({
+            strokeColor: color,
+            strokeWeight: weight,
+            zIndex: zIndex,
+            icons: [{
+                icon: arrowIcon,
+                offset: '0',
+                repeat: '50px'
+            }],
+        })
       } else {
         const newPolyline = new google.maps.Polyline({
           path: routePath,
-          strokeColor: "#FFC107",
+          strokeColor: color,
           strokeOpacity: 0.8,
-          strokeWeight: 4,
+          strokeWeight: weight,
           map: map,
+          zIndex: zIndex,
           icons: [{
             icon: arrowIcon,
             offset: '0',
@@ -61,7 +72,9 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
         polyline.setMap(null);
       }
     };
-  }, [map, routePath]);
+  // To avoid re-rendering issues, we stringify the path as a dependency
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, JSON.stringify(routePath), color, weight, zIndex]);
 
   return null;
 }
@@ -72,6 +85,7 @@ function MapControl({
   onVehicleSelect, 
   selectedVehicle, 
   routePath, 
+  highlightedSegment,
   routeSegmentToFit 
 }: Omit<FleetMapProps, 'apiKey'>) {
   const map = useMap();
@@ -95,13 +109,14 @@ function MapControl({
           <VehiclePin status={vehicle.status} isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId} />
         </AdvancedMarker>
       ))}
-      {routePath && <RoutePolyline routePath={routePath} />}
+      {routePath && <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />}
+      {highlightedSegment && <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />}
     </>
   );
 }
 
 
-export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, routeSegmentToFit }: FleetMapProps) {
+export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
 
@@ -126,6 +141,7 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
           onVehicleSelect={onVehicleSelect}
           selectedVehicle={selectedVehicle}
           routePath={routePath}
+          highlightedSegment={highlightedSegment}
           routeSegmentToFit={routeSegmentToFit}
         />
       </Map>

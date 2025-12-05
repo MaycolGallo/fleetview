@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import type { RouteEvent, Vehicle } from '@/lib/types';
+import { cn } from '@/lib/utils';
 import {
   PlayCircle,
   PauseCircle,
@@ -21,6 +22,7 @@ interface RouteHistorySheetProps {
   events: RouteEvent[];
   vehicle: Vehicle | null;
   onSegmentSelect: (segmentIndex: number) => void;
+  selectedSegmentIndex: number | null;
 }
 
 const statusIcons = {
@@ -45,6 +47,7 @@ export function RouteHistorySheet({
   events,
   vehicle,
   onSegmentSelect,
+  selectedSegmentIndex,
 }: RouteHistorySheetProps) {
   const totalDistance = events.reduce((sum, e) => sum + e.distanceKm, 0);
   const totalDuration = events.reduce((sum, e) => sum + e.durationMinutes, 0);
@@ -88,25 +91,39 @@ export function RouteHistorySheet({
                 <div className="relative flex items-stretch gap-0 px-4 pb-4">
                   {events.map((event, index) => {
                     const Icon = statusIcons[event.status];
+                    const isSelected = selectedSegmentIndex === index;
+
                     return (
                       <div
                         key={index}
-                        className="flex-shrink-0 group"
+                        className={cn(
+                          "flex-shrink-0 group transition-all duration-300",
+                           isSelected ? 'scale-105' : 'scale-100'
+                        )}
                         style={{ width: index === events.length -1 ? 'auto' : '180px'}}
                         onClick={() => onSegmentSelect(index)}
                       >
                         <div className="relative flex flex-col items-center text-center cursor-pointer">
                           {/* Timeline line */}
                           {index < events.length - 1 && (
-                            <div className="absolute top-4 left-1/2 h-0.5 w-full bg-border group-hover:bg-primary transition-colors" />
+                            <div className={cn(
+                                "absolute top-4 left-1/2 h-0.5 w-full bg-border transition-colors",
+                                isSelected ? 'bg-primary' : 'group-hover:bg-primary'
+                            )} />
                           )}
 
-                          <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 ring-card -mt-4 group-hover:ring-primary transition-all">
+                          <div className={cn(
+                              "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
+                              isSelected ? 'ring-primary' : 'ring-card group-hover:ring-primary'
+                          )}>
                             <Icon className="h-5 w-5 text-primary" />
                           </div>
 
                           <div className="pt-2">
-                             <p className="font-semibold text-foreground capitalize text-sm">
+                             <p className={cn(
+                                 "font-semibold capitalize text-sm transition-colors",
+                                 isSelected ? 'text-primary-foreground' : 'text-foreground'
+                              )}>
                               {event.status}
                             </p>
                             <p className="text-xs text-muted-foreground whitespace-normal pt-1 px-1 h-10">
