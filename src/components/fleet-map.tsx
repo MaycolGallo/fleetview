@@ -22,7 +22,7 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
 
     // Define the arrow icon for the polyline
     const arrowIcon = {
-      path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+      path: 'M 0,-1 0,1',
       scale: 3,
       strokeColor: '#FFC107',
     };
