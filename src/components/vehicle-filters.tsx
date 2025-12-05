@@ -19,11 +19,11 @@ export function VehicleFilters({ currentFilter, onFilterChange }: VehicleFilters
       <Select value={currentFilter} onValueChange={(value) => onFilterChange(value as 'all' | VehicleStatus)}>
         <SelectTrigger 
           id="status-filter" 
-          className="w-full bg-zinc-800 border-zinc-700 focus:ring-primary"
+          className="w-full"
         >
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
-        <SelectContent className="bg-zinc-800 border-zinc-700 text-foreground">
+        <SelectContent>
           <SelectItem value="all">All Vehicles</SelectItem>
           <SelectItem value="active">Active</SelectItem>
           <SelectItem value="idle">Idle</SelectItem>
