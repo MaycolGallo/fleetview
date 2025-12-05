@@ -51,9 +51,6 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
       }
     };
     fetchVehicles();
-    const interval = setInterval(fetchVehicles, 120000); // Update every 2 minutes
-
-    return () => clearInterval(interval);
   }, [dispatch]);
 
   const handleShowRouteHistory = async (vehicle: Vehicle) => {
