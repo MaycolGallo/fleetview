@@ -23,6 +23,7 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
     // Define the arrow icon for the polyline
     const arrowIcon = {
       path: 'M 0,-1 0,1',
+      strokeOpacity: 1,
       scale: 3,
       strokeColor: '#FFC107',
     };
@@ -80,7 +81,6 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
         center={mapCenter}
         zoom={mapZoom}
         gestureHandling={'greedy'}
-        disableDefaultUI={true}
         mapId="fleetview-map"
         className="w-full h-full"
       >
