@@ -12,8 +12,8 @@ interface FleetMapProps {
 }
 
 export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle }: FleetMapProps) {
-  const defaultCenter = { lat: 39.8283, lng: -98.5795 };
-  const defaultZoom = 4;
+  const defaultCenter = { lat: -12.046374, lng: -77.042793 };
+  const defaultZoom = 12;
 
   return (
     <APIProvider apiKey={apiKey}>
