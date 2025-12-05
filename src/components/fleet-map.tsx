@@ -66,11 +66,14 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
   return null;
 }
 
-
-export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, routeSegmentToFit }: FleetMapProps) {
-  const defaultCenter = { lat: -12.046374, lng: -77.042793 };
-  const defaultZoom = 13;
-
+// This new component will contain the logic that needs the map instance.
+function MapControl({ 
+  vehicles, 
+  onVehicleSelect, 
+  selectedVehicle, 
+  routePath, 
+  routeSegmentToFit 
+}: Omit<FleetMapProps, 'apiKey'>) {
   const map = useMap();
 
   useEffect(() => {
@@ -80,7 +83,27 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
       map.fitBounds(bounds, 100);
     }
   }, [map, routeSegmentToFit]);
+  
+  return (
+    <>
+      {vehicles.map((vehicle) => (
+        <AdvancedMarker
+          key={vehicle.vehicleId}
+          position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+          onClick={() => onVehicleSelect(vehicle)}
+        >
+          <VehiclePin status={vehicle.status} isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId} />
+        </AdvancedMarker>
+      ))}
+      {routePath && <RoutePolyline routePath={routePath} />}
+    </>
+  );
+}
 
+
+export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, routeSegmentToFit }: FleetMapProps) {
+  const defaultCenter = { lat: -12.046374, lng: -77.042793 };
+  const defaultZoom = 13;
 
   // Use a key to force re-render when we want to center on a new route
   const mapKey = selectedVehicle?.vehicleId && routePath ? selectedVehicle.vehicleId : 'default';
@@ -98,16 +121,13 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
         mapId="fleetview-map"
         className="w-full h-full"
       >
-        {vehicles.map((vehicle) => (
-          <AdvancedMarker
-            key={vehicle.vehicleId}
-            position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-            onClick={() => onVehicleSelect(vehicle)}
-          >
-            <VehiclePin status={vehicle.status} isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId} />
-          </AdvancedMarker>
-        ))}
-         {routePath && <RoutePolyline routePath={routePath} />}
+        <MapControl 
+          vehicles={vehicles}
+          onVehicleSelect={onVehicleSelect}
+          selectedVehicle={selectedVehicle}
+          routePath={routePath}
+          routeSegmentToFit={routeSegmentToFit}
+        />
       </Map>
     </APIProvider>
   );
