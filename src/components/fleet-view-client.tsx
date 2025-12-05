@@ -156,7 +156,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
                             <PanelLeft />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent side="right" align="start" sideOffset={8} className="w-80 p-0 bg-card/95 backdrop-blur-sm">
+                    <PopoverContent side="right" align="start" sideOffset={8} className="w-80 p-0 bg-zinc-900/95 backdrop-blur-sm">
                        <div className="flex flex-col h-[60vh] max-h-[60vh]">
                           <div className="p-4">
                             <h2 className="font-semibold text-lg">Vehicles</h2>
@@ -180,7 +180,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
             </div>
             
             {routeHistoryVehicle && (
-              <div className="bg-background/80 backdrop-blur-sm p-1 rounded-lg shadow-md border mt-2">
+              <div className="bg-zinc-900/90 backdrop-blur-sm p-1 rounded-lg shadow-md border border-zinc-700 mt-2">
                   <Button variant="ghost" size="sm" onClick={handleBackToFleet}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Fleet
