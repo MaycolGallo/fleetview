@@ -148,45 +148,52 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
       <div className="flex h-screen w-screen bg-background">
         <div className="relative h-full w-full">
             <header className="absolute top-0 left-0 right-0 p-2 md:p-4 bg-transparent z-20">
-                <div className="container mx-auto flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-2 bg-card p-2 rounded-lg shadow-md border">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <PanelLeft />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80 p-0">
-                             <div className="flex flex-col h-[60vh] max-h-[60vh]">
-                                <div className="p-4">
-                                  <h2 className="font-semibold text-lg">Vehicles</h2>
-                                  <div className="mt-2">
-                                    <VehicleFilters
-                                      currentFilter={statusFilter}
-                                      onFilterChange={setStatusFilter}
-                                    />
+                <div className="flex items-start gap-4">
+                  
+                  {/* Vertical Toolbar */}
+                  <div className="flex flex-col gap-2 bg-card p-2 rounded-lg shadow-md border">
+                      <Popover>
+                          <PopoverTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                  <PanelLeft />
+                              </Button>
+                          </PopoverTrigger>
+                          <PopoverContent side="right" align="start" className="w-80 p-0">
+                               <div className="flex flex-col h-[60vh] max-h-[60vh]">
+                                  <div className="p-4">
+                                    <h2 className="font-semibold text-lg">Vehicles</h2>
+                                    <div className="mt-2">
+                                      <VehicleFilters
+                                        currentFilter={statusFilter}
+                                        onFilterChange={setStatusFilter}
+                                      />
+                                    </div>
                                   </div>
-                                </div>
-                                <Separator />
-                                <VehicleList 
-                                  vehicles={vehicles}
-                                  statusFilter={statusFilter}
-                                  onVehicleSelect={handleVehicleSelect}
-                                  selectedVehicle={selectedVehicle}
-                                />
-                             </div>
-                        </PopoverContent>
-                    </Popover>
-                    
-                    {routeHistoryVehicle ? (
-                      <Button variant="ghost" onClick={handleBackToFleet}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Fleet
-                      </Button>
-                    ) : (
-                      <h1 className="text-xl font-bold text-foreground hidden md:block">FleetView</h1>
-                    )}
+                                  <Separator />
+                                  <VehicleList 
+                                    vehicles={vehicles}
+                                    statusFilter={statusFilter}
+                                    onVehicleSelect={handleVehicleSelect}
+                                    selectedVehicle={selectedVehicle}
+                                  />
+                               </div>
+                          </PopoverContent>
+                      </Popover>
+                      {/* Future buttons can be added here */}
                   </div>
+                  
+                  {/* Title / Back Button */}
+                  <div className="bg-card p-2 rounded-lg shadow-md border h-[56px] flex items-center">
+                      {routeHistoryVehicle ? (
+                        <Button variant="ghost" onClick={handleBackToFleet}>
+                          <ArrowLeft className="mr-2 h-4 w-4" />
+                          Back to Fleet
+                        </Button>
+                      ) : (
+                        <h1 className="text-xl font-bold text-foreground px-3 hidden md:block">FleetView</h1>
+                      )}
+                  </div>
+
                 </div>
             </header>
 
