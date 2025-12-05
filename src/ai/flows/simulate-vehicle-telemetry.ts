@@ -46,6 +46,8 @@ const prompt = ai.definePrompt({
   output: {schema: SimulateVehicleTelemetryOutputSchema},
   prompt: `You are a vehicle telemetry simulator. Generate realistic telemetry data for the specified number of vehicles. The data should include vehicle ID, latitude, longitude, and status (active, idle, or out-of-service). Each vehicle's data must be self-consistent.
 
+All vehicles must be located within the metropolitan area of Lima, Peru (approximate latitude -12.046, longitude -77.042).
+
 Number of vehicles: {{{numberOfVehicles}}}
 
 Output format: array of JSON objects. Do not include any text outside of the JSON array.
