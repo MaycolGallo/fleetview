@@ -1,13 +1,7 @@
 'use client';
 
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import type { RouteEvent, Vehicle } from '@/lib/types';
 import {
@@ -19,10 +13,10 @@ import {
   Milestone,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { AnimatePresence, motion } from 'framer-motion';
 
 interface RouteHistorySheetProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
   events: RouteEvent[];
   vehicle: Vehicle | null;
 }
@@ -46,7 +40,6 @@ function formatDuration(minutes: number) {
 
 export function RouteHistorySheet({
   isOpen,
-  onOpenChange,
   events,
   vehicle,
 }: RouteHistorySheetProps) {
@@ -54,89 +47,85 @@ export function RouteHistorySheet({
   const totalDuration = events.reduce((sum, e) => sum + e.durationMinutes, 0);
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="h-[60%] sm:h-[50%] flex flex-col"
-      >
-        <SheetHeader className="pr-12">
-          <SheetTitle className="text-2xl">
-            Route History: {vehicle?.vehicleId}
-          </SheetTitle>
-          <SheetDescription>
-            A detailed log of the vehicle's recent trip.
-          </SheetDescription>
-        </SheetHeader>
-        <div className="flex items-center gap-6 text-sm text-muted-foreground border-t border-b py-3 mt-2">
-          <div className="flex items-center gap-2">
-            <Milestone className="w-5 h-5 text-primary" />
-            <span>
-              Total Distance:{' '}
-              <strong className="text-foreground">
-                {totalDistance.toFixed(1)} km
-              </strong>
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="w-5 h-5 text-primary" />
-            <span>
-              Total Time:{' '}
-              <strong className="text-foreground">
-                {formatDuration(totalDuration)}
-              </strong>
-            </span>
-          </div>
-        </div>
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          <div className="relative py-6">
-            {/* Timeline line */}
-            <div className="absolute left-9 top-0 bottom-0 w-0.5 bg-border" />
-            <ul className="space-y-8">
-              {events.map((event, index) => {
-                const Icon = statusIcons[event.status];
-                return (
-                  <li key={index} className="flex items-start gap-4">
-                    <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 ring-card">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div className="flex-1 mt-1">
-                      <p className="font-semibold text-foreground capitalize">
-                        {event.status}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {event.description}
-                      </p>
-                      <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>
-                          {format(parseISO(event.timestamp), 'p')}
-                        </span>
-                        {event.durationMinutes > 0 && (
-                          <>
-                            <Separator
-                              orientation="vertical"
-                              className="h-3"
-                            />
-                            <span>{formatDuration(event.durationMinutes)}</span>
-                          </>
-                        )}
-                        {event.distanceKm > 0 && (
-                          <>
-                            <Separator
-                              orientation="vertical"
-                              className="h-3"
-                            />
-                            <span>{event.distanceKm.toFixed(1)} km</span>
-                          </>
-                        )}
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="absolute bottom-4 left-4 right-4 z-20"
+        >
+          <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl">
+            <CardHeader>
+              <CardTitle>Route History: {vehicle?.vehicleId}</CardTitle>
+              <CardDescription className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <Milestone className="w-4 h-4 text-primary" />
+                  <span>
+                    Total Distance:{' '}
+                    <strong className="text-foreground">
+                      {totalDistance.toFixed(1)} km
+                    </strong>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-primary" />
+                  <span>
+                    Total Time:{' '}
+                    <strong className="text-foreground">
+                      {formatDuration(totalDuration)}
+                    </strong>
+                  </span>
+                </div>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-4">
+              <ScrollArea className="w-full whitespace-nowrap">
+                <div className="relative flex items-stretch gap-8 px-4 pb-4">
+                  {/* Timeline line */}
+                  <div className="absolute top-4 left-0 right-0 h-0.5 bg-border" />
+
+                  {events.map((event, index) => {
+                    const Icon = statusIcons[event.status];
+                    return (
+                      <div key={index} className="flex flex-col items-center gap-2 pt-4 flex-shrink-0 w-48 text-center relative">
+                         <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 ring-card -mt-4">
+                            <Icon className="h-5 w-5 text-primary" />
+                         </div>
+                        <p className="font-semibold text-foreground capitalize text-sm">
+                          {event.status}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-normal">
+                          {event.description}
+                        </p>
+                        <div className="mt-1 flex flex-col items-center gap-1 text-xs text-muted-foreground">
+                           <span>
+                            {format(parseISO(event.timestamp), 'p')}
+                          </span>
+                          {(event.durationMinutes > 0 || event.distanceKm > 0) && <Separator orientation="horizontal" className="w-10 my-1" />}
+                          <div className="flex gap-2">
+                          {event.durationMinutes > 0 && (
+                              <span>{formatDuration(event.durationMinutes)}</span>
+                          )}
+                          {event.distanceKm > 0 && (
+                            <>
+                              {event.durationMinutes > 0 && <Separator orientation="vertical" className="h-3" />}
+                              <span>{event.distanceKm.toFixed(1)} km</span>
+                            </>
+                          )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </ScrollArea>
-      </SheetContent>
-    </Sheet>
+                    );
+                  })}
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

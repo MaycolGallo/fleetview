@@ -129,14 +129,6 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
       </header>
       <main className="flex-1 relative">
         <div className="absolute inset-0 z-0">
-          {(isLoadingRoute) && (
-              <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-20">
-                  <div className="flex items-center gap-2 text-foreground">
-                      <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
-                      <p>Generating route...</p>
-                  </div>
-              </div>
-          )}
           <FleetMap
             apiKey={apiKey}
             vehicles={filteredVehicles}
@@ -145,6 +137,14 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
             routePath={routePath}
           />
         </div>
+        {(isLoadingRoute) && (
+            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-20">
+                <div className="flex items-center gap-2 text-foreground">
+                    <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
+                    <p>Generating route...</p>
+                </div>
+            </div>
+        )}
         <VehicleDetailDialog
           vehicle={selectedVehicle}
           isOpen={!!selectedVehicle}
@@ -153,7 +153,6 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
         />
         <RouteHistorySheet
           isOpen={isRouteSheetOpen}
-          onOpenChange={setIsRouteSheetOpen}
           events={routeEvents}
           vehicle={routeHistoryVehicle}
         />
