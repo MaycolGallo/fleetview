@@ -150,7 +150,6 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
             <header className="absolute top-0 left-0 right-0 p-2 md:p-4 bg-transparent z-20">
                 <div className="flex items-start gap-4">
                   
-                  {/* Vertical Toolbar */}
                   <div className="flex flex-col gap-2 bg-background/80 backdrop-blur-sm p-2 rounded-lg shadow-md border">
                       <Popover>
                           <PopoverTrigger asChild>
@@ -179,10 +178,8 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
                                </div>
                           </PopoverContent>
                       </Popover>
-                      {/* Future buttons can be added here */}
                   </div>
                   
-                  {/* Back Button */}
                   {routeHistoryVehicle && (
                     <div className="bg-background/80 backdrop-blur-sm p-2 rounded-lg shadow-md border h-[40px] flex items-center">
                         <Button variant="ghost" size="sm" onClick={handleBackToFleet}>
