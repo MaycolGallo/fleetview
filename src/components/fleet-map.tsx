@@ -1,25 +1,68 @@
 "use client";
 
-import { APIProvider, Map, AdvancedMarker } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
 import { VehiclePin } from './vehicle-pin';
+import { useEffect, useState } from 'react';
 
 interface FleetMapProps {
   apiKey: string;
   vehicles: Vehicle[];
   onVehicleSelect: (vehicle: Vehicle) => void;
   selectedVehicle: Vehicle | null;
+  routePath: { lat: number; lng: number }[] | null;
 }
 
-export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle }: FleetMapProps) {
+function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[] }) {
+  const map = useMap();
+  const [polyline, setPolyline] = useState<google.maps.Polyline | null>(null);
+
+  useEffect(() => {
+    if (!map || !routePath) {
+        if (polyline) {
+            polyline.setMap(null);
+            setPolyline(null);
+        }
+        return;
+    }
+    
+    if(polyline) {
+        polyline.setPath(routePath);
+    } else {
+        const newPolyline = new google.maps.Polyline({
+            path: routePath,
+            strokeColor: "#FFC107",
+            strokeOpacity: 0.8,
+            strokeWeight: 4,
+            map: map,
+          });
+          setPolyline(newPolyline);
+    }
+
+    return () => {
+        if(polyline) {
+            polyline.setMap(null);
+        }
+    };
+  }, [map, routePath]);
+
+  return null;
+}
+
+
+export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
-  const defaultZoom = 12;
+  const defaultZoom = 13;
+
+  const mapCenter = selectedVehicle && routePath ? { lat: selectedVehicle.latitude, lng: selectedVehicle.longitude } : defaultCenter;
+  const mapZoom = selectedVehicle && routePath ? 14 : defaultZoom;
+
 
   return (
     <APIProvider apiKey={apiKey}>
       <Map
-        defaultCenter={defaultCenter}
-        defaultZoom={defaultZoom}
+        center={mapCenter}
+        zoom={mapZoom}
         gestureHandling={'greedy'}
         disableDefaultUI={true}
         mapId="fleetview-map"
@@ -34,6 +77,7 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle }:
             <VehiclePin status={vehicle.status} isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId} />
           </AdvancedMarker>
         ))}
+         {routePath && <RoutePolyline routePath={routePath} />}
       </Map>
     </APIProvider>
   );

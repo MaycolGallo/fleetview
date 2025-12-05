@@ -6,15 +6,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import type { Vehicle } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, AlertCircle, CheckCircle, Clock, Route } from 'lucide-react';
 
 interface VehicleDetailDialogProps {
   vehicle: Vehicle | null;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onShowRouteHistory: (vehicle: Vehicle) => void;
 }
 
 const statusDetails = {
@@ -35,11 +38,15 @@ const statusDetails = {
     }
 };
 
-export function VehicleDetailDialog({ vehicle, isOpen, onOpenChange }: VehicleDetailDialogProps) {
+export function VehicleDetailDialog({ vehicle, isOpen, onOpenChange, onShowRouteHistory }: VehicleDetailDialogProps) {
   if (!vehicle) return null;
 
   const details = statusDetails[vehicle.status];
   const StatusIcon = details.icon;
+
+  const handleShowRoute = () => {
+    onShowRouteHistory(vehicle);
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -71,6 +78,12 @@ export function VehicleDetailDialog({ vehicle, isOpen, onOpenChange }: VehicleDe
             </div>
           </div>
         </div>
+        <DialogFooter>
+            <Button onClick={handleShowRoute}>
+                <Route className="mr-2 h-4 w-4" />
+                Show Route History
+            </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
