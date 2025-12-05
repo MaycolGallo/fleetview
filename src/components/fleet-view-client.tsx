@@ -10,10 +10,10 @@ import { VehicleFilters } from './vehicle-filters';
 import { VehicleDetailDialog } from './vehicle-detail-dialog';
 import { RouteHistorySheet } from './route-history-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, PanelLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarInset } from '@/components/ui/sidebar';
 import { VehicleList } from './vehicle-list';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from './ui/separator';
 
 interface FleetViewClientProps {
@@ -145,60 +145,63 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   };
 
   return (
-    <SidebarProvider defaultOpen={false}>
       <div className="flex h-screen w-screen bg-background">
-        <Sidebar collapsible="icon" variant="sidebar">
-          <SidebarContent>
-            <SidebarHeader>
-              <h2 className="font-semibold text-lg p-2">Vehicles</h2>
-              <div className="px-2">
-                <VehicleFilters
-                  currentFilter={statusFilter}
-                  onFilterChange={setStatusFilter}
-                />
-              </div>
-            </SidebarHeader>
-            <Separator />
-            <VehicleList 
-              vehicles={vehicles}
-              statusFilter={statusFilter}
-              onVehicleSelect={handleVehicleSelect}
-              selectedVehicle={selectedVehicle}
-            />
-          </SidebarContent>
-        </Sidebar>
+        <div className="relative h-full w-full">
+            <header className="absolute top-0 left-0 right-0 p-2 md:p-4 bg-transparent z-20">
+                <div className="container mx-auto flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-2 bg-card p-2 rounded-lg shadow-md border">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                                <PanelLeft />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80 p-0">
+                             <div className="flex flex-col h-[60vh] max-h-[60vh]">
+                                <div className="p-4">
+                                  <h2 className="font-semibold text-lg">Vehicles</h2>
+                                  <div className="mt-2">
+                                    <VehicleFilters
+                                      currentFilter={statusFilter}
+                                      onFilterChange={setStatusFilter}
+                                    />
+                                  </div>
+                                </div>
+                                <Separator />
+                                <VehicleList 
+                                  vehicles={vehicles}
+                                  statusFilter={statusFilter}
+                                  onVehicleSelect={handleVehicleSelect}
+                                  selectedVehicle={selectedVehicle}
+                                />
+                             </div>
+                        </PopoverContent>
+                    </Popover>
+                    
+                    {routeHistoryVehicle ? (
+                      <Button variant="ghost" onClick={handleBackToFleet}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Fleet
+                      </Button>
+                    ) : (
+                      <h1 className="text-xl font-bold text-foreground hidden md:block">FleetView</h1>
+                    )}
+                  </div>
+                </div>
+            </header>
 
-        <SidebarInset>
-            <div className="relative h-full w-full">
-                <header className="absolute top-0 left-0 right-0 p-2 md:p-4 bg-transparent z-20">
-                    <div className="container mx-auto flex items-center justify-between flex-wrap gap-4">
-                      <div className="flex items-center gap-2 bg-card p-2 rounded-lg shadow-md border">
-                        <SidebarTrigger />
-                        {routeHistoryVehicle ? (
-                          <Button variant="ghost" onClick={handleBackToFleet}>
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Back to Fleet
-                          </Button>
-                        ) : (
-                          <h1 className="text-xl font-bold text-foreground hidden md:block">FleetView</h1>
-                        )}
-                      </div>
-                    </div>
-                </header>
-
-                <main className="h-full w-full z-10">
-                  <FleetMap
-                    apiKey={apiKey}
-                    vehicles={filteredVehicles}
-                    onVehicleSelect={handleVehicleSelect}
-                    selectedVehicle={routeHistoryVehicle || selectedVehicle}
-                    routePath={routePath}
-                    highlightedSegment={highlightedSegment}
-                    routeSegmentToFit={routeSegmentToFit}
-                  />
-                </main>
-            </div>
-        </SidebarInset>
+            <main className="h-full w-full z-10">
+              <FleetMap
+                apiKey={apiKey}
+                vehicles={filteredVehicles}
+                onVehicleSelect={handleVehicleSelect}
+                selectedVehicle={routeHistoryVehicle || selectedVehicle}
+                routePath={routePath}
+                highlightedSegment={highlightedSegment}
+                routeSegmentToFit={routeSegmentToFit}
+              />
+            </main>
+        </div>
         
         {(isLoadingRoute) && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30">
@@ -223,6 +226,5 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
           selectedSegmentIndex={selectedSegmentIndex}
         />
       </div>
-    </SidebarProvider>
   );
 }
