@@ -1,6 +1,5 @@
 import { FleetViewClient } from '@/components/fleet-view-client';
 import { ApiKeyInstructions } from '@/components/api-key-instructions';
-import type { Vehicle } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,8 +9,6 @@ export default async function Home() {
   if (!apiKey) {
     return <ApiKeyInstructions />;
   }
-
-  const initialVehicles: Vehicle[] = [];
   
-  return <FleetViewClient initialVehicles={initialVehicles} apiKey={apiKey} />;
+  return <FleetViewClient apiKey={apiKey} />;
 }

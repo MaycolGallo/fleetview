@@ -4,7 +4,6 @@
 
 import { useEffect, useMemo } from 'react';
 import type { Vehicle, VehicleStatus } from '@/lib/types';
-import { simulateVehicleTelemetry } from '@/ai/flows/simulate-vehicle-telemetry';
 import { simulateRouteHistory } from '@/ai/flows/simulate-route-history';
 import { FleetMap } from './fleet-map';
 import { VehicleFilters } from './vehicle-filters';
@@ -17,14 +16,29 @@ import { VehicleList } from './vehicle-list';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from './ui/separator';
 import { useFleetState } from '@/hooks/use-fleet-state';
+import { useQuery } from '@tanstack/react-query';
+import { Skeleton } from './ui/skeleton';
 
 interface FleetViewClientProps {
-  initialVehicles: Vehicle[];
   apiKey: string;
 }
 
-export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProps) {
-  const [state, dispatch] = useFleetState(initialVehicles);
+async function fetchVehicles(): Promise<Vehicle[]> {
+    const response = await fetch('/api/vehicles');
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+}
+
+export function FleetViewClient({ apiKey }: FleetViewClientProps) {
+  const { data: initialVehicles, isLoading: isLoadingVehicles, error } = useQuery({
+    queryKey: ['vehicles'],
+    queryKey: ['vehicles'],
+    queryFn: fetchVehicles,
+  });
+
+  const [state, dispatch] = useFleetState(initialVehicles || []);
   const {
     vehicles,
     statusFilter,
@@ -42,16 +56,10 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   const { toast } = useToast();
 
   useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        const updatedVehicles = await simulateVehicleTelemetry({ numberOfVehicles: 30 });
-        dispatch({ type: 'SET_VEHICLES', payload: updatedVehicles });
-      } catch (error) {
-        console.error("Failed to fetch vehicle telemetry:", error);
-      }
-    };
-    fetchVehicles();
-  }, [dispatch]);
+    if (initialVehicles) {
+      dispatch({ type: 'SET_VEHICLES', payload: initialVehicles });
+    }
+  }, [initialVehicles, dispatch]);
 
   const handleShowRouteHistory = async (vehicle: Vehicle) => {
     dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
@@ -111,6 +119,14 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
     dispatch({ type: 'SET_ROUTE_SHEET_OPEN', payload: isOpen });
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        Error fetching vehicle data. Please try refreshing the page.
+      </div>
+    );
+  }
+
   return (
       <div className="relative h-screen w-screen bg-background">
         <header className="absolute top-0 left-0 p-4 z-20">
@@ -118,7 +134,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
             <div className="rounded-lg shadow-md border border-zinc-700 bg-zinc-900/90 backdrop-blur-sm p-1 flex flex-col gap-1">
                 <Popover>
                     <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hover:bg-zinc-700/80">
                             <PanelLeft />
                         </Button>
                     </PopoverTrigger>
@@ -134,12 +150,26 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
                             </div>
                           </div>
                           <Separator />
-                          <VehicleList 
-                            vehicles={vehicles}
-                            statusFilter={statusFilter}
-                            onVehicleSelect={handleVehicleSelect}
-                            selectedVehicle={selectedVehicle}
-                          />
+                          {isLoadingVehicles ? (
+                            <div className="p-2 flex flex-col gap-2">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={i} className="flex items-center gap-3 p-2 rounded-md">
+                                  <Skeleton className="w-5 h-5 rounded-full" />
+                                  <div className="flex-1 space-y-1">
+                                    <Skeleton className="h-4 w-3/4" />
+                                    <Skeleton className="h-3 w-1/2" />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <VehicleList 
+                              vehicles={vehicles}
+                              statusFilter={statusFilter}
+                              onVehicleSelect={handleVehicleSelect}
+                              selectedVehicle={selectedVehicle}
+                            />
+                          )}
                        </div>
                     </PopoverContent>
                 </Popover>
