@@ -1,4 +1,3 @@
-import { simulateVehicleTelemetry } from '@/ai/flows/simulate-vehicle-telemetry';
 import { FleetViewClient } from '@/components/fleet-view-client';
 import { ApiKeyInstructions } from '@/components/api-key-instructions';
 import type { Vehicle } from '@/lib/types';
@@ -12,7 +11,7 @@ export default async function Home() {
     return <ApiKeyInstructions />;
   }
 
-  const initialVehicles: Vehicle[] = await simulateVehicleTelemetry({ numberOfVehicles: 30 });
+  const initialVehicles: Vehicle[] = [];
   
   return <FleetViewClient initialVehicles={initialVehicles} apiKey={apiKey} />;
 }

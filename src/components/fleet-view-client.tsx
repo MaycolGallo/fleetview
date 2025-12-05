@@ -17,15 +17,18 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | 'all'>('all');
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
+  const fetchVehicles = async () => {
+    try {
+      const updatedVehicles = await simulateVehicleTelemetry({ numberOfVehicles: 30 });
+      setVehicles(updatedVehicles);
+    } catch (error) {
+      console.error("Failed to fetch vehicle telemetry:", error);
+    }
+  };
+
   useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const updatedVehicles = await simulateVehicleTelemetry({ numberOfVehicles: 30 });
-        setVehicles(updatedVehicles);
-      } catch (error) {
-        console.error("Failed to fetch vehicle telemetry:", error);
-      }
-    }, 5000); // Update every 5 seconds
+    fetchVehicles(); // Fetch initial data
+    const interval = setInterval(fetchVehicles, 60000); // Update every 60 seconds
 
     return () => clearInterval(interval);
   }, []);
