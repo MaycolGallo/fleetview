@@ -27,7 +27,7 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
       strokeColor: '#FFC107',
     };
 
-    if (routePath) {
+    if (routePath && routePath.length > 0) {
       if (polyline) {
         polyline.setPath(routePath);
       } else {
@@ -51,10 +51,6 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
         setPolyline(null);
       }
     }
-
-    return () => {
-      // Don't remove polyline from map when component unmounts if routePath is still present
-    };
   }, [map, routePath, polyline]);
 
   useEffect(() => {
@@ -64,7 +60,7 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
             polyline.setMap(null);
         }
     }
-  },[polyline])
+  },[polyline]);
 
   return null;
 }
