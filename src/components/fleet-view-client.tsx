@@ -2,8 +2,8 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
-import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
+import { useEffect, useMemo } from 'react';
+import type { Vehicle, VehicleStatus } from '@/lib/types';
 import { simulateVehicleTelemetry } from '@/ai/flows/simulate-vehicle-telemetry';
 import { simulateRouteHistory } from '@/ai/flows/simulate-route-history';
 import { FleetMap } from './fleet-map';
@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { VehicleList } from './vehicle-list';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from './ui/separator';
+import { useFleetState } from '@/hooks/use-fleet-state';
 
 interface FleetViewClientProps {
   initialVehicles: Vehicle[];
@@ -23,24 +24,28 @@ interface FleetViewClientProps {
 }
 
 export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProps) {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
-  const [statusFilter, setStatusFilter] = useState<VehicleStatus | 'all'>('all');
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [routeHistoryVehicle, setRouteHistoryVehicle] = useState<Vehicle | null>(null);
-  const [routePath, setRoutePath] = useState<{ lat: number; lng: number }[] | null>(null);
-  const [routeEvents, setRouteEvents] = useState<RouteEvent[]>([]);
-  const [isRouteSheetOpen, setIsRouteSheetOpen] = useState(false);
-  const [isLoadingRoute, setIsLoadingRoute] = useState(false);
-  const [routeSegmentToFit, setRouteSegmentToFit] = useState<{ lat: number; lng: number }[] | null>(null);
-  const [selectedSegmentIndex, setSelectedSegmentIndex] = useState<number | null>(null);
-  const [highlightedSegment, setHighlightedSegment] = useState<{ lat: number; lng: number }[] | null>(null);
+  const [state, dispatch] = useFleetState(initialVehicles);
+  const {
+    vehicles,
+    statusFilter,
+    selectedVehicle,
+    routeHistoryVehicle,
+    routePath,
+    routeEvents,
+    isRouteSheetOpen,
+    isLoadingRoute,
+    routeSegmentToFit,
+    selectedSegmentIndex,
+    highlightedSegment,
+  } = state;
+
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
         const updatedVehicles = await simulateVehicleTelemetry({ numberOfVehicles: 30 });
-        setVehicles(updatedVehicles);
+        dispatch({ type: 'SET_VEHICLES', payload: updatedVehicles });
       } catch (error) {
         console.error("Failed to fetch vehicle telemetry:", error);
       }
@@ -49,24 +54,17 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
     const interval = setInterval(fetchVehicles, 120000); // Update every 2 minutes
 
     return () => clearInterval(interval);
-  }, []);
+  }, [dispatch]);
 
   const handleShowRouteHistory = async (vehicle: Vehicle) => {
-    setSelectedVehicle(null); // Close dialog
-    setIsLoadingRoute(true);
-    setRouteHistoryVehicle(vehicle);
+    dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
     try {
       const { routePoints, routeEvents } = await simulateRouteHistory({
         vehicleId: vehicle.vehicleId,
         startLat: vehicle.latitude,
         startLng: vehicle.longitude,
       });
-      setRoutePath(routePoints);
-      setRouteEvents(routeEvents);
-      setIsRouteSheetOpen(true);
-      if (routePoints.length > 0) {
-        setRouteSegmentToFit(routePoints);
-      }
+      dispatch({ type: 'SET_ROUTE_HISTORY', payload: { routePoints, routeEvents } });
     } catch (error) {
       console.error("Failed to fetch route history:", error);
       toast({
@@ -74,21 +72,12 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
         title: "Error",
         description: "Could not load route history. Please try again.",
       });
-      setRouteHistoryVehicle(null); // Exit route view on error
-    } finally {
-      setIsLoadingRoute(false);
+      dispatch({ type: 'BACK_TO_FLEET' });
     }
   };
 
   const handleBackToFleet = () => {
-    setRouteHistoryVehicle(null);
-    setRoutePath(null);
-    setRouteEvents([]);
-    setSelectedVehicle(null);
-    setIsRouteSheetOpen(false);
-    setRouteSegmentToFit(null);
-    setHighlightedSegment(null);
-    setSelectedSegmentIndex(null);
+    dispatch({ type: 'BACK_TO_FLEET' });
   };
 
   const filteredVehicles = useMemo(() => {
@@ -106,44 +95,24 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
       // If in route view, clicking the pin does nothing for now
       return;
     }
-    setSelectedVehicle(vehicle);
+    dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
   };
 
   const handleDialogClose = () => {
-    setSelectedVehicle(null);
+    dispatch({ type: 'SELECT_VEHICLE', payload: null });
   };
-  
+
   const handleSegmentSelect = (segmentIndex: number) => {
-    if (selectedSegmentIndex === segmentIndex) {
-      // Deselect if clicking the same segment
-      setSelectedSegmentIndex(null);
-      setHighlightedSegment(null);
-      setRouteSegmentToFit(routePath); // Fit entire route
-      return;
-    }
-
-    setSelectedSegmentIndex(segmentIndex);
-    if (!routePath || !routeEvents) return;
-
-    // A simple heuristic to map events to points
-    const pointsPerEvent = routeEvents.length > 1 ? Math.floor((routePath.length -1) / (routeEvents.length -1)) : routePath.length;
-    const startPointIndex = segmentIndex * pointsPerEvent;
-    const endPointIndex = (segmentIndex === routeEvents.length - 1) 
-      ? routePath.length -1
-      : (segmentIndex + 1) * pointsPerEvent;
-
-    let segmentPoints: { lat: number; lng: number }[] = [];
-    if (startPointIndex >= endPointIndex) {
-      if (routePath[startPointIndex]) {
-        segmentPoints = [routePath[startPointIndex]];
-      }
-    } else {
-      segmentPoints = routePath.slice(startPointIndex, endPointIndex + 1);
-    }
-
-    setRouteSegmentToFit(segmentPoints.length > 0 ? segmentPoints : null);
-    setHighlightedSegment(segmentPoints.length > 1 ? segmentPoints : null);
+    dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: segmentIndex });
   };
+
+  const handleFilterChange = (filter: VehicleStatus | 'all') => {
+    dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
+  };
+
+  const handleRouteSheetOpenChange = (isOpen: boolean) => {
+    dispatch({ type: 'SET_ROUTE_SHEET_OPEN', payload: isOpen });
+  }
 
   return (
       <div className="relative h-screen w-screen bg-background">
@@ -163,7 +132,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
                             <div className="mt-2">
                               <VehicleFilters
                                 currentFilter={statusFilter}
-                                onFilterChange={setStatusFilter}
+                                onFilterChange={handleFilterChange}
                               />
                             </div>
                           </div>
@@ -180,7 +149,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
             </div>
             
             {routeHistoryVehicle && (
-              <div className="bg-card/90 backdrop-blur-sm p-1 rounded-lg shadow-md border border-border mt-2">
+              <div className="bg-background/80 backdrop-blur-sm p-1 rounded-lg shadow-md border border-border mt-2">
                   <Button variant="ghost" size="sm" onClick={handleBackToFleet}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Fleet
@@ -217,7 +186,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
         />
         <RouteHistorySheet
           isOpen={isRouteSheetOpen}
-          onOpenChange={setIsRouteSheetOpen}
+          onOpenChange={handleRouteSheetOpenChange}
           events={routeEvents}
           vehicle={routeHistoryVehicle}
           onSegmentSelect={handleSegmentSelect}
