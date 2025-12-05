@@ -99,7 +99,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background">
-      <header className="p-4 bg-card border-b border-border z-10 shadow-md">
+      <header className="p-4 bg-card border-b border-border z-20 shadow-md">
         <div className="container mx-auto flex items-center justify-between flex-wrap gap-4">
           {routeHistoryVehicle ? (
              <Button variant="ghost" onClick={handleBackToFleet}>
@@ -121,21 +121,23 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
         </div>
       </header>
       <main className="flex-1 relative">
-        {(isLoadingRoute) && (
-            <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-20">
-                <div className="flex items-center gap-2 text-foreground">
-                    <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
-                    <p>Generating route...</p>
-                </div>
-            </div>
-        )}
-        <FleetMap
-          apiKey={apiKey}
-          vehicles={filteredVehicles}
-          onVehicleSelect={handleVehicleSelect}
-          selectedVehicle={routeHistoryVehicle || selectedVehicle}
-          routePath={routePath}
-        />
+        <div className="absolute inset-0 z-10">
+          {(isLoadingRoute) && (
+              <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-20">
+                  <div className="flex items-center gap-2 text-foreground">
+                      <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
+                      <p>Generating route...</p>
+                  </div>
+              </div>
+          )}
+          <FleetMap
+            apiKey={apiKey}
+            vehicles={filteredVehicles}
+            onVehicleSelect={handleVehicleSelect}
+            selectedVehicle={routeHistoryVehicle || selectedVehicle}
+            routePath={routePath}
+          />
+        </div>
         <VehicleDetailDialog
           vehicle={selectedVehicle}
           isOpen={!!selectedVehicle}
