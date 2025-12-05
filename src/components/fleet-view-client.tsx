@@ -12,7 +12,7 @@ import { RouteHistorySheet } from './route-history-sheet';
 import { Button } from './ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarTrigger, SidebarContent, SidebarHeader, SidebarInset } from '@/components/ui/sidebar';
 import { VehicleList } from './vehicle-list';
 import { Separator } from './ui/separator';
 
@@ -146,8 +146,8 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="relative h-screen w-screen bg-background">
-        <Sidebar collapsible="icon" variant="floating">
+      <div className="flex h-screen w-screen bg-background">
+        <Sidebar collapsible="icon" variant="sidebar">
           <SidebarContent>
             <SidebarHeader>
               <h2 className="font-semibold text-lg p-2">Vehicles</h2>
@@ -168,33 +168,35 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
           </SidebarContent>
         </Sidebar>
 
-        <header className="absolute top-0 left-0 right-0 p-2 md:p-4 bg-transparent z-20">
-            <div className="container mx-auto flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-2 bg-card p-2 rounded-lg shadow-md border">
-                <SidebarTrigger />
-                {routeHistoryVehicle ? (
-                  <Button variant="ghost" onClick={handleBackToFleet}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Fleet
-                  </Button>
-                ) : (
-                  <h1 className="text-xl font-bold text-foreground hidden md:block">FleetView</h1>
-                )}
-              </div>
-            </div>
-        </header>
+        <SidebarInset>
+            <header className="absolute top-0 left-0 right-0 p-2 md:p-4 bg-transparent z-20">
+                <div className="container mx-auto flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-2 bg-card p-2 rounded-lg shadow-md border">
+                    <SidebarTrigger />
+                    {routeHistoryVehicle ? (
+                      <Button variant="ghost" onClick={handleBackToFleet}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to Fleet
+                      </Button>
+                    ) : (
+                      <h1 className="text-xl font-bold text-foreground hidden md:block">FleetView</h1>
+                    )}
+                  </div>
+                </div>
+            </header>
 
-        <main className="absolute inset-0 z-10">
-          <FleetMap
-            apiKey={apiKey}
-            vehicles={filteredVehicles}
-            onVehicleSelect={handleVehicleSelect}
-            selectedVehicle={routeHistoryVehicle || selectedVehicle}
-            routePath={routePath}
-            highlightedSegment={highlightedSegment}
-            routeSegmentToFit={routeSegmentToFit}
-          />
-        </main>
+            <main className="absolute inset-0 z-10">
+              <FleetMap
+                apiKey={apiKey}
+                vehicles={filteredVehicles}
+                onVehicleSelect={handleVehicleSelect}
+                selectedVehicle={routeHistoryVehicle || selectedVehicle}
+                routePath={routePath}
+                highlightedSegment={highlightedSegment}
+                routeSegmentToFit={routeSegmentToFit}
+              />
+            </main>
+        </SidebarInset>
         
         {(isLoadingRoute) && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30">
@@ -222,3 +224,5 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
     </SidebarProvider>
   );
 }
+
+    
