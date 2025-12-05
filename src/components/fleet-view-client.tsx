@@ -145,9 +145,9 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="relative h-screen w-screen bg-background">
-        <Sidebar collapsible="icon" variant="floating" defaultOpen={false}>
+        <Sidebar collapsible="icon" variant="floating">
           <SidebarContent>
             <SidebarHeader>
               <h2 className="font-semibold text-lg p-2">Vehicles</h2>
