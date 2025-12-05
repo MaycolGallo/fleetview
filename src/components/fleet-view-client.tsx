@@ -169,33 +169,35 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
         </Sidebar>
 
         <SidebarInset>
-            <header className="absolute top-0 left-0 right-0 p-2 md:p-4 bg-transparent z-20">
-                <div className="container mx-auto flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-2 bg-card p-2 rounded-lg shadow-md border">
-                    <SidebarTrigger />
-                    {routeHistoryVehicle ? (
-                      <Button variant="ghost" onClick={handleBackToFleet}>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Fleet
-                      </Button>
-                    ) : (
-                      <h1 className="text-xl font-bold text-foreground hidden md:block">FleetView</h1>
-                    )}
-                  </div>
-                </div>
-            </header>
+            <div className="relative h-full w-full">
+                <header className="absolute top-0 left-0 right-0 p-2 md:p-4 bg-transparent z-20">
+                    <div className="container mx-auto flex items-center justify-between flex-wrap gap-4">
+                      <div className="flex items-center gap-2 bg-card p-2 rounded-lg shadow-md border">
+                        <SidebarTrigger />
+                        {routeHistoryVehicle ? (
+                          <Button variant="ghost" onClick={handleBackToFleet}>
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Back to Fleet
+                          </Button>
+                        ) : (
+                          <h1 className="text-xl font-bold text-foreground hidden md:block">FleetView</h1>
+                        )}
+                      </div>
+                    </div>
+                </header>
 
-            <main className="absolute inset-0 z-10">
-              <FleetMap
-                apiKey={apiKey}
-                vehicles={filteredVehicles}
-                onVehicleSelect={handleVehicleSelect}
-                selectedVehicle={routeHistoryVehicle || selectedVehicle}
-                routePath={routePath}
-                highlightedSegment={highlightedSegment}
-                routeSegmentToFit={routeSegmentToFit}
-              />
-            </main>
+                <main className="h-full w-full z-10">
+                  <FleetMap
+                    apiKey={apiKey}
+                    vehicles={filteredVehicles}
+                    onVehicleSelect={handleVehicleSelect}
+                    selectedVehicle={routeHistoryVehicle || selectedVehicle}
+                    routePath={routePath}
+                    highlightedSegment={highlightedSegment}
+                    routeSegmentToFit={routeSegmentToFit}
+                  />
+                </main>
+            </div>
         </SidebarInset>
         
         {(isLoadingRoute) && (
@@ -224,5 +226,3 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
     </SidebarProvider>
   );
 }
-
-    
