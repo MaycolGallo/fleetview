@@ -182,17 +182,15 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
                       {/* Future buttons can be added here */}
                   </div>
                   
-                  {/* Title / Back Button */}
-                  <div className="bg-card p-2 rounded-lg shadow-md border h-[56px] flex items-center">
-                      {routeHistoryVehicle ? (
-                        <Button variant="ghost" onClick={handleBackToFleet}>
+                  {/* Back Button */}
+                  {routeHistoryVehicle && (
+                    <div className="bg-card p-2 rounded-lg shadow-md border h-[40px] flex items-center">
+                        <Button variant="ghost" size="sm" onClick={handleBackToFleet}>
                           <ArrowLeft className="mr-2 h-4 w-4" />
                           Back to Fleet
                         </Button>
-                      ) : (
-                        <h1 className="text-xl font-bold text-foreground px-3 hidden md:block">FleetView</h1>
-                      )}
-                  </div>
+                    </div>
+                  )}
 
                 </div>
             </header>
