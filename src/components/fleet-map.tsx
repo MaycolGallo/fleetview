@@ -18,33 +18,41 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
   const [polyline, setPolyline] = useState<google.maps.Polyline | null>(null);
 
   useEffect(() => {
-    if (!map || !routePath) {
-        if (polyline) {
-            polyline.setMap(null);
-            setPolyline(null);
-        }
-        return;
-    }
-    
-    if(polyline) {
+    if (!map) return;
+
+    if (routePath) {
+      if (polyline) {
         polyline.setPath(routePath);
-    } else {
+      } else {
         const newPolyline = new google.maps.Polyline({
-            path: routePath,
-            strokeColor: "#FFC107",
-            strokeOpacity: 0.8,
-            strokeWeight: 4,
-            map: map,
-          });
-          setPolyline(newPolyline);
+          path: routePath,
+          strokeColor: "#FFC107",
+          strokeOpacity: 0.8,
+          strokeWeight: 4,
+          map: map,
+        });
+        setPolyline(newPolyline);
+      }
+    } else {
+      if (polyline) {
+        polyline.setMap(null);
+        setPolyline(null);
+      }
     }
 
     return () => {
-        if(polyline) {
+      // Don't remove polyline from map when component unmounts if routePath is still present
+    };
+  }, [map, routePath, polyline]);
+
+  useEffect(() => {
+    // Cleanup polyline when component unmounts
+    return () => {
+        if (polyline) {
             polyline.setMap(null);
         }
-    };
-  }, [map, routePath]);
+    }
+  },[polyline])
 
   return null;
 }
