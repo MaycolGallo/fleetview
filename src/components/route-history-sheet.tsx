@@ -15,10 +15,14 @@ import {
   Milestone,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import { Sheet, SheetContent, SheetOverlay, SheetPortal } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
+
 
 interface RouteHistorySheetProps {
   isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
   events: RouteEvent[];
   vehicle: Vehicle | null;
   onSegmentSelect: (segmentIndex: number) => void;
@@ -42,27 +46,12 @@ function formatDuration(minutes: number) {
   return result.trim();
 }
 
-export function RouteHistorySheet({
-  isOpen,
-  events,
-  vehicle,
-  onSegmentSelect,
-  selectedSegmentIndex,
-}: RouteHistorySheetProps) {
-  const totalDistance = events.reduce((sum, e) => sum + e.distanceKm, 0);
-  const totalDuration = events.reduce((sum, e) => sum + e.durationMinutes, 0);
+function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegmentIndex }: Omit<RouteHistorySheetProps, 'isOpen' | 'onOpenChange'>) {
+    const totalDistance = events.reduce((sum, e) => sum + e.distanceKm, 0);
+    const totalDuration = events.reduce((sum, e) => sum + e.durationMinutes, 0);
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="absolute bottom-4 left-4 right-4 z-20"
-        >
-          <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl">
+    return (
+        <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
             <CardHeader>
               <CardTitle>Route History: {vehicle?.vehicleId}</CardTitle>
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
@@ -86,9 +75,9 @@ export function RouteHistorySheet({
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pb-4">
-              <ScrollArea className="w-full whitespace-nowrap">
-                <div className="relative flex items-stretch gap-0 px-4 pb-4">
+            <CardContent className="pb-4 flex-1">
+              <ScrollArea className="w-full whitespace-nowrap h-full">
+                <div className="relative flex items-stretch gap-0 px-4 pb-4 h-full">
                   {events.map((event, index) => {
                     const Icon = statusIcons[event.status];
                     const isSelected = selectedSegmentIndex === index;
@@ -103,7 +92,7 @@ export function RouteHistorySheet({
                         style={{ width: index === events.length -1 ? 'auto' : '180px'}}
                         onClick={() => onSegmentSelect(index)}
                       >
-                        <div className="relative flex flex-col items-center text-center cursor-pointer">
+                        <div className="relative flex flex-col items-center text-center cursor-pointer h-full">
                           {/* Timeline line */}
                           {index < events.length - 1 && (
                             <div className={cn(
@@ -156,6 +145,36 @@ export function RouteHistorySheet({
               </ScrollArea>
             </CardContent>
           </Card>
+    )
+}
+
+export function RouteHistorySheet(props: RouteHistorySheetProps) {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+        <Sheet open={props.isOpen} onOpenChange={props.onOpenChange}>
+            <SheetPortal>
+                <SheetOverlay className="fixed inset-0 bg-black/40 z-20" />
+                <SheetContent side="bottom" className="bg-transparent border-none h-[40%] z-20 p-4">
+                    <RouteHistoryContent {...props} />
+                </SheetContent>
+            </SheetPortal>
+      </Sheet>
+    )
+  }
+
+  return (
+    <AnimatePresence>
+      {props.isOpen && (
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="absolute bottom-4 left-4 right-4 z-20"
+        >
+          <RouteHistoryContent {...props} />
         </motion.div>
       )}
     </AnimatePresence>
