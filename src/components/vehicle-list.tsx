@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Vehicle, VehicleStatus } from "@/lib/types";
@@ -17,15 +18,15 @@ interface VehicleListProps {
 const statusDetails = {
     'active': {
         icon: CheckCircle,
-        className: 'text-green-500',
+        className: 'text-green-400',
     },
     'idle': {
         icon: Clock,
-        className: 'text-gray-500',
+        className: 'text-amber-400',
     },
     'out-of-service': {
         icon: AlertCircle,
-        className: 'text-red-500',
+        className: 'text-red-400',
     }
 };
 
