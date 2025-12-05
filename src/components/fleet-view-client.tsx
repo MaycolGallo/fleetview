@@ -145,64 +145,61 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   };
 
   return (
-      <div className="flex h-screen w-screen bg-background">
-        <div className="relative h-full w-full">
-            <header className="absolute top-0 left-0 right-0 p-2 md:p-4 bg-transparent z-20">
-                <div className="flex items-start gap-4">
-                  <div className="flex flex-col gap-2 bg-background/80 backdrop-blur-sm p-2 rounded-lg shadow-md border">
-                      <Popover>
-                          <PopoverTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <PanelLeft />
-                              </Button>
-                          </PopoverTrigger>
-                          <PopoverContent side="right" align="start" sideOffset={8} className="w-80 p-0">
-                               <div className="flex flex-col h-[60vh] max-h-[60vh]">
-                                  <div className="p-4">
-                                    <h2 className="font-semibold text-lg">Vehicles</h2>
-                                    <div className="mt-2">
-                                      <VehicleFilters
-                                        currentFilter={statusFilter}
-                                        onFilterChange={setStatusFilter}
-                                      />
-                                    </div>
-                                  </div>
-                                  <Separator />
-                                  <VehicleList 
-                                    vehicles={vehicles}
-                                    statusFilter={statusFilter}
-                                    onVehicleSelect={handleVehicleSelect}
-                                    selectedVehicle={selectedVehicle}
-                                  />
-                               </div>
-                          </PopoverContent>
-                      </Popover>
-                  </div>
-                  
-                  {routeHistoryVehicle && (
-                    <div className="bg-background/80 backdrop-blur-sm p-2 rounded-lg shadow-md border h-[40px] flex items-center">
-                        <Button variant="ghost" size="sm" onClick={handleBackToFleet}>
-                          <ArrowLeft className="mr-2 h-4 w-4" />
-                          Back to Fleet
+      <div className="relative h-screen w-screen bg-background">
+        <header className="absolute top-0 left-0 p-4 z-20">
+          <div className="flex flex-col items-start gap-2">
+            {/* Toolbar container */}
+            <div className="rounded-lg shadow-md border bg-background/80 backdrop-blur-sm p-1 flex flex-col gap-1">
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg">
+                            <PanelLeft />
                         </Button>
-                    </div>
-                  )}
-
-                </div>
-            </header>
-
-            <main className="h-full w-full z-10">
-              <FleetMap
-                apiKey={apiKey}
-                vehicles={filteredVehicles}
-                onVehicleSelect={handleVehicleSelect}
-                selectedVehicle={routeHistoryVehicle || selectedVehicle}
-                routePath={routePath}
-                highlightedSegment={highlightedSegment}
-                routeSegmentToFit={routeSegmentToFit}
-              />
-            </main>
-        </div>
+                    </PopoverTrigger>
+                    <PopoverContent side="right" align="center" sideOffset={12} className="w-80 p-0">
+                       <div className="flex flex-col h-[60vh] max-h-[60vh]">
+                          <div className="p-4">
+                            <h2 className="font-semibold text-lg">Vehicles</h2>
+                            <div className="mt-2">
+                              <VehicleFilters
+                                currentFilter={statusFilter}
+                                onFilterChange={setStatusFilter}
+                              />
+                            </div>
+                          </div>
+                          <Separator />
+                          <VehicleList 
+                            vehicles={vehicles}
+                            statusFilter={statusFilter}
+                            onVehicleSelect={handleVehicleSelect}
+                            selectedVehicle={selectedVehicle}
+                          />
+                       </div>
+                    </PopoverContent>
+                </Popover>
+            </div>
+            
+            {routeHistoryVehicle && (
+              <div className="bg-background/80 backdrop-blur-sm p-1 rounded-lg shadow-md border mt-2">
+                  <Button variant="ghost" size="sm" onClick={handleBackToFleet}>
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Fleet
+                  </Button>
+              </div>
+            )}
+          </div>
+        </header>
+        <main className="h-full w-full z-10">
+          <FleetMap
+            apiKey={apiKey}
+            vehicles={filteredVehicles}
+            onVehicleSelect={handleVehicleSelect}
+            selectedVehicle={routeHistoryVehicle || selectedVehicle}
+            routePath={routePath}
+            highlightedSegment={highlightedSegment}
+            routeSegmentToFit={routeSegmentToFit}
+          />
+        </main>
         
         {(isLoadingRoute) && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30">
