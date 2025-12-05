@@ -1,3 +1,4 @@
+
 "use client";
 
 import { APIProvider, Map, AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
@@ -69,15 +70,18 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
 
-  const mapCenter = selectedVehicle && routePath ? { lat: selectedVehicle.latitude, lng: selectedVehicle.longitude } : defaultCenter;
-  const mapZoom = selectedVehicle && routePath ? 14 : defaultZoom;
+  // Use a key to force re-render when we want to center on a new route
+  const mapKey = selectedVehicle?.vehicleId && routePath ? selectedVehicle.vehicleId : 'default';
+  const initialCenter = selectedVehicle && routePath ? { lat: selectedVehicle.latitude, lng: selectedVehicle.longitude } : defaultCenter;
+  const initialZoom = selectedVehicle && routePath ? 14 : defaultZoom;
 
 
   return (
     <APIProvider apiKey={apiKey}>
       <Map
-        center={mapCenter}
-        zoom={mapZoom}
+        key={mapKey}
+        defaultCenter={initialCenter}
+        defaultZoom={initialZoom}
         gestureHandling={'greedy'}
         mapId="fleetview-map"
         className="w-full h-full"
