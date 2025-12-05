@@ -12,6 +12,7 @@ interface FleetMapProps {
   onVehicleSelect: (vehicle: Vehicle) => void;
   selectedVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[] | null;
+  routeSegmentToFit: { lat: number; lng: number }[] | null;
 }
 
 function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[] }) {
@@ -66,9 +67,20 @@ function RoutePolyline({ routePath }: { routePath: { lat: number; lng: number }[
 }
 
 
-export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath }: FleetMapProps) {
+export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, routeSegmentToFit }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
+
+  const map = useMap();
+
+  useEffect(() => {
+    if (map && routeSegmentToFit && routeSegmentToFit.length > 0) {
+      const bounds = new google.maps.LatLngBounds();
+      routeSegmentToFit.forEach(point => bounds.extend(point));
+      map.fitBounds(bounds, 100);
+    }
+  }, [map, routeSegmentToFit]);
+
 
   // Use a key to force re-render when we want to center on a new route
   const mapKey = selectedVehicle?.vehicleId && routePath ? selectedVehicle.vehicleId : 'default';

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -26,6 +27,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   const [routeEvents, setRouteEvents] = useState<RouteEvent[]>([]);
   const [isRouteSheetOpen, setIsRouteSheetOpen] = useState(false);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
+  const [routeSegmentToFit, setRouteSegmentToFit] = useState<{ lat: number; lng: number }[] | null>(null);
   const { toast } = useToast();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -80,6 +82,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
     setRouteEvents([]);
     setSelectedVehicle(null);
     setIsRouteSheetOpen(false);
+    setRouteSegmentToFit(null);
   };
 
   const filteredVehicles = useMemo(() => {
@@ -103,6 +106,26 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   const handleDialogClose = () => {
     setSelectedVehicle(null);
   };
+  
+  const handleSegmentSelect = (segmentIndex: number) => {
+    if (!routePath || !routeEvents) return;
+
+    // A simple heuristic to map events to points
+    const pointsPerEvent = Math.floor(routePath.length / routeEvents.length);
+    const startPointIndex = segmentIndex * pointsPerEvent;
+    const endPointIndex = Math.min((segmentIndex + 1) * pointsPerEvent, routePath.length -1);
+    
+    if (startPointIndex >= endPointIndex) {
+      if (routePath[startPointIndex]) {
+        setRouteSegmentToFit([routePath[startPointIndex]]);
+      }
+      return;
+    }
+
+    const segmentPoints = routePath.slice(startPointIndex, endPointIndex + 1);
+    setRouteSegmentToFit(segmentPoints);
+  };
+
 
   return (
     <div className="flex flex-col h-screen w-screen bg-background">
@@ -135,6 +158,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
             onVehicleSelect={handleVehicleSelect}
             selectedVehicle={routeHistoryVehicle || selectedVehicle}
             routePath={routePath}
+            routeSegmentToFit={routeSegmentToFit}
           />
         </div>
         {(isLoadingRoute) && (
@@ -155,6 +179,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
           isOpen={isRouteSheetOpen}
           events={routeEvents}
           vehicle={routeHistoryVehicle}
+          onSegmentSelect={handleSegmentSelect}
         />
       </main>
     </div>

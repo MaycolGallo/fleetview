@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import type { RouteEvent, Vehicle } from '@/lib/types';
@@ -20,6 +20,7 @@ interface RouteHistorySheetProps {
   isOpen: boolean;
   events: RouteEvent[];
   vehicle: Vehicle | null;
+  onSegmentSelect: (segmentIndex: number) => void;
 }
 
 const statusIcons = {
@@ -43,6 +44,7 @@ export function RouteHistorySheet({
   isOpen,
   events,
   vehicle,
+  onSegmentSelect,
 }: RouteHistorySheetProps) {
   const totalDistance = events.reduce((sum, e) => sum + e.distanceKm, 0);
   const totalDuration = events.reduce((sum, e) => sum + e.durationMinutes, 0);
@@ -83,38 +85,50 @@ export function RouteHistorySheet({
             </CardHeader>
             <CardContent className="pb-4">
               <ScrollArea className="w-full whitespace-nowrap">
-                <div className="relative flex items-stretch gap-8 px-4 pb-4">
-                  {/* Timeline line */}
-                  <div className="absolute top-4 left-0 right-0 h-0.5 bg-border" />
-
+                <div className="relative flex items-stretch gap-0 px-4 pb-4">
                   {events.map((event, index) => {
                     const Icon = statusIcons[event.status];
                     return (
-                      <div key={index} className="flex flex-col items-center gap-2 pt-4 flex-shrink-0 w-48 text-center relative">
-                         <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 ring-card -mt-4">
+                      <div
+                        key={index}
+                        className="flex-shrink-0 group"
+                        style={{ width: index === events.length -1 ? 'auto' : '180px'}}
+                        onClick={() => onSegmentSelect(index)}
+                      >
+                        <div className="relative flex flex-col items-center text-center cursor-pointer">
+                          {/* Timeline line */}
+                          {index < events.length - 1 && (
+                            <div className="absolute top-4 left-1/2 h-0.5 w-full bg-border group-hover:bg-primary transition-colors" />
+                          )}
+
+                          <div className="z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 ring-card -mt-4 group-hover:ring-primary transition-all">
                             <Icon className="h-5 w-5 text-primary" />
-                         </div>
-                        <p className="font-semibold text-foreground capitalize text-sm">
-                          {event.status}
-                        </p>
-                        <p className="text-xs text-muted-foreground whitespace-normal">
-                          {event.description}
-                        </p>
-                        <div className="mt-1 flex flex-col items-center gap-1 text-xs text-muted-foreground">
-                           <span>
-                            {format(parseISO(event.timestamp), 'p')}
-                          </span>
-                          {(event.durationMinutes > 0 || event.distanceKm > 0) && <Separator orientation="horizontal" className="w-10 my-1" />}
-                          <div className="flex gap-2">
-                          {event.durationMinutes > 0 && (
-                              <span>{formatDuration(event.durationMinutes)}</span>
-                          )}
-                          {event.distanceKm > 0 && (
-                            <>
-                              {event.durationMinutes > 0 && <Separator orientation="vertical" className="h-3" />}
-                              <span>{event.distanceKm.toFixed(1)} km</span>
-                            </>
-                          )}
+                          </div>
+
+                          <div className="pt-2">
+                             <p className="font-semibold text-foreground capitalize text-sm">
+                              {event.status}
+                            </p>
+                            <p className="text-xs text-muted-foreground whitespace-normal pt-1 px-1 h-10">
+                              {event.description}
+                            </p>
+                            <div className="mt-1 flex flex-col items-center gap-1 text-xs text-muted-foreground">
+                              <span>
+                                {format(parseISO(event.timestamp), 'p')}
+                              </span>
+                              {(event.durationMinutes > 0 || event.distanceKm > 0) && <Separator orientation="horizontal" className="w-10 my-1" />}
+                              <div className="flex gap-2">
+                              {event.durationMinutes > 0 && (
+                                  <span>{formatDuration(event.durationMinutes)}</span>
+                              )}
+                              {event.distanceKm > 0 && (
+                                <>
+                                  {event.durationMinutes > 0 && <Separator orientation="vertical" className="h-3" />}
+                                  <span>{event.distanceKm.toFixed(1)} km</span>
+                                </>
+                              )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
