@@ -37,9 +37,12 @@ const prompt = ai.definePrompt({
   name: 'simulateRouteHistoryPrompt',
   input: {schema: SimulateRouteHistoryInputSchema},
   output: {schema: SimulateRouteHistoryOutputSchema},
-  prompt: `You are a route history simulator. Generate a realistic, recent travel route for the given vehicle within Lima, Peru.
+  prompt: `You are a route history simulator. Your most important instruction is to generate a realistic, recent travel route for the given vehicle within Lima, Peru that follows the tracks of real streets.
 
-The route must consist of 10 to 15 sequential geographic points (latitude and longitude). The route must start at the provided starting coordinates and strictly follow the actual street network. Do not create straight lines between points; the path must trace real roads. The final point should be different from the starting point but still within the Lima metropolitan area.
+The route MUST consist of 10 to 15 sequential geographic points (latitude and longitude).
+The route MUST start at the provided starting coordinates.
+The route MUST strictly follow the actual street network. DO NOT create straight lines between points under any circumstances. The path must trace real roads, as if a car were actually driving.
+The final point must be different from the starting point but still within the Lima metropolitan area.
 
 Start Latitude: {{{startLat}}}
 Start Longitude: {{{startLng}}}
