@@ -24,7 +24,11 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
   const [routePath, setRoutePath] = useState<{ lat: number; lng: number }[] | null>(null);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
   const { toast } = useToast();
+  const [isMounted, setIsMounted] = useState(false);
 
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchVehicles = async () => {
@@ -107,10 +111,12 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
           )}
           
            <div className={routeHistoryVehicle ? 'invisible' : ''}>
-            <VehicleFilters
-              currentFilter={statusFilter}
-              onFilterChange={setStatusFilter}
-            />
+            {isMounted && (
+              <VehicleFilters
+                currentFilter={statusFilter}
+                onFilterChange={setStatusFilter}
+              />
+            )}
           </div>
         </div>
       </header>
