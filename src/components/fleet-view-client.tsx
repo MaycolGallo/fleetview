@@ -156,7 +156,7 @@ export function FleetViewClient({ initialVehicles, apiKey }: FleetViewClientProp
                             <PanelLeft />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent side="right" align="start" sideOffset={8} className="w-80 p-0">
+                    <PopoverContent side="right" align="start" sideOffset={8} className="w-80 p-0 bg-card/95 backdrop-blur-sm">
                        <div className="flex flex-col h-[60vh] max-h-[60vh]">
                           <div className="p-4">
                             <h2 className="font-semibold text-lg">Vehicles</h2>
