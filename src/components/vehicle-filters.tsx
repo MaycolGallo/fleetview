@@ -16,7 +16,7 @@ export function VehicleFilters({ currentFilter, onFilterChange }: VehicleFilters
       <Select value={currentFilter} onValueChange={(value) => onFilterChange(value as 'all' | VehicleStatus)}>
         <SelectTrigger 
           id="status-filter" 
-          className="w-full h-10 rounded-lg bg-transparent hover:bg-zinc-700/80 border-0"
+          className="w-full h-10"
         >
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
