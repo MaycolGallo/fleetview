@@ -91,7 +91,14 @@ function MapControl({
   const map = useMap();
 
   useEffect(() => {
-    if (map && routeSegmentToFit && routeSegmentToFit.length > 0) {
+    if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
+  
+    if (routeSegmentToFit.length === 1) {
+      // If there's only one point, pan to it and set a reasonable zoom level.
+      map.panTo(routeSegmentToFit[0]);
+      map.setZoom(16);
+    } else {
+      // If there are multiple points (a route segment), fit them in the view.
       const bounds = new google.maps.LatLngBounds();
       routeSegmentToFit.forEach(point => bounds.extend(point));
       map.fitBounds(bounds, 100);
