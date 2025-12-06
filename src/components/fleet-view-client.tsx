@@ -18,6 +18,8 @@ import { Separator } from './ui/separator';
 import { useFleetState } from '@/hooks/use-fleet-state';
 import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from './ui/skeleton';
+import { Label } from './ui/label';
+import { Checkbox } from './ui/checkbox';
 
 interface FleetViewClientProps {
   apiKey: string;
@@ -50,6 +52,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     routeSegmentToFit,
     selectedSegmentIndex,
     highlightedSegment,
+    visibleVehicleIds,
   } = state;
 
   const { toast } = useToast();
@@ -88,15 +91,21 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     if (routeHistoryVehicle) {
       return [routeHistoryVehicle];
     }
-    if (statusFilter === 'all') {
+    return vehicles.filter(v => 
+      visibleVehicleIds.has(v.vehicleId) &&
+      (statusFilter === 'all' || v.status === statusFilter)
+    );
+  }, [vehicles, statusFilter, routeHistoryVehicle, visibleVehicleIds]);
+
+  const listVehicles = useMemo(() => {
+     if (statusFilter === 'all') {
       return vehicles;
     }
     return vehicles.filter(v => v.status === statusFilter);
-  }, [vehicles, statusFilter, routeHistoryVehicle]);
+  }, [vehicles, statusFilter]);
 
   const handleVehicleSelect = (vehicle: Vehicle) => {
     if (routeHistoryVehicle) {
-      // If in route view, clicking the pin does nothing for now
       return;
     }
     dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
@@ -122,6 +131,18 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     dispatch({ type: 'SET_ROUTE_SHEET_OPEN', payload: isOpen });
   }
 
+  const handleVehicleVisibilityToggle = (vehicleId: string) => {
+    dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: vehicleId });
+  };
+
+  const handleToggleAll = (isChecked: boolean) => {
+    const vehicleIds = listVehicles.map(v => v.vehicleId);
+    dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: vehicleIds, visible: isChecked } });
+  };
+
+  const areAllFilteredVisible = listVehicles.every(v => visibleVehicleIds.has(v.vehicleId));
+
+
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -143,13 +164,21 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                     </PopoverTrigger>
                     <PopoverContent side="right" align="start" sideOffset={8} className="w-80 p-0 bg-zinc-900/95 border-zinc-700 backdrop-blur-sm">
                        <div className="flex flex-col h-[60vh] max-h-[60vh]">
-                          <div className="p-4">
+                          <div className="p-4 space-y-4">
                             <h2 className="font-semibold text-lg">Vehicles</h2>
-                            <div className="mt-2">
-                              <VehicleFilters
+                            <VehicleFilters
                                 currentFilter={statusFilter}
                                 onFilterChange={handleFilterChange}
                               />
+                            <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id="toggle-all"
+                                  checked={areAllFilteredVisible}
+                                  onCheckedChange={(checked) => handleToggleAll(Boolean(checked))}
+                                />
+                                <Label htmlFor="toggle-all" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                    {areAllFilteredVisible ? 'Hide All' : 'Show All'}
+                                </Label>
                             </div>
                           </div>
                           <Separator />
@@ -167,10 +196,11 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                             </div>
                           ) : (
                             <VehicleList 
-                              vehicles={vehicles}
-                              statusFilter={statusFilter}
+                              vehicles={listVehicles}
                               onVehicleSelect={handlePanToVehicle}
                               selectedVehicle={selectedVehicle}
+                              visibleVehicleIds={visibleVehicleIds}
+                              onVisibilityChange={handleVehicleVisibilityToggle}
                             />
                           )}
                        </div>

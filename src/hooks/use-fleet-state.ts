@@ -15,6 +15,7 @@ interface FleetState {
   routeSegmentToFit: { lat: number; lng: number }[] | null;
   selectedSegmentIndex: number | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
+  visibleVehicleIds: Set<string>;
 }
 
 // 2. Define the actions
@@ -27,7 +28,9 @@ type FleetAction =
   | { type: 'SET_ROUTE_HISTORY'; payload: { routePoints: { lat: number; lng: number }[]; routeEvents: RouteEvent[] } }
   | { type: 'BACK_TO_FLEET' }
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
-  | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean };
+  | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean }
+  | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: string }
+  | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: string[], visible: boolean } };
 
 
 // 3. Define the initial state
@@ -43,13 +46,18 @@ const getInitialState = (initialVehicles: Vehicle[]): FleetState => ({
   routeSegmentToFit: null,
   selectedSegmentIndex: null,
   highlightedSegment: null,
+  visibleVehicleIds: new Set(initialVehicles.map(v => v.vehicleId)),
 });
 
 // 4. Create the reducer function
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES':
-      return { ...state, vehicles: action.payload };
+      return { 
+        ...state, 
+        vehicles: action.payload,
+        visibleVehicleIds: new Set(action.payload.map(v => v.vehicleId)),
+      };
 
     case 'SET_STATUS_FILTER':
       return { ...state, statusFilter: action.payload };
@@ -131,6 +139,26 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         routeSegmentToFit: segmentPoints.length > 0 ? segmentPoints : null,
         highlightedSegment: segmentPoints.length > 1 ? segmentPoints : null,
       };
+    }
+
+    case 'TOGGLE_VEHICLE_VISIBILITY': {
+        const newVisibleIds = new Set(state.visibleVehicleIds);
+        if (newVisibleIds.has(action.payload)) {
+            newVisibleIds.delete(action.payload);
+        } else {
+            newVisibleIds.add(action.payload);
+        }
+        return { ...state, visibleVehicleIds: newVisibleIds };
+    }
+
+    case 'SET_ALL_VEHICLES_VISIBILITY': {
+        const newVisibleIds = new Set(state.visibleVehicleIds);
+        if (action.payload.visible) {
+            action.payload.ids.forEach(id => newVisibleIds.add(id));
+        } else {
+            action.payload.ids.forEach(id => newVisibleIds.delete(id));
+        }
+        return { ...state, visibleVehicleIds: newVisibleIds };
     }
 
     default:
