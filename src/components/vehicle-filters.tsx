@@ -13,7 +13,7 @@ interface VehicleFiltersProps {
 export function VehicleFilters({ currentFilter, onFilterChange }: VehicleFiltersProps) {
   return (
     <div className="grid gap-2">
-      <Select value={currentFilter} onValueChange={(value) => onFilterChange(value as 'all' | VehicleStatus)}>
+      <Select value={currentFilter} onValueChange={(value) => onFilterChange(value as 'all' | VehicleStatus)} modal={false}>
         <SelectTrigger 
           id="status-filter" 
           className="w-full h-10"
