@@ -20,7 +20,7 @@ const PopoverContent = React.forwardRef<
       sideOffset={sideOffset}
       onPointerDownOutside={(e) => {
         const target = e.target as HTMLElement;
-        if (target.closest('[data-radix-select-trigger]')) {
+        if (target.closest('[data-radix-select-trigger]') || target.closest('.select-item-class')) { // A more robust way might be needed depending on Radix versions
           e.preventDefault();
         }
       }}
