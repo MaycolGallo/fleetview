@@ -23,11 +23,8 @@ const PopoverContent = React.forwardRef<
         className
       )}
       onOpenAutoFocus={(e) => e.preventDefault()}
-      onPointerDownOutside={(event) => {
-        const target = event.target as HTMLElement;
-        if (target.closest('[data-radix-select-content]')) {
-          event.preventDefault();
-        }
+      onInteractOutside={(e) => {
+        e.preventDefault();
       }}
       {...props}
     />
