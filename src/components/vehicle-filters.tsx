@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,7 +11,7 @@ interface VehicleFiltersProps {
 export function VehicleFilters({ currentFilter, onFilterChange }: VehicleFiltersProps) {
   return (
     <div className="grid gap-2">
-      <Select value={currentFilter} onValueChange={(value) => onFilterChange(value as 'all' | VehicleStatus)} modal={false}>
+      <Select value={currentFilter} onValueChange={(value) => onFilterChange(value as 'all' | VehicleStatus)}>
         <SelectTrigger 
           id="status-filter" 
           className="w-full h-10"
