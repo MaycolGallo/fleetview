@@ -4,7 +4,7 @@
 import { APIProvider, Map, AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
 import { VehiclePin } from './vehicle-pin';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface FleetMapProps {
   apiKey: string;
@@ -16,60 +16,47 @@ interface FleetMapProps {
   routeSegmentToFit: { lat: number; lng: number }[] | null;
 }
 
-function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { lat: number; lng: number }[], color: string, weight: number, zIndex?: number }) {
+function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { lat: number; lng: number }[] | null, color: string, weight: number, zIndex?: number }) {
   const map = useMap();
-  const [polyline, setPolyline] = useState<google.maps.Polyline | null>(null);
+  const polylineRef = useRef<google.maps.Polyline | null>(null);
 
   useEffect(() => {
     if (!map) return;
-
-    const arrowIcon = {
-      path: 'M 0,-1 0,1',
-      strokeOpacity: 1,
-      scale: 3,
-      strokeColor: color,
-    };
-
-    if (routePath && routePath.length > 0) {
-      if (polyline) {
-        polyline.setPath(routePath);
-        polyline.setOptions({
-            strokeColor: color,
-            strokeWeight: weight,
-            zIndex: zIndex,
-            icons: [{
-                icon: arrowIcon,
-                offset: '0',
-                repeat: '50px'
-            }],
-        })
-      } else {
-        const newPolyline = new google.maps.Polyline({
-          path: routePath,
-          strokeColor: color,
-          strokeOpacity: 0.8,
-          strokeWeight: weight,
-          map: map,
-          zIndex: zIndex,
-          icons: [{
-            icon: arrowIcon,
-            offset: '0',
-            repeat: '50px'
-          }],
-        });
-        setPolyline(newPolyline);
-      }
-    } else {
-      if (polyline) {
-        polyline.setMap(null);
-        setPolyline(null);
-      }
+  
+    // Clean up existing polyline if it exists
+    if (polylineRef.current) {
+      polylineRef.current.setMap(null);
+      polylineRef.current = null;
     }
-    
-    // Cleanup effect
+  
+    if (routePath && routePath.length > 0) {
+      const arrowIcon = {
+        path: 'M 0,-1 0,1',
+        strokeOpacity: 1,
+        scale: 3,
+        strokeColor: color,
+      };
+
+      const newPolyline = new google.maps.Polyline({
+        path: routePath,
+        strokeColor: color,
+        strokeOpacity: 0.8,
+        strokeWeight: weight,
+        map: map,
+        zIndex: zIndex,
+        icons: [{
+          icon: arrowIcon,
+          offset: '0',
+          repeat: '50px'
+        }],
+      });
+      polylineRef.current = newPolyline;
+    }
+  
+    // Cleanup effect for when the component unmounts
     return () => {
-      if (polyline) {
-        polyline.setMap(null);
+      if (polylineRef.current) {
+        polylineRef.current.setMap(null);
       }
     };
   // To avoid re-rendering issues, we stringify the path as a dependency
@@ -78,6 +65,7 @@ function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { 
 
   return null;
 }
+
 
 // This new component will contain the logic that needs the map instance.
 function MapControl({ 
@@ -116,8 +104,8 @@ function MapControl({
           <VehiclePin status={vehicle.status} isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId} />
         </AdvancedMarker>
       ))}
-      {routePath && <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />}
-      {highlightedSegment && <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />}
+      <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
+      <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />
     </>
   );
 }
