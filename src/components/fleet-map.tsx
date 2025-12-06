@@ -23,15 +23,12 @@ function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { 
   const polylineRef = useRef<google.maps.Polyline | null>(null);
 
   useEffect(() => {
-    if (!map) return;
-  
     // Clean up existing polyline if it exists
     if (polylineRef.current) {
       polylineRef.current.setMap(null);
-      polylineRef.current = null;
     }
-  
-    if (routePath && routePath.length > 0) {
+
+    if (map && routePath && routePath.length > 0) {
       const arrowIcon = {
         path: 'M 0,-1 0,1',
         strokeOpacity: 1,
@@ -53,9 +50,10 @@ function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { 
         }],
       });
       polylineRef.current = newPolyline;
+    } else {
+        polylineRef.current = null;
     }
   
-    // Cleanup effect for when the component unmounts
     return () => {
       if (polylineRef.current) {
         polylineRef.current.setMap(null);
