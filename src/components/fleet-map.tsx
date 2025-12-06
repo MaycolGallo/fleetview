@@ -1,11 +1,10 @@
 
 "use client";
 
-import { APIProvider, Map, AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, useMap, ColorScheme } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
 import { VehiclePin } from './vehicle-pin';
 import { useEffect, useState, useRef } from 'react';
-import { darkMapStyle } from '@/lib/map-styles';
 
 interface FleetMapProps {
   apiKey: string;
@@ -74,15 +73,9 @@ function MapControl({
   selectedVehicle, 
   routePath, 
   highlightedSegment,
-  routeSegmentToFit,
-  isMapDark
-}: Omit<FleetMapProps, 'apiKey'>) {
+  routeSegmentToFit
+}: Omit<FleetMapProps, 'apiKey' | 'isMapDark'>) {
   const map = useMap();
-
-  useEffect(() => {
-    if (!map) return;
-    map.setOptions({ styles: isMapDark ? darkMapStyle : [] });
-  }, [map, isMapDark]);
 
   useEffect(() => {
     if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
@@ -137,6 +130,7 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
         mapId="fleetview-map"
         className="w-full h-full"
         disableDefaultUI={true}
+        colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
       >
         <MapControl 
           vehicles={vehicles}
@@ -145,7 +139,6 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
           routePath={routePath}
           highlightedSegment={highlightedSegment}
           routeSegmentToFit={routeSegmentToFit}
-          isMapDark={isMapDark}
         />
       </Map>
     </APIProvider>
