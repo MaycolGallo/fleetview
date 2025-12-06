@@ -81,13 +81,7 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
-      onPointerDownOutside={(e) => {
-        // When used inside a popover, prevent the popover from closing.
-        const popover = e.target instanceof Element && e.target.closest('[data-radix-popover-content]')
-        if (popover) {
-            e.preventDefault()
-        }
-      }}
+      onCloseAutoFocus={(e) => e.preventDefault()}
       {...props}
     >
       <SelectScrollUpButton />
