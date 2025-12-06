@@ -34,7 +34,6 @@ async function fetchVehicles(): Promise<Vehicle[]> {
 export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const { data: initialVehicles, isLoading: isLoadingVehicles, error } = useQuery({
     queryKey: ['vehicles'],
-    queryKey: ['vehicles'],
     queryFn: fetchVehicles,
   });
 
@@ -103,6 +102,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
   };
 
+  const handlePanToVehicle = (vehicle: Vehicle) => {
+    dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
+  };
+
   const handleDialogClose = () => {
     dispatch({ type: 'SELECT_VEHICLE', payload: null });
   };
@@ -166,7 +169,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                             <VehicleList 
                               vehicles={vehicles}
                               statusFilter={statusFilter}
-                              onVehicleSelect={handleVehicleSelect}
+                              onVehicleSelect={handlePanToVehicle}
                               selectedVehicle={selectedVehicle}
                             />
                           )}

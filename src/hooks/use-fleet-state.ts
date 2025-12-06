@@ -22,6 +22,7 @@ type FleetAction =
   | { type: 'SET_VEHICLES'; payload: Vehicle[] }
   | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus | 'all' }
   | { type: 'SELECT_VEHICLE'; payload: Vehicle | null }
+  | { type: 'PAN_TO_VEHICLE'; payload: Vehicle }
   | { type: 'START_ROUTE_LOADING'; payload: Vehicle }
   | { type: 'SET_ROUTE_HISTORY'; payload: { routePoints: { lat: number; lng: number }[]; routeEvents: RouteEvent[] } }
   | { type: 'BACK_TO_FLEET' }
@@ -54,8 +55,11 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       return { ...state, statusFilter: action.payload };
 
     case 'SELECT_VEHICLE':
-      return { ...state, selectedVehicle: action.payload };
+      return { ...state, selectedVehicle: action.payload, routeSegmentToFit: action.payload ? [{ lat: action.payload.latitude, lng: action.payload.longitude }] : null };
     
+    case 'PAN_TO_VEHICLE':
+      return { ...state, routeSegmentToFit: [{ lat: action.payload.latitude, lng: action.payload.longitude }] };
+
     case 'SET_ROUTE_SHEET_OPEN':
         return { ...state, isRouteSheetOpen: action.payload };
 
