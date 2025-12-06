@@ -76,9 +76,15 @@ function MapControl({
   selectedVehicle, 
   routePath, 
   highlightedSegment,
-  routeSegmentToFit 
-}: Omit<FleetMapProps, 'apiKey' | 'isMapDark'>) {
+  routeSegmentToFit,
+  isMapDark
+}: Omit<FleetMapProps, 'apiKey'>) {
   const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+    map.setOptions({ styles: isMapDark ? darkMapStyle : [] });
+  }, [map, isMapDark]);
 
   useEffect(() => {
     if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
@@ -131,8 +137,8 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
         defaultZoom={initialZoom}
         gestureHandling={'greedy'}
         mapId="fleetview-map"
-        styles={isMapDark ? darkMapStyle : []}
         className="w-full h-full"
+        disableDefaultUI={true}
       >
         <MapControl 
           vehicles={vehicles}
@@ -141,6 +147,7 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
           routePath={routePath}
           highlightedSegment={highlightedSegment}
           routeSegmentToFit={routeSegmentToFit}
+          isMapDark={isMapDark}
         />
       </Map>
     </APIProvider>
