@@ -186,10 +186,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                        <div className="flex flex-col h-[60vh] max-h-[60vh]">
                           <div className="p-4 space-y-4">
                             <h2 className="font-semibold text-lg">Vehicles</h2>
-                            <VehicleFilters
-                                currentFilter={statusFilter}
-                                onFilterChange={handleFilterChange}
-                              />
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
                                     <Checkbox 
@@ -236,6 +232,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                        </div>
                     </PopoverContent>
                 </Popover>
+                 <VehicleFilters
+                    currentFilter={statusFilter}
+                    onFilterChange={handleFilterChange}
+                  />
             </div>
             
             {routeHistoryVehicle && (
