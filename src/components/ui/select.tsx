@@ -81,6 +81,14 @@ const SelectContent = React.forwardRef<
         className
       )}
       position={position}
+      onPointerDownOutside={(e) => {
+        const target = e.target as HTMLElement;
+        // Check if the click is on a trigger. If so, prevent the popover from closing.
+        // This is necessary when Select is nested inside a Popover.
+        if (target.closest('[data-radix-collection-item]')) {
+            e.preventDefault();
+        }
+      }}
       {...props}
     >
       <SelectScrollUpButton />
