@@ -19,6 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
+import { Switch } from './ui/switch';
 
 interface FleetViewClientProps {
   apiKey: string;
@@ -71,6 +72,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     selectedSegmentIndex,
     highlightedSegment,
     visibleVehicleIds,
+    isMapDark,
   } = state;
 
   const { toast } = useToast();
@@ -154,6 +156,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: vehicleIds, visible: isChecked } });
   };
 
+  const handleMapThemeToggle = (isDark: boolean) => {
+    dispatch({ type: 'SET_MAP_DARK_MODE', payload: isDark });
+  }
+
   const areAllFilteredVisible = listVehicles.every(v => visibleVehicleIds.has(v.vehicleId));
 
 
@@ -184,15 +190,25 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                                 currentFilter={statusFilter}
                                 onFilterChange={handleFilterChange}
                               />
-                            <div className="flex items-center space-x-2">
-                                <Checkbox 
-                                  id="toggle-all"
-                                  checked={areAllFilteredVisible}
-                                  onCheckedChange={(checked) => handleToggleAll(Boolean(checked))}
-                                />
-                                <Label htmlFor="toggle-all" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                    {areAllFilteredVisible ? 'Hide All' : 'Show All'}
-                                </Label>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox 
+                                      id="toggle-all"
+                                      checked={areAllFilteredVisible}
+                                      onCheckedChange={(checked) => handleToggleAll(Boolean(checked))}
+                                    />
+                                    <Label htmlFor="toggle-all" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                        {areAllFilteredVisible ? 'Hide All' : 'Show All'}
+                                    </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Switch 
+                                    id="dark-map" 
+                                    checked={isMapDark}
+                                    onCheckedChange={handleMapThemeToggle}
+                                  />
+                                  <Label htmlFor="dark-map">Dark Map</Label>
+                                </div>
                             </div>
                           </div>
                           <Separator />
@@ -241,6 +257,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             routePath={routePath}
             highlightedSegment={highlightedSegment}
             routeSegmentToFit={routeSegmentToFit}
+            isMapDark={isMapDark}
           />
         </main>
         

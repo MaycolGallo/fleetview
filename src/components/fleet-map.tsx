@@ -5,6 +5,7 @@ import { APIProvider, Map, AdvancedMarker, useMap } from '@vis.gl/react-google-m
 import type { Vehicle } from '@/lib/types';
 import { VehiclePin } from './vehicle-pin';
 import { useEffect, useState, useRef } from 'react';
+import { darkMapStyle } from '@/lib/map-styles';
 
 interface FleetMapProps {
   apiKey: string;
@@ -14,6 +15,7 @@ interface FleetMapProps {
   routePath: { lat: number; lng: number }[] | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
   routeSegmentToFit: { lat: number; lng: number }[] | null;
+  isMapDark: boolean;
 }
 
 function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { lat: number; lng: number }[] | null, color: string, weight: number, zIndex?: number }) {
@@ -75,7 +77,7 @@ function MapControl({
   routePath, 
   highlightedSegment,
   routeSegmentToFit 
-}: Omit<FleetMapProps, 'apiKey'>) {
+}: Omit<FleetMapProps, 'apiKey' | 'isMapDark'>) {
   const map = useMap();
 
   useEffect(() => {
@@ -111,7 +113,7 @@ function MapControl({
 }
 
 
-export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit }: FleetMapProps) {
+export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
 
@@ -129,6 +131,7 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
         defaultZoom={initialZoom}
         gestureHandling={'greedy'}
         mapId="fleetview-map"
+        styles={isMapDark ? darkMapStyle : []}
         className="w-full h-full"
       >
         <MapControl 

@@ -16,6 +16,7 @@ interface FleetState {
   selectedSegmentIndex: number | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
   visibleVehicleIds: Set<string>;
+  isMapDark: boolean;
 }
 
 // 2. Define the actions
@@ -30,7 +31,8 @@ type FleetAction =
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
   | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: string }
-  | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: string[], visible: boolean } };
+  | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: string[], visible: boolean } }
+  | { type: 'SET_MAP_DARK_MODE', payload: boolean };
 
 
 // 3. Define the initial state
@@ -47,6 +49,7 @@ const getInitialState = (initialVehicles: Vehicle[]): FleetState => ({
   selectedSegmentIndex: null,
   highlightedSegment: null,
   visibleVehicleIds: new Set(initialVehicles.map(v => v.vehicleId)),
+  isMapDark: true,
 });
 
 // 4. Create the reducer function
@@ -159,6 +162,10 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             action.payload.ids.forEach(id => newVisibleIds.delete(id));
         }
         return { ...state, visibleVehicleIds: newVisibleIds };
+    }
+    
+    case 'SET_MAP_DARK_MODE': {
+      return { ...state, isMapDark: action.payload };
     }
 
     default:
