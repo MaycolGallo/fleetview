@@ -15,7 +15,7 @@ import {
   Milestone,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
-import { Sheet, SheetContent, SheetOverlay, SheetPortal } from '@/components/ui/sheet';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -153,14 +153,11 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
 
   if (isMobile) {
     return (
-        <Sheet open={props.isOpen} onOpenChange={props.onOpenChange}>
-            <SheetPortal>
-                <SheetOverlay className="fixed inset-0 bg-black/40 z-20" />
-                <SheetContent side="bottom" className="bg-transparent border-none h-[40%] z-20 p-4">
-                    <RouteHistoryContent {...props} />
-                </SheetContent>
-            </SheetPortal>
-      </Sheet>
+        <Drawer open={props.isOpen} onOpenChange={props.onOpenChange}>
+            <DrawerContent className="h-[40%]">
+                <RouteHistoryContent {...props} />
+            </DrawerContent>
+      </Drawer>
     )
   }
 
