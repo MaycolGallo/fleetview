@@ -23,9 +23,6 @@ const PopoverContent = React.forwardRef<
         className
       )}
       onOpenAutoFocus={(e) => e.preventDefault()}
-      onInteractOutside={(e) => {
-        e.preventDefault();
-      }}
       {...props}
     />
   </PopoverPrimitive.Portal>
