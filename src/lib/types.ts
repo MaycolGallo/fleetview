@@ -14,3 +14,8 @@ export interface RouteEvent {
   durationMinutes: number;
   description: string;
 }
+
+export interface RouteHistory {
+  routePoints: { lat: number; lng: number }[];
+  routeEvents: RouteEvent[];
+}

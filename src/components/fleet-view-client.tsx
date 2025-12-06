@@ -3,8 +3,7 @@
 "use client";
 
 import { useEffect, useMemo } from 'react';
-import type { Vehicle, VehicleStatus } from '@/lib/types';
-import { simulateRouteHistory } from '@/ai/flows/simulate-route-history';
+import type { Vehicle, VehicleStatus, RouteEvent, RouteHistory } from '@/lib/types';
 import { FleetMap } from './fleet-map';
 import { VehicleFilters } from './vehicle-filters';
 import { VehicleDetailDialog } from './vehicle-detail-dialog';
@@ -32,6 +31,25 @@ async function fetchVehicles(): Promise<Vehicle[]> {
     }
     return response.json();
 }
+
+async function fetchRouteHistory(vehicle: Vehicle): Promise<RouteHistory> {
+  const response = await fetch('/api/routes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      vehicleId: vehicle.vehicleId,
+      startLat: vehicle.latitude,
+      startLng: vehicle.longitude,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error('Network response was not ok');
+  }
+  return response.json();
+}
+
 
 export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const { data: initialVehicles, isLoading: isLoadingVehicles, error } = useQuery({
@@ -66,11 +84,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const handleShowRouteHistory = async (vehicle: Vehicle) => {
     dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
     try {
-      const { routePoints, routeEvents } = await simulateRouteHistory({
-        vehicleId: vehicle.vehicleId,
-        startLat: vehicle.latitude,
-        startLng: vehicle.longitude,
-      });
+      const { routePoints, routeEvents } = await fetchRouteHistory(vehicle);
       dispatch({ type: 'SET_ROUTE_HISTORY', payload: { routePoints, routeEvents } });
     } catch (error) {
       console.error("Failed to fetch route history:", error);
