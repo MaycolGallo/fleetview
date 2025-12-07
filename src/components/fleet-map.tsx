@@ -4,14 +4,14 @@
 import { APIProvider, Map, AdvancedMarker, useMap, ColorScheme } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
 import { VehiclePin } from './vehicle-pin';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { Badge } from "./ui/badge";
 import { AlertCircle, CheckCircle, Clock, Route } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -96,6 +96,69 @@ function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { 
   return null;
 }
 
+function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onShowRouteHistory }: { vehicle: Vehicle, selectedVehicle: Vehicle | null, onVehicleSelect: (vehicle: Vehicle | null) => void, onShowRouteHistory: (vehicle: Vehicle) => void }) {
+  const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
+  const status = statusDetails[vehicle.status];
+  const StatusIcon = status.icon;
+  const markerRef = useRef<google.maps.marker.AdvancedMarkerElement>(null);
+  
+  return (
+    <AdvancedMarker
+      ref={markerRef}
+      key={vehicle.vehicleId}
+      position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+      onClick={() => onVehicleSelect(vehicle)}
+    >
+      <DropdownMenu>
+        <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
+          <DropdownMenuTrigger asChild>
+            <div onContextMenu={(e) => { e.preventDefault(); }}>
+              <VehiclePin status={vehicle.status} isSelected={isSelected} />
+            </div>
+          </DropdownMenuTrigger>
+
+          <PopoverContent
+            sideOffset={25}
+            className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <div className="grid gap-4">
+              <div className="space-y-2">
+                <h4 className="font-medium leading-none text-xl">{vehicle.vehicleId}</h4>
+                <p className="text-sm text-muted-foreground">Vehicle Details</p>
+              </div>
+              <div className="grid gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Status</span>
+                  <Badge variant="outline" className={cn("capitalize text-sm border", status.className, status.text)}>
+                    <StatusIcon className="mr-2 h-4 w-4" />
+                    {vehicle.status.replace('-', ' ')}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Latitude</span>
+                  <span className="font-mono text-foreground">{vehicle.latitude.toFixed(6)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Longitude</span>
+                  <span className="font-mono text-foreground">{vehicle.longitude.toFixed(6)}</span>
+                </div>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        <DropdownMenuContent>
+          <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
+            <Route className="mr-2 h-4 w-4" />
+            <span>Show Route History</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </AdvancedMarker>
+  );
+}
+
 
 // This new component will contain the logic that needs the map instance.
 function MapControl({ 
@@ -126,70 +189,15 @@ function MapControl({
 
   return (
     <>
-      {vehicles.map((vehicle) => {
-        const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
-        const status = statusDetails[vehicle.status];
-        const StatusIcon = status.icon;
-
-        return (
-          <AdvancedMarker
-              key={vehicle.vehicleId}
-              position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-          >
-            <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
-              <DropdownMenu>
-                  <PopoverTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <div
-                        onContextMenu={(e) => {
-                          e.preventDefault();
-                          onVehicleSelect(vehicle);
-                        }}
-                      >
-                        <VehiclePin status={vehicle.status} isSelected={isSelected} />
-                      </div>
-                    </DropdownMenuTrigger>
-                  </PopoverTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
-                    <Route className="mr-2 h-4 w-4" />
-                    <span>Show Route History</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-               <PopoverContent
-                    sideOffset={25}
-                    className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
-                    onOpenAutoFocus={(e) => e.preventDefault()}
-                  >
-                    <div className="grid gap-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium leading-none text-xl">{vehicle.vehicleId}</h4>
-                        <p className="text-sm text-muted-foreground">Vehicle Details</p>
-                      </div>
-                      <div className="grid gap-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Status</span>
-                          <Badge variant="outline" className={cn("capitalize text-sm border", status.className, status.text)}>
-                            <StatusIcon className="mr-2 h-4 w-4" />
-                            {vehicle.status.replace('-', ' ')}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Latitude</span>
-                          <span className="font-mono text-foreground">{vehicle.latitude.toFixed(6)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-muted-foreground">Longitude</span>
-                          <span className="font-mono text-foreground">{vehicle.longitude.toFixed(6)}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </PopoverContent>
-            </Popover>
-          </AdvancedMarker>
-        )
-      })}
+      {vehicles.map((vehicle) => (
+        <VehicleMarker 
+          key={vehicle.vehicleId}
+          vehicle={vehicle}
+          selectedVehicle={selectedVehicle}
+          onVehicleSelect={onVehicleSelect}
+          onShowRouteHistory={onShowRouteHistory}
+        />
+      ))}
       <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
       <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />
     </>
