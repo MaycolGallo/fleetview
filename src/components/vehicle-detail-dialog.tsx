@@ -44,7 +44,7 @@ export function VehicleDetailDialog({ vehicle, isOpen, onOpenChange }: VehicleDe
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm bg-card/95 backdrop-blur-sm border-primary/20">
+      <DialogContent className="max-w-sm bg-card/95 backdrop-blur-sm border-primary/20 mx-4">
         <DialogHeader>
           <DialogTitle className="text-2xl">{vehicle.vehicleId}</DialogTitle>
         </DialogHeader>
