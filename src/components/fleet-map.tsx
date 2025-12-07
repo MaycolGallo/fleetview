@@ -17,7 +17,7 @@ import { Route } from 'lucide-react';
 interface FleetMapProps {
   apiKey: string;
   vehicles: Vehicle[];
-  onVehicleSelect: (vehicle: Vehicle) => void;
+  onVehicleSelect: (vehicle: Vehicle | null) => void;
   onShowRouteHistory: (vehicle: Vehicle) => void;
   selectedVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[] | null;
@@ -105,25 +105,25 @@ function MapControl({
   return (
     <>
       {vehicles.map((vehicle) => (
-        <AdvancedMarker
-          key={vehicle.vehicleId}
-          position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-          onClick={() => onVehicleSelect(vehicle)}
-        >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <div onContextMenu={(e) => { e.preventDefault(); }}>
-                    <VehiclePin status={vehicle.status} isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId} />
-                </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
-                <Route className="mr-2 h-4 w-4" />
-                <span>Show Route History</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </AdvancedMarker>
+        <DropdownMenu key={vehicle.vehicleId}>
+          <DropdownMenuTrigger asChild>
+            <AdvancedMarker
+              position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+              onClick={() => onVehicleSelect(vehicle)}
+            >
+              {/* The trigger is the marker itself for right-click */}
+              <div onContextMenu={(e) => e.preventDefault()}>
+                  <VehiclePin status={vehicle.status} isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId} />
+              </div>
+            </AdvancedMarker>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
+              <Route className="mr-2 h-4 w-4" />
+              <span>Show Route History</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ))}
       <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
       <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />
@@ -153,7 +153,12 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
         className="w-full h-full"
         disableDefaultUI={true}
         colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
-        onClick={() => onVehicleSelect(null)}
+        onClick={(e) => {
+            // Check if click was on a marker
+            if (!e.detail.isAdvancedMarker) {
+                 onVehicleSelect(null)
+            }
+        }}
       >
         <MapControl 
           vehicles={vehicles}
