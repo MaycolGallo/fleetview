@@ -19,7 +19,11 @@ import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
-import { FleetMap } from './fleet-map';
+
+const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full w-full" />,
+});
 
 
 interface FleetViewClientProps {
