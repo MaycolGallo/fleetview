@@ -23,21 +23,22 @@ interface VehicleMarkerProps {
 export function VehicleMarker({ vehicle, isSelected, onClick, onShowRouteHistory }: VehicleMarkerProps) {
   
   const handleSelect = (e: Event) => {
+    // This prevents the InfoWindow from opening when an item in the dropdown is clicked.
     e.preventDefault();
     onShowRouteHistory();
   }
 
   // Clicks on the marker itself are for the InfoWindow (left-click)
   const handleMarkerClick: React.MouseEventHandler<HTMLDivElement> = (e) => {
-    // We prevent the event from propagating to the DropdownMenuTrigger
-    e.stopPropagation();
+    // This handles the left-click to open the InfoWindow.
+    // The DropdownMenuTrigger will handle the right-click automatically.
     onClick();
   }
 
   return (
     <AdvancedMarker
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-      onClick={onClick}
+      onClick={onClick} // This is for the InfoWindow
     >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
