@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from "./ui/badge";
@@ -45,27 +44,42 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
   const status = statusDetails[vehicle.status];
   const StatusIcon = status.icon;
 
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
+  const triggerRef = useRef<HTMLDivElement>(null);
+
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+      e.preventDefault();
+      setDropdownPosition({ x: e.clientX, y: e.clientY });
+      setDropdownOpen(true);
+  }
+  
   return (
     <AdvancedMarker
+      key={vehicle.vehicleId}
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+      ref={triggerRef}
     >
       <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
         <PopoverTrigger asChild>
-            <div className="cursor-pointer">
-                <VehiclePin status={vehicle.status} isSelected={isSelected} />
-            </div>
+          <div 
+            onClick={() => onVehicleSelect(vehicle)}
+            onContextMenu={handleContextMenu}
+            className="cursor-pointer"
+          >
+            <VehiclePin status={vehicle.status} isSelected={isSelected} />
+          </div>
         </PopoverTrigger>
         <PopoverContent
           sideOffset={25}
           className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
               <div className="grid gap-4">
                 <div className="space-y-2">
                     <h4 className="font-medium leading-none text-xl">{vehicle.vehicleId}</h4>
-                    <p className="text-sm text-muted-foreground">Vehicle Details (Right-click for options)</p>
+                    <p className="text-sm text-muted-foreground">Vehicle Details</p>
                 </div>
                 <div className="grid gap-2">
                     <div className="flex items-center justify-between">
@@ -85,16 +99,25 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
                     </div>
                 </div>
               </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
-                    <Route className="mr-2 h-4 w-4" />
-                    <span>Show Route History</span>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </PopoverContent>
       </Popover>
+        
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+        <DropdownMenuContent 
+          style={{
+              position: 'fixed',
+              top: dropdownPosition.y,
+              left: dropdownPosition.x,
+          }}
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
+            <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
+                <Route className="mr-2 h-4 w-4" />
+                <span>Show Route History</span>
+            </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
     </AdvancedMarker>
   );
 }
