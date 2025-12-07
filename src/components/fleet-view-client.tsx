@@ -127,14 +127,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     return vehicles.filter(v => v.status === statusFilter);
   }, [vehicles, statusFilter]);
 
-  const handleVehicleSelect = (vehicle: Vehicle | null) => {
-    if (routeHistoryVehicle) {
-      // Don't change selection if route history is active
-      return;
-    }
-    dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
-  };
-
   const handlePanToVehicle = (vehicle: Vehicle) => {
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
     setPopoverOpen(false);
@@ -261,7 +253,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           <FleetMap
             apiKey={apiKey}
             vehicles={filteredVehicles}
-            onVehicleSelect={handleVehicleSelect}
             onShowRouteHistory={handleShowRouteHistory}
             selectedVehicle={routeHistoryVehicle || selectedVehicle}
             routePath={routePath}

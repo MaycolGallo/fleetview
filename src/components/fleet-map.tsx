@@ -13,9 +13,8 @@ import { cn } from "@/lib/utils";
 interface FleetMapProps {
   apiKey: string;
   vehicles: Vehicle[];
-  onVehicleSelect: (vehicle: Vehicle | null) => void;
   onShowRouteHistory: (vehicle: Vehicle) => void;
-  selectedVehicle: Vehicle | null;
+  selectedVehicle: Vehicle | null; // This is now for highlighting from outside, not for direct control
   routePath: { lat: number; lng: number }[] | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
   routeSegmentToFit: { lat: number; lng: number }[] | null;
@@ -90,14 +89,26 @@ function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { 
 // This component contains the logic that needs the map instance.
 function MapControl({ 
   vehicles, 
-  onVehicleSelect, 
-  selectedVehicle, 
   routePath, 
   highlightedSegment,
   routeSegmentToFit,
-  onShowRouteHistory
-}: Omit<FleetMapProps, 'apiKey' | 'isMapDark'>) {
+  onShowRouteHistory,
+  externalSelectedVehicle
+}: {
+  vehicles: Vehicle[];
+  routePath: { lat: number; lng: number }[] | null;
+  highlightedSegment: { lat: number; lng: number }[] | null;
+  routeSegmentToFit: { lat: number; lng: number }[] | null;
+  onShowRouteHistory: (vehicle: Vehicle) => void;
+  externalSelectedVehicle: Vehicle | null;
+}) {
   const map = useMap();
+  const [internalSelectedVehicle, setInternalSelectedVehicle] = useState<Vehicle | null>(null);
+
+  // Sync internal state with external prop
+  useEffect(() => {
+    setInternalSelectedVehicle(externalSelectedVehicle);
+  }, [externalSelectedVehicle]);
   
   useEffect(() => {
     if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
@@ -114,15 +125,15 @@ function MapControl({
     }
   }, [map, routeSegmentToFit]);
 
-  const handleInfoWindowClose = () => {
-    onVehicleSelect(null);
-  }
-  
   const handleMarkerClick = (vehicle: Vehicle) => {
-    onVehicleSelect(vehicle);
+    setInternalSelectedVehicle(vehicle);
+  };
+  
+  const handleInfoWindowClose = () => {
+    setInternalSelectedVehicle(null);
   }
 
-  const status = selectedVehicle ? statusDetails[selectedVehicle.status] : null;
+  const status = internalSelectedVehicle ? statusDetails[internalSelectedVehicle.status] : null;
   const StatusIcon = status?.icon;
 
   return (
@@ -132,20 +143,20 @@ function MapControl({
           key={vehicle.vehicleId}
           vehicle={vehicle}
           onClick={() => handleMarkerClick(vehicle)}
-          isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId}
+          isSelected={internalSelectedVehicle?.vehicleId === vehicle.vehicleId}
         />
       ))}
 
-      {selectedVehicle && (
+      {internalSelectedVehicle && (
         <InfoWindow
-          position={{ lat: selectedVehicle.latitude, lng: selectedVehicle.longitude }}
+          position={{ lat: internalSelectedVehicle.latitude, lng: internalSelectedVehicle.longitude }}
           onCloseClick={handleInfoWindowClose}
           pixelOffset={new google.maps.Size(0, -40)}
         >
           <div className="p-2 bg-card text-card-foreground rounded-lg shadow-lg w-80">
              <div className="grid gap-4">
               <div className="space-y-2">
-                <h4 className="font-medium leading-none text-xl">{selectedVehicle.vehicleId}</h4>
+                <h4 className="font-medium leading-none text-xl">{internalSelectedVehicle.vehicleId}</h4>
                 <p className="text-sm text-muted-foreground">Vehicle Details</p>
               </div>
               <div className="grid gap-2">
@@ -154,24 +165,25 @@ function MapControl({
                   {status && StatusIcon && (
                     <Badge variant="outline" className={cn("capitalize text-sm border", status.className, status.text)}>
                       <StatusIcon className="mr-2 h-4 w-4" />
-                      {selectedVehicle.status.replace('-', ' ')}
+                      {internalSelectedVehicle.status.replace('-', ' ')}
                     </Badge>
                   )}
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Latitude</span>
-                  <span className="font-mono text-foreground">{selectedVehicle.latitude.toFixed(6)}</span>
+                  <span className="font-mono text-foreground">{internalSelectedVehicle.latitude.toFixed(6)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Longitude</span>
-                  <span className="font-mono text-foreground">{selectedVehicle.longitude.toFixed(6)}</span>
+                  <span className="font-mono text-foreground">{internalSelectedVehicle.longitude.toFixed(6)}</span>
                 </div>
               </div>
               <Button 
                   variant="outline" 
                   className="w-full mt-4"
                   onClick={() => {
-                    onShowRouteHistory(selectedVehicle);
+                    onShowRouteHistory(internalSelectedVehicle);
+                    setInternalSelectedVehicle(null);
                   }}
               >
                   <Route className="mr-2 h-4 w-4" />
@@ -190,7 +202,7 @@ function MapControl({
 }
 
 
-export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onShowRouteHistory }: FleetMapProps) {
+export function FleetMap({ apiKey, vehicles, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onShowRouteHistory }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
 
@@ -207,12 +219,11 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
       >
         <MapControl 
           vehicles={vehicles}
-          onVehicleSelect={onVehicleSelect}
-          selectedVehicle={selectedVehicle}
+          onShowRouteHistory={onShowRouteHistory}
+          externalSelectedVehicle={selectedVehicle}
           routePath={routePath}
           highlightedSegment={highlightedSegment}
           routeSegmentToFit={routeSegmentToFit}
-          onShowRouteHistory={onShowRouteHistory}
         />
       </Map>
     </APIProvider>
