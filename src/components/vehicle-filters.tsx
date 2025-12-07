@@ -15,7 +15,6 @@ export function VehicleFilters({ currentFilter, onFilterChange }: VehicleFilters
         <SelectTrigger 
           id="status-filter" 
           className="w-full h-10"
-          onPointerDown={(e) => e.stopPropagation()}
         >
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
