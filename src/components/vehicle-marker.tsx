@@ -1,15 +1,9 @@
 
 "use client";
 
-import type { MouseEvent } from 'react';
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Badge } from "./ui/badge";
-import { Button } from './ui/button';
-import { AlertCircle, CheckCircle, Clock, Route } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface VehicleMarkerProps {
   vehicle: Vehicle;

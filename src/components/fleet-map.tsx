@@ -5,7 +5,6 @@ import { APIProvider, Map, useMap, ColorScheme, InfoWindow } from '@vis.gl/react
 import type { Vehicle } from '@/lib/types';
 import React, { useEffect, useRef, useState, MouseEvent } from 'react';
 import { VehicleMarker } from './vehicle-marker';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from "./ui/badge";
 import { Button } from './ui/button';
 import { AlertCircle, CheckCircle, Clock, Route } from "lucide-react";
@@ -104,22 +103,18 @@ function MapControl({
   const [infowindowOpen, setInfowindowOpen] = useState(false);
 
   useEffect(() => {
-    if (selectedVehicle) {
-      setInfowindowOpen(true);
-    } else {
-      setInfowindowOpen(false);
-    }
+    setInfowindowOpen(!!selectedVehicle);
   }, [selectedVehicle]);
  
   useEffect(() => {
     if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
   
     if (routeSegmentToFit.length === 1) {
-      // If there's only one point, pan to it and set a reasonable zoom level.
       map.panTo(routeSegmentToFit[0]);
-      map.setZoom(16);
+      if (map.getZoom()! < 15) {
+        map.setZoom(15);
+      }
     } else {
-      // If there are multiple points (a route segment), fit them in the view.
       const bounds = new google.maps.LatLngBounds();
       routeSegmentToFit.forEach(point => bounds.extend(point));
       map.fitBounds(bounds, 100);
@@ -207,14 +202,11 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
 
-  // Use a key to force re-render when we want to center on a new route
-  const mapKey = selectedVehicle?.vehicleId && routePath ? selectedVehicle.vehicleId : 'default';
-  const initialCenter = selectedVehicle && routePath ? { lat: selectedVehicle.latitude, lng: selectedVehicle.longitude } : defaultCenter;
-  const initialZoom = selectedVehicle && routePath ? 14 : defaultZoom;
-
   const handleMapClick = (e: google.maps.MapMouseEvent) => {
     // This is the key: if the click is on the map (not a marker), latLng will be defined.
-    // The google maps team has confirmed that clicks on Advanced Markers will result in a null latLng.
+    // The google maps team has confirmed that clicks on Advanced Markers will result in a null latLng,
+    // so this event should only fire for map clicks. However, the event from the library
+    // has the latLng directly on the event object.
     if (e.latLng) {
       onVehicleSelect(null);
     }
@@ -223,9 +215,8 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
   return (
     <APIProvider apiKey={apiKey}>
       <Map
-        key={mapKey}
-        defaultCenter={initialCenter}
-        defaultZoom={initialZoom}
+        defaultCenter={defaultCenter}
+        defaultZoom={defaultZoom}
         gestureHandling={'greedy'}
         mapId="fleetview-map"
         className="w-full h-full"
