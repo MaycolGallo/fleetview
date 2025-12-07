@@ -28,21 +28,20 @@ export function VehicleMarker({ vehicle, isSelected, onClick, onShowRouteHistory
     onShowRouteHistory();
   }
 
-  // Clicks on the marker itself are for the InfoWindow (left-click)
-  const handleMarkerClick: React.MouseEventHandler<HTMLDivElement> = (e) => {
-    // This handles the left-click to open the InfoWindow.
-    // The DropdownMenuTrigger will handle the right-click automatically.
-    onClick();
-  }
+  const handleContextMenu = (e: React.MouseEvent) => {
+    // This is the key fix: stop the right-click from bubbling down to the map,
+    // which would otherwise trigger the map's own click handlers.
+    e.stopPropagation();
+  };
 
   return (
     <AdvancedMarker
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-      onClick={onClick} // This is for the InfoWindow
+      onClick={onClick} // This handles the left-click for the InfoWindow.
     >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="cursor-pointer">
+          <div onContextMenu={handleContextMenu}>
             <VehiclePin status={vehicle.status} isSelected={isSelected} />
           </div>
         </DropdownMenuTrigger>
