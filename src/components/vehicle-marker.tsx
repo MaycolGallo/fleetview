@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Vehicle } from '@/lib/types';
@@ -8,12 +7,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { Badge } from "./ui/badge";
 import { AlertCircle, CheckCircle, Clock, Route } from "lucide-react";
 import { cn } from "@/lib/utils";
+import React, { useState, useRef } from 'react';
 
 interface VehicleMarkerProps {
   vehicle: Vehicle;
@@ -44,64 +43,93 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
   const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
   const status = statusDetails[vehicle.status];
   const StatusIcon = status.icon;
-  
+
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const markerRef = useRef<HTMLDivElement>(null);
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setDropdownOpen(true);
+  };
+
+  const handleLeftClick = () => {
+    onVehicleSelect(vehicle);
+  };
+
   return (
     <AdvancedMarker
+      ref={markerRef}
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
     >
-      <DropdownMenu>
-        <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
-          
-          <DropdownMenuTrigger asChild>
-            <PopoverTrigger asChild onClick={(e) => {
-              e.stopPropagation(); // prevent map click from closing popover immediately
-              onVehicleSelect(vehicle)
-            }}>
-              <div className="cursor-pointer">
-                <VehiclePin status={vehicle.status} isSelected={isSelected} />
-              </div>
-            </PopoverTrigger>
-          </DropdownMenuTrigger>
+      <div 
+        onClick={handleLeftClick} 
+        onContextMenu={handleContextMenu}
+        className="cursor-pointer"
+      >
+        <VehiclePin status={vehicle.status} isSelected={isSelected} />
+      </div>
 
-          <PopoverContent
-              sideOffset={25}
-              className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
-              onOpenAutoFocus={(e) => e.preventDefault()}
-              onClick={(e) => e.stopPropagation()} // prevent clicks inside from closing it via map click
+      {/* Popover for Left Click */}
+      <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
+        <PopoverContent
+            sideOffset={25}
+            className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            hidden={!markerRef.current} // Hide until marker is rendered
+            style={{
+                // This is a workaround to anchor to a ref inside AdvancedMarker
+                position: 'absolute',
+                top: markerRef.current?.clientHeight, 
+                left: '50%',
+                transform: 'translateX(-50%)',
+            }}
+        >
+          <div className="grid gap-4">
+              <div className="space-y-2">
+                  <h4 className="font-medium leading-none text-xl">{vehicle.vehicleId}</h4>
+                  <p className="text-sm text-muted-foreground">Vehicle Details</p>
+              </div>
+              <div className="grid gap-2">
+                  <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Status</span>
+                      <Badge variant="outline" className={cn("capitalize text-sm border", status.className, status.text)}>
+                          <StatusIcon className="mr-2 h-4 w-4" />
+                          {vehicle.status.replace('-', ' ')}
+                      </Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Latitude</span>
+                      <span className="font-mono text-foreground">{vehicle.latitude.toFixed(6)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Longitude</span>
+                      <span className="font-mono text-foreground">{vehicle.longitude.toFixed(6)}</span>
+                  </div>
+              </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+      
+      {/* Dropdown for Right Click */}
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setDropdownOpen}>
+          <DropdownMenuContent 
+            align="start"
+            hidden={!markerRef.current} // Hide until marker is rendered
+             style={{
+                // This is a workaround to anchor to a ref inside AdvancedMarker
+                position: 'absolute',
+                top: markerRef.current?.clientHeight,
+                left: '50%',
+                transform: 'translateX(-50%)',
+            }}
           >
-            <div className="grid gap-4">
-                <div className="space-y-2">
-                    <h4 className="font-medium leading-none text-xl">{vehicle.vehicleId}</h4>
-                    <p className="text-sm text-muted-foreground">Vehicle Details</p>
-                </div>
-                <div className="grid gap-2">
-                    <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Status</span>
-                        <Badge variant="outline" className={cn("capitalize text-sm border", status.className, status.text)}>
-                            <StatusIcon className="mr-2 h-4 w-4" />
-                            {vehicle.status.replace('-', ' ')}
-                        </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Latitude</span>
-                        <span className="font-mono text-foreground">{vehicle.latitude.toFixed(6)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Longitude</span>
-                        <span className="font-mono text-foreground">{vehicle.longitude.toFixed(6)}</span>
-                    </div>
-                </div>
-            </div>
-          </PopoverContent>
-          
-          <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
               <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
                   <Route className="mr-2 h-4 w-4" />
                   <span>Show Route History</span>
               </DropdownMenuItem>
           </DropdownMenuContent>
-        </Popover>
       </DropdownMenu>
+
     </AdvancedMarker>
   );
 }
