@@ -19,7 +19,6 @@ import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
-import { VehicleDetailDialog } from './vehicle-detail-dialog';
 
 interface FleetViewClientProps {
   apiKey: string;
@@ -63,7 +62,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     vehicles,
     statusFilter,
     selectedVehicle,
-    isDetailDialogOpen,
     routeHistoryVehicle,
     routePath,
     routeEvents,
@@ -144,12 +142,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const handleRouteSheetOpenChange = (isOpen: boolean) => {
     dispatch({ type: 'SET_ROUTE_SHEET_OPEN', payload: isOpen });
   }
-
-    const handleDetailDialogOpenChange = (isOpen: boolean) => {
-        if (!isOpen) {
-            dispatch({ type: 'SELECT_VEHICLE', payload: null });
-        }
-    }
 
   const handleVehicleVisibilityToggle = (vehicleId: string) => {
     dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: vehicleId });
@@ -266,12 +258,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           />
         </main>
         
-        <VehicleDetailDialog 
-            vehicle={selectedVehicle}
-            isOpen={isDetailDialogOpen}
-            onOpenChange={handleDetailDialogOpenChange}
-        />
-
         {(isLoadingRoute) && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30">
                 <div className="flex items-center gap-2 text-foreground">

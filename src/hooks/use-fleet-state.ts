@@ -7,7 +7,6 @@ interface FleetState {
   vehicles: Vehicle[];
   statusFilter: VehicleStatus | 'all';
   selectedVehicle: Vehicle | null;
-  isDetailDialogOpen: boolean;
   routeHistoryVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[] | null;
   routeEvents: RouteEvent[];
@@ -41,7 +40,6 @@ const getInitialState = (initialVehicles: Vehicle[]): FleetState => ({
   vehicles: initialVehicles,
   statusFilter: 'all',
   selectedVehicle: null,
-  isDetailDialogOpen: false,
   routeHistoryVehicle: null,
   routePath: null,
   routeEvents: [],
@@ -68,15 +66,16 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       return { ...state, statusFilter: action.payload };
 
     case 'SELECT_VEHICLE':
+      // If the same vehicle is selected, deselect it. Otherwise, select the new one.
+      const newSelectedVehicle = state.selectedVehicle?.vehicleId === action.payload?.vehicleId ? null : action.payload;
       return { 
         ...state, 
-        selectedVehicle: action.payload, 
-        isDetailDialogOpen: !!action.payload,
-        routeSegmentToFit: action.payload ? [{ lat: action.payload.latitude, lng: action.payload.longitude }] : null 
+        selectedVehicle: newSelectedVehicle,
+        routeSegmentToFit: newSelectedVehicle ? [{ lat: newSelectedVehicle.latitude, lng: newSelectedVehicle.longitude }] : null 
       };
     
     case 'PAN_TO_VEHICLE':
-      return { ...state, selectedVehicle: null, isDetailDialogOpen: false, routeSegmentToFit: [{ lat: action.payload.latitude, lng: action.payload.longitude }] };
+      return { ...state, selectedVehicle: null, routeSegmentToFit: [{ lat: action.payload.latitude, lng: action.payload.longitude }] };
 
     case 'SET_ROUTE_SHEET_OPEN':
         return { ...state, isRouteSheetOpen: action.payload };
@@ -85,7 +84,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       return {
         ...state,
         selectedVehicle: null,
-        isDetailDialogOpen: false,
         isLoadingRoute: true,
         routeHistoryVehicle: action.payload,
       };
@@ -107,7 +105,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         routePath: null,
         routeEvents: [],
         selectedVehicle: null,
-        isDetailDialogOpen: false,
         isRouteSheetOpen: false,
         routeSegmentToFit: null,
         highlightedSegment: null,
