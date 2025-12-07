@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
@@ -8,7 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from "./ui/badge";
 import { AlertCircle, CheckCircle, Clock, Route } from "lucide-react";
@@ -60,13 +60,12 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
     >
       <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
         <PopoverTrigger asChild>
-          <div 
-            onClick={() => onVehicleSelect(vehicle)}
-            onContextMenu={handleContextMenu}
-            className="cursor-pointer"
-          >
-            <VehiclePin status={vehicle.status} isSelected={isSelected} />
-          </div>
+            <div 
+                className="cursor-pointer"
+                onContextMenu={handleContextMenu}
+            >
+                <VehiclePin status={vehicle.status} isSelected={isSelected} />
+            </div>
         </PopoverTrigger>
         <PopoverContent
           sideOffset={25}
