@@ -101,6 +101,9 @@ function MapControl({
 }: Omit<FleetMapProps, 'apiKey' | 'isMapDark'>) {
   const map = useMap();
   const [infowindowOpen, setInfowindowOpen] = useState(false);
+  
+  // This ref is the key to solving the click issue.
+  const markerClicked = useRef(false);
 
   useEffect(() => {
     setInfowindowOpen(!!selectedVehicle);
@@ -126,6 +129,11 @@ function MapControl({
     onVehicleSelect(null);
   }
   
+  const handleMarkerClick = (vehicle: Vehicle) => {
+    markerClicked.current = true;
+    onVehicleSelect(vehicle);
+  }
+
   const stopContentClick = (e: MouseEvent) => {
     e.stopPropagation();
   };
@@ -139,7 +147,7 @@ function MapControl({
         <VehicleMarker
           key={vehicle.vehicleId}
           vehicle={vehicle}
-          onClick={() => onVehicleSelect(vehicle)}
+          onClick={() => handleMarkerClick(vehicle)}
           isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId}
         />
       ))}
@@ -201,15 +209,22 @@ function MapControl({
 export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onShowRouteHistory }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
+  const markerClicked = useRef(false);
 
-  const handleMapClick = (e: google.maps.MapMouseEvent) => {
-    // This is the key: if the click is on the map (not a marker), latLng will be defined.
-    // The google maps team has confirmed that clicks on Advanced Markers will result in a null latLng,
-    // so this event should only fire for map clicks. However, the event from the library
-    // has the latLng directly on the event object.
-    if (e.latLng) {
-      onVehicleSelect(null);
+  const handleMapClick = () => {
+    // If a marker was just clicked, do nothing.
+    // The marker's click handler will have already set this.
+    if (markerClicked.current) {
+      markerClicked.current = false; // Reset the flag
+      return;
     }
+    // Otherwise, it was a click on the map, so deselect any vehicle.
+    onVehicleSelect(null);
+  };
+  
+  const handleMarkerClick = (vehicle: Vehicle | null) => {
+    markerClicked.current = true;
+    onVehicleSelect(vehicle);
   }
 
   return (
@@ -226,7 +241,7 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
       >
         <MapControl 
           vehicles={vehicles}
-          onVehicleSelect={onVehicleSelect}
+          onVehicleSelect={handleMarkerClick}
           selectedVehicle={selectedVehicle}
           routePath={routePath}
           highlightedSegment={highlightedSegment}
