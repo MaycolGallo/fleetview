@@ -95,8 +95,9 @@ function MapControl({
   routePath, 
   highlightedSegment,
   routeSegmentToFit,
-  onShowRouteHistory
-}: Omit<FleetMapProps, 'apiKey' | 'isMapDark'>) {
+  onShowRouteHistory,
+  markerClicked
+}: Omit<FleetMapProps, 'apiKey' | 'isMapDark'> & { markerClicked: React.MutableRefObject<boolean>}) {
   const map = useMap();
   const [infowindowOpen, setInfowindowOpen] = useState(false);
   
@@ -124,6 +125,7 @@ function MapControl({
   }
   
   const handleMarkerClick = (vehicle: Vehicle) => {
+    markerClicked.current = true; // Set flag when marker is clicked
     onVehicleSelect(vehicle);
   }
 
@@ -200,18 +202,13 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
   const defaultZoom = 13;
   const markerClicked = useRef(false);
 
-  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+  const handleMapClick = () => {
     if (markerClicked.current) {
         markerClicked.current = false;
         return;
     }
     onVehicleSelect(null);
   };
-  
-  const handleMarkerClick = (vehicle: Vehicle) => {
-    markerClicked.current = true; // Set flag when marker is clicked
-    onVehicleSelect(vehicle);
-  }
 
   return (
     <APIProvider apiKey={apiKey}>
@@ -227,12 +224,13 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
       >
         <MapControl 
           vehicles={vehicles}
-          onVehicleSelect={handleMarkerClick}
+          onVehicleSelect={onVehicleSelect}
           selectedVehicle={selectedVehicle}
           routePath={routePath}
           highlightedSegment={highlightedSegment}
           routeSegmentToFit={routeSegmentToFit}
           onShowRouteHistory={onShowRouteHistory}
+          markerClicked={markerClicked}
         />
       </Map>
     </APIProvider>
