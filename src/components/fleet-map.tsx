@@ -95,9 +95,8 @@ function MapControl({
   routePath, 
   highlightedSegment,
   routeSegmentToFit,
-  onShowRouteHistory,
-  markerClicked
-}: Omit<FleetMapProps, 'apiKey' | 'isMapDark'> & { markerClicked: React.MutableRefObject<boolean>}) {
+  onShowRouteHistory
+}: Omit<FleetMapProps, 'apiKey' | 'isMapDark'>) {
   const map = useMap();
   const [infowindowOpen, setInfowindowOpen] = useState(false);
   
@@ -125,7 +124,6 @@ function MapControl({
   }
   
   const handleMarkerClick = (vehicle: Vehicle) => {
-    markerClicked.current = true; // Set flag when marker is clicked
     onVehicleSelect(vehicle);
   }
 
@@ -200,14 +198,13 @@ function MapControl({
 export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onShowRouteHistory }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
-  const markerClicked = useRef(false);
-
-  const handleMapClick = () => {
-    if (markerClicked.current) {
-        markerClicked.current = false;
-        return;
+  
+  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+    // If the click was on the map (and not a marker), close the infowindow.
+    // The AdvancedMarker component stops propagation for its own click events.
+    if (e.latLng) {
+      onVehicleSelect(null);
     }
-    onVehicleSelect(null);
   };
 
   return (
@@ -230,7 +227,6 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
           highlightedSegment={highlightedSegment}
           routeSegmentToFit={routeSegmentToFit}
           onShowRouteHistory={onShowRouteHistory}
-          markerClicked={markerClicked}
         />
       </Map>
     </APIProvider>
