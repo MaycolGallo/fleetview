@@ -1,3 +1,4 @@
+
 "use client";
 
 import { cn } from '@/lib/utils';
@@ -30,7 +31,7 @@ export function VehiclePin({ status, isSelected }: VehiclePinProps) {
   return (
     <div
       className={cn(
-        'transition-transform duration-300 transform-gpu',
+        'transition-transform duration-300 transform-gpu cursor-pointer',
         isSelected ? 'scale-125 z-10' : 'scale-100'
       )}
       style={{ filter: isSelected ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' : 'none' }}
