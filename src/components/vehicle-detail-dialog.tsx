@@ -21,18 +21,18 @@ interface VehicleDetailDialogProps {
 const statusDetails = {
     'active': {
         icon: CheckCircle,
-        className: 'text-green-500 bg-green-100 border-green-200',
-        text: 'text-green-700'
+        className: 'text-green-500 bg-green-900/20 border-green-500/30',
+        text: 'text-green-400'
     },
     'idle': {
         icon: Clock,
-        className: 'text-amber-500 bg-amber-100 border-amber-200',
-        text: 'text-amber-700'
+        className: 'text-amber-500 bg-amber-900/20 border-amber-500/30',
+        text: 'text-amber-400'
     },
     'out-of-service': {
         icon: AlertCircle,
-        className: 'text-red-500 bg-red-100 border-red-200',
-        text: 'text-red-700'
+        className: 'text-red-500 bg-red-900/20 border-red-500/30',
+        text: 'text-red-400'
     }
 };
 
@@ -44,14 +44,14 @@ export function VehicleDetailDialog({ vehicle, isOpen, onOpenChange }: VehicleDe
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] bg-card/95 backdrop-blur-sm">
+      <DialogContent className="max-w-sm bg-card/95 backdrop-blur-sm border-primary/20">
         <DialogHeader>
           <DialogTitle className="text-2xl">{vehicle.vehicleId}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Status</span>
-            <Badge variant="outline" className={cn("capitalize text-sm", status.className, status.text)}>
+            <Badge variant="outline" className={cn("capitalize text-sm border", status.className, status.text)}>
               <StatusIcon className="mr-2 h-4 w-4" />
               {vehicle.status.replace('-', ' ')}
             </Badge>
