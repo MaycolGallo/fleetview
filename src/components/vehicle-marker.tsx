@@ -9,7 +9,7 @@ import React from 'react';
 interface VehicleMarkerProps {
   vehicle: Vehicle;
   isSelected: boolean;
-  onClick: (vehicle: Vehicle) => void;
+  onClick: () => void;
 }
 
 export function VehicleMarker({ vehicle, isSelected, onClick }: VehicleMarkerProps) {
@@ -17,7 +17,7 @@ export function VehicleMarker({ vehicle, isSelected, onClick }: VehicleMarkerPro
   return (
     <AdvancedMarker
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-      onClick={() => onClick(vehicle)}
+      onClick={onClick}
     >
       <VehiclePin status={vehicle.status} isSelected={isSelected} />
     </AdvancedMarker>
