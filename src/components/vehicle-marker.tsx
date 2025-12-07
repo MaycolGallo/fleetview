@@ -1,7 +1,7 @@
 
 "use client";
 
-import { MouseEvent } from 'react';
+import type { MouseEvent } from 'react';
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
@@ -46,15 +46,13 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
   };
   
   // This stops the click from bubbling up to the map, which would deselect the marker
-  const stopPropagation = (e: MouseEvent) => {
+  const stopContentClick = (e: MouseEvent) => {
     e.stopPropagation();
   };
 
   return (
     <AdvancedMarker
-      key={vehicle.vehicleId}
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-      onClick={stopPropagation}
     >
       <Popover open={isSelected} onOpenChange={handleSelection}>
         <PopoverTrigger asChild>
@@ -66,7 +64,7 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
           sideOffset={25}
           className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
           onOpenAutoFocus={(e) => e.preventDefault()}
-          onClick={stopPropagation}
+          onClick={stopContentClick}
         >
           <div className="grid gap-4">
             <div className="space-y-2">
