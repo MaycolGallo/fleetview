@@ -19,11 +19,7 @@ import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
-
-const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full" />,
-});
+import { FleetMap } from './fleet-map';
 
 
 interface FleetViewClientProps {
@@ -174,6 +170,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         Error fetching vehicle data. Please try refreshing the page.
       </div>
     );
+  }
+
+  if (isLoadingVehicles) {
+    return <div className="h-screen w-screen bg-background flex items-center justify-center"><Skeleton className="h-full w-full" /></div>
   }
 
   return (
