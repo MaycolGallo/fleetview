@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { Vehicle, VehicleStatus, RouteHistory } from '@/lib/types';
-import { FleetMap } from './fleet-map';
+import dynamic from 'next/dynamic';
 import { VehicleFilters } from './vehicle-filters';
 import { RouteHistorySheet } from './route-history-sheet';
 import { Button } from './ui/button';
@@ -19,6 +19,12 @@ import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
+
+const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full w-full" />,
+});
+
 
 interface FleetViewClientProps {
   apiKey: string;
