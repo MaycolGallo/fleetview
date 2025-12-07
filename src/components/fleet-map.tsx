@@ -133,22 +133,23 @@ function MapControl({
 
         return (
           <Popover key={vehicle.vehicleId} open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
-            <AdvancedMarker
-              position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-              onClick={(e) => {
-                e.domEvent.stopPropagation();
-                onVehicleSelect(vehicle);
-              }}
-            >
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <div onContextMenu={(e) => e.preventDefault()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <AdvancedMarker
+                  position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+                  onClick={(e) => {
+                    e.domEvent.stopPropagation();
+                    onVehicleSelect(vehicle);
+                  }}
+                >
+                    <div onContextMenu={(e) => e.preventDefault()}>
                       <PopoverTrigger asChild>
                           <VehiclePin status={vehicle.status} isSelected={isSelected} />
                       </PopoverTrigger>
-                  </div>
-                </DropdownMenuTrigger>
-                <PopoverContent sideOffset={25} className="w-80 bg-card/95 backdrop-blur-sm border-primary/20" onOpenAutoFocus={(e) => e.preventDefault()}>
+                    </div>
+                </AdvancedMarker>
+              </DropdownMenuTrigger>
+              <PopoverContent sideOffset={25} className="w-80 bg-card/95 backdrop-blur-sm border-primary/20" onOpenAutoFocus={(e) => e.preventDefault()}>
                   <div className="grid gap-4">
                     <div className="space-y-2">
                       <h4 className="font-medium leading-none text-xl">{vehicle.vehicleId}</h4>
@@ -172,15 +173,14 @@ function MapControl({
                         </div>
                     </div>
                   </div>
-                </PopoverContent>
-                <DropdownMenuContent>
+              </PopoverContent>
+              <DropdownMenuContent>
                   <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
                     <Route className="mr-2 h-4 w-4" />
                     <span>Show Route History</span>
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </AdvancedMarker>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </Popover>
         )
       })}
