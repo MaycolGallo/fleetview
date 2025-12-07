@@ -41,11 +41,11 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
   const status = statusDetails[vehicle.status];
   const StatusIcon = status.icon;
 
-  const handleSelection = (open: boolean) => {
+  const handleOpenChange = (open: boolean) => {
     onVehicleSelect(open ? vehicle : null);
   };
   
-  // This stops the click from bubbling up to the map, which would deselect the marker
+  // This stops a click inside the popover from bubbling up to the map, which would deselect the marker
   const stopContentClick = (e: MouseEvent) => {
     e.stopPropagation();
   };
@@ -54,11 +54,11 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
     <AdvancedMarker
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
     >
-      <Popover open={isSelected} onOpenChange={handleSelection}>
+      <Popover open={isSelected} onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
-          <div className="cursor-pointer">
-            <VehiclePin status={vehicle.status} isSelected={isSelected} />
-          </div>
+            <div className="cursor-pointer">
+                <VehiclePin status={vehicle.status} isSelected={isSelected} />
+            </div>
         </PopoverTrigger>
         <PopoverContent
           sideOffset={25}
@@ -93,7 +93,7 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
                 className="w-full"
                 onClick={() => {
                   onShowRouteHistory(vehicle);
-                  handleSelection(false); // Close popover when showing history
+                  handleOpenChange(false); // Close popover when showing history
                 }}
             >
                 <Route className="mr-2 h-4 w-4" />
