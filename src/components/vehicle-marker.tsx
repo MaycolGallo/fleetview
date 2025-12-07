@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
@@ -60,10 +61,7 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
     >
       <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
         <PopoverTrigger asChild>
-            <div 
-                className="cursor-pointer"
-                onContextMenu={handleContextMenu}
-            >
+            <div onContextMenu={handleContextMenu}>
                 <VehiclePin status={vehicle.status} isSelected={isSelected} />
             </div>
         </PopoverTrigger>
