@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Route } from 'lucide-react';
+import React from 'react';
 
 interface VehicleMarkerProps {
   vehicle: Vehicle;
@@ -22,10 +23,15 @@ interface VehicleMarkerProps {
 export function VehicleMarker({ vehicle, isSelected, onClick, onShowRouteHistory }: VehicleMarkerProps) {
   
   const handleSelect = (e: Event) => {
+    // This prevents the dropdown from closing the InfoWindow
     e.preventDefault();
-    e.stopPropagation();
     onShowRouteHistory();
   }
+
+  // This stops the right-click from being captured by the map.
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+  };
 
   return (
     <AdvancedMarker
@@ -33,8 +39,8 @@ export function VehicleMarker({ vehicle, isSelected, onClick, onShowRouteHistory
       onClick={onClick}
     >
       <DropdownMenu>
-        <DropdownMenuTrigger asChild onContextMenu={(e) => e.preventDefault()}>
-          <div className="cursor-pointer">
+        <DropdownMenuTrigger asChild>
+          <div className="cursor-pointer" onContextMenu={handleContextMenu}>
             <VehiclePin status={vehicle.status} isSelected={isSelected} />
           </div>
         </DropdownMenuTrigger>
