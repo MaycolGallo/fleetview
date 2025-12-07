@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { Vehicle, VehicleStatus, RouteHistory } from '@/lib/types';
 import { FleetMap } from './fleet-map';
 import { VehicleFilters } from './vehicle-filters';
@@ -58,6 +58,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   });
 
   const [state, dispatch] = useFleetState(initialVehicles || []);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
   const {
     vehicles,
     statusFilter,
@@ -129,6 +131,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const handlePanToVehicle = (vehicle: Vehicle) => {
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
+    setPopoverOpen(false);
   };
 
   const handleSegmentSelect = (segmentIndex: number) => {
@@ -172,13 +175,13 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         <header className="absolute top-0 left-0 p-4 z-20">
           <div className="flex flex-col items-start gap-2">
             <div className="rounded-lg shadow-md border border-zinc-700 bg-zinc-900/90 backdrop-blur-sm p-1 flex flex-col gap-1">
-                <Popover>
+                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hover:bg-zinc-700/80">
                             <PanelLeft />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent side="right" align="start" sideOffset={8} className="w-80 p-0 bg-zinc-900/95 border-zinc-700 backdrop-blur-sm">
+                    <PopoverContent side="right" align="start" sideOffset={8} className="w-80 p-0 bg-zinc-900/95 border-zinc-700 backdrop-blur-sm" onOpenAutoFocus={(e) => e.preventDefault()}>
                        <div className="flex flex-col h-[60vh] max-h-[60vh]">
                           <div className="p-4 space-y-4">
                             <h2 className="font-semibold text-lg">Vehicles</h2>

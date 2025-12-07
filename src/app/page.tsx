@@ -1,4 +1,4 @@
-import { FleetViewClient } from '@/components/fleet-view-client';
+import { FleetViewLoader } from '@/components/fleet-view-loader';
 import { ApiKeyInstructions } from '@/components/api-key-instructions';
 
 export const dynamic = 'force-dynamic';
@@ -10,5 +10,5 @@ export default async function Home() {
     return <ApiKeyInstructions />;
   }
   
-  return <FleetViewClient apiKey={apiKey} />;
+  return <FleetViewLoader apiKey={apiKey} />;
 }
