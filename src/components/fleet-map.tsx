@@ -98,12 +98,7 @@ function MapControl({
   onShowRouteHistory
 }: Omit<FleetMapProps, 'apiKey' | 'isMapDark'>) {
   const map = useMap();
-  const [infowindowOpen, setInfowindowOpen] = useState(false);
   
-  useEffect(() => {
-    setInfowindowOpen(!!selectedVehicle);
-  }, [selectedVehicle]);
- 
   useEffect(() => {
     if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
   
@@ -141,9 +136,9 @@ function MapControl({
         />
       ))}
 
-      {infowindowOpen && selectedVehicle && (
+      {selectedVehicle && (
         <InfoWindow
-          anchor={{ lat: selectedVehicle.latitude, lng: selectedVehicle.longitude }}
+          position={{ lat: selectedVehicle.latitude, lng: selectedVehicle.longitude }}
           onCloseClick={handleInfoWindowClose}
           pixelOffset={new google.maps.Size(0, -40)}
         >
@@ -198,14 +193,6 @@ function MapControl({
 export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onShowRouteHistory }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
-  
-  const handleMapClick = (e: google.maps.MapMouseEvent) => {
-    // If the click was on the map (and not a marker), close the infowindow.
-    // The AdvancedMarker component stops propagation for its own click events.
-    if (e.latLng) {
-      onVehicleSelect(null);
-    }
-  };
 
   return (
     <APIProvider apiKey={apiKey}>
@@ -217,7 +204,6 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
         className="w-full h-full"
         disableDefaultUI={true}
         colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
-        onClick={handleMapClick}
       >
         <MapControl 
           vehicles={vehicles}
