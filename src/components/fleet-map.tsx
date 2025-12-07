@@ -135,7 +135,7 @@ function MapControl({
           <Popover key={vehicle.vehicleId} open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <PopoverTrigger asChild onClick={(e) => { e.stopPropagation(); onVehicleSelect(vehicle); }}>
+                <PopoverTrigger asChild onClick={() => onVehicleSelect(vehicle)}>
                     <AdvancedMarker
                       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
                     >
