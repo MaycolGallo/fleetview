@@ -17,9 +17,13 @@ export function VehicleMarker({ vehicle, isSelected, onClick }: VehicleMarkerPro
   return (
     <AdvancedMarker
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-      onClick={onClick}
     >
-      <VehiclePin status={vehicle.status} isSelected={isSelected} />
+        <div onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+        }}>
+            <VehiclePin status={vehicle.status} isSelected={isSelected} />
+        </div>
     </AdvancedMarker>
   );
 }
