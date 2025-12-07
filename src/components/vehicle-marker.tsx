@@ -23,15 +23,16 @@ interface VehicleMarkerProps {
 export function VehicleMarker({ vehicle, isSelected, onClick, onShowRouteHistory }: VehicleMarkerProps) {
   
   const handleSelect = (e: Event) => {
-    // This prevents the dropdown from closing the InfoWindow
     e.preventDefault();
     onShowRouteHistory();
   }
 
-  // This stops the right-click from being captured by the map.
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-  };
+  // Clicks on the marker itself are for the InfoWindow (left-click)
+  const handleMarkerClick: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    // We prevent the event from propagating to the DropdownMenuTrigger
+    e.stopPropagation();
+    onClick();
+  }
 
   return (
     <AdvancedMarker
@@ -40,7 +41,7 @@ export function VehicleMarker({ vehicle, isSelected, onClick, onShowRouteHistory
     >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="cursor-pointer" onContextMenu={handleContextMenu}>
+          <div className="cursor-pointer">
             <VehiclePin status={vehicle.status} isSelected={isSelected} />
           </div>
         </DropdownMenuTrigger>

@@ -45,7 +45,6 @@ function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { 
   const polylineRef = useRef<google.maps.Polyline | null>(null);
 
   useEffect(() => {
-    // Clean up existing polyline if it exists
     if (polylineRef.current) {
       polylineRef.current.setMap(null);
     }
@@ -81,7 +80,6 @@ function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { 
         polylineRef.current.setMap(null);
       }
     };
-  // To avoid re-rendering issues, we stringify the path as a dependency
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map, JSON.stringify(routePath), color, weight, zIndex]);
 
@@ -103,11 +101,7 @@ function MapControl({
   const [infowindowOpen, setInfowindowOpen] = useState(false);
   
   useEffect(() => {
-    if (selectedVehicle) {
-      setInfowindowOpen(true);
-    } else {
-      setInfowindowOpen(false);
-    }
+    setInfowindowOpen(!!selectedVehicle);
   }, [selectedVehicle]);
  
   useEffect(() => {
@@ -126,7 +120,6 @@ function MapControl({
   }, [map, routeSegmentToFit]);
 
   const handleInfoWindowClose = () => {
-    setInfowindowOpen(false);
     onVehicleSelect(null);
   }
   
@@ -206,22 +199,18 @@ function MapControl({
 export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onShowRouteHistory }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
-
-  // This ref is the key to solving the click issue.
   const markerClicked = useRef(false);
 
   const handleMapClick = (e: google.maps.MapMouseEvent) => {
-    // If a marker was just clicked, do nothing. Reset for next click.
     if (markerClicked.current) {
         markerClicked.current = false;
         return;
     }
-    // Otherwise, it was a map click, so deselect.
     onVehicleSelect(null);
   };
   
   const handleMarkerClick = (vehicle: Vehicle) => {
-    markerClicked.current = true;
+    markerClicked.current = true; // Set flag when marker is clicked
     onVehicleSelect(vehicle);
   }
 
