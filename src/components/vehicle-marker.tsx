@@ -8,8 +8,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Popover, PopoverContent } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from "./ui/badge";
 import { AlertCircle, CheckCircle, Clock, Route } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,34 +41,25 @@ const statusDetails = {
 };
 
 export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onShowRouteHistory }: VehicleMarkerProps) {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  
   const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
   const status = statusDetails[vehicle.status];
   const StatusIcon = status.icon;
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onVehicleSelect(null); // Close popover if open
-    setDropdownOpen(true);
-  };
-  
   return (
     <AdvancedMarker
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
     >
-      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+      <DropdownMenu>
         <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
-          
-          {/* This div is the trigger for both menus */}
-          <div
-            onClick={() => onVehicleSelect(vehicle)}
-            onContextMenu={handleContextMenu}
-          >
-            <VehiclePin status={vehicle.status} isSelected={isSelected} />
-          </div>
+          <DropdownMenuTrigger asChild>
+              <div 
+                className="cursor-pointer" 
+                onClick={() => onVehicleSelect(vehicle)}
+              >
+                  <VehiclePin status={vehicle.status} isSelected={isSelected} />
+              </div>
+          </DropdownMenuTrigger>
 
-          {/* Popover for Left-Click */}
           <PopoverContent
               sideOffset={25}
               className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
@@ -97,15 +89,14 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
                   </div>
               </div>
           </PopoverContent>
-          
-          {/* Dropdown for Right-Click */}
-          <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
-                  <Route className="mr-2 h-4 w-4" />
-                  <span>Show Route History</span>
-              </DropdownMenuItem>
-          </DropdownMenuContent>
         </Popover>
+
+        <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
+                <Route className="mr-2 h-4 w-4" />
+                <span>Show Route History</span>
+            </DropdownMenuItem>
+        </DropdownMenuContent>
       </DropdownMenu>
     </AdvancedMarker>
   );
