@@ -3,7 +3,7 @@
 
 import { APIProvider, Map, useMap, ColorScheme, InfoWindow } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
-import React, { useEffect, useRef, useState, MouseEvent } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { VehicleMarker } from './vehicle-marker';
 import { Badge } from "./ui/badge";
 import { Button } from './ui/button';
@@ -89,7 +89,7 @@ function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { 
 }
 
 
-// This new component will contain the logic that needs the map instance.
+// This component contains the logic that needs the map instance.
 function MapControl({ 
   vehicles, 
   onVehicleSelect, 
@@ -102,11 +102,12 @@ function MapControl({
   const map = useMap();
   const [infowindowOpen, setInfowindowOpen] = useState(false);
   
-  // This ref is the key to solving the click issue.
-  const markerClicked = useRef(false);
-
   useEffect(() => {
-    setInfowindowOpen(!!selectedVehicle);
+    if (selectedVehicle) {
+      setInfowindowOpen(true);
+    } else {
+      setInfowindowOpen(false);
+    }
   }, [selectedVehicle]);
  
   useEffect(() => {
@@ -130,13 +131,8 @@ function MapControl({
   }
   
   const handleMarkerClick = (vehicle: Vehicle) => {
-    markerClicked.current = true;
     onVehicleSelect(vehicle);
   }
-
-  const stopContentClick = (e: MouseEvent) => {
-    e.stopPropagation();
-  };
 
   const status = selectedVehicle ? statusDetails[selectedVehicle.status] : null;
   const StatusIcon = status?.icon;
@@ -154,11 +150,11 @@ function MapControl({
 
       {infowindowOpen && selectedVehicle && (
         <InfoWindow
-          position={{ lat: selectedVehicle.latitude, lng: selectedVehicle.longitude }}
+          anchor={{ lat: selectedVehicle.latitude, lng: selectedVehicle.longitude }}
           onCloseClick={handleInfoWindowClose}
           pixelOffset={new google.maps.Size(0, -40)}
         >
-          <div className="p-2 bg-card text-card-foreground rounded-lg shadow-lg w-80" onClick={stopContentClick}>
+          <div className="p-2 bg-card text-card-foreground rounded-lg shadow-lg w-80">
              <div className="grid gap-4">
               <div className="space-y-2">
                 <h4 className="font-medium leading-none text-xl">{selectedVehicle.vehicleId}</h4>
@@ -185,7 +181,7 @@ function MapControl({
               </div>
               <Button 
                   variant="outline" 
-                  className="w-full"
+                  className="w-full mt-4"
                   onClick={() => {
                     onShowRouteHistory(selectedVehicle);
                   }}
@@ -209,20 +205,21 @@ function MapControl({
 export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onShowRouteHistory }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
+
+  // This ref is the key to solving the click issue.
   const markerClicked = useRef(false);
 
-  const handleMapClick = () => {
-    // If a marker was just clicked, do nothing.
-    // The marker's click handler will have already set this.
+  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+    // If a marker was just clicked, do nothing. Reset for next click.
     if (markerClicked.current) {
-      markerClicked.current = false; // Reset the flag
-      return;
+        markerClicked.current = false;
+        return;
     }
-    // Otherwise, it was a click on the map, so deselect any vehicle.
+    // Otherwise, it was a map click, so deselect.
     onVehicleSelect(null);
   };
   
-  const handleMarkerClick = (vehicle: Vehicle | null) => {
+  const handleMarkerClick = (vehicle: Vehicle) => {
     markerClicked.current = true;
     onVehicleSelect(vehicle);
   }

@@ -19,7 +19,7 @@ export function VehicleMarker({ vehicle, isSelected, onClick }: VehicleMarkerPro
           onClick={onClick}
       >
           <div className="cursor-pointer">
-              <VehiclePin status={vehicle.status} isSelected={isSelected} />
+            <VehiclePin status={vehicle.status} isSelected={isSelected} />
           </div>
       </AdvancedMarker>
   );
