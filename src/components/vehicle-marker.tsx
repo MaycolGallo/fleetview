@@ -1,7 +1,7 @@
 "use client";
 
 import type { Vehicle } from '@/lib/types';
-import { AdvancedMarker, Popover } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, Popover as GoogleMapsPopover } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
 import {
   DropdownMenu,
@@ -44,20 +44,15 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
   const StatusIcon = status.icon;
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setDropdownOpen(true);
-  };
-  
   return (
     <AdvancedMarker
+      key={vehicle.vehicleId}
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
       onClick={() => onVehicleSelect(vehicle)}
     >
       <DropdownMenu open={isDropdownOpen} onOpenChange={setDropdownOpen}>
-        {/* We use an empty trigger and control the dropdown programmatically */}
-        <div onContextMenu={handleContextMenu} className="cursor-pointer">
-            <VehiclePin status={vehicle.status} isSelected={isSelected} />
+        <div onContextMenu={(e) => { e.preventDefault(); setDropdownOpen(true); }} >
+          <VehiclePin status={vehicle.status} isSelected={isSelected} />
         </div>
         
         <DropdownMenuContent>
@@ -69,7 +64,7 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
       </DropdownMenu>
 
       {isSelected && (
-        <Popover
+        <GoogleMapsPopover
           anchor={null}
           onClose={() => onVehicleSelect(null)}
           >
@@ -98,7 +93,7 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
                   </div>
               </div>
           </div>
-        </Popover>
+        </GoogleMapsPopover>
       )}
 
     </AdvancedMarker>
