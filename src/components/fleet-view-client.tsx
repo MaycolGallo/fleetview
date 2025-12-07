@@ -3,10 +3,9 @@
 "use client";
 
 import { useEffect, useMemo } from 'react';
-import type { Vehicle, VehicleStatus, RouteEvent, RouteHistory } from '@/lib/types';
+import type { Vehicle, VehicleStatus, RouteHistory } from '@/lib/types';
 import { FleetMap } from './fleet-map';
 import { VehicleFilters } from './vehicle-filters';
-import { VehicleDetailDialog } from './vehicle-detail-dialog';
 import { RouteHistorySheet } from './route-history-sheet';
 import { Button } from './ui/button';
 import { ArrowLeft, PanelLeft } from 'lucide-react';
@@ -120,7 +119,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     return vehicles.filter(v => v.status === statusFilter);
   }, [vehicles, statusFilter]);
 
-  const handleVehicleSelect = (vehicle: Vehicle) => {
+  const handleVehicleSelect = (vehicle: Vehicle | null) => {
     if (routeHistoryVehicle) {
       return;
     }
@@ -129,10 +128,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const handlePanToVehicle = (vehicle: Vehicle) => {
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
-  };
-
-  const handleDialogClose = () => {
-    dispatch({ type: 'SELECT_VEHICLE', payload: null });
   };
 
   const handleSegmentSelect = (segmentIndex: number) => {
@@ -253,6 +248,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             apiKey={apiKey}
             vehicles={filteredVehicles}
             onVehicleSelect={handleVehicleSelect}
+            onShowRouteHistory={handleShowRouteHistory}
             selectedVehicle={routeHistoryVehicle || selectedVehicle}
             routePath={routePath}
             highlightedSegment={highlightedSegment}
@@ -269,12 +265,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 </div>
             </div>
         )}
-        <VehicleDetailDialog
-          vehicle={selectedVehicle}
-          isOpen={!!selectedVehicle}
-          onOpenChange={(isOpen) => !isOpen && handleDialogClose()}
-          onShowRouteHistory={handleShowRouteHistory}
-        />
         <RouteHistorySheet
           isOpen={isRouteSheetOpen}
           onOpenChange={handleRouteSheetOpenChange}

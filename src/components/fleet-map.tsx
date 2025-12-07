@@ -5,11 +5,20 @@ import { APIProvider, Map, AdvancedMarker, useMap, ColorScheme } from '@vis.gl/r
 import type { Vehicle } from '@/lib/types';
 import { VehiclePin } from './vehicle-pin';
 import { useEffect, useState, useRef } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Route } from 'lucide-react';
+
 
 interface FleetMapProps {
   apiKey: string;
   vehicles: Vehicle[];
   onVehicleSelect: (vehicle: Vehicle) => void;
+  onShowRouteHistory: (vehicle: Vehicle) => void;
   selectedVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[] | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
@@ -73,7 +82,8 @@ function MapControl({
   selectedVehicle, 
   routePath, 
   highlightedSegment,
-  routeSegmentToFit
+  routeSegmentToFit,
+  onShowRouteHistory
 }: Omit<FleetMapProps, 'apiKey' | 'isMapDark'>) {
   const map = useMap();
 
@@ -100,7 +110,19 @@ function MapControl({
           position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
           onClick={() => onVehicleSelect(vehicle)}
         >
-          <VehiclePin status={vehicle.status} isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <div onContextMenu={(e) => { e.preventDefault(); }}>
+                    <VehiclePin status={vehicle.status} isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId} />
+                </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
+                <Route className="mr-2 h-4 w-4" />
+                <span>Show Route History</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </AdvancedMarker>
       ))}
       <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
@@ -110,7 +132,7 @@ function MapControl({
 }
 
 
-export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark }: FleetMapProps) {
+export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onShowRouteHistory }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
 
@@ -131,6 +153,7 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
         className="w-full h-full"
         disableDefaultUI={true}
         colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
+        onClick={() => onVehicleSelect(null)}
       >
         <MapControl 
           vehicles={vehicles}
@@ -139,6 +162,7 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
           routePath={routePath}
           highlightedSegment={highlightedSegment}
           routeSegmentToFit={routeSegmentToFit}
+          onShowRouteHistory={onShowRouteHistory}
         />
       </Map>
     </APIProvider>
