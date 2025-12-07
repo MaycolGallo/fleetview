@@ -1,7 +1,7 @@
 
 "use client";
 
-import { APIProvider, Map, AdvancedMarker, useMap, ColorScheme, Pin } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, useMap, ColorScheme } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
 import { VehiclePin } from './vehicle-pin';
 import { useEffect, useState, useRef } from 'react';
@@ -135,20 +135,22 @@ function MapControl({
           <AdvancedMarker
             key={vehicle.vehicleId}
             position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+            onClick={() => onVehicleSelect(vehicle)}
           >
             <DropdownMenu>
-              <DropdownMenuTrigger onContextMenu={(e) => e.preventDefault()}>
-                <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
-                  <PopoverTrigger asChild onClick={(e) => { e.stopPropagation(); onVehicleSelect(vehicle); }}>
-                    <div>
-                      <VehiclePin status={vehicle.status} isSelected={isSelected} />
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent 
-                    sideOffset={25} 
-                    className="w-80 bg-card/95 backdrop-blur-sm border-primary/20" 
-                    onOpenAutoFocus={(e) => e.preventDefault()}
-                  >
+              <DropdownMenuTrigger asChild>
+                <div onContextMenu={(e) => e.preventDefault()}>
+                  <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
+                    <PopoverTrigger asChild>
+                      <div>
+                        <VehiclePin status={vehicle.status} isSelected={isSelected} />
+                      </div>
+                    </PopoverTrigger>
+                     <PopoverContent
+                      sideOffset={25}
+                      className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
+                      onOpenAutoFocus={(e) => e.preventDefault()}
+                    >
                       <div className="grid gap-4">
                         <div className="space-y-2">
                           <h4 className="font-medium leading-none text-xl">{vehicle.vehicleId}</h4>
@@ -172,14 +174,15 @@ function MapControl({
                             </div>
                         </div>
                       </div>
-                  </PopoverContent>
-                </Popover>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                  <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
-                    <Route className="mr-2 h-4 w-4" />
-                    <span>Show Route History</span>
-                  </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
+                  <Route className="mr-2 h-4 w-4" />
+                  <span>Show Route History</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </AdvancedMarker>
