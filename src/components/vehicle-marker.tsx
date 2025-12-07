@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
@@ -60,20 +60,25 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
     setDropdownOpen(true);
   };
   
+  const handleLeftClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Ensure this only triggers on a primary (left) click, not on a right-click.
+    if (e.button === 0) {
+      onVehicleSelect(vehicle);
+    }
+  }
+
   return (
     <AdvancedMarker
       key={vehicle.vehicleId}
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
     >
-      <Popover open={isPopoverOpen} onOpenChange={(open) => {
-        onVehicleSelect(open ? vehicle : null);
-      }}>
-        <PopoverTrigger asChild>
+      <Popover open={isPopoverOpen} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
+        <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
             <div 
-              onContextMenu={handleContextMenu} 
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
+              onContextMenu={handleContextMenu}
+              onClick={handleLeftClick}
+              className="cursor-pointer"
             >
                 <VehiclePin status={vehicle.status} isSelected={isSelected} />
             </div>
