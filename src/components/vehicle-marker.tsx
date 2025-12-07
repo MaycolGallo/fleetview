@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, MouseEvent } from 'react';
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
@@ -48,7 +48,7 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
   const status = statusDetails[vehicle.status];
   const StatusIcon = status.icon;
 
-  const handleContextMenu = (e: React.MouseEvent) => {
+  const handleContextMenu = (e: MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDropdownPosition({ x: e.clientX, y: e.clientY });
@@ -56,13 +56,11 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
   };
   
   const handlePopoverOpenChange = (open: boolean) => {
-    if (open) {
-      onVehicleSelect(vehicle);
-    } else {
-      // If the popover is being closed, we ensure no vehicle is selected.
-      // This handles closing via clicks outside or the escape key.
-      onVehicleSelect(null);
-    }
+    onVehicleSelect(open ? vehicle : null);
+  };
+
+  const stopPropagation = (e: MouseEvent) => {
+    e.stopPropagation();
   };
 
   return (
@@ -74,9 +72,8 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
         <PopoverTrigger asChild>
             <div 
               onContextMenu={handleContextMenu}
+              onClick={stopPropagation}
               className="cursor-pointer"
-              // Stop propagation to prevent map click from closing popover immediately
-              onClick={(e) => e.stopPropagation()}
             >
                 <VehiclePin status={vehicle.status} isSelected={isSelected} />
             </div>
