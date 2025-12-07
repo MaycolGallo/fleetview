@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from 'react';
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
@@ -7,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Popover, PopoverContent } from '@/components/ui/popover';
 import { Badge } from "./ui/badge";
@@ -40,69 +40,73 @@ const statusDetails = {
 };
 
 export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onShowRouteHistory }: VehicleMarkerProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  
   const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
   const status = statusDetails[vehicle.status];
   const StatusIcon = status.icon;
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onVehicleSelect(null); // Close popover if open
+    setDropdownOpen(true);
+  };
   
   return (
     <AdvancedMarker
-      key={vehicle.vehicleId}
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
     >
-        <DropdownMenu>
-            <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
-                <DropdownMenuTrigger asChild>
-                    <div
-                        onContextMenu={(e) => {
-                            e.preventDefault();
-                            const trigger = e.currentTarget as HTMLElement;
-                            const rightClick = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, view: window });
-                            trigger.dispatchEvent(rightClick);
-                        }}
-                    >
-                        <PopoverContent
-                            sideOffset={25}
-                            className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
-                            onOpenAutoFocus={(e) => e.preventDefault()}
-                        >
-                            <div className="grid gap-4">
-                                <div className="space-y-2">
-                                    <h4 className="font-medium leading-none text-xl">{vehicle.vehicleId}</h4>
-                                    <p className="text-sm text-muted-foreground">Vehicle Details</p>
-                                </div>
-                                <div className="grid gap-2">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-muted-foreground">Status</span>
-                                        <Badge variant="outline" className={cn("capitalize text-sm border", status.className, status.text)}>
-                                            <StatusIcon className="mr-2 h-4 w-4" />
-                                            {vehicle.status.replace('-', ' ')}
-                                        </Badge>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-muted-foreground">Latitude</span>
-                                        <span className="font-mono text-foreground">{vehicle.latitude.toFixed(6)}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-muted-foreground">Longitude</span>
-                                        <span className="font-mono text-foreground">{vehicle.longitude.toFixed(6)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </PopoverContent>
-                        <div onClick={() => onVehicleSelect(vehicle)}>
-                            <VehiclePin status={vehicle.status} isSelected={isSelected} />
-                        </div>
-                    </div>
-                </DropdownMenuTrigger>
-            </Popover>
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+        <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
+          
+          {/* This div is the trigger for both menus */}
+          <div
+            onClick={() => onVehicleSelect(vehicle)}
+            onContextMenu={handleContextMenu}
+          >
+            <VehiclePin status={vehicle.status} isSelected={isSelected} />
+          </div>
 
-            <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
-                    <Route className="mr-2 h-4 w-4" />
-                    <span>Show Route History</span>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+          {/* Popover for Left-Click */}
+          <PopoverContent
+              sideOffset={25}
+              className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+              <div className="grid gap-4">
+                  <div className="space-y-2">
+                      <h4 className="font-medium leading-none text-xl">{vehicle.vehicleId}</h4>
+                      <p className="text-sm text-muted-foreground">Vehicle Details</p>
+                  </div>
+                  <div className="grid gap-2">
+                      <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Status</span>
+                          <Badge variant="outline" className={cn("capitalize text-sm border", status.className, status.text)}>
+                              <StatusIcon className="mr-2 h-4 w-4" />
+                              {vehicle.status.replace('-', ' ')}
+                          </Badge>
+                      </div>
+                      <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Latitude</span>
+                          <span className="font-mono text-foreground">{vehicle.latitude.toFixed(6)}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Longitude</span>
+                          <span className="font-mono text-foreground">{vehicle.longitude.toFixed(6)}</span>
+                      </div>
+                  </div>
+              </div>
+          </PopoverContent>
+          
+          {/* Dropdown for Right-Click */}
+          <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onShowRouteHistory(vehicle)}>
+                  <Route className="mr-2 h-4 w-4" />
+                  <span>Show Route History</span>
+              </DropdownMenuItem>
+          </DropdownMenuContent>
+        </Popover>
+      </DropdownMenu>
     </AdvancedMarker>
   );
 }
