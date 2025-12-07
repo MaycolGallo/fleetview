@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from "./ui/badge";
 import { AlertCircle, CheckCircle, Clock, Route } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -135,9 +135,13 @@ function MapControl({
           <Popover key={vehicle.vehicleId} open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <PopoverTrigger asChild onClick={() => onVehicleSelect(vehicle)}>
+                <PopoverTrigger asChild>
                     <AdvancedMarker
                       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+                      onClick={(e) => {
+                        e.domEvent.stopPropagation();
+                        onVehicleSelect(vehicle);
+                      }}
                     >
                       <div onContextMenu={(e) => e.preventDefault()}>
                           <VehiclePin status={vehicle.status} isSelected={isSelected} />
