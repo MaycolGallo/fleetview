@@ -204,7 +204,6 @@ export function FleetMap({ apiKey, vehicles, onVehicleSelect, selectedVehicle, r
         className="w-full h-full"
         disableDefaultUI={true}
         colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
-        onClick={() => onVehicleSelect(null)}
       >
         <MapControl 
           vehicles={vehicles}
