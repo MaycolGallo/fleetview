@@ -41,15 +41,21 @@ const statusDetails = {
 };
 
 export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onShowRouteHistory }: VehicleMarkerProps) {
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
-
+  
   const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
   const status = statusDetails[vehicle.status];
   const StatusIcon = status.icon;
 
+  useEffect(() => {
+    setIsPopoverOpen(isSelected);
+  }, [isSelected]);
+  
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setDropdownPosition({ x: e.clientX, y: e.clientY });
     setDropdownOpen(true);
   };
@@ -59,9 +65,16 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
       key={vehicle.vehicleId}
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
     >
-      <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
+      <Popover open={isPopoverOpen} onOpenChange={(open) => {
+        onVehicleSelect(open ? vehicle : null);
+      }}>
         <PopoverTrigger asChild>
-            <div onContextMenu={handleContextMenu}>
+            <div 
+              onContextMenu={handleContextMenu} 
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
                 <VehiclePin status={vehicle.status} isSelected={isSelected} />
             </div>
         </PopoverTrigger>
