@@ -145,6 +145,7 @@ function MapControl({
           vehicle={vehicle}
           onClick={() => handleMarkerClick(vehicle)}
           isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId}
+          onShowRouteHistory={() => onShowRouteHistory(vehicle)}
         />
       ))}
 
