@@ -41,18 +41,13 @@ const statusDetails = {
 };
 
 export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onShowRouteHistory }: VehicleMarkerProps) {
-  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
-  
-  const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
+
   const status = statusDetails[vehicle.status];
   const StatusIcon = status.icon;
 
-  useEffect(() => {
-    setIsPopoverOpen(isSelected);
-  }, [isSelected]);
-  
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -60,25 +55,28 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
     setDropdownOpen(true);
   };
   
-  const handleLeftClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    // Ensure this only triggers on a primary (left) click, not on a right-click.
-    if (e.button === 0) {
+  const handlePopoverOpenChange = (open: boolean) => {
+    if (open) {
       onVehicleSelect(vehicle);
+    } else {
+      // If the popover is being closed, we ensure no vehicle is selected.
+      // This handles closing via clicks outside or the escape key.
+      onVehicleSelect(null);
     }
-  }
+  };
 
   return (
     <AdvancedMarker
       key={vehicle.vehicleId}
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
     >
-      <Popover open={isPopoverOpen} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
-        <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
+      <Popover open={isSelected} onOpenChange={handlePopoverOpenChange}>
+        <PopoverTrigger asChild>
             <div 
               onContextMenu={handleContextMenu}
-              onClick={handleLeftClick}
               className="cursor-pointer"
+              // Stop propagation to prevent map click from closing popover immediately
+              onClick={(e) => e.stopPropagation()}
             >
                 <VehiclePin status={vehicle.status} isSelected={isSelected} />
             </div>
