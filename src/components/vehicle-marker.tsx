@@ -5,7 +5,7 @@ import type { MouseEvent } from 'react';
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import { Popover, PopoverContent } from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Badge } from "./ui/badge";
 import { Button } from './ui/button';
 import { AlertCircle, CheckCircle, Clock, Route } from "lucide-react";
@@ -55,11 +55,12 @@ export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onSho
     <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
         <AdvancedMarker
             position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-            onClick={handleMarkerClick}
         >
-            <div className="cursor-pointer">
-                <VehiclePin status={vehicle.status} isSelected={isSelected} />
-            </div>
+            <PopoverTrigger asChild>
+                <div onClick={handleMarkerClick} className="cursor-pointer">
+                    <VehiclePin status={vehicle.status} isSelected={isSelected} />
+                </div>
+            </PopoverTrigger>
         </AdvancedMarker>
         
         {isSelected && (
