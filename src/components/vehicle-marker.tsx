@@ -10,7 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Popover, PopoverContent } from '@/components/ui/popover';
 import { Badge } from "./ui/badge";
 import { AlertCircle, CheckCircle, Clock, Route } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,25 +41,30 @@ const statusDetails = {
 };
 
 export function VehicleMarker({ vehicle, selectedVehicle, onVehicleSelect, onShowRouteHistory }: VehicleMarkerProps) {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
   const status = statusDetails[vehicle.status];
   const StatusIcon = status.icon;
 
+  const handleRightClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDropdownOpen(true);
+  };
+  
   return (
     <AdvancedMarker
+      key={vehicle.vehicleId}
       position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+      onClick={() => onVehicleSelect(vehicle)}
     >
-      <DropdownMenu>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <Popover open={isSelected} onOpenChange={(open) => onVehicleSelect(open ? vehicle : null)}>
-          <DropdownMenuTrigger asChild>
-              <div 
-                className="cursor-pointer" 
-                onClick={() => onVehicleSelect(vehicle)}
-              >
-                  <VehiclePin status={vehicle.status} isSelected={isSelected} />
-              </div>
+          <DropdownMenuTrigger asChild onContextMenu={handleRightClick}>
+            <div>
+              <VehiclePin status={vehicle.status} isSelected={isSelected} />
+            </div>
           </DropdownMenuTrigger>
-
+          
           <PopoverContent
               sideOffset={25}
               className="w-80 bg-card/95 backdrop-blur-sm border-primary/20"
