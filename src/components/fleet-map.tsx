@@ -145,40 +145,42 @@ function MapControl({
         ))}
 
         {infoVehicle && (
-            <AdvancedMarker
-                position={{lat: infoVehicle.latitude, lng: infoVehicle.longitude}}
+          <AdvancedMarker
+            position={{ lat: infoVehicle.latitude, lng: infoVehicle.longitude }}
+          >
+            <div
+              className="absolute bottom-[4rem] left-1/2 -translate-x-1/2 bg-popover text-popover-foreground rounded-lg shadow-lg p-3 w-64 border border-border"
             >
-                <div className="bg-popover text-popover-foreground rounded-lg shadow-lg p-3 w-60 border border-border transform -translate-y-[calc(100%+1rem)]">
-                    <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-semibold">{infoVehicle.vehicleId}</h4>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setInfoVehicle(null)}>
-                            <XIcon className="h-4 w-4" />
-                        </Button>
-                    </div>
-                    <div className='space-y-2 text-sm'>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Status:</span>
-                            <Badge variant={
-                                infoVehicle.status === 'active' ? 'default' :
-                                infoVehicle.status === 'idle' ? 'secondary' : 'destructive'
-                            } className="capitalize">
-                                {infoVehicle.status.replace('-', ' ')}
-                            </Badge>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Coords:</span>
-                            <span className='font-mono text-xs'>{infoVehicle.latitude.toFixed(4)}, {infoVehicle.longitude.toFixed(4)}</span>
-                        </div>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      className="w-full mt-3"
-                      onClick={() => onAction('show-route-history', infoVehicle)}
-                    >
-                      Show Route History
-                    </Button>
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-semibold">{infoVehicle.vehicleId}</h4>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setInfoVehicle(null)}>
+                  <XIcon className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className='space-y-2 text-sm'>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status:</span>
+                  <Badge variant={
+                    infoVehicle.status === 'active' ? 'default' :
+                      infoVehicle.status === 'idle' ? 'secondary' : 'destructive'
+                  } className="capitalize">
+                    {infoVehicle.status.replace('-', ' ')}
+                  </Badge>
                 </div>
-            </AdvancedMarker>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Coords:</span>
+                  <span className='font-mono text-xs'>{infoVehicle.latitude.toFixed(4)}, {infoVehicle.longitude.toFixed(4)}</span>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                className="w-full mt-3"
+                onClick={() => onAction('show-route-history', infoVehicle)}
+              >
+                Show Route History
+              </Button>
+            </div>
+          </AdvancedMarker>
         )}
 
       <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
