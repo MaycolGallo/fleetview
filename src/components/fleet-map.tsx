@@ -46,10 +46,13 @@ function RoutePolyline({
 
     if (map && routePath && routePath.length > 0) {
       const arrowIcon = {
-        path: 'M 0,-1 0,1',
+        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
         strokeOpacity: 1,
         scale: 3,
-        strokeColor: color,
+        strokeColor: zIndex === 1 ? '#FFFFFF' : color,
+        strokeWeight: 1,
+        fillColor: zIndex === 1 ? '#FFFFFF' : color,
+        fillOpacity: 1,
       };
 
       const newPolyline = new google.maps.Polyline({
