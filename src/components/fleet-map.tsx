@@ -130,7 +130,7 @@ function MapControl({
         defaultZoom={13}
         gestureHandling={'greedy'}
         disableDefaultUI={true}
-        mapId={'a3b0c4I2e9f3g4h5'}
+        mapId={'a3b0c4d2e9f3g4h5'}
         onClick={handleMapClick}
         scheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
     >
@@ -141,7 +141,6 @@ function MapControl({
             onClick={() => handleVehicleClick(vehicle)}
             isSelected={externalSelectedVehicle?.vehicleId === vehicle.vehicleId || infoVehicle?.vehicleId === vehicle.vehicleId}
             onAction={onAction}
-            onVehicleSelect={onVehicleSelect}
             />
         ))}
 
@@ -149,7 +148,7 @@ function MapControl({
             <AdvancedMarker
                 position={{lat: infoVehicle.latitude, lng: infoVehicle.longitude}}
             >
-                <div className="bg-popover text-popover-foreground rounded-lg shadow-lg p-3 w-60 border border-border">
+                <div className="bg-popover text-popover-foreground rounded-lg shadow-lg p-3 w-60 border border-border transform -translate-y-[calc(100%+2.5rem)]">
                     <div className="flex justify-between items-start mb-2">
                         <h4 className="font-semibold">{infoVehicle.vehicleId}</h4>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setInfoVehicle(null)}>
