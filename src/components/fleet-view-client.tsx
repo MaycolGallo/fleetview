@@ -168,6 +168,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     dispatch({ type: 'SET_MAP_DARK_MODE', payload: isDark });
   }
 
+  const handleRouteClick = (pointIndex: number) => {
+    dispatch({ type: 'SELECT_MAP_SEGMENT', payload: pointIndex });
+  };
+
   const handleVehicleAction = (action: VehicleAction, vehicle: Vehicle) => {
     switch (action) {
       case 'show-route-history':
@@ -315,6 +319,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             vehicles={filteredVehicles}
             onVehicleSelect={handlePanToVehicle}
             onAction={handleVehicleAction}
+            onRouteClick={handleRouteClick}
             selectedVehicle={selectedVehicle}
             routePath={routePath}
             highlightedSegment={highlightedSegment}

@@ -29,6 +29,7 @@ type FleetAction =
   | { type: 'SET_ROUTE_HISTORY'; payload: { routePoints: { lat: number; lng: number }[]; routeEvents: RouteEvent[] } }
   | { type: 'BACK_TO_FLEET' }
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
+  | { type: 'SELECT_MAP_SEGMENT'; payload: number }
   | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: string }
   | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: string[], visible: boolean } }
@@ -51,6 +52,32 @@ const getInitialState = (initialVehicles: Vehicle[]): FleetState => ({
   visibleVehicleIds: new Set(initialVehicles.map(v => v.vehicleId)),
   isMapDark: true,
 });
+
+// Helper function to calculate segment points
+const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
+    if (!state.routePath || !state.routeEvents || state.routePath.length === 0) return { segmentPoints: [], highlightedSegment: null };
+
+    const pointsPerEvent = state.routeEvents.length > 1 ? Math.floor((state.routePath.length - 1) / (state.routeEvents.length - 1)) : state.routePath.length;
+    const startPointIndex = segmentIndex * pointsPerEvent;
+    const endPointIndex = (segmentIndex === state.routeEvents.length - 1) 
+      ? state.routePath.length - 1
+      : (segmentIndex + 1) * pointsPerEvent;
+
+    let segmentPoints: { lat: number; lng: number }[] = [];
+    if (startPointIndex >= endPointIndex) {
+      if (state.routePath[startPointIndex]) {
+        segmentPoints = [state.routePath[startPointIndex]];
+      }
+    } else {
+      segmentPoints = state.routePath.slice(startPointIndex, endPointIndex + 1);
+    }
+    
+    return { 
+        segmentPoints: segmentPoints.length > 0 ? segmentPoints : null, 
+        highlightedSegment: segmentPoints.length > 1 ? segmentPoints : null 
+    };
+}
+
 
 // 4. Create the reducer function
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
@@ -138,31 +165,32 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
           routeSegmentToFit: state.routePath, // Fit entire route
         };
       }
-
-      if (!state.routePath || !state.routeEvents) return state;
-
-      // A simple heuristic to map events to points
-      const pointsPerEvent = state.routeEvents.length > 1 ? Math.floor((state.routePath.length - 1) / (state.routeEvents.length - 1)) : state.routePath.length;
-      const startPointIndex = segmentIndex * pointsPerEvent;
-      const endPointIndex = (segmentIndex === state.routeEvents.length - 1) 
-        ? state.routePath.length - 1
-        : (segmentIndex + 1) * pointsPerEvent;
-
-      let segmentPoints: { lat: number; lng: number }[] = [];
-      if (startPointIndex >= endPointIndex) {
-        if (state.routePath[startPointIndex]) {
-          segmentPoints = [state.routePath[startPointIndex]];
-        }
-      } else {
-        segmentPoints = state.routePath.slice(startPointIndex, endPointIndex + 1);
-      }
-
+      const { segmentPoints, highlightedSegment } = getSegmentPoints(state, segmentIndex);
       return {
         ...state,
         selectedSegmentIndex: segmentIndex,
-        routeSegmentToFit: segmentPoints.length > 0 ? segmentPoints : null,
-        highlightedSegment: segmentPoints.length > 1 ? segmentPoints : null,
+        routeSegmentToFit: segmentPoints,
+        highlightedSegment: highlightedSegment,
       };
+    }
+    
+    case 'SELECT_MAP_SEGMENT': {
+        const pointIndex = action.payload;
+        if (!state.routePath || !state.routeEvents || state.routeEvents.length <= 1) return state;
+
+        const pointsPerEvent = (state.routePath.length - 1) / (state.routeEvents.length - 1);
+        const segmentIndex = Math.floor(pointIndex / pointsPerEvent);
+        
+        // Don't re-select if already selected
+        if (state.selectedSegmentIndex === segmentIndex) return state;
+
+        const { segmentPoints, highlightedSegment } = getSegmentPoints(state, segmentIndex);
+        return {
+            ...state,
+            selectedSegmentIndex: segmentIndex,
+            routeSegmentToFit: segmentPoints,
+            highlightedSegment: highlightedSegment,
+        };
     }
 
     case 'TOGGLE_VEHICLE_VISIBILITY': {

@@ -15,6 +15,7 @@ interface FleetMapProps {
   onVehicleSelect: (vehicle: Vehicle | null) => void;
   onShowRouteHistory: (vehicle: Vehicle) => void;
   onAction: (action: VehicleAction, vehicle: Vehicle) => void;
+  onRouteClick: (pointIndex: number) => void;
   selectedVehicle: Vehicle | null; 
   routePath: { lat: number; lng: number }[] | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
@@ -22,7 +23,19 @@ interface FleetMapProps {
   isMapDark: boolean;
 }
 
-function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { lat: number; lng: number }[] | null, color: string, weight: number, zIndex?: number }) {
+function RoutePolyline({ 
+  routePath, 
+  color, 
+  weight, 
+  zIndex = 1,
+  onClick
+}: { 
+  routePath: { lat: number; lng: number }[] | null, 
+  color: string, 
+  weight: number, 
+  zIndex?: number,
+  onClick?: (pointIndex: number) => void 
+}) {
   const map = useMap();
   const polylineRef = useRef<google.maps.Polyline | null>(null);
 
@@ -46,24 +59,52 @@ function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { 
         strokeWeight: weight,
         map: map,
         zIndex: zIndex,
-        icons: [{
+        clickable: !!onClick,
+        icons: zIndex === 1 ? [{ // Only show arrows on the main route line
           icon: arrowIcon,
           offset: '0',
           repeat: '50px'
-        }],
+        }] : undefined,
       });
       polylineRef.current = newPolyline;
+
+      if (onClick) {
+        newPolyline.addListener('click', (e: google.maps.PolylineMouseEvent) => {
+          if (!e.latLng || !routePath) return;
+
+          // Find the closest point on the polyline to the click event
+          let closestPointIndex = -1;
+          let minDistance = Infinity;
+
+          routePath.forEach((point, index) => {
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(
+              e.latLng!,
+              new google.maps.LatLng(point.lat, point.lng)
+            );
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestPointIndex = index;
+            }
+          });
+
+          if (closestPointIndex !== -1) {
+            onClick(closestPointIndex);
+          }
+        });
+      }
+
     } else {
         polylineRef.current = null;
     }
   
     return () => {
       if (polylineRef.current) {
+        google.maps.event.clearInstanceListeners(polylineRef.current);
         polylineRef.current.setMap(null);
       }
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, JSON.stringify(routePath), color, weight, zIndex]);
+  }, [map, JSON.stringify(routePath), color, weight, zIndex, onClick]);
 
   return null;
 }
@@ -76,6 +117,7 @@ function MapControl({
   onVehicleSelect,
   onShowRouteHistory,
   onAction,
+  onRouteClick,
   externalSelectedVehicle,
   isMapDark,
 }: {
@@ -86,11 +128,19 @@ function MapControl({
   onVehicleSelect: (vehicle: Vehicle | null) => void;
   onShowRouteHistory: (vehicle: Vehicle) => void;
   onAction: (action: VehicleAction, vehicle: Vehicle) => void;
+  onRouteClick: (pointIndex: number) => void;
   externalSelectedVehicle: Vehicle | null;
   isMapDark: boolean;
 }) {
   const map = useMap();
   const [infoVehicle, setInfoVehicle] = useState<Vehicle | null>(null);
+
+  useEffect(() => {
+    // Load the geometry library when the map is available
+    if (map) {
+      google.maps.importLibrary('geometry');
+    }
+  }, [map]);
 
   useEffect(() => {
     if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
@@ -183,15 +233,15 @@ function MapControl({
           </AdvancedMarker>
         )}
 
-      <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
-      <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />
+      <RoutePolyline routePath={routePath} color="#FFC107" weight={5} zIndex={1} onClick={onRouteClick} />
+      <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={7} zIndex={2} />
     </Map>
     </>
   );
 }
 
 
-export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory, onAction, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onVehicleSelect }: FleetMapProps) {
+export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory, onAction, onRouteClick, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onVehicleSelect }: FleetMapProps) {
   
   return (
     <APIProvider apiKey={apiKey}>
@@ -201,6 +251,7 @@ export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory
           onVehicleSelect={onVehicleSelect}
           onShowRouteHistory={onShowRouteHistory}
           onAction={onAction}
+          onRouteClick={onRouteClick}
           externalSelectedVehicle={selectedVehicle}
           routePath={routePath}
           highlightedSegment={highlightedSegment}

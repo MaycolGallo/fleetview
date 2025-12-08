@@ -18,6 +18,7 @@ import { format, parseISO } from 'date-fns';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
 
 
 interface RouteHistorySheetProps {
@@ -49,6 +50,22 @@ function formatDuration(minutes: number) {
 function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegmentIndex }: Omit<RouteHistorySheetProps, 'isOpen' | 'onOpenChange'>) {
     const totalDistance = events.reduce((sum, e) => sum + e.distanceKm, 0);
     const totalDuration = events.reduce((sum, e) => sum + e.durationMinutes, 0);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+    useEffect(() => {
+        itemRefs.current = itemRefs.current.slice(0, events.length);
+    }, [events]);
+
+    useEffect(() => {
+        if (selectedSegmentIndex !== null && itemRefs.current[selectedSegmentIndex]) {
+            itemRefs.current[selectedSegmentIndex]?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center'
+            });
+        }
+    }, [selectedSegmentIndex]);
 
     return (
         <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
@@ -76,7 +93,7 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
               </div>
             </CardHeader>
             <CardContent className="pb-4 flex-1">
-              <ScrollArea className="w-full whitespace-nowrap h-full">
+              <ScrollArea className="w-full whitespace-nowrap h-full" viewportRef={scrollContainerRef}>
                 <div className="relative flex items-stretch gap-0 px-4 pb-4 h-full">
                   {events.map((event, index) => {
                     const Icon = statusIcons[event.status];
@@ -85,6 +102,7 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
                     return (
                       <div
                         key={index}
+                        ref={el => itemRefs.current[index] = el}
                         className={cn(
                           "flex-shrink-0 group transition-all duration-300",
                            isSelected ? 'scale-105' : 'scale-100'
