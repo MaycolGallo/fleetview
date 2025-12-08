@@ -315,7 +315,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             vehicles={filteredVehicles}
             onVehicleSelect={handlePanToVehicle}
             onAction={handleVehicleAction}
-            selectedVehicle={routeHistoryVehicle || selectedVehicle}
+            selectedVehicle={selectedVehicle}
             routePath={routePath}
             highlightedSegment={highlightedSegment}
             routeSegmentToFit={routeSegmentToFit}
