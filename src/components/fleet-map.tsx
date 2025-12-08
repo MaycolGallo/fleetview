@@ -5,8 +5,6 @@ import { APIProvider, Map, useMap, ColorScheme, AdvancedMarker } from '@vis.gl/r
 import type { Vehicle } from '@/lib/types';
 import React, { useEffect, useRef, useState } from 'react';
 import { VehicleMarker, type VehicleAction } from './vehicle-marker';
-import { Button } from './ui/button';
-import { History } from 'lucide-react';
 
 interface FleetMapProps {
   apiKey: string;
@@ -67,8 +65,6 @@ function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { 
   return null;
 }
 
-
-// This component contains the logic that needs the map instance.
 function MapControl({ 
   vehicles, 
   routePath, 
@@ -111,7 +107,7 @@ function MapControl({
 
 
   return (
-    <Map defaultZoom={13} defaultCenter={{ lat: -12.046374, lng: -77.042793 }} onClick={handleMapClick}>
+    <>
       {vehicles.map((vehicle) => (
         <VehicleMarker
           key={vehicle.vehicleId}
@@ -123,7 +119,7 @@ function MapControl({
       ))}
       <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
       <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />
-    </Map>
+    </>
   );
 }
 
