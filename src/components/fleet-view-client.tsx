@@ -314,7 +314,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             apiKey={apiKey}
             vehicles={filteredVehicles}
             onVehicleSelect={handlePanToVehicle}
-            onShowRouteHistory={handleShowRouteHistory}
             onAction={handleVehicleAction}
             selectedVehicle={routeHistoryVehicle || selectedVehicle}
             routePath={routePath}
