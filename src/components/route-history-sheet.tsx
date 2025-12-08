@@ -143,13 +143,13 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
                           {index < events.length - 1 && (
                             <div className={cn(
                                 "absolute top-4 left-1/2 h-0.5 w-full bg-border transition-colors",
-                                isSelected && isClickable ? 'bg-primary' : isClickable ? 'group-hover:bg-primary' : ''
+                                isSelected && isClickable ? 'bg-primary' : (isClickable ? 'group-hover:bg-primary' : '')
                             )} />
                           )}
 
                           <div className={cn(
                               "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
-                              isSelected && isClickable ? 'ring-primary' : `ring-card ${isClickable ? 'group-hover:ring-primary' : ''}`
+                              isSelected && isClickable ? 'ring-primary' : cn('ring-card', isClickable && 'group-hover:ring-primary')
                           )}>
                             <Icon className="h-5 w-5 text-primary" />
                           </div>
