@@ -1,13 +1,13 @@
-
 "use client";
 
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
+  DropdownMenuTrigger,
   DropdownMenuItem, 
   DropdownMenuLabel,
   DropdownMenuSeparator
@@ -45,33 +45,21 @@ export function VehicleMarker({
   onClick,
   onAction
 }: VehicleMarkerProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsMenuOpen(true);
-  };
   
-  const handleLeftClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onClick();
-  }
-
   const handleMenuAction = (action: VehicleAction) => {
     onAction?.(action, vehicle);
-    setIsMenuOpen(false);
   };
 
   return (
-    <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-      <AdvancedMarker
-        position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-      >
-        <div onContextMenu={handleContextMenu} onClick={handleLeftClick}>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <AdvancedMarker
+          position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+          onClick={onClick}
+        >
           <VehiclePin status={vehicle.status} isSelected={isSelected} />
-        </div>
-      </AdvancedMarker>
+        </AdvancedMarker>
+      </DropdownMenuTrigger>
       <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
         <DropdownMenuLabel>{vehicle.vehicleId}</DropdownMenuLabel>
         <DropdownMenuSeparator />
