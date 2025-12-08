@@ -136,9 +136,11 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     return vehicles.filter(v => v.status === statusFilter);
   }, [vehicles, statusFilter]);
 
-  const handlePanToVehicle = (vehicle: Vehicle) => {
+  const handlePanToVehicle = (vehicle: Vehicle | null) => {
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
-    setPopoverOpen(false);
+    if (vehicle) {
+        setPopoverOpen(false);
+    }
   };
 
   const handleSegmentSelect = (segmentIndex: number) => {
@@ -287,6 +289,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             apiKey={apiKey}
             vehicles={filteredVehicles}
             onVehicleSelect={handlePanToVehicle}
+            onShowRouteHistory={handleShowRouteHistory}
             selectedVehicle={routeHistoryVehicle || selectedVehicle}
             routePath={routePath}
             highlightedSegment={highlightedSegment}

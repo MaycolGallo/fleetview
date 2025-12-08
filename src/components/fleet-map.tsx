@@ -9,7 +9,8 @@ import { VehicleMarker } from './vehicle-marker';
 interface FleetMapProps {
   apiKey: string;
   vehicles: Vehicle[];
-  onVehicleSelect: (vehicle: Vehicle) => void;
+  onVehicleSelect: (vehicle: Vehicle | null) => void;
+  onShowRouteHistory: (vehicle: Vehicle) => void;
   selectedVehicle: Vehicle | null; 
   routePath: { lat: number; lng: number }[] | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
@@ -71,13 +72,15 @@ function MapControl({
   highlightedSegment,
   routeSegmentToFit,
   onVehicleSelect,
+  onShowRouteHistory,
   externalSelectedVehicle
 }: {
   vehicles: Vehicle[];
   routePath: { lat: number; lng: number }[] | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
   routeSegmentToFit: { lat: number; lng: number }[] | null;
-  onVehicleSelect: (vehicle: Vehicle) => void;
+  onVehicleSelect: (vehicle: Vehicle | null) => void;
+  onShowRouteHistory: (vehicle: Vehicle) => void;
   externalSelectedVehicle: Vehicle | null;
 }) {
   const map = useMap();
@@ -104,6 +107,7 @@ function MapControl({
           key={vehicle.vehicleId}
           vehicle={vehicle}
           onClick={() => onVehicleSelect(vehicle)}
+          onShowRouteHistory={() => onShowRouteHistory(vehicle)}
           isSelected={externalSelectedVehicle?.vehicleId === vehicle.vehicleId}
         />
       ))}
@@ -115,7 +119,7 @@ function MapControl({
 }
 
 
-export function FleetMap({ apiKey, vehicles, selectedVehicle, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onVehicleSelect }: FleetMapProps) {
+export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onVehicleSelect }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
 
@@ -129,10 +133,12 @@ export function FleetMap({ apiKey, vehicles, selectedVehicle, routePath, highlig
         className="w-full h-full"
         disableDefaultUI={true}
         colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
+        onClick={() => onVehicleSelect(null)}
       >
         <MapControl 
           vehicles={vehicles}
           onVehicleSelect={onVehicleSelect}
+          onShowRouteHistory={onShowRouteHistory}
           externalSelectedVehicle={selectedVehicle}
           routePath={routePath}
           highlightedSegment={highlightedSegment}
