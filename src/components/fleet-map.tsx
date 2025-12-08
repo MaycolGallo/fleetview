@@ -86,11 +86,11 @@ function MapControl({
   externalSelectedVehicle: Vehicle | null;
 }) {
   const map = useMap();
-  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
   // Sync with external state if it changes (e.g., from list selection)
+  const [internalSelectedVehicle, setInternalSelectedVehicle] = useState<Vehicle | null>(null);
   useEffect(() => {
-    setSelectedVehicle(externalSelectedVehicle);
+    setInternalSelectedVehicle(externalSelectedVehicle);
   }, [externalSelectedVehicle]);
 
   
@@ -110,57 +110,52 @@ function MapControl({
   }, [map, routeSegmentToFit]);
 
   const handleMarkerClick = (vehicle: Vehicle) => {
-    if (selectedVehicle?.vehicleId === vehicle.vehicleId) {
-      // If clicking the same marker, deselect it
-      setSelectedVehicle(null);
+    // This will notify the parent to pan the map
+    onVehicleSelect(vehicle); 
+  };
+  
+  const handleMapClick = (e: google.maps.MapMouseEvent | React.MouseEvent) => {
+    // A click on the map itself deselects any vehicle
+    // We check if the event is a map mouse event to avoid conflicts with marker clicks
+    if ('latLng' in e) {
       onVehicleSelect(null);
-    } else {
-      setSelectedVehicle(vehicle);
-      onVehicleSelect(vehicle); // Notify parent
     }
   };
 
-  const handleMapClick = () => {
-    setSelectedVehicle(null);
-    onVehicleSelect(null);
-  };
 
   return (
     <>
-       <Map onClick={handleMapClick}>
-        {vehicles.map((vehicle) => (
-          <VehicleMarker
-            key={vehicle.vehicleId}
-            vehicle={vehicle}
-            onClick={() => handleMarkerClick(vehicle)}
-            isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId}
-          />
-        ))}
+      {vehicles.map((vehicle) => (
+        <VehicleMarker
+          key={vehicle.vehicleId}
+          vehicle={vehicle}
+          onClick={() => handleMarkerClick(vehicle)}
+          isSelected={internalSelectedVehicle?.vehicleId === vehicle.vehicleId}
+        />
+      ))}
 
-        {selectedVehicle && (
-          <AdvancedMarker
-            position={{ lat: selectedVehicle.latitude, lng: selectedVehicle.longitude }}
-            // Offset the button slightly
-            pixelOffset={new google.maps.Size(0, -50)}
+      {internalSelectedVehicle && (
+        <AdvancedMarker
+          position={{ lat: internalSelectedVehicle.latitude, lng: internalSelectedVehicle.longitude }}
+          pixelOffset={new google.maps.Size(0, -50)}
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-background hover:bg-muted"
+            onClick={(e) => {
+                e.stopPropagation();
+                onShowRouteHistory(internalSelectedVehicle);
+            }}
           >
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-background hover:bg-muted"
-              onClick={(e) => {
-                  e.stopPropagation();
-                  onShowRouteHistory(selectedVehicle);
-              }}
-            >
-              <History className="mr-2 h-4 w-4" />
-              Show Route History
-            </Button>
-          </AdvancedMarker>
-        )}
+            <History className="mr-2 h-4 w-4" />
+            Show Route History
+          </Button>
+        </AdvancedMarker>
+      )}
 
-        <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
-        <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />
-      </Map>
+      <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
+      <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />
     </>
   );
 }
@@ -169,6 +164,10 @@ function MapControl({
 export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onVehicleSelect }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
+
+  const handleMapClick = () => {
+    onVehicleSelect(null);
+  };
 
   return (
     <APIProvider apiKey={apiKey}>
@@ -180,7 +179,7 @@ export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory
         className="w-full h-full"
         disableDefaultUI={true}
         colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
-        onClick={() => onVehicleSelect(null)}
+        onClick={handleMapClick}
       >
         <MapControl 
           vehicles={vehicles}
