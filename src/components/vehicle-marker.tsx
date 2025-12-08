@@ -10,8 +10,7 @@ import {
   DropdownMenuContent, 
   DropdownMenuItem, 
   DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 
@@ -27,7 +26,7 @@ export type VehicleAction =
 interface VehicleMarkerProps {
   vehicle: Vehicle;
   isSelected: boolean;
-  onVehicleSelect: (vehicle: Vehicle) => void;
+  onClick: () => void;
   onAction?: (action: VehicleAction, vehicle: Vehicle) => void;
 }
 
@@ -43,7 +42,7 @@ const contextMenuItems = [
 export function VehicleMarker({ 
   vehicle, 
   isSelected, 
-  onVehicleSelect,
+  onClick,
   onAction
 }: VehicleMarkerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -56,7 +55,7 @@ export function VehicleMarker({
   
   const handleLeftClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onVehicleSelect(vehicle);
+    onClick();
   }
 
   const handleMenuAction = (action: VehicleAction) => {
@@ -66,15 +65,13 @@ export function VehicleMarker({
 
   return (
     <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-      <DropdownMenuTrigger asChild>
-        <AdvancedMarker
-          position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-        >
-            <div onContextMenu={handleContextMenu} onClick={handleLeftClick}>
-                <VehiclePin status={vehicle.status} isSelected={isSelected} />
-            </div>
-        </AdvancedMarker>
-      </DropdownMenuTrigger>
+      <AdvancedMarker
+        position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+      >
+        <div onContextMenu={handleContextMenu} onClick={handleLeftClick}>
+          <VehiclePin status={vehicle.status} isSelected={isSelected} />
+        </div>
+      </AdvancedMarker>
       <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
         <DropdownMenuLabel>{vehicle.vehicleId}</DropdownMenuLabel>
         <DropdownMenuSeparator />
