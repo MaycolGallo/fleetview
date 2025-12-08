@@ -1,10 +1,12 @@
 
 "use client";
 
-import { APIProvider, Map, useMap, ColorScheme } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, useMap, ColorScheme, AdvancedMarker } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { VehicleMarker } from './vehicle-marker';
+import { Button } from './ui/button';
+import { History } from 'lucide-react';
 
 interface FleetMapProps {
   apiKey: string;
@@ -84,6 +86,13 @@ function MapControl({
   externalSelectedVehicle: Vehicle | null;
 }) {
   const map = useMap();
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+
+  // Sync with external state if it changes (e.g., from list selection)
+  useEffect(() => {
+    setSelectedVehicle(externalSelectedVehicle);
+  }, [externalSelectedVehicle]);
+
   
   useEffect(() => {
     if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
@@ -100,20 +109,58 @@ function MapControl({
     }
   }, [map, routeSegmentToFit]);
 
+  const handleMarkerClick = (vehicle: Vehicle) => {
+    if (selectedVehicle?.vehicleId === vehicle.vehicleId) {
+      // If clicking the same marker, deselect it
+      setSelectedVehicle(null);
+      onVehicleSelect(null);
+    } else {
+      setSelectedVehicle(vehicle);
+      onVehicleSelect(vehicle); // Notify parent
+    }
+  };
+
+  const handleMapClick = () => {
+    setSelectedVehicle(null);
+    onVehicleSelect(null);
+  };
+
   return (
     <>
-      {vehicles.map((vehicle) => (
-        <VehicleMarker
-          key={vehicle.vehicleId}
-          vehicle={vehicle}
-          onClick={() => onVehicleSelect(vehicle)}
-          onShowRouteHistory={() => onShowRouteHistory(vehicle)}
-          isSelected={externalSelectedVehicle?.vehicleId === vehicle.vehicleId}
-        />
-      ))}
+       <Map onClick={handleMapClick}>
+        {vehicles.map((vehicle) => (
+          <VehicleMarker
+            key={vehicle.vehicleId}
+            vehicle={vehicle}
+            onClick={() => handleMarkerClick(vehicle)}
+            isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId}
+          />
+        ))}
 
-      <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
-      <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />
+        {selectedVehicle && (
+          <AdvancedMarker
+            position={{ lat: selectedVehicle.latitude, lng: selectedVehicle.longitude }}
+            // Offset the button slightly
+            pixelOffset={new google.maps.Size(0, -50)}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-background hover:bg-muted"
+              onClick={(e) => {
+                  e.stopPropagation();
+                  onShowRouteHistory(selectedVehicle);
+              }}
+            >
+              <History className="mr-2 h-4 w-4" />
+              Show Route History
+            </Button>
+          </AdvancedMarker>
+        )}
+
+        <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
+        <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />
+      </Map>
     </>
   );
 }
