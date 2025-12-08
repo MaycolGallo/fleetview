@@ -138,7 +138,7 @@ function MapControl({
             <VehicleMarker
             key={vehicle.vehicleId}
             vehicle={vehicle}
-            onClick={() => handleVehicleClick(vehicle)}
+            onVehicleSelect={() => handleVehicleClick(vehicle)}
             isSelected={externalSelectedVehicle?.vehicleId === vehicle.vehicleId || infoVehicle?.vehicleId === vehicle.vehicleId}
             onAction={onAction}
             />
