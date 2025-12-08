@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import { VehicleFilters } from './vehicle-filters';
 import { RouteHistorySheet } from './route-history-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft } from 'lucide-react';
+import { ArrowLeft, PanelLeft, HardDriveUpload } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VehicleList } from './vehicle-list';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -19,6 +19,15 @@ import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { Switch } from './ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -176,7 +185,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       <div className="relative h-screen w-screen bg-background">
         <header className="absolute top-0 left-0 p-4 z-20">
           <div className="flex flex-col items-start gap-2">
-            <div className="rounded-lg shadow-md border border-zinc-700 bg-zinc-900/90 backdrop-blur-sm p-1 flex flex-col gap-1">
+            <div className="rounded-lg shadow-md border border-zinc-700 bg-zinc-900/90 backdrop-blur-sm p-1 flex items-start gap-1">
                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hover:bg-zinc-700/80">
@@ -237,6 +246,30 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                        </div>
                     </PopoverContent>
                 </Popover>
+
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hover:bg-zinc-700/80">
+                        <HardDriveUpload />
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Import Data</DialogTitle>
+                      <DialogDescription>
+                        Import vehicle and route data from a local file. This will overwrite existing data.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                       <p className="text-sm text-muted-foreground">
+                         This feature is not yet implemented.
+                       </p>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" disabled>Import</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
             </div>
             
             {routeHistoryVehicle && (
@@ -253,7 +286,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           <FleetMap
             apiKey={apiKey}
             vehicles={filteredVehicles}
-            onShowRouteHistory={handleShowRouteHistory}
+            onVehicleSelect={handlePanToVehicle}
             selectedVehicle={routeHistoryVehicle || selectedVehicle}
             routePath={routePath}
             highlightedSegment={highlightedSegment}
