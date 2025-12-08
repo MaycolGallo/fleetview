@@ -3,7 +3,7 @@
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -22,6 +22,7 @@ interface VehicleMarkerProps {
   isSelected: boolean;
   onClick: () => void;
   onAction?: (action: VehicleAction, vehicle: Vehicle) => void;
+  onVehicleSelect: (vehicle: Vehicle | null) => void;
 }
 
 const contextMenuItems = [
@@ -60,7 +61,7 @@ function ContextMenu({
     return createPortal(
         <>
             <div 
-                className="fixed inset-0 z-40" 
+                className="fixed inset-0 z-[51]" 
                 onClick={onClose} 
                 onContextMenu={(e) => {
                     e.preventDefault();
@@ -68,7 +69,7 @@ function ContextMenu({
                 }}
             />
             <div
-                className="fixed z-50 bg-popover border border-border rounded-md shadow-lg p-1 min-w-[200px]"
+                className="fixed z-[52] bg-popover border border-border rounded-md shadow-lg p-1 min-w-[200px]"
                 style={{ top: position.y, left: position.x }}
             >
                 <div className="px-2 py-1.5 text-sm font-semibold border-b border-border mb-1">
@@ -101,7 +102,8 @@ export function VehicleMarker({
   vehicle, 
   isSelected, 
   onClick, 
-  onAction
+  onAction,
+  onVehicleSelect,
 }: VehicleMarkerProps) {
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
@@ -109,6 +111,7 @@ export function VehicleMarker({
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    onVehicleSelect(vehicle);
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
     setContextMenuOpen(true);
   };

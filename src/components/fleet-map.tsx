@@ -5,6 +5,9 @@ import { APIProvider, Map, useMap, ColorScheme, AdvancedMarker } from '@vis.gl/r
 import type { Vehicle } from '@/lib/types';
 import React, { useEffect, useRef, useState } from 'react';
 import { VehicleMarker, type VehicleAction } from './vehicle-marker';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
+import { XIcon } from 'lucide-react';
 
 interface FleetMapProps {
   apiKey: string;
@@ -85,6 +88,7 @@ function MapControl({
   externalSelectedVehicle: Vehicle | null;
 }) {
   const map = useMap();
+  const [infoVehicle, setInfoVehicle] = useState<Vehicle | null>(null);
 
   useEffect(() => {
     if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
@@ -103,22 +107,82 @@ function MapControl({
   
   const handleMapClick = () => {
     onVehicleSelect(null);
+    setInfoVehicle(null);
   };
+
+  const handleVehicleClick = (vehicle: Vehicle) => {
+    onVehicleSelect(vehicle);
+    setInfoVehicle(vehicle);
+  }
+
+  // When external selection changes (e.g. from list), close local info window
+  useEffect(() => {
+    if (externalSelectedVehicle === null) {
+      setInfoVehicle(null);
+    }
+  }, [externalSelectedVehicle]);
 
 
   return (
     <>
-      {vehicles.map((vehicle) => (
-        <VehicleMarker
-          key={vehicle.vehicleId}
-          vehicle={vehicle}
-          onClick={() => onVehicleSelect(vehicle)}
-          isSelected={externalSelectedVehicle?.vehicleId === vehicle.vehicleId}
-          onAction={onAction}
-        />
-      ))}
+    <Map 
+        defaultCenter={{ lat: -12.046374, lng: -77.042793 }}
+        defaultZoom={13}
+        gestureHandling={'greedy'}
+        disableDefaultUI={true}
+        onClick={handleMapClick}
+    >
+        {vehicles.map((vehicle) => (
+            <VehicleMarker
+            key={vehicle.vehicleId}
+            vehicle={vehicle}
+            onClick={() => handleVehicleClick(vehicle)}
+            isSelected={externalSelectedVehicle?.vehicleId === vehicle.vehicleId || infoVehicle?.vehicleId === vehicle.vehicleId}
+            onAction={onAction}
+            onVehicleSelect={onVehicleSelect}
+            />
+        ))}
+
+        {infoVehicle && (
+            <AdvancedMarker
+                position={{lat: infoVehicle.latitude, lng: infoVehicle.longitude}}
+            >
+                <div className="bg-popover text-popover-foreground rounded-lg shadow-lg p-3 w-60 border border-border">
+                    <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold">{infoVehicle.vehicleId}</h4>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setInfoVehicle(null)}>
+                            <XIcon className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className='space-y-2 text-sm'>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Status:</span>
+                            <Badge variant={
+                                infoVehicle.status === 'active' ? 'default' :
+                                infoVehicle.status === 'idle' ? 'secondary' : 'destructive'
+                            } className="capitalize">
+                                {infoVehicle.status.replace('-', ' ')}
+                            </Badge>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-muted-foreground">Coords:</span>
+                            <span className='font-mono text-xs'>{infoVehicle.latitude.toFixed(4)}, {infoVehicle.longitude.toFixed(4)}</span>
+                        </div>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="w-full mt-3"
+                      onClick={() => onAction('show-route-history', infoVehicle)}
+                    >
+                      Show Route History
+                    </Button>
+                </div>
+            </AdvancedMarker>
+        )}
+
       <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
       <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />
+    </Map>
     </>
   );
 }
@@ -130,16 +194,7 @@ export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory
 
   return (
     <APIProvider apiKey={apiKey}>
-      <Map
-        defaultCenter={defaultCenter}
-        defaultZoom={defaultZoom}
-        gestureHandling={'greedy'}
-        mapId="fleetview-map"
-        className="w-full h-full"
-        disableDefaultUI={true}
-        colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
-        onClick={() => onVehicleSelect(null)}
-      >
+      <div className="w-full h-full">
         <MapControl 
           vehicles={vehicles}
           onVehicleSelect={onVehicleSelect}
@@ -150,7 +205,7 @@ export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory
           highlightedSegment={highlightedSegment}
           routeSegmentToFit={routeSegmentToFit}
         />
-      </Map>
+      </div>
     </APIProvider>
   );
 }
