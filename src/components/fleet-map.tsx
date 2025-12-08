@@ -136,11 +136,11 @@ function MapControl({
     >
         {vehicles.map((vehicle) => (
             <VehicleMarker
-            key={vehicle.vehicleId}
-            vehicle={vehicle}
-            onVehicleSelect={() => handleVehicleClick(vehicle)}
-            isSelected={externalSelectedVehicle?.vehicleId === vehicle.vehicleId || infoVehicle?.vehicleId === vehicle.vehicleId}
-            onAction={onAction}
+              key={vehicle.vehicleId}
+              vehicle={vehicle}
+              onVehicleSelect={() => handleVehicleClick(vehicle)}
+              isSelected={externalSelectedVehicle?.vehicleId === vehicle.vehicleId || infoVehicle?.vehicleId === vehicle.vehicleId}
+              onAction={onAction}
             />
         ))}
 
