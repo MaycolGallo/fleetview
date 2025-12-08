@@ -9,9 +9,9 @@ import {
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger, 
   DropdownMenuLabel,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 
@@ -27,7 +27,7 @@ export type VehicleAction =
 interface VehicleMarkerProps {
   vehicle: Vehicle;
   isSelected: boolean;
-  onClick: () => void;
+  onVehicleSelect: (vehicle: Vehicle) => void;
   onAction?: (action: VehicleAction, vehicle: Vehicle) => void;
 }
 
@@ -43,38 +43,38 @@ const contextMenuItems = [
 export function VehicleMarker({ 
   vehicle, 
   isSelected, 
-  onClick, 
+  onVehicleSelect,
   onAction
 }: VehicleMarkerProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const handleMenuAction = (action: VehicleAction) => {
-    onAction?.(action, vehicle);
-    setIsMenuOpen(false);
-  };
-  
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsMenuOpen(true);
   };
-
+  
   const handleLeftClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onClick();
+    onVehicleSelect(vehicle);
   }
+
+  const handleMenuAction = (action: VehicleAction) => {
+    onAction?.(action, vehicle);
+    setIsMenuOpen(false);
+  };
 
   return (
     <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-      <AdvancedMarker
-        position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-      >
-        <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild>
+        <AdvancedMarker
+          position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+        >
             <div onContextMenu={handleContextMenu} onClick={handleLeftClick}>
                 <VehiclePin status={vehicle.status} isSelected={isSelected} />
             </div>
-        </DropdownMenuTrigger>
-      </AdvancedMarker>
+        </AdvancedMarker>
+      </DropdownMenuTrigger>
       <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
         <DropdownMenuLabel>{vehicle.vehicleId}</DropdownMenuLabel>
         <DropdownMenuSeparator />
