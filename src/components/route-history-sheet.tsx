@@ -18,7 +18,7 @@ import { format, parseISO } from 'date-fns';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 
 interface RouteHistorySheetProps {
@@ -53,6 +53,19 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
+    const { totalStops, totalStopTime } = useMemo(() => {
+        return events.reduce(
+            (acc, event) => {
+                if (event.status === 'stop') {
+                    acc.totalStops += 1;
+                    acc.totalStopTime += event.durationMinutes;
+                }
+                return acc;
+            },
+            { totalStops: 0, totalStopTime: 0 }
+        );
+    }, [events]);
+
     useEffect(() => {
         itemRefs.current = itemRefs.current.slice(0, events.length);
     }, [events]);
@@ -71,7 +84,7 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
         <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
             <CardHeader>
               <CardTitle>Route History: {vehicle?.vehicleId}</CardTitle>
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Milestone className="w-4 h-4 text-primary" />
                   <span>
@@ -90,6 +103,17 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
                     </strong>
                   </span>
                 </div>
+                {totalStops > 0 && (
+                    <div className="flex items-center gap-2">
+                        <PauseCircle className="w-4 h-4 text-primary" />
+                        <span>
+                            {totalStops} stops{' '}
+                            <strong className="text-foreground">
+                                ({formatDuration(totalStopTime)})
+                            </strong>
+                        </span>
+                    </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="pb-4 flex-1">
