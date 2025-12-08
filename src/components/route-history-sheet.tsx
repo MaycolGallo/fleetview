@@ -122,6 +122,7 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
                   {events.map((event, index) => {
                     const Icon = statusIcons[event.status];
                     const isSelected = selectedSegmentIndex === index;
+                    const isClickable = event.status !== 'stop';
 
                     return (
                       <div
@@ -129,23 +130,26 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
                         ref={el => itemRefs.current[index] = el}
                         className={cn(
                           "flex-shrink-0 group transition-all duration-300",
-                           isSelected ? 'scale-105' : 'scale-100'
+                           isSelected && isClickable ? 'scale-105' : 'scale-100'
                         )}
                         style={{ width: index === events.length -1 ? 'auto' : '180px'}}
-                        onClick={() => onSegmentSelect(index)}
+                        onClick={isClickable ? () => onSegmentSelect(index) : undefined}
                       >
-                        <div className="relative flex flex-col items-center text-center cursor-pointer h-full">
+                        <div className={cn(
+                          "relative flex flex-col items-center text-center h-full",
+                          isClickable ? "cursor-pointer" : "cursor-default"
+                        )}>
                           {/* Timeline line */}
                           {index < events.length - 1 && (
                             <div className={cn(
                                 "absolute top-4 left-1/2 h-0.5 w-full bg-border transition-colors",
-                                isSelected ? 'bg-primary' : 'group-hover:bg-primary'
+                                isSelected && isClickable ? 'bg-primary' : isClickable ? 'group-hover:bg-primary' : ''
                             )} />
                           )}
 
                           <div className={cn(
                               "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
-                              isSelected ? 'ring-primary' : 'ring-card group-hover:ring-primary'
+                              isSelected && isClickable ? 'ring-primary' : `ring-card ${isClickable ? 'group-hover:ring-primary' : ''}`
                           )}>
                             <Icon className="h-5 w-5 text-primary" />
                           </div>
@@ -153,7 +157,7 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
                           <div className="pt-2">
                              <p className={cn(
                                  "font-semibold capitalize text-sm transition-colors",
-                                 isSelected ? 'text-primary-foreground' : 'text-foreground'
+                                 isSelected && isClickable ? 'text-primary-foreground' : 'text-foreground'
                               )}>
                               {event.status}
                             </p>
