@@ -76,7 +76,8 @@ function MapControl({
   onVehicleSelect,
   onShowRouteHistory,
   onAction,
-  externalSelectedVehicle
+  externalSelectedVehicle,
+  isMapDark,
 }: {
   vehicles: Vehicle[];
   routePath: { lat: number; lng: number }[] | null;
@@ -86,6 +87,7 @@ function MapControl({
   onShowRouteHistory: (vehicle: Vehicle) => void;
   onAction: (action: VehicleAction, vehicle: Vehicle) => void;
   externalSelectedVehicle: Vehicle | null;
+  isMapDark: boolean;
 }) {
   const map = useMap();
   const [infoVehicle, setInfoVehicle] = useState<Vehicle | null>(null);
@@ -117,9 +119,7 @@ function MapControl({
 
   // When external selection changes (e.g. from list), close local info window
   useEffect(() => {
-    if (externalSelectedVehicle === null) {
-      setInfoVehicle(null);
-    }
+    setInfoVehicle(externalSelectedVehicle);
   }, [externalSelectedVehicle]);
 
 
@@ -130,7 +130,9 @@ function MapControl({
         defaultZoom={13}
         gestureHandling={'greedy'}
         disableDefaultUI={true}
+        mapId={'a3b0c4I2e9f3g4h5'}
         onClick={handleMapClick}
+        scheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
     >
         {vehicles.map((vehicle) => (
             <VehicleMarker
@@ -189,9 +191,7 @@ function MapControl({
 
 
 export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory, onAction, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onVehicleSelect }: FleetMapProps) {
-  const defaultCenter = { lat: -12.046374, lng: -77.042793 };
-  const defaultZoom = 13;
-
+  
   return (
     <APIProvider apiKey={apiKey}>
       <div className="w-full h-full">
@@ -204,6 +204,7 @@ export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory
           routePath={routePath}
           highlightedSegment={highlightedSegment}
           routeSegmentToFit={routeSegmentToFit}
+          isMapDark={isMapDark}
         />
       </div>
     </APIProvider>
