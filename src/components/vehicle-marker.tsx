@@ -1,9 +1,10 @@
+
 "use client";
 
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -20,9 +21,8 @@ export type VehicleAction =
 interface VehicleMarkerProps {
   vehicle: Vehicle;
   isSelected: boolean;
-  onClick: () => void;
+  onVehicleSelect: (vehicle: Vehicle) => void;
   onAction?: (action: VehicleAction, vehicle: Vehicle) => void;
-  onVehicleSelect: (vehicle: Vehicle | null) => void;
 }
 
 const contextMenuItems = [
@@ -101,9 +101,8 @@ function ContextMenu({
 export function VehicleMarker({ 
   vehicle, 
   isSelected, 
-  onClick, 
-  onAction,
   onVehicleSelect,
+  onAction
 }: VehicleMarkerProps) {
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
@@ -111,14 +110,13 @@ export function VehicleMarker({
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onVehicleSelect(vehicle);
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
     setContextMenuOpen(true);
   };
   
   const handleLeftClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onClick();
+    onVehicleSelect(vehicle);
   }
 
   const handleMenuAction = (action: VehicleAction, targetVehicle: Vehicle) => {
