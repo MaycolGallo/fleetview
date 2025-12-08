@@ -1,14 +1,10 @@
 
 "use client";
 
-import { APIProvider, Map, useMap, ColorScheme, InfoWindow } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, useMap, ColorScheme } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
 import React, { useEffect, useRef, useState } from 'react';
 import { VehicleMarker } from './vehicle-marker';
-import { Badge } from "./ui/badge";
-import { Button } from './ui/button';
-import { AlertCircle, CheckCircle, Clock, Route } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface FleetMapProps {
   apiKey: string;
@@ -20,24 +16,6 @@ interface FleetMapProps {
   routeSegmentToFit: { lat: number; lng: number }[] | null;
   isMapDark: boolean;
 }
-
-const statusDetails = {
-    'active': {
-        icon: CheckCircle,
-        className: 'text-green-500 bg-green-900/20 border-green-500/30',
-        text: 'text-green-400'
-    },
-    'idle': {
-        icon: Clock,
-        className: 'text-amber-500 bg-amber-900/20 border-amber-500/30',
-        text: 'text-amber-400'
-    },
-    'out-of-service': {
-        icon: AlertCircle,
-        className: 'text-red-500 bg-red-900/20 border-red-500/30',
-        text: 'text-red-400'
-    }
-};
 
 function RoutePolyline({ routePath, color, weight, zIndex = 1 }: { routePath: { lat: number; lng: number }[] | null, color: string, weight: number, zIndex?: number }) {
   const map = useMap();
@@ -103,12 +81,6 @@ function MapControl({
   externalSelectedVehicle: Vehicle | null;
 }) {
   const map = useMap();
-  const [internalSelectedVehicle, setInternalSelectedVehicle] = useState<Vehicle | null>(null);
-
-  // Sync internal state with external prop
-  useEffect(() => {
-    setInternalSelectedVehicle(externalSelectedVehicle);
-  }, [externalSelectedVehicle]);
   
   useEffect(() => {
     if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
@@ -125,75 +97,16 @@ function MapControl({
     }
   }, [map, routeSegmentToFit]);
 
-  const handleMarkerClick = (vehicle: Vehicle) => {
-    setInternalSelectedVehicle(vehicle);
-  };
-  
-  const handleInfoWindowClose = () => {
-    setInternalSelectedVehicle(null);
-  }
-
-  const status = internalSelectedVehicle ? statusDetails[internalSelectedVehicle.status] : null;
-  const StatusIcon = status?.icon;
-
   return (
     <>
       {vehicles.map((vehicle) => (
         <VehicleMarker
           key={vehicle.vehicleId}
           vehicle={vehicle}
-          onClick={() => handleMarkerClick(vehicle)}
-          isSelected={internalSelectedVehicle?.vehicleId === vehicle.vehicleId}
+          onClick={() => onShowRouteHistory(vehicle)}
+          isSelected={externalSelectedVehicle?.vehicleId === vehicle.vehicleId}
         />
       ))}
-
-      {internalSelectedVehicle && (
-        <InfoWindow
-          position={{ lat: internalSelectedVehicle.latitude, lng: internalSelectedVehicle.longitude }}
-          onCloseClick={handleInfoWindowClose}
-          pixelOffset={new google.maps.Size(0, -40)}
-        >
-          <div className="p-2 bg-card text-card-foreground rounded-lg shadow-lg w-80">
-             <div className="grid gap-4">
-              <div className="space-y-2">
-                <h4 className="font-medium leading-none text-xl">{internalSelectedVehicle.vehicleId}</h4>
-                <p className="text-sm text-muted-foreground">Vehicle Details</p>
-              </div>
-              <div className="grid gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Status</span>
-                  {status && StatusIcon && (
-                    <Badge variant="outline" className={cn("capitalize text-sm border", status.className, status.text)}>
-                      <StatusIcon className="mr-2 h-4 w-4" />
-                      {internalSelectedVehicle.status.replace('-', ' ')}
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Latitude</span>
-                  <span className="font-mono text-foreground">{internalSelectedVehicle.latitude.toFixed(6)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Longitude</span>
-                  <span className="font-mono text-foreground">{internalSelectedVehicle.longitude.toFixed(6)}</span>
-                </div>
-              </div>
-              <Button 
-                  variant="outline" 
-                  className="w-full mt-4"
-                  onClick={() => {
-                    onShowRouteHistory(internalSelectedVehicle);
-                    setInternalSelectedVehicle(null);
-                  }}
-              >
-                  <Route className="mr-2 h-4 w-4" />
-                  Show Route History
-              </Button>
-            </div>
-          </div>
-        </InfoWindow>
-      )}
-
 
       <RoutePolyline routePath={routePath} color="#FFC107" weight={4} zIndex={1} />
       <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={6} zIndex={2} />

@@ -66,19 +66,32 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       return { ...state, statusFilter: action.payload };
 
     case 'SELECT_VEHICLE':
-      // If the same vehicle is selected, deselect it. Otherwise, select the new one.
-      const newSelectedVehicle = state.selectedVehicle?.vehicleId === action.payload?.vehicleId ? null : action.payload;
       return { 
         ...state, 
-        selectedVehicle: newSelectedVehicle,
-        routeSegmentToFit: newSelectedVehicle ? [{ lat: newSelectedVehicle.latitude, lng: newSelectedVehicle.longitude }] : null 
+        selectedVehicle: action.payload,
+        routeSegmentToFit: action.payload ? [{ lat: action.payload.latitude, lng: action.payload.longitude }] : null 
       };
     
     case 'PAN_TO_VEHICLE':
-      return { ...state, selectedVehicle: null, routeSegmentToFit: [{ lat: action.payload.latitude, lng: action.payload.longitude }] };
+      return { ...state, selectedVehicle: action.payload, routeSegmentToFit: [{ lat: action.payload.latitude, lng: action.payload.longitude }] };
 
     case 'SET_ROUTE_SHEET_OPEN':
-        return { ...state, isRouteSheetOpen: action.payload };
+      // If we're closing the sheet, also go back to the main fleet view.
+      if (action.payload === false && state.isRouteSheetOpen === true) {
+        return {
+          ...state,
+          routeHistoryVehicle: null,
+          routePath: null,
+          routeEvents: [],
+          selectedVehicle: null,
+          isRouteSheetOpen: false,
+          routeSegmentToFit: null,
+          highlightedSegment: null,
+          selectedSegmentIndex: null,
+          isLoadingRoute: false,
+        }
+      }
+      return { ...state, isRouteSheetOpen: action.payload };
 
     case 'START_ROUTE_LOADING':
       return {
