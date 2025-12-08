@@ -4,7 +4,7 @@
 import { APIProvider, Map, useMap, ColorScheme, AdvancedMarker } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
 import React, { useEffect, useRef, useState } from 'react';
-import { VehicleMarker } from './vehicle-marker';
+import { VehicleMarker, type VehicleAction } from './vehicle-marker';
 import { Button } from './ui/button';
 import { History } from 'lucide-react';
 
@@ -13,6 +13,7 @@ interface FleetMapProps {
   vehicles: Vehicle[];
   onVehicleSelect: (vehicle: Vehicle | null) => void;
   onShowRouteHistory: (vehicle: Vehicle) => void;
+  onAction: (action: VehicleAction, vehicle: Vehicle) => void;
   selectedVehicle: Vehicle | null; 
   routePath: { lat: number; lng: number }[] | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
@@ -75,6 +76,7 @@ function MapControl({
   routeSegmentToFit,
   onVehicleSelect,
   onShowRouteHistory,
+  onAction,
   externalSelectedVehicle
 }: {
   vehicles: Vehicle[];
@@ -83,6 +85,7 @@ function MapControl({
   routeSegmentToFit: { lat: number; lng: number }[] | null;
   onVehicleSelect: (vehicle: Vehicle | null) => void;
   onShowRouteHistory: (vehicle: Vehicle) => void;
+  onAction: (action: VehicleAction, vehicle: Vehicle) => void;
   externalSelectedVehicle: Vehicle | null;
 }) {
   const map = useMap();
@@ -131,10 +134,11 @@ function MapControl({
           vehicle={vehicle}
           onClick={() => handleMarkerClick(vehicle)}
           isSelected={internalSelectedVehicle?.vehicleId === vehicle.vehicleId}
+          onAction={onAction}
         />
       ))}
 
-      {internalSelectedVehicle && (
+      {internalSelectedVehicle && !routePath && (
         <AdvancedMarker
           position={{ lat: internalSelectedVehicle.latitude, lng: internalSelectedVehicle.longitude }}
           pixelOffset={new google.maps.Size(0, -50)}
@@ -161,7 +165,7 @@ function MapControl({
 }
 
 
-export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onVehicleSelect }: FleetMapProps) {
+export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory, onAction, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onVehicleSelect }: FleetMapProps) {
   const defaultCenter = { lat: -12.046374, lng: -77.042793 };
   const defaultZoom = 13;
 
@@ -185,6 +189,7 @@ export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory
           vehicles={vehicles}
           onVehicleSelect={onVehicleSelect}
           onShowRouteHistory={onShowRouteHistory}
+          onAction={onAction}
           externalSelectedVehicle={selectedVehicle}
           routePath={routePath}
           highlightedSegment={highlightedSegment}

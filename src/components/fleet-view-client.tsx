@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
@@ -28,6 +27,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import type { VehicleAction } from './vehicle-marker';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -168,6 +168,31 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     dispatch({ type: 'SET_MAP_DARK_MODE', payload: isDark });
   }
 
+  const handleVehicleAction = (action: VehicleAction, vehicle: Vehicle) => {
+    switch (action) {
+      case 'show-route-history':
+        handleShowRouteHistory(vehicle);
+        break;
+      case 'center-map':
+        handlePanToVehicle(vehicle);
+        break;
+      case 'show-details':
+        toast({ title: 'Vehicle Details', description: `Showing details for ${vehicle.vehicleId}` });
+        break;
+      case 'track-vehicle':
+        toast({ title: 'Track Vehicle', description: `Tracking ${vehicle.vehicleId}` });
+        break;
+      case 'view-alerts':
+        toast({ title: 'View Alerts', description: `Viewing alerts for ${vehicle.vehicleId}` });
+        break;
+      case 'maintenance':
+        toast({ title: 'Maintenance Log', description: `Opening maintenance log for ${vehicle.vehicleId}` });
+        break;
+      default:
+        console.warn(`Unknown vehicle action: ${action}`);
+    }
+  };
+
   const areAllFilteredVisible = listVehicles.every(v => visibleVehicleIds.has(v.vehicleId));
 
 
@@ -290,6 +315,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             vehicles={filteredVehicles}
             onVehicleSelect={handlePanToVehicle}
             onShowRouteHistory={handleShowRouteHistory}
+            onAction={handleVehicleAction}
             selectedVehicle={routeHistoryVehicle || selectedVehicle}
             routePath={routePath}
             highlightedSegment={highlightedSegment}
