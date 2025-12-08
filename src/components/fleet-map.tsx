@@ -148,7 +148,7 @@ function MapControl({
             <AdvancedMarker
                 position={{lat: infoVehicle.latitude, lng: infoVehicle.longitude}}
             >
-                <div className="bg-popover text-popover-foreground rounded-lg shadow-lg p-3 w-60 border border-border transform -translate-y-[calc(100%+2.5rem)]">
+                <div className="bg-popover text-popover-foreground rounded-lg shadow-lg p-3 w-60 border border-border transform -translate-y-[calc(100%+1rem)]">
                     <div className="flex justify-between items-start mb-2">
                         <h4 className="font-semibold">{infoVehicle.vehicleId}</h4>
                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setInfoVehicle(null)}>
