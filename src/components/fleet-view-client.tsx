@@ -83,11 +83,9 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     dispatch({ type: 'BACK_TO_FLEET' });
   };
 
-  const handlePanToVehicle = (vehicle: Vehicle | null) => {
+  const handlePanToVehicle = (vehicle: Vehicle) => {
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
-    if (vehicle) {
-        setPopoverOpen(false);
-    }
+    setPopoverOpen(false);
   };
 
   const handleFilterChange = (filter: VehicleStatus | 'all') => {
@@ -139,7 +137,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     return vehicles.filter(v => v.status === statusFilter);
   }, [vehicles, statusFilter]);
 
-  const areAllFilteredVisible = listVehicles.every(v => visibleVehicleIds.has(v.vehicleId));
+  const areAllFilteredVisible = listVehicles.length > 0 && listVehicles.every(v => visibleVehicleIds.has(v.vehicleId));
 
 
   if (error) {

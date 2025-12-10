@@ -144,7 +144,8 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
       routeSegmentToFit.forEach(point => bounds.extend(point));
       map.fitBounds(bounds, 100);
     }
-  }, [map, routeSegmentToFit]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, routeSegmentToFit, JSON.stringify(routeSegmentToFit)]);
   
   const handleMapClick = () => {
     dispatch({ type: 'SELECT_VEHICLE', payload: null });

@@ -99,11 +99,10 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         return { 
           ...state, 
           selectedVehicle: action.payload,
-          // Do not pan the map when just selecting a vehicle
-          routeSegmentToFit: null, 
+          routeSegmentToFit: null, // Don't pan on simple select
         };
     
-    case 'PAN_TO_VEHICLE':
+    case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
         return { ...state, selectedVehicle: null, routeSegmentToFit: null };
       }
@@ -112,6 +111,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         selectedVehicle: action.payload, 
         routeSegmentToFit: [{ lat: action.payload.latitude, lng: action.payload.longitude }] 
       };
+    }
 
     case 'SET_ROUTE_SHEET_OPEN':
       // If we're closing the sheet, also go back to the main fleet view.
@@ -134,7 +134,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     case 'START_ROUTE_LOADING':
       return {
         ...state,
-        selectedVehicle: null,
+        selectedVehicle: null, // Clear selection when starting to load route
         isLoadingRoute: true,
         routeHistoryVehicle: action.payload,
       };
