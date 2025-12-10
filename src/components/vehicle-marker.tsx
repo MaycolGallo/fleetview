@@ -29,7 +29,7 @@ export type VehicleAction =
 interface VehicleMarkerProps {
   vehicle: Vehicle;
   isSelected: boolean;
-  onSelect: (vehicle: Vehicle) => void;
+  onVehicleSelect: (vehicle: Vehicle) => void;
   onAction?: (action: VehicleAction, vehicle: Vehicle) => void;
 }
 
@@ -155,7 +155,7 @@ function MobileContextMenuDrawer({
 export function VehicleMarker({ 
   vehicle, 
   isSelected, 
-  onSelect,
+  onVehicleSelect,
   onAction
 }: VehicleMarkerProps) {
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
@@ -174,7 +174,7 @@ export function VehicleMarker({
   
   const handleLeftClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onSelect(vehicle);
+    onVehicleSelect(vehicle);
   }
 
   const handleTouchStart = (e: React.TouchEvent) => {
