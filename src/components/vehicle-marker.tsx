@@ -8,6 +8,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+
 
 export type VehicleAction = 
   | 'show-route-history'
@@ -21,7 +29,7 @@ export type VehicleAction =
 interface VehicleMarkerProps {
   vehicle: Vehicle;
   isSelected: boolean;
-  onVehicleSelect: (vehicle: Vehicle) => void;
+  onSelect: (vehicle: Vehicle) => void;
   onAction?: (action: VehicleAction, vehicle: Vehicle) => void;
 }
 
@@ -98,34 +106,87 @@ function ContextMenu({
     );
 }
 
+function MobileContextMenuDrawer({
+    isOpen,
+    onOpenChange,
+    vehicle,
+    onAction,
+}: {
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
+    vehicle: Vehicle;
+    onAction: (action: VehicleAction, vehicle: Vehicle) => void;
+}) {
+    const handleAction = (action: VehicleAction) => {
+        onAction(action, vehicle);
+        onOpenChange(false);
+    };
+
+    return (
+        <Drawer open={isOpen} onOpenChange={onOpenChange}>
+            <DrawerContent>
+                <DrawerHeader className="text-left">
+                    <DrawerTitle>{vehicle.vehicleId}</DrawerTitle>
+                </DrawerHeader>
+                <div className="p-4 pt-0">
+                    <div className="flex flex-col gap-1">
+                         {contextMenuItems.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <Button
+                                    key={item.action}
+                                    variant="ghost"
+                                    size="lg"
+                                    className="w-full justify-start text-base py-6"
+                                    onClick={() => handleAction(item.action)}
+                                >
+                                    <Icon className="mr-3 h-5 w-5" />
+                                    {item.label}
+                                </Button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </DrawerContent>
+        </Drawer>
+    )
+}
+
 export function VehicleMarker({ 
   vehicle, 
   isSelected, 
-  onVehicleSelect,
+  onSelect,
   onAction
 }: VehicleMarkerProps) {
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
+  const isMobile = useIsMobile();
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isMobile) return;
     setContextMenuPosition({ x: e.clientX, y: e.clientY });
     setContextMenuOpen(true);
   };
   
   const handleLeftClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onVehicleSelect(vehicle);
+    onSelect(vehicle);
   }
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.stopPropagation();
     pressTimer.current = setTimeout(() => {
-      const touch = e.touches[0];
-      setContextMenuPosition({ x: touch.clientX, y: touch.clientY });
-      setContextMenuOpen(true);
+      if (isMobile) {
+        setDrawerOpen(true);
+      } else {
+        const touch = e.touches[0];
+        setContextMenuPosition({ x: touch.clientX, y: touch.clientY });
+        setContextMenuOpen(true);
+      }
     }, 500); // 500ms for a long press
   };
 
@@ -169,12 +230,21 @@ export function VehicleMarker({
         </div>
       </AdvancedMarker>
 
-      {contextMenuOpen && (
+      {contextMenuOpen && !isMobile && (
         <ContextMenu
           vehicle={vehicle}
           position={contextMenuPosition}
           onAction={handleMenuAction}
           onClose={() => setContextMenuOpen(false)}
+        />
+      )}
+      
+      {isMobile && (
+         <MobileContextMenuDrawer
+            isOpen={drawerOpen}
+            onOpenChange={setDrawerOpen}
+            vehicle={vehicle}
+            onAction={handleMenuAction}
         />
       )}
     </>
