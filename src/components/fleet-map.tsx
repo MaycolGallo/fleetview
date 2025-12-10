@@ -4,7 +4,7 @@
 
 import { APIProvider, Map, useMap, ColorScheme, AdvancedMarker } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { VehicleMarker, type VehicleAction } from './vehicle-marker';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -145,7 +145,7 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
       map.fitBounds(bounds, 100);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, routeSegmentToFit, JSON.stringify(routeSegmentToFit)]);
+  }, [map, JSON.stringify(routeSegmentToFit)]);
   
   const handleMapClick = () => {
     dispatch({ type: 'SELECT_VEHICLE', payload: null });
@@ -167,15 +167,6 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
 
   return (
     <>
-    <Map 
-        defaultCenter={{ lat: -12.046374, lng: -77.042793 }}
-        defaultZoom={13}
-        gestureHandling={'greedy'}
-        disableDefaultUI={true}
-        mapId={'a3b0c4d2e9f3g4h5'}
-        onClick={handleMapClick}
-        colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
-    >
         {filteredVehicles.map((vehicle) => (
             <VehicleMarker
               key={vehicle.vehicleId}
@@ -227,20 +218,33 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
 
       <RoutePolyline routePath={routePath} color="#FFC107" weight={5} zIndex={1} onClick={handleRouteClick} />
       <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={7} zIndex={2} />
-    </Map>
     </>
   );
 }
 
 
 export function FleetMap({ apiKey, onAction }: FleetMapProps) {
+  const { state, dispatch } = useFleet();
+  const { isMapDark } = state;
   
+  const handleMapClick = () => {
+    dispatch({ type: 'SELECT_VEHICLE', payload: null });
+  };
+
   return (
     <APIProvider apiKey={apiKey}>
       <div className="w-full h-full">
-        <MapControl 
-          onAction={onAction}
-        />
+        <Map 
+            defaultCenter={{ lat: -12.046374, lng: -77.042793 }}
+            defaultZoom={13}
+            gestureHandling={'greedy'}
+            disableDefaultUI={true}
+            mapId={'a3b0c4d2e9f3g4h5'}
+            onClick={handleMapClick}
+            colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
+        >
+          <MapControl onAction={onAction} />
+        </Map>
       </div>
     </APIProvider>
   );
