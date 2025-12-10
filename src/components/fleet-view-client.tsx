@@ -12,8 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { VehicleList } from './vehicle-list';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from './ui/separator';
-import { useFleetState } from '@/hooks/use-fleet-state';
-import { useQuery } from '@tanstack/react-query';
 import { Skeleton } from './ui/skeleton';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
@@ -28,6 +26,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import type { VehicleAction } from './vehicle-marker';
+import { useFleet } from '@/context/fleet-context';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -39,40 +38,8 @@ interface FleetViewClientProps {
   apiKey: string;
 }
 
-async function fetchVehicles(): Promise<Vehicle[]> {
-    const response = await fetch('/api/vehicles');
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-}
-
-async function fetchRouteHistory(vehicle: Vehicle): Promise<RouteHistory> {
-  const response = await fetch('/api/routes', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      vehicleId: vehicle.vehicleId,
-      startLat: vehicle.latitude,
-      startLng: vehicle.longitude,
-    }),
-  });
-  if (!response.ok) {
-    throw new Error('Network response was not ok');
-  }
-  return response.json();
-}
-
-
 export function FleetViewClient({ apiKey }: FleetViewClientProps) {
-  const { data: initialVehicles, isLoading: isLoadingVehicles, error } = useQuery({
-    queryKey: ['vehicles'],
-    queryFn: fetchVehicles,
-  });
-
-  const [state, dispatch] = useFleetState(initialVehicles || []);
+  const { state, dispatch, isLoadingVehicles, error } = useFleet();
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const {
@@ -80,29 +47,26 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     statusFilter,
     selectedVehicle,
     routeHistoryVehicle,
-    routePath,
-    routeEvents,
-    isRouteSheetOpen,
-    isLoadingRoute,
-    routeSegmentToFit,
-    selectedSegmentIndex,
-    highlightedSegment,
-    visibleVehicleIds,
     isMapDark,
+    visibleVehicleIds,
   } = state;
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (initialVehicles) {
-      dispatch({ type: 'SET_VEHICLES', payload: initialVehicles });
-    }
-  }, [initialVehicles, dispatch]);
-
   const handleShowRouteHistory = async (vehicle: Vehicle) => {
     dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
     try {
-      const { routePoints, routeEvents } = await fetchRouteHistory(vehicle);
+      const response = await fetch('/api/routes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vehicleId: vehicle.vehicleId,
+          startLat: vehicle.latitude,
+          startLng: vehicle.longitude,
+        }),
+      });
+      if (!response.ok) throw new Error('Network response was not ok');
+      const { routePoints, routeEvents }: RouteHistory = await response.json();
       dispatch({ type: 'SET_ROUTE_HISTORY', payload: { routePoints, routeEvents } });
     } catch (error) {
       console.error("Failed to fetch route history:", error);
@@ -119,23 +83,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     dispatch({ type: 'BACK_TO_FLEET' });
   };
 
-  const filteredVehicles = useMemo(() => {
-    if (routeHistoryVehicle) {
-      return [routeHistoryVehicle];
-    }
-    return vehicles.filter(v => 
-      visibleVehicleIds.has(v.vehicleId) &&
-      (statusFilter === 'all' || v.status === statusFilter)
-    );
-  }, [vehicles, statusFilter, routeHistoryVehicle, visibleVehicleIds]);
-
-  const listVehicles = useMemo(() => {
-     if (statusFilter === 'all') {
-      return vehicles;
-    }
-    return vehicles.filter(v => v.status === statusFilter);
-  }, [vehicles, statusFilter]);
-
   const handlePanToVehicle = (vehicle: Vehicle | null) => {
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
     if (vehicle) {
@@ -143,22 +90,14 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     }
   };
 
-  const handleSegmentSelect = (segmentIndex: number) => {
-    dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: segmentIndex });
-  };
-
   const handleFilterChange = (filter: VehicleStatus | 'all') => {
     dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
   };
 
-  const handleRouteSheetOpenChange = (isOpen: boolean) => {
-    dispatch({ type: 'SET_ROUTE_SHEET_OPEN', payload: isOpen });
-  }
-
   const handleVehicleVisibilityToggle = (vehicleId: string) => {
     dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: vehicleId });
   };
-
+  
   const handleToggleAll = (isChecked: boolean) => {
     const vehicleIds = listVehicles.map(v => v.vehicleId);
     dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: vehicleIds, visible: isChecked } });
@@ -167,10 +106,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const handleMapThemeToggle = (isDark: boolean) => {
     dispatch({ type: 'SET_MAP_DARK_MODE', payload: isDark });
   }
-
-  const handleRouteClick = (pointIndex: number) => {
-    dispatch({ type: 'SELECT_MAP_SEGMENT', payload: pointIndex });
-  };
 
   const handleVehicleAction = (action: VehicleAction, vehicle: Vehicle) => {
     switch (action) {
@@ -196,6 +131,13 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         console.warn(`Unknown vehicle action: ${action}`);
     }
   };
+  
+  const listVehicles = useMemo(() => {
+     if (statusFilter === 'all') {
+      return vehicles;
+    }
+    return vehicles.filter(v => v.status === statusFilter);
+  }, [vehicles, statusFilter]);
 
   const areAllFilteredVisible = listVehicles.every(v => visibleVehicleIds.has(v.vehicleId));
 
@@ -316,19 +258,11 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         <main className="h-full w-full z-10">
           <FleetMap
             apiKey={apiKey}
-            vehicles={filteredVehicles}
-            onVehicleSelect={handlePanToVehicle}
             onAction={handleVehicleAction}
-            onRouteClick={handleRouteClick}
-            selectedVehicle={selectedVehicle}
-            routePath={routePath}
-            highlightedSegment={highlightedSegment}
-            routeSegmentToFit={routeSegmentToFit}
-            isMapDark={isMapDark}
           />
         </main>
         
-        {(isLoadingRoute) && (
+        {state.isLoadingRoute && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30">
                 <div className="flex items-center gap-2 text-foreground">
                     <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
@@ -336,14 +270,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 </div>
             </div>
         )}
-        <RouteHistorySheet
-          isOpen={isRouteSheetOpen}
-          onOpenChange={handleRouteSheetOpenChange}
-          events={routeEvents}
-          vehicle={routeHistoryVehicle}
-          onSegmentSelect={handleSegmentSelect}
-          selectedSegmentIndex={selectedSegmentIndex}
-        />
+        <RouteHistorySheet />
       </div>
   );
 }

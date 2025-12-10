@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,15 +20,10 @@ import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
 import React, { useEffect, useMemo, useRef } from 'react';
+import { useFleet } from '@/context/fleet-context';
 
 
 interface RouteHistorySheetProps {
-  isOpen: boolean;
-  onOpenChange: (isOpen: boolean) => void;
-  events: RouteEvent[];
-  vehicle: Vehicle | null;
-  onSegmentSelect: (segmentIndex: number) => void;
-  selectedSegmentIndex: number | null;
 }
 
 const statusIcons = {
@@ -47,7 +43,9 @@ function formatDuration(minutes: number) {
   return result.trim();
 }
 
-function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegmentIndex }: Omit<RouteHistorySheetProps, 'isOpen' | 'onOpenChange'>) {
+function RouteHistoryContent({ onSegmentSelect }: { onSegmentSelect: (index: number) => void}) {
+    const { state } = useFleet();
+    const { events, vehicle, selectedSegmentIndex } = state;
     const totalDistance = events.reduce((sum, e) => sum + e.distanceKm, 0);
     const totalDuration = events.reduce((sum, e) => sum + e.durationMinutes, 0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -141,9 +139,9 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
                         )}>
                           {/* Timeline line */}
                           {index < events.length - 1 && (
-                            <div className={cn(
+                             <div className={cn(
                                 "absolute top-4 left-1/2 h-0.5 w-full bg-border transition-colors",
-                                isSelected && isClickable ? 'bg-primary' : (isClickable ? 'group-hover:bg-primary' : '')
+                                isSelected && isClickable ? 'bg-primary' : (isClickable ? 'group-hover:bg-primary' : 'bg-border')
                             )} />
                           )}
 
@@ -196,12 +194,22 @@ function RouteHistoryContent({ events, vehicle, onSegmentSelect, selectedSegment
 
 export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const isMobile = useIsMobile();
+  const { state, dispatch } = useFleet();
+  const { isRouteSheetOpen } = state;
 
+  const handleOpenChange = (isOpen: boolean) => {
+    dispatch({ type: 'SET_ROUTE_SHEET_OPEN', payload: isOpen });
+  }
+
+  const handleSegmentSelect = (segmentIndex: number) => {
+    dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: segmentIndex });
+  };
+  
   if (isMobile) {
     return (
-        <Drawer open={props.isOpen} onOpenChange={props.onOpenChange}>
+        <Drawer open={isRouteSheetOpen} onOpenChange={handleOpenChange}>
             <DrawerContent className="h-[40%]">
-                <RouteHistoryContent {...props} />
+                <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
             </DrawerContent>
       </Drawer>
     )
@@ -209,7 +217,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
 
   return (
     <AnimatePresence>
-      {props.isOpen && (
+      {isRouteSheetOpen && (
         <motion.div
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
@@ -217,7 +225,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
           className="absolute bottom-4 left-4 right-4 z-20"
         >
-          <RouteHistoryContent {...props} />
+          <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
         </motion.div>
       )}
     </AnimatePresence>

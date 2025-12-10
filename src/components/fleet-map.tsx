@@ -1,26 +1,19 @@
 
+
 "use client";
 
 import { APIProvider, Map, useMap, ColorScheme, AdvancedMarker } from '@vis.gl/react-google-maps';
 import type { Vehicle } from '@/lib/types';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { VehicleMarker, type VehicleAction } from './vehicle-marker';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { XIcon } from 'lucide-react';
+import { useFleet } from '@/context/fleet-context';
 
 interface FleetMapProps {
   apiKey: string;
-  vehicles: Vehicle[];
-  onVehicleSelect: (vehicle: Vehicle | null) => void;
-  onShowRouteHistory: (vehicle: Vehicle) => void;
   onAction: (action: VehicleAction, vehicle: Vehicle) => void;
-  onRouteClick: (pointIndex: number) => void;
-  selectedVehicle: Vehicle | null; 
-  routePath: { lat: number; lng: number }[] | null;
-  highlightedSegment: { lat: number; lng: number }[] | null;
-  routeSegmentToFit: { lat: number; lng: number }[] | null;
-  isMapDark: boolean;
 }
 
 function RoutePolyline({ 
@@ -112,31 +105,29 @@ function RoutePolyline({
   return null;
 }
 
-function MapControl({ 
-  vehicles, 
-  routePath, 
-  highlightedSegment,
-  routeSegmentToFit,
-  onVehicleSelect,
-  onShowRouteHistory,
-  onAction,
-  onRouteClick,
-  externalSelectedVehicle,
-  isMapDark,
-}: {
-  vehicles: Vehicle[];
-  routePath: { lat: number; lng: number }[] | null;
-  highlightedSegment: { lat: number; lng: number }[] | null;
-  routeSegmentToFit: { lat: number; lng: number }[] | null;
-  onVehicleSelect: (vehicle: Vehicle | null) => void;
-  onShowRouteHistory: (vehicle: Vehicle) => void;
-  onAction: (action: VehicleAction, vehicle: Vehicle) => void;
-  onRouteClick: (pointIndex: number) => void;
-  externalSelectedVehicle: Vehicle | null;
-  isMapDark: boolean;
-}) {
+function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: Vehicle) => void }) {
   const map = useMap();
+  const { state, dispatch } = useFleet();
+  const {
+    vehicles,
+    statusFilter,
+    selectedVehicle,
+    routeHistoryVehicle,
+    routePath,
+    highlightedSegment,
+    routeSegmentToFit,
+    isMapDark,
+    visibleVehicleIds,
+  } = state;
   const [infoVehicle, setInfoVehicle] = useState<Vehicle | null>(null);
+
+  const handleVehicleSelect = (vehicle: Vehicle | null) => {
+    dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
+  };
+
+  const handleRouteClick = (pointIndex: number) => {
+    dispatch({ type: 'SELECT_MAP_SEGMENT', payload: pointIndex });
+  };
 
   useEffect(() => {
     // Load the geometry library when the map is available
@@ -161,20 +152,29 @@ function MapControl({
   }, [map, routeSegmentToFit]);
   
   const handleMapClick = () => {
-    onVehicleSelect(null);
+    handleVehicleSelect(null);
     setInfoVehicle(null);
   };
 
   const handleVehicleClick = (vehicle: Vehicle) => {
-    onVehicleSelect(vehicle);
+    handleVehicleSelect(vehicle);
     setInfoVehicle(vehicle);
   }
 
   // When external selection changes (e.g. from list), close local info window
   useEffect(() => {
-    setInfoVehicle(externalSelectedVehicle);
-  }, [externalSelectedVehicle]);
+    setInfoVehicle(selectedVehicle);
+  }, [selectedVehicle]);
 
+  const filteredVehicles = useMemo(() => {
+    if (routeHistoryVehicle) {
+      return [routeHistoryVehicle];
+    }
+    return vehicles.filter(v => 
+      visibleVehicleIds.has(v.vehicleId) &&
+      (statusFilter === 'all' || v.status === statusFilter)
+    );
+  }, [vehicles, statusFilter, routeHistoryVehicle, visibleVehicleIds]);
 
   return (
     <>
@@ -187,12 +187,12 @@ function MapControl({
         onClick={handleMapClick}
         colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
     >
-        {vehicles.map((vehicle) => (
+        {filteredVehicles.map((vehicle) => (
             <VehicleMarker
               key={vehicle.vehicleId}
               vehicle={vehicle}
               onVehicleSelect={() => handleVehicleClick(vehicle)}
-              isSelected={externalSelectedVehicle?.vehicleId === vehicle.vehicleId || infoVehicle?.vehicleId === vehicle.vehicleId}
+              isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId || infoVehicle?.vehicleId === vehicle.vehicleId}
               onAction={onAction}
             />
         ))}
@@ -236,7 +236,7 @@ function MapControl({
           </AdvancedMarker>
         )}
 
-      <RoutePolyline routePath={routePath} color="#FFC107" weight={5} zIndex={1} onClick={onRouteClick} />
+      <RoutePolyline routePath={routePath} color="#FFC107" weight={5} zIndex={1} onClick={handleRouteClick} />
       <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={7} zIndex={2} />
     </Map>
     </>
@@ -244,22 +244,13 @@ function MapControl({
 }
 
 
-export function FleetMap({ apiKey, vehicles, selectedVehicle, onShowRouteHistory, onAction, onRouteClick, routePath, highlightedSegment, routeSegmentToFit, isMapDark, onVehicleSelect }: FleetMapProps) {
+export function FleetMap({ apiKey, onAction }: FleetMapProps) {
   
   return (
     <APIProvider apiKey={apiKey}>
       <div className="w-full h-full">
         <MapControl 
-          vehicles={vehicles}
-          onVehicleSelect={onVehicleSelect}
-          onShowRouteHistory={onShowRouteHistory}
           onAction={onAction}
-          onRouteClick={onRouteClick}
-          externalSelectedVehicle={selectedVehicle}
-          routePath={routePath}
-          highlightedSegment={highlightedSegment}
-          routeSegmentToFit={routeSegmentToFit}
-          isMapDark={isMapDark}
         />
       </div>
     </APIProvider>
