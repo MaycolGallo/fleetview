@@ -5,7 +5,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import type { RouteEvent, Vehicle } from '@/lib/types';
+import type { RouteEvent } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   PlayCircle,
@@ -19,12 +19,11 @@ import { format, parseISO } from 'date-fns';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useFleet } from '@/context/fleet-context';
 
 
-interface RouteHistorySheetProps {
-}
+interface RouteHistorySheetProps {}
 
 const statusIcons = {
   start: PlayCircle,
@@ -45,13 +44,13 @@ function formatDuration(minutes: number) {
 
 function RouteHistoryContent({ onSegmentSelect }: { onSegmentSelect: (index: number) => void}) {
     const { state } = useFleet();
-    const { events, vehicle, selectedSegmentIndex } = state;
+    const { routeEvents: events, routeHistoryVehicle: vehicle, selectedSegmentIndex } = state;
     const totalDistance = events.reduce((sum, e) => sum + e.distanceKm, 0);
     const totalDuration = events.reduce((sum, e) => sum + e.durationMinutes, 0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-    const { totalStops, totalStopTime } = useMemo(() => {
+    const { totalStops, totalStopTime } = React.useMemo(() => {
         return events.reduce(
             (acc, event) => {
                 if (event.status === 'stop') {
@@ -141,7 +140,7 @@ function RouteHistoryContent({ onSegmentSelect }: { onSegmentSelect: (index: num
                           {index < events.length - 1 && (
                              <div className={cn(
                                 "absolute top-4 left-1/2 h-0.5 w-full bg-border transition-colors",
-                                isSelected && isClickable ? 'bg-primary' : (isClickable ? 'group-hover:bg-primary' : 'bg-border')
+                                isSelected && isClickable ? 'bg-primary' : 'group-hover:bg-primary'
                             )} />
                           )}
 

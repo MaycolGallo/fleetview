@@ -16,6 +16,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { useFleet } from '@/context/fleet-context';
 
 
 export type VehicleAction = 
@@ -29,7 +30,6 @@ export type VehicleAction =
 
 interface VehicleMarkerProps {
   vehicle: Vehicle;
-  isSelected: boolean;
   onVehicleSelect: (vehicle: Vehicle) => void;
   onAction?: (action: VehicleAction, vehicle: Vehicle) => void;
 }
@@ -155,10 +155,12 @@ function MobileContextMenuDrawer({
 
 export function VehicleMarker({ 
   vehicle, 
-  isSelected, 
   onVehicleSelect,
   onAction
 }: VehicleMarkerProps) {
+  const { state } = useFleet();
+  const { selectedVehicle } = state;
+  const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [drawerOpen, setDrawerOpen] = useState(false);

@@ -1,21 +1,17 @@
 
 "use client";
 
-import type { Vehicle, VehicleStatus } from "@/lib/types";
+import type { Vehicle } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle, Clock, EyeOff, Eye } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { useMemo } from "react";
 import { Badge } from "./ui/badge";
 import { Checkbox } from "./ui/checkbox";
-import { Button } from "./ui/button";
+import { useFleet } from "@/context/fleet-context";
 
 interface VehicleListProps {
-    vehicles: Vehicle[];
-    onVehicleSelect: (vehicle: Vehicle) => void;
-    selectedVehicle: Vehicle | null;
-    visibleVehicleIds: Set<string>;
-    onVisibilityChange: (vehicleId: string) => void;
+    onVehicleSelect: () => void;
 }
 
 const statusDetails = {
@@ -33,12 +29,30 @@ const statusDetails = {
     }
 };
 
-export function VehicleList({ vehicles, onVehicleSelect, selectedVehicle, visibleVehicleIds, onVisibilityChange }: VehicleListProps) {
+export function VehicleList({ onVehicleSelect }: VehicleListProps) {
+    const { state, dispatch } = useFleet();
+    const { vehicles, statusFilter, selectedVehicle, visibleVehicleIds } = state;
+
+    const handleSelect = (vehicle: Vehicle) => {
+        dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
+        onVehicleSelect();
+    };
+
+    const handleVisibilityChange = (vehicleId: string) => {
+        dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: vehicleId });
+    };
+
+    const listVehicles = useMemo(() => {
+        if (statusFilter === 'all') {
+            return vehicles;
+        }
+        return vehicles.filter(v => v.status === statusFilter);
+    }, [vehicles, statusFilter]);
     
     return (
         <ScrollArea className="h-full">
             <div className="flex flex-col gap-1 p-2">
-                {vehicles.map(vehicle => {
+                {listVehicles.map(vehicle => {
                     const StatusIcon = statusDetails[vehicle.status].icon;
                     const isVisible = visibleVehicleIds.has(vehicle.vehicleId);
                     return (
@@ -51,12 +65,12 @@ export function VehicleList({ vehicles, onVehicleSelect, selectedVehicle, visibl
                         >
                             <Checkbox
                                 checked={isVisible}
-                                onCheckedChange={() => onVisibilityChange(vehicle.vehicleId)}
+                                onCheckedChange={() => handleVisibilityChange(vehicle.vehicleId)}
                                 aria-label={`Toggle visibility of ${vehicle.vehicleId}`}
                                 className="flex-shrink-0"
                             />
                             <button
-                                onClick={() => onVehicleSelect(vehicle)}
+                                onClick={() => handleSelect(vehicle)}
                                 className={cn(
                                     "flex items-center gap-3 text-left transition-colors text-sm w-full",
                                     "hover:text-sidebar-accent-foreground rounded-md",

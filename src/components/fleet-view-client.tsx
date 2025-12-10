@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Vehicle, VehicleStatus, RouteHistory } from '@/lib/types';
 import dynamic from 'next/dynamic';
 import { VehicleFilters } from './vehicle-filters';
@@ -25,7 +25,6 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import type { VehicleAction } from './vehicle-marker';
 import { useFleet } from '@/context/fleet-context';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
@@ -45,7 +44,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const {
     vehicles,
     statusFilter,
-    selectedVehicle,
     routeHistoryVehicle,
     isMapDark,
     visibleVehicleIds,
@@ -53,47 +51,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const { toast } = useToast();
 
-  const handleShowRouteHistory = async (vehicle: Vehicle) => {
-    dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
-    try {
-      const response = await fetch('/api/routes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          vehicleId: vehicle.vehicleId,
-          startLat: vehicle.latitude,
-          startLng: vehicle.longitude,
-        }),
-      });
-      if (!response.ok) throw new Error('Network response was not ok');
-      const { routePoints, routeEvents }: RouteHistory = await response.json();
-      dispatch({ type: 'SET_ROUTE_HISTORY', payload: { routePoints, routeEvents } });
-    } catch (error) {
-      console.error("Failed to fetch route history:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not load route history. Please try again.",
-      });
-      dispatch({ type: 'BACK_TO_FLEET' });
-    }
-  };
-
   const handleBackToFleet = () => {
     dispatch({ type: 'BACK_TO_FLEET' });
-  };
-
-  const handlePanToVehicle = (vehicle: Vehicle) => {
-    dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
-    setPopoverOpen(false);
-  };
-
-  const handleFilterChange = (filter: VehicleStatus | 'all') => {
-    dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
-  };
-
-  const handleVehicleVisibilityToggle = (vehicleId: string) => {
-    dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: vehicleId });
   };
   
   const handleToggleAll = (isChecked: boolean) => {
@@ -104,31 +63,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const handleMapThemeToggle = (isDark: boolean) => {
     dispatch({ type: 'SET_MAP_DARK_MODE', payload: isDark });
   }
-
-  const handleVehicleAction = (action: VehicleAction, vehicle: Vehicle) => {
-    switch (action) {
-      case 'show-route-history':
-        handleShowRouteHistory(vehicle);
-        break;
-      case 'center-map':
-        handlePanToVehicle(vehicle);
-        break;
-      case 'show-details':
-        toast({ title: 'Vehicle Details', description: `Showing details for ${vehicle.vehicleId}` });
-        break;
-      case 'track-vehicle':
-        toast({ title: 'Track Vehicle', description: `Tracking ${vehicle.vehicleId}` });
-        break;
-      case 'view-alerts':
-        toast({ title: 'View Alerts', description: `Viewing alerts for ${vehicle.vehicleId}` });
-        break;
-      case 'maintenance':
-        toast({ title: 'Maintenance Log', description: `Opening maintenance log for ${vehicle.vehicleId}` });
-        break;
-      default:
-        console.warn(`Unknown vehicle action: ${action}`);
-    }
-  };
   
   const listVehicles = useMemo(() => {
      if (statusFilter === 'all') {
@@ -167,10 +101,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                        <div className="flex flex-col h-[60vh] max-h-[60vh]">
                           <div className="p-4 space-y-4">
                             <h2 className="font-semibold text-lg">Vehicles</h2>
-                            <VehicleFilters
-                                currentFilter={statusFilter}
-                                onFilterChange={handleFilterChange}
-                            />
+                            <VehicleFilters />
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
                                     <Checkbox 
@@ -206,13 +137,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                               ))}
                             </div>
                           ) : (
-                            <VehicleList 
-                              vehicles={listVehicles}
-                              onVehicleSelect={handlePanToVehicle}
-                              selectedVehicle={selectedVehicle}
-                              visibleVehicleIds={visibleVehicleIds}
-                              onVisibilityChange={handleVehicleVisibilityToggle}
-                            />
+                            <VehicleList onVehicleSelect={() => setPopoverOpen(false)} />
                           )}
                        </div>
                     </PopoverContent>
@@ -254,10 +179,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           </div>
         </header>
         <main className="h-full w-full z-10">
-          <FleetMap
-            apiKey={apiKey}
-            onAction={handleVehicleAction}
-          />
+          <FleetMap apiKey={apiKey} />
         </main>
         
         {state.isLoadingRoute && (

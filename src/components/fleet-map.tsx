@@ -2,17 +2,18 @@
 "use client";
 
 import { APIProvider, Map, useMap, ColorScheme, AdvancedMarker } from '@vis.gl/react-google-maps';
-import type { Vehicle } from '@/lib/types';
+import type { Vehicle, RouteHistory } from '@/lib/types';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { VehicleMarker, type VehicleAction } from './vehicle-marker';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { XIcon } from 'lucide-react';
 import { useFleet } from '@/context/fleet-context';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface FleetMapProps {
   apiKey: string;
-  onAction: (action: VehicleAction, vehicle: Vehicle) => void;
 }
 
 function RoutePolyline({ 
@@ -98,15 +99,16 @@ function RoutePolyline({
         polylineRef.current.setMap(null);
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, JSON.stringify(routePath), color, weight, zIndex, onClick]);
+  }, [map, routePath, color, weight, zIndex, onClick]);
 
   return null;
 }
 
-function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: Vehicle) => void }) {
+function MapControl() {
   const map = useMap();
   const { state, dispatch } = useFleet();
+  const { toast } = useToast();
+
   const {
     vehicles,
     statusFilter,
@@ -115,7 +117,6 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
     routePath,
     highlightedSegment,
     routeSegmentToFit,
-    isMapDark,
     visibleVehicleIds,
   } = state;
 
@@ -131,7 +132,7 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
   }, [map]);
 
   useEffect(() => {
-    if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
+    if (!map || !routeSegmentToFit) return;
   
     if (routeSegmentToFit.length === 1) {
       map.panTo(routeSegmentToFit[0]);
@@ -153,6 +154,58 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
     dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
   }
 
+  const handleShowRouteHistory = async (vehicle: Vehicle) => {
+    dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+    try {
+      const response = await fetch('/api/routes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vehicleId: vehicle.vehicleId,
+          startLat: vehicle.latitude,
+          startLng: vehicle.longitude,
+        }),
+      });
+      if (!response.ok) throw new Error('Network response was not ok');
+      const { routePoints, routeEvents }: RouteHistory = await response.json();
+      dispatch({ type: 'SET_ROUTE_HISTORY', payload: { routePoints, routeEvents } });
+    } catch (error) {
+      console.error("Failed to fetch route history:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not load route history. Please try again.",
+      });
+      dispatch({ type: 'BACK_TO_FLEET' });
+    }
+  };
+
+   const handleVehicleAction = (action: VehicleAction, vehicle: Vehicle) => {
+    switch (action) {
+      case 'show-route-history':
+        handleShowRouteHistory(vehicle);
+        break;
+      case 'center-map':
+        dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
+        break;
+      case 'show-details':
+        toast({ title: 'Vehicle Details', description: `Showing details for ${vehicle.vehicleId}` });
+        break;
+      case 'track-vehicle':
+        toast({ title: 'Track Vehicle', description: `Tracking ${vehicle.vehicleId}` });
+        break;
+      case 'view-alerts':
+        toast({ title: 'View Alerts', description: `Viewing alerts for ${vehicle.vehicleId}` });
+        break;
+      case 'maintenance':
+        toast({ title: 'Maintenance Log', description: `Opening maintenance log for ${vehicle.vehicleId}` });
+        break;
+      default:
+        console.warn(`Unknown vehicle action: ${action}`);
+    }
+  };
+
+
   const filteredVehicles = useMemo(() => {
     if (routeHistoryVehicle) {
       return [routeHistoryVehicle];
@@ -169,9 +222,8 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
             <VehicleMarker
               key={vehicle.vehicleId}
               vehicle={vehicle}
-              onVehicleSelect={() => handleVehicleClick(vehicle)}
-              isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId}
-              onAction={onAction}
+              onVehicleSelect={handleVehicleClick}
+              onAction={handleVehicleAction}
             />
         ))}
 
@@ -206,7 +258,7 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
               <Button
                 size="sm"
                 className="w-full mt-3"
-                onClick={() => onAction('show-route-history', selectedVehicle)}
+                onClick={() => handleShowRouteHistory(selectedVehicle)}
               >
                 Show Route History
               </Button>
@@ -221,7 +273,7 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
 }
 
 
-export function FleetMap({ apiKey, onAction }: FleetMapProps) {
+export function FleetMap({ apiKey }: FleetMapProps) {
   const { state, dispatch } = useFleet();
   const { isMapDark } = state;
   
@@ -241,7 +293,7 @@ export function FleetMap({ apiKey, onAction }: FleetMapProps) {
             onClick={handleMapClick}
             colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
-          <MapControl onAction={onAction} />
+          <MapControl />
         </Map>
       </div>
     </APIProvider>

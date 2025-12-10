@@ -1,17 +1,23 @@
+
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useFleet } from "@/context/fleet-context";
 import type { VehicleStatus } from "@/lib/types";
 
-interface VehicleFiltersProps {
-  currentFilter: string;
-  onFilterChange: (filter: 'all' | VehicleStatus) => void;
-}
+interface VehicleFiltersProps {}
 
-export function VehicleFilters({ currentFilter, onFilterChange }: VehicleFiltersProps) {
+export function VehicleFilters(props: VehicleFiltersProps) {
+  const { state, dispatch } = useFleet();
+  const { statusFilter } = state;
+  
+  const onFilterChange = (filter: 'all' | VehicleStatus) => {
+    dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
+  }
+
   return (
     <div className="grid gap-2">
-      <Select value={currentFilter} onValueChange={(value) => onFilterChange(value as 'all' | VehicleStatus)}>
+      <Select value={statusFilter} onValueChange={(value) => onFilterChange(value as 'all' | VehicleStatus)}>
         <SelectTrigger 
           id="status-filter" 
           className="w-full h-10"
