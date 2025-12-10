@@ -99,13 +99,19 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         return { 
           ...state, 
           selectedVehicle: action.payload,
+          // Do not pan the map when just selecting a vehicle
+          routeSegmentToFit: null, 
         };
     
     case 'PAN_TO_VEHICLE':
       if (action.payload === null) {
-        return { ...state, selectedVehicle: null };
+        return { ...state, selectedVehicle: null, routeSegmentToFit: null };
       }
-      return { ...state, selectedVehicle: action.payload, routeSegmentToFit: [{ lat: action.payload.latitude, lng: action.payload.longitude }] };
+      return { 
+        ...state, 
+        selectedVehicle: action.payload, 
+        routeSegmentToFit: [{ lat: action.payload.latitude, lng: action.payload.longitude }] 
+      };
 
     case 'SET_ROUTE_SHEET_OPEN':
       // If we're closing the sheet, also go back to the main fleet view.

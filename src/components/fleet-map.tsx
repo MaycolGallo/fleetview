@@ -119,11 +119,6 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
     isMapDark,
     visibleVehicleIds,
   } = state;
-  const [infoVehicle, setInfoVehicle] = useState<Vehicle | null>(null);
-
-  const handleVehicleSelect = (vehicle: Vehicle | null) => {
-    dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
-  };
 
   const handleRouteClick = (pointIndex: number) => {
     dispatch({ type: 'SELECT_MAP_SEGMENT', payload: pointIndex });
@@ -152,19 +147,12 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
   }, [map, routeSegmentToFit]);
   
   const handleMapClick = () => {
-    handleVehicleSelect(null);
-    setInfoVehicle(null);
+    dispatch({ type: 'SELECT_VEHICLE', payload: null });
   };
 
   const handleVehicleClick = (vehicle: Vehicle) => {
-    handleVehicleSelect(vehicle);
-    setInfoVehicle(vehicle);
+    dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
   }
-
-  // When external selection changes (e.g. from list), close local info window
-  useEffect(() => {
-    setInfoVehicle(selectedVehicle);
-  }, [selectedVehicle]);
 
   const filteredVehicles = useMemo(() => {
     if (routeHistoryVehicle) {
@@ -192,21 +180,21 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
               key={vehicle.vehicleId}
               vehicle={vehicle}
               onVehicleSelect={() => handleVehicleClick(vehicle)}
-              isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId || infoVehicle?.vehicleId === vehicle.vehicleId}
+              isSelected={selectedVehicle?.vehicleId === vehicle.vehicleId}
               onAction={onAction}
             />
         ))}
 
-        {infoVehicle && (
+        {selectedVehicle && (
           <AdvancedMarker
-            position={{ lat: infoVehicle.latitude, lng: infoVehicle.longitude }}
+            position={{ lat: selectedVehicle.latitude, lng: selectedVehicle.longitude }}
           >
             <div
               className="absolute bottom-[4rem] left-1/2 -translate-x-1/2 bg-popover text-popover-foreground rounded-lg shadow-lg p-3 w-64 border border-border"
             >
               <div className="flex justify-between items-start mb-2">
-                <h4 className="font-semibold">{infoVehicle.vehicleId}</h4>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setInfoVehicle(null)}>
+                <h4 className="font-semibold">{selectedVehicle.vehicleId}</h4>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => dispatch({type: 'SELECT_VEHICLE', payload: null})}>
                   <XIcon className="h-4 w-4" />
                 </Button>
               </div>
@@ -214,21 +202,21 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Status:</span>
                   <Badge variant={
-                    infoVehicle.status === 'active' ? 'default' :
-                      infoVehicle.status === 'idle' ? 'secondary' : 'destructive'
+                    selectedVehicle.status === 'active' ? 'default' :
+                      selectedVehicle.status === 'idle' ? 'secondary' : 'destructive'
                   } className="capitalize">
-                    {infoVehicle.status.replace('-', ' ')}
+                    {selectedVehicle.status.replace('-', ' ')}
                   </Badge>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Coords:</span>
-                  <span className='font-mono text-xs'>{infoVehicle.latitude.toFixed(4)}, {infoVehicle.longitude.toFixed(4)}</span>
+                  <span className='font-mono text-xs'>{selectedVehicle.latitude.toFixed(4)}, {selectedVehicle.longitude.toFixed(4)}</span>
                 </div>
               </div>
               <Button
                 size="sm"
                 className="w-full mt-3"
-                onClick={() => onAction('show-route-history', infoVehicle)}
+                onClick={() => onAction('show-route-history', selectedVehicle)}
               >
                 Show Route History
               </Button>
