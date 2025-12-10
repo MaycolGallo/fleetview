@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { APIProvider, Map, useMap, ColorScheme, AdvancedMarker } from '@vis.gl/react-google-maps';
@@ -144,8 +143,7 @@ function MapControl({ onAction }: { onAction: (action: VehicleAction, vehicle: V
       routeSegmentToFit.forEach(point => bounds.extend(point));
       map.fitBounds(bounds, 100);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [map, JSON.stringify(routeSegmentToFit)]);
+  }, [map, routeSegmentToFit]);
   
   const handleMapClick = () => {
     dispatch({ type: 'SELECT_VEHICLE', payload: null });
