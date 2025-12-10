@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import type { Vehicle } from '@/lib/types';
@@ -30,8 +29,6 @@ export type VehicleAction =
 
 interface VehicleMarkerProps {
   vehicle: Vehicle;
-  onVehicleSelect: (vehicle: Vehicle) => void;
-  onAction?: (action: VehicleAction, vehicle: Vehicle) => void;
 }
 
 const contextMenuItems = [
@@ -46,22 +43,21 @@ const contextMenuItems = [
 function ContextMenu({
   vehicle,
   position,
-  onAction,
   onClose,
 }: {
   vehicle: Vehicle;
   position: { x: number; y: number };
-  onAction: (action: VehicleAction, vehicle: Vehicle) => void;
   onClose: () => void;
 }) {
     const [portalNode, setPortalNode] = useState<HTMLElement | null>(null);
+    const { dispatch } = useFleet();
 
     useEffect(() => {
         setPortalNode(document.body);
     }, []);
 
     const handleAction = (action: VehicleAction) => {
-        onAction(action, vehicle);
+        dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
         onClose();
     };
 
@@ -111,15 +107,17 @@ function MobileContextMenuDrawer({
     isOpen,
     onOpenChange,
     vehicle,
-    onAction,
 }: {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     vehicle: Vehicle;
-    onAction: (action: VehicleAction, vehicle: Vehicle) => void;
 }) {
+    const { dispatch } = useFleet();
+
     const handleAction = (action: VehicleAction) => {
-        onAction(action, vehicle);
+        if (action === 'show-route-history') {
+             dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+        }
         onOpenChange(false);
     };
 
@@ -155,10 +153,8 @@ function MobileContextMenuDrawer({
 
 export function VehicleMarker({ 
   vehicle, 
-  onVehicleSelect,
-  onAction
 }: VehicleMarkerProps) {
-  const { state } = useFleet();
+  const { state, dispatch } = useFleet();
   const { selectedVehicle } = state;
   const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
@@ -177,7 +173,7 @@ export function VehicleMarker({
   
   const handleLeftClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onVehicleSelect(vehicle);
+    dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
   }
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -208,11 +204,6 @@ export function VehicleMarker({
     }
   };
 
-  const handleMenuAction = (action: VehicleAction, targetVehicle: Vehicle) => {
-    setContextMenuOpen(false);
-    onAction?.(action, targetVehicle);
-  };
-
   return (
     <>
       <AdvancedMarker
@@ -237,7 +228,6 @@ export function VehicleMarker({
         <ContextMenu
           vehicle={vehicle}
           position={contextMenuPosition}
-          onAction={handleMenuAction}
           onClose={() => setContextMenuOpen(false)}
         />
       )}
@@ -247,9 +237,10 @@ export function VehicleMarker({
             isOpen={drawerOpen}
             onOpenChange={setDrawerOpen}
             vehicle={vehicle}
-            onAction={handleMenuAction}
         />
       )}
     </>
   );
 }
+
+    
