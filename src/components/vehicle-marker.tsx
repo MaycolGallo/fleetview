@@ -4,7 +4,7 @@
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -106,6 +106,7 @@ export function VehicleMarker({
 }: VehicleMarkerProps) {
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
+  const pressTimer = useRef<NodeJS.Timeout | null>(null);
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -119,6 +120,30 @@ export function VehicleMarker({
     onVehicleSelect(vehicle);
   }
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    pressTimer.current = setTimeout(() => {
+      const touch = e.touches[0];
+      setContextMenuPosition({ x: touch.clientX, y: touch.clientY });
+      setContextMenuOpen(true);
+    }, 500); // 500ms for a long press
+  };
+
+  const handleTouchEnd = () => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  };
+
+  const handleTouchMove = () => {
+    // Cancel long press if finger moves
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  };
+
   const handleMenuAction = (action: VehicleAction, targetVehicle: Vehicle) => {
     setContextMenuOpen(false);
     onAction?.(action, targetVehicle);
@@ -128,10 +153,17 @@ export function VehicleMarker({
     <>
       <AdvancedMarker
         position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+        onClick={(e) => {
+          // This onClick is for the AdvancedMarker itself, which can interfere with our custom logic
+          // We let our own div's onClick handle it to prevent double-firing.
+        }}
       >
         <div 
           onClick={handleLeftClick} 
           onContextMenu={handleContextMenu}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchMove}
         >
           <VehiclePin status={vehicle.status} isSelected={isSelected} />
         </div>

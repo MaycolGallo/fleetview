@@ -72,7 +72,7 @@ function RoutePolyline({
       polylineRef.current = newPolyline;
 
       if (onClick) {
-        newPolyline.addListener('click', (e: google.maps.PolylineMouseEvent) => {
+        newPolyline.addListener('click', (e: google.maps.PolyMouseEvent) => {
           if (!e.latLng || !routePath) return;
 
           // Find the closest point on the polyline to the click event
@@ -185,7 +185,7 @@ function MapControl({
         disableDefaultUI={true}
         mapId={'a3b0c4d2e9f3g4h5'}
         onClick={handleMapClick}
-        scheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
+        colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
     >
         {vehicles.map((vehicle) => (
             <VehicleMarker
