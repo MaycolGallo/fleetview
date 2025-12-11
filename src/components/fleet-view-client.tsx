@@ -29,7 +29,7 @@ import { useFleet } from '@/context/fleet-context';
 import { VehicleDetails } from './vehicle-details';
 import { simulateVehicleTelemetry } from '@/ai/flows/simulate-vehicle-telemetry';
 import { useFirestore } from '@/firebase';
-import { collection, writeBatch } from 'firebase/firestore';
+import { collection, writeBatch, doc } from 'firebase/firestore';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -77,6 +77,17 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       description: "Generating and saving 50 vehicles. This may take a moment.",
     });
 
+    if (!firestore) {
+        toast({
+            variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "Firestore is not available.",
+        });
+        setIsSeeding(false);
+        return;
+    }
+
+
     try {
       // 1. Generate vehicle data using the Genkit flow
       const simulatedData = await simulateVehicleTelemetry({ numberOfVehicles: 50 });
@@ -90,16 +101,14 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
       // 3. Add each vehicle to the batch
       simulatedData.forEach(vehicle => {
-        // The AI sometimes returns 'vehicleId', we need to ensure it's mapped to 'id' for our type
         const docData = {
           ...vehicle,
-          // Add missing fields with sensible defaults if AI doesn't provide them
           driverName: `Driver ${Math.floor(Math.random() * 100)}`,
           speedKph: vehicle.status === 'active' ? Math.floor(Math.random() * 80) + 20 : 0,
           fuelLevel: Math.floor(Math.random() * 80) + 20,
           lastMaintenance: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
         };
-        const docRef = collection(firestore, 'vehicles', vehicle.vehicleId);
+        const docRef = doc(firestore, 'vehicles', vehicle.vehicleId);
         batch.set(docRef, docData);
       });
 
@@ -110,6 +119,9 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         title: "Database Seeded!",
         description: `${simulatedData.length} vehicles have been successfully added to Firestore.`,
       });
+      // Trigger a manual refresh or rely on the real-time listener to update
+      dispatch({ type: 'SET_VEHICLES', payload: (await Promise.all(simulatedData.map(async v => ({...v}))) as Vehicle[]) });
+
 
     } catch (e: any) {
       console.error("Error seeding database:", e);
