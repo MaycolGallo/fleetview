@@ -12,6 +12,8 @@ import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
 import { User, Gauge, Fuel, Wrench, Calendar } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Progress } from './ui/progress';
 
 function DetailItem({ icon: Icon, label, value, unit }: { icon: React.ElementType, label: string, value: React.ReactNode, unit?: string }) {
   return (
@@ -64,36 +66,37 @@ export function VehicleDetails() {
           </div>
         </SheetHeader>
         <div className="py-6 space-y-6">
-            <div className="space-y-4 rounded-lg border bg-card text-card-foreground shadow-sm p-4">
-                 <h3 className="font-semibold leading-none tracking-tight">Current Status</h3>
-                 <Separator />
-                <DetailItem icon={User} label="Driver" value={selectedVehicle.driverName} />
-                <DetailItem icon={Gauge} label="Speed" value={selectedVehicle.speedKph} unit="km/h" />
-                <div className="space-y-2">
-                    <DetailItem icon={Fuel} label="Fuel Level" value={`${selectedVehicle.fuelLevel}%`} />
-                    <div className="w-full bg-muted rounded-full h-2.5">
-                        <div 
-                            className="bg-primary h-2.5 rounded-full" 
-                            style={{ width: `${selectedVehicle.fuelLevel}%` }}
-                        ></div>
+            <Card>
+                 <CardHeader className='p-4'>
+                    <CardTitle className='text-base'>Current Status</CardTitle>
+                 </CardHeader>
+                 <CardContent className="p-4 pt-0 space-y-4">
+                    <DetailItem icon={User} label="Driver" value={selectedVehicle.driverName} />
+                    <DetailItem icon={Gauge} label="Speed" value={selectedVehicle.speedKph} unit="km/h" />
+                    <div className="space-y-2">
+                        <DetailItem icon={Fuel} label="Fuel Level" value={`${selectedVehicle.fuelLevel}%`} />
+                        <Progress value={selectedVehicle.fuelLevel} className="h-2" />
                     </div>
-                </div>
-            </div>
+                </CardContent>
+            </Card>
 
-            <div className="space-y-4 rounded-lg border bg-card text-card-foreground shadow-sm p-4">
-                 <h3 className="font-semibold leading-none tracking-tight">Maintenance</h3>
-                 <Separator />
-                <DetailItem 
-                    icon={Wrench} 
-                    label="Last Service" 
-                    value={format(new Date(selectedVehicle.lastMaintenance), 'PPP')} 
-                />
-                 <DetailItem 
-                    icon={Calendar} 
-                    label="Time since" 
-                    value={formatDistanceToNow(new Date(selectedVehicle.lastMaintenance), { addSuffix: true })}
-                />
-            </div>
+            <Card>
+                <CardHeader className='p-4'>
+                    <CardTitle className='text-base'>Maintenance</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0 space-y-4">
+                    <DetailItem 
+                        icon={Wrench} 
+                        label="Last Service" 
+                        value={format(new Date(selectedVehicle.lastMaintenance), 'PPP')} 
+                    />
+                    <DetailItem 
+                        icon={Calendar} 
+                        label="Time since" 
+                        value={formatDistanceToNow(new Date(selectedVehicle.lastMaintenance), { addSuffix: true })}
+                    />
+                </CardContent>
+            </Card>
             
             {isOutofService && (
                 <div className="rounded-lg border border-destructive/50 bg-destructive/10 text-destructive p-4 text-sm">
