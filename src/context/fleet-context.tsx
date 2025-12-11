@@ -1,8 +1,8 @@
 
 'use client';
 
-import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react';
+import { useCollection, useFirestore, useMemoFirebase, useFirebase } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
 
@@ -87,7 +87,6 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
-       // On initial load or full data refresh, set all vehicles to be visible.
        const newVisibleIds = new Set(action.payload.map(v => v.id));
        return {
          ...state,
@@ -249,17 +248,21 @@ const FleetContext = createContext<FleetContextValue | undefined>(undefined);
 export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useReducer(fleetReducer, getInitialState());
     const firestore = useFirestore();
+    const { user } = useFirebase();
     
     const vehiclesQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        // Only create the query if we have a signed-in user.
+        if (!firestore || !user) return null;
         return query(collection(firestore, 'vehicles'));
-    }, [firestore]);
+    }, [firestore, user]);
 
-    const { data: vehiclesData, isLoading: isLoadingVehicles, error } = useCollection<Omit<Vehicle, 'id'>>(vehiclesQuery);
+    const { data: vehiclesData, isLoading: isLoadingFirestore, error } = useCollection<Omit<Vehicle, 'id'>>(vehiclesQuery);
+    
+    // isLoadingVehicles should be true if Firestore is loading or if there's no user yet.
+    const isLoadingVehicles = isLoadingFirestore || !user;
 
     useEffect(() => {
         if (vehiclesData) {
-          // The useCollection hook provides the document ID as `id`
           dispatch({ type: 'SET_VEHICLES', payload: vehiclesData as Vehicle[] });
         }
     }, [vehiclesData]);
