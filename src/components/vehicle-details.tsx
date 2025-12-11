@@ -6,7 +6,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from '@/components/ui/sheet';
 import { useFleet } from '@/context/fleet-context';
 import { Badge } from './ui/badge';
@@ -49,7 +48,7 @@ export function VehicleDetails() {
       <SheetContent className="w-[380px] sm:w-[420px]">
         <SheetHeader>
           <SheetTitle>{selectedVehicle.vehicleId}</SheetTitle>
-          <SheetDescription>
+          <div className="text-sm text-muted-foreground">
             <Badge
               variant={
                 selectedVehicle.status === 'active'
@@ -62,7 +61,7 @@ export function VehicleDetails() {
             >
               {selectedVehicle.status.replace('-', ' ')}
             </Badge>
-          </SheetDescription>
+          </div>
         </SheetHeader>
         <div className="py-6 space-y-6">
             <div className="space-y-4 rounded-lg border bg-card text-card-foreground shadow-sm p-4">
