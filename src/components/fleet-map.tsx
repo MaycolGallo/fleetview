@@ -1,13 +1,10 @@
 
 "use client";
 
-import { APIProvider, Map, useMap, ColorScheme, AdvancedMarker } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, useMap, ColorScheme } from '@vis.gl/react-google-maps';
 import type { Vehicle, RouteHistory } from '@/lib/types';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { VehicleMarker, type VehicleAction } from './vehicle-marker';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { XIcon } from 'lucide-react';
+import { VehicleMarker } from './vehicle-marker';
 import { useFleet } from '@/context/fleet-context';
 import { useToast } from '@/hooks/use-toast';
 
@@ -112,7 +109,6 @@ function MapControl() {
   const {
     vehicles,
     statusFilter,
-    selectedVehicle,
     routeHistoryVehicle,
     routePath,
     highlightedSegment,
@@ -150,61 +146,6 @@ function MapControl() {
     dispatch({ type: 'SELECT_VEHICLE', payload: null });
   };
 
-  const handleVehicleClick = (vehicle: Vehicle) => {
-    dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
-  }
-
-  const handleShowRouteHistory = async (vehicle: Vehicle) => {
-    dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
-    try {
-      const response = await fetch('/api/routes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          vehicleId: vehicle.vehicleId,
-          startLat: vehicle.latitude,
-          startLng: vehicle.longitude,
-        }),
-      });
-      if (!response.ok) throw new Error('Network response was not ok');
-      const { routePoints, routeEvents }: RouteHistory = await response.json();
-      dispatch({ type: 'SET_ROUTE_HISTORY', payload: { routePoints, routeEvents } });
-    } catch (error) {
-      console.error("Failed to fetch route history:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not load route history. Please try again.",
-      });
-      dispatch({ type: 'BACK_TO_FLEET' });
-    }
-  };
-
-   const handleVehicleAction = (action: VehicleAction, vehicle: Vehicle) => {
-    switch (action) {
-      case 'show-route-history':
-        handleShowRouteHistory(vehicle);
-        break;
-      case 'center-map':
-        dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
-        break;
-      case 'show-details':
-        toast({ title: 'Vehicle Details', description: `Showing details for ${vehicle.vehicleId}` });
-        break;
-      case 'track-vehicle':
-        toast({ title: 'Track Vehicle', description: `Tracking ${vehicle.vehicleId}` });
-        break;
-      case 'view-alerts':
-        toast({ title: 'View Alerts', description: `Viewing alerts for ${vehicle.vehicleId}` });
-        break;
-      case 'maintenance':
-        toast({ title: 'Maintenance Log', description: `Opening maintenance log for ${vehicle.vehicleId}` });
-        break;
-      default:
-        console.warn(`Unknown vehicle action: ${action}`);
-    }
-  };
-
 
   const filteredVehicles = useMemo(() => {
     if (routeHistoryVehicle) {
@@ -222,49 +163,8 @@ function MapControl() {
             <VehicleMarker
               key={vehicle.vehicleId}
               vehicle={vehicle}
-              onVehicleSelect={handleVehicleClick}
-              onAction={handleVehicleAction}
             />
         ))}
-
-        {selectedVehicle && (
-          <AdvancedMarker
-            position={{ lat: selectedVehicle.latitude, lng: selectedVehicle.longitude }}
-          >
-            <div
-              className="absolute bottom-[4rem] left-1/2 -translate-x-1/2 bg-popover text-popover-foreground rounded-lg shadow-lg p-3 w-64 border border-border"
-            >
-              <div className="flex justify-between items-start mb-2">
-                <h4 className="font-semibold">{selectedVehicle.vehicleId}</h4>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => dispatch({type: 'SELECT_VEHICLE', payload: null})}>
-                  <XIcon className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className='space-y-2 text-sm'>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status:</span>
-                  <Badge variant={
-                    selectedVehicle.status === 'active' ? 'default' :
-                      selectedVehicle.status === 'idle' ? 'secondary' : 'destructive'
-                  } className="capitalize">
-                    {selectedVehicle.status.replace('-', ' ')}
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Coords:</span>
-                  <span className='font-mono text-xs'>{selectedVehicle.latitude.toFixed(4)}, {selectedVehicle.longitude.toFixed(4)}</span>
-                </div>
-              </div>
-              <Button
-                size="sm"
-                className="w-full mt-3"
-                onClick={() => handleShowRouteHistory(selectedVehicle)}
-              >
-                Show Route History
-              </Button>
-            </div>
-          </AdvancedMarker>
-        )}
 
       <RoutePolyline routePath={routePath} color="#FFC107" weight={5} zIndex={1} onClick={handleRouteClick} />
       <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={7} zIndex={2} />

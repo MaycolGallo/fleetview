@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import type { Vehicle, VehicleStatus } from '@/lib/types';
+import { subDays } from 'date-fns';
 
 // Lima, Peru bounding box
 const LIMA_BOUNDS = {
@@ -17,12 +18,36 @@ function getRandomStatus(): VehicleStatus {
   return statuses[Math.floor(Math.random() * statuses.length)];
 }
 
+const sampleDrivers = [
+  'Juan Perez', 'Maria Garcia', 'Carlos Rodriguez', 'Ana Martinez', 'Luis Hernandez',
+  'Sofia Gomez', 'Miguel Diaz', 'Lucia Torres', 'Jorge Vargas', 'Camila Ruiz',
+  'Fernando Morales', 'Valeria Castillo', 'Ricardo Sanchez', 'Isabella Ramirez', 'Matias Flores'
+];
+
 function generateVehicle(index: number): Vehicle {
+  const status = getRandomStatus();
+  let speedKph;
+  switch (status) {
+    case 'active':
+      speedKph = Math.floor(Math.random() * 60) + 20; // 20-79 km/h
+      break;
+    case 'idle':
+      speedKph = 0;
+      break;
+    case 'out-of-service':
+      speedKph = 0;
+      break;
+  }
+
   return {
     vehicleId: `VEH-${1000 + index}`,
     latitude: getRandomCoordinate(LIMA_BOUNDS.lat.min, LIMA_BOUNDS.lat.max),
     longitude: getRandomCoordinate(LIMA_BOUNDS.lng.min, LIMA_BOUNDS.lng.max),
-    status: getRandomStatus(),
+    status: status,
+    driverName: sampleDrivers[Math.floor(Math.random() * sampleDrivers.length)],
+    speedKph: speedKph,
+    fuelLevel: Math.floor(Math.random() * 80) + 20, // 20-99%
+    lastMaintenance: subDays(new Date(), Math.floor(Math.random() * 180)).toISOString(), // Within last 6 months
   };
 }
 

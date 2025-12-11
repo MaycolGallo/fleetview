@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo, useState } from 'react';
-import type { Vehicle, VehicleStatus, RouteHistory } from '@/lib/types';
+import type { Vehicle } from '@/lib/types';
 import dynamic from 'next/dynamic';
 import { VehicleFilters } from './vehicle-filters';
 import { RouteHistorySheet } from './route-history-sheet';
@@ -26,6 +26,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useFleet } from '@/context/fleet-context';
+import { VehicleDetails } from './vehicle-details';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -181,6 +182,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         <main className="h-full w-full z-10">
           <FleetMap apiKey={apiKey} />
         </main>
+        
+        <VehicleDetails />
         
         {state.isLoadingRoute && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30">

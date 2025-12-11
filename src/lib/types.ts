@@ -5,6 +5,10 @@ export interface Vehicle {
   latitude: number;
   longitude: number;
   status: VehicleStatus;
+  driverName: string;
+  speedKph: number;
+  fuelLevel: number; // Percentage
+  lastMaintenance: string; // ISO Date string
 }
 
 export interface RouteEvent {
