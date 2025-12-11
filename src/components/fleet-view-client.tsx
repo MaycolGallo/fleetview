@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { VehicleFilters } from './vehicle-filters';
 import { RouteHistorySheet } from './route-history-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft, HardDriveUpload } from 'lucide-react';
+import { ArrowLeft, PanelLeft, HardDriveUpload, DatabaseZap } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { VehicleList } from './vehicle-list';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -27,6 +27,9 @@ import {
 } from "@/components/ui/dialog";
 import { useFleet } from '@/context/fleet-context';
 import { VehicleDetails } from './vehicle-details';
+import { simulateVehicleTelemetry } from '@/ai/flows/simulate-vehicle-telemetry';
+import { useFirestore } from '@/firebase';
+import { collection, writeBatch } from 'firebase/firestore';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -41,6 +44,8 @@ interface FleetViewClientProps {
 export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const { state, dispatch, isLoadingVehicles, error } = useFleet();
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const firestore = useFirestore();
 
   const {
     vehicles,
@@ -64,6 +69,60 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const handleMapThemeToggle = (isDark: boolean) => {
     dispatch({ type: 'SET_MAP_DARK_MODE', payload: isDark });
   }
+
+  const handleSeedDatabase = async () => {
+    setIsSeeding(true);
+    toast({
+      title: "Seeding Database...",
+      description: "Generating and saving 50 vehicles. This may take a moment.",
+    });
+
+    try {
+      // 1. Generate vehicle data using the Genkit flow
+      const simulatedData = await simulateVehicleTelemetry({ numberOfVehicles: 50 });
+      if (!simulatedData || simulatedData.length === 0) {
+        throw new Error("Failed to generate vehicle data.");
+      }
+
+      // 2. Create a write batch
+      const batch = writeBatch(firestore);
+      const vehiclesCol = collection(firestore, 'vehicles');
+
+      // 3. Add each vehicle to the batch
+      simulatedData.forEach(vehicle => {
+        // The AI sometimes returns 'vehicleId', we need to ensure it's mapped to 'id' for our type
+        const docData = {
+          ...vehicle,
+          // Add missing fields with sensible defaults if AI doesn't provide them
+          driverName: `Driver ${Math.floor(Math.random() * 100)}`,
+          speedKph: vehicle.status === 'active' ? Math.floor(Math.random() * 80) + 20 : 0,
+          fuelLevel: Math.floor(Math.random() * 80) + 20,
+          lastMaintenance: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+        };
+        const docRef = collection(firestore, 'vehicles', vehicle.vehicleId);
+        batch.set(docRef, docData);
+      });
+
+      // 4. Commit the batch
+      await batch.commit();
+
+      toast({
+        title: "Database Seeded!",
+        description: `${simulatedData.length} vehicles have been successfully added to Firestore.`,
+      });
+
+    } catch (e: any) {
+      console.error("Error seeding database:", e);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: e.message || "Could not seed the database.",
+      });
+    } finally {
+      setIsSeeding(false);
+      setPopoverOpen(false);
+    }
+  };
   
   const listVehicles = useMemo(() => {
      if (statusFilter === 'all') {
@@ -78,13 +137,9 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen">
-        Error fetching vehicle data. Please try refreshing the page.
+        An error occurred: {error.message}.
       </div>
     );
-  }
-
-  if (isLoadingVehicles) {
-    return <div className="h-screen w-screen bg-background flex items-center justify-center"><Skeleton className="h-full w-full" /></div>
   }
 
   return (
@@ -141,6 +196,18 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                             <VehicleList onVehicleSelect={() => setPopoverOpen(false)} />
                           )}
                        </div>
+                       <Separator />
+                        <div className="p-2">
+                           <Button 
+                              variant="outline" 
+                              className="w-full"
+                              onClick={handleSeedDatabase}
+                              disabled={isSeeding}
+                            >
+                              <DatabaseZap className="mr-2 h-4 w-4" />
+                              {isSeeding ? 'Seeding...' : 'Seed Database'}
+                           </Button>
+                        </div>
                     </PopoverContent>
                 </Popover>
 

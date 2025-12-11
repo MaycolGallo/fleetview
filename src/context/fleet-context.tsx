@@ -1,8 +1,9 @@
 
 'use client';
 
-import { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
 
 // 1. Define the state shape
@@ -40,8 +41,8 @@ type FleetAction =
 
 
 // 3. Define the initial state
-const getInitialState = (initialVehicles: Vehicle[] = []): FleetState => ({
-  vehicles: initialVehicles,
+const getInitialState = (): FleetState => ({
+  vehicles: [],
   statusFilter: 'all',
   selectedVehicle: null,
   routeHistoryVehicle: null,
@@ -52,7 +53,7 @@ const getInitialState = (initialVehicles: Vehicle[] = []): FleetState => ({
   routeSegmentToFit: null,
   selectedSegmentIndex: null,
   highlightedSegment: null,
-  visibleVehicleIds: new Set(initialVehicles.map(v => v.vehicleId)),
+  visibleVehicleIds: new Set(),
   isMapDark: true,
 });
 
@@ -85,13 +86,28 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 // 4. Create the reducer function
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
-    case 'SET_VEHICLES':
+    case 'SET_VEHICLES': {
+      const newVehicleIds = new Set(action.payload.map(v => v.vehicleId));
+      const newVisibleIds = new Set(state.visibleVehicleIds);
+
+      // Add new vehicles to visible set, remove old ones
+      state.visibleVehicleIds.forEach(id => {
+        if (!newVehicleIds.has(id)) {
+          newVisibleIds.delete(id);
+        }
+      });
+      action.payload.forEach(v => {
+        if (!state.visibleVehicleIds.has(v.vehicleId)) {
+          newVisibleIds.add(v.vehicleId);
+        }
+      });
+
       return { 
         ...state, 
         vehicles: action.payload,
-        visibleVehicleIds: new Set(action.payload.map(v => v.vehicleId)),
+        visibleVehicleIds: newVisibleIds,
       };
-
+    }
     case 'SET_STATUS_FILTER':
       return { ...state, statusFilter: action.payload };
 
@@ -242,28 +258,24 @@ interface FleetContextValue {
 
 const FleetContext = createContext<FleetContextValue | undefined>(undefined);
 
-async function fetchVehicles(): Promise<Vehicle[]> {
-    const response = await fetch('/api/vehicles');
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-}
-
 // 6. Create the Provider component
 export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
-    const { data: initialVehicles, isLoading: isLoadingVehicles, error } = useQuery({
-        queryKey: ['vehicles'],
-        queryFn: fetchVehicles,
-    });
+    const [state, dispatch] = useReducer(fleetReducer, getInitialState());
+    const firestore = useFirestore();
     
-    const [state, dispatch] = useReducer(fleetReducer, getInitialState(initialVehicles));
+    const vehiclesQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'vehicles'));
+    }, [firestore]);
+
+    const { data: vehiclesData, isLoading: isLoadingVehicles, error } = useCollection<Vehicle>(vehiclesQuery);
 
     useEffect(() => {
-        if (initialVehicles) {
-          dispatch({ type: 'SET_VEHICLES', payload: initialVehicles });
+        if (vehiclesData) {
+          const transformedData = vehiclesData.map(v => ({...v, vehicleId: v.id}));
+          dispatch({ type: 'SET_VEHICLES', payload: transformedData });
         }
-    }, [initialVehicles]);
+    }, [vehiclesData]);
 
     return (
         <FleetContext.Provider value={{ state, dispatch, isLoadingVehicles, error }}>
