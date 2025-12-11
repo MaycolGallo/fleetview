@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "Vehicle": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vehicle",
+      "type": "object",
+      "description": "Represents a vehicle in the fleet.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the vehicle."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the vehicle."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of the vehicle (e.g., truck, car, van)."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The current latitude of the vehicle."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The current longitude of the vehicle."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the vehicle (e.g., active, idle, out-of-service)."
+        },
+        "lastUpdate": {
+          "type": "string",
+          "description": "The last time the vehicle's data was updated.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "type",
+        "latitude",
+        "longitude",
+        "status",
+        "lastUpdate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/vehicles/{vehicleId}",
+        "definition": {
+          "entityName": "Vehicle",
+          "schema": {
+            "$ref": "#/backend/entities/Vehicle"
+          },
+          "description": "Stores vehicle data. Any authenticated user can read this data.",
+          "params": [
+            {
+              "name": "vehicleId",
+              "description": "The unique identifier of the vehicle."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "This design prioritizes simplicity and scalability for the FleetView application. Given that all vehicles seem to have similar access requirements (display on a map, detailed information view, dynamic updates, and filtering), a single collection, `/vehicles`, is sufficient. We are also supporting filtering by status. No denormalization of authorization is necessary since any authenticated user (including anonymous) is allowed to read this data. If write access were restricted, denormalization of an 'ownerId' field into each vehicle document would be necessary for authorization independence using a rule like `request.auth.uid == resource.data.ownerId`. However, for this use case, read-only access is sufficient. Security rules will enforce data validation, such as ensuring `lastUpdate` is a valid timestamp."
+  }
+}

@@ -1,0 +1,53 @@
+/**
+ * Core Philosophy: This ruleset establishes a public, read-only data model for authenticated users.
+ * Its primary goal is to securely expose vehicle fleet data for real-time tracking applications
+ * while completely disallowing any data modification from client applications.
+ *
+ * Data Structure: The data is organized in a single, flat collection named `/vehicles`. Each
+ * document within this collection represents a specific vehicle and its current state.
+ *
+ * Key Security Decisions:
+ * - Read Access: Any authenticated user, including those signed in anonymously, is permitted
+ *   to read individual vehicle documents and list the entire collection. This supports the
+ *   primary use case of displaying all vehicles on a map.
+ * - Write Access: All client-side write operations (create, update, delete) are explicitly
+ *   denied. This enforces a security posture where vehicle data can only be modified by a
+ *   trusted backend service (e.g., a Cloud Function or a server using the Admin SDK),
+ *   preventing unauthorized changes to fleet location or status.
+ * - User Isolation: There is no user-specific data; all vehicle information is treated as
+ *   globally readable for any authenticated session.
+ *
+ * Denormalization for Authorization: No denormalization is required for authorization in this
+ * model. Because access is not dependent on ownership or roles, simple checks against the
+ * user's authentication state are sufficient and highly performant.
+ *
+ * Structural Segregation: Not applicable, as all data shares the same public-read security profile.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    /**
+     * Checks if the user is authenticated, including anonymous users.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Allows any authenticated user to read vehicle data. All writes are disabled.
+     * @path /vehicles/{vehicleId}
+     * @allow A user who is signed-in (even anonymously) performing a `get` or `list` on the /vehicles collection.
+     * @deny Any user (authenticated or not) attempting to `create`, `update`, or `delete` a vehicle document.
+     * @principle Implements a public read-only model for authenticated users, securing the collection against all client-side writes.
+     */
+    match /vehicles/{vehicleId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}
