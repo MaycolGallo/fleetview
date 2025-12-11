@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/sheet';
 import { useFleet } from '@/context/fleet-context';
 import { Badge } from './ui/badge';
-import { Separator } from './ui/separator';
 import { User, Gauge, Fuel, Wrench, Calendar } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
