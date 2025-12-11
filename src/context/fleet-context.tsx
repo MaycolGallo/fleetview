@@ -87,26 +87,13 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
-      const newVehicleIds = new Set(action.payload.map(v => v.id));
-      const newVisibleIds = new Set(state.visibleVehicleIds);
-
-      // Add new vehicles to visible set, remove old ones
-      state.visibleVehicleIds.forEach(id => {
-        if (!newVehicleIds.has(id)) {
-          newVisibleIds.delete(id);
-        }
-      });
-      action.payload.forEach(v => {
-        if (!state.visibleVehicleIds.has(v.id)) {
-          newVisibleIds.add(v.id);
-        }
-      });
-
-      return { 
-        ...state, 
-        vehicles: action.payload,
-        visibleVehicleIds: newVisibleIds,
-      };
+       // On initial load or full data refresh, set all vehicles to be visible.
+       const newVisibleIds = new Set(action.payload.map(v => v.id));
+       return {
+         ...state,
+         vehicles: action.payload,
+         visibleVehicleIds: newVisibleIds
+       };
     }
     case 'SET_STATUS_FILTER':
       return { ...state, statusFilter: action.payload };
