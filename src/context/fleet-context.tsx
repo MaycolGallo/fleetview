@@ -87,7 +87,7 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
-      const newVehicleIds = new Set(action.payload.map(v => v.vehicleId));
+      const newVehicleIds = new Set(action.payload.map(v => v.id));
       const newVisibleIds = new Set(state.visibleVehicleIds);
 
       // Add new vehicles to visible set, remove old ones
@@ -97,8 +97,8 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         }
       });
       action.payload.forEach(v => {
-        if (!state.visibleVehicleIds.has(v.vehicleId)) {
-          newVisibleIds.add(v.vehicleId);
+        if (!state.visibleVehicleIds.has(v.id)) {
+          newVisibleIds.add(v.id);
         }
       });
 
@@ -268,12 +268,12 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
         return query(collection(firestore, 'vehicles'));
     }, [firestore]);
 
-    const { data: vehiclesData, isLoading: isLoadingVehicles, error } = useCollection<Vehicle>(vehiclesQuery);
+    const { data: vehiclesData, isLoading: isLoadingVehicles, error } = useCollection<Omit<Vehicle, 'id'>>(vehiclesQuery);
 
     useEffect(() => {
         if (vehiclesData) {
-          const transformedData = vehiclesData.map(v => ({...v, vehicleId: v.id}));
-          dispatch({ type: 'SET_VEHICLES', payload: transformedData });
+          // The useCollection hook provides the document ID as `id`
+          dispatch({ type: 'SET_VEHICLES', payload: vehiclesData as Vehicle[] });
         }
     }, [vehiclesData]);
 

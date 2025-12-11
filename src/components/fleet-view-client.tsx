@@ -62,7 +62,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   };
   
   const handleToggleAll = (isChecked: boolean) => {
-    const vehicleIds = listVehicles.map(v => v.vehicleId);
+    const vehicleIds = listVehicles.map(v => v.id);
     dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: vehicleIds, visible: isChecked } });
   };
 
@@ -97,10 +97,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
       // 2. Create a write batch
       const batch = writeBatch(firestore);
-      const vehiclesCol = collection(firestore, 'vehicles');
 
       // 3. Add each vehicle to the batch
-      simulatedData.forEach(vehicle => {
+      simulatedData.forEach((vehicle, index) => {
+        const vehicleId = `VEH-${1000 + index}`;
         const docData = {
           ...vehicle,
           driverName: `Driver ${Math.floor(Math.random() * 100)}`,
@@ -108,7 +108,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           fuelLevel: Math.floor(Math.random() * 80) + 20,
           lastMaintenance: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
         };
-        const docRef = doc(firestore, 'vehicles', vehicle.vehicleId);
+        const docRef = doc(firestore, 'vehicles', vehicleId);
         batch.set(docRef, docData);
       });
 
@@ -119,8 +119,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         title: "Database Seeded!",
         description: `${simulatedData.length} vehicles have been successfully added to Firestore.`,
       });
-      // Trigger a manual refresh or rely on the real-time listener to update
-      dispatch({ type: 'SET_VEHICLES', payload: (await Promise.all(simulatedData.map(async v => ({...v}))) as Vehicle[]) });
+      // The real-time listener will automatically update the UI, so no manual dispatch is needed.
 
 
     } catch (e: any) {
@@ -143,7 +142,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     return vehicles.filter(v => v.status === statusFilter);
   }, [vehicles, statusFilter]);
 
-  const areAllFilteredVisible = listVehicles.length > 0 && listVehicles.every(v => visibleVehicleIds.has(v.vehicleId));
+  const areAllFilteredVisible = listVehicles.length > 0 && listVehicles.every(v => visibleVehicleIds.has(v.id));
 
 
   if (error) {

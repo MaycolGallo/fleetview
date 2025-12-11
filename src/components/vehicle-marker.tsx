@@ -57,7 +57,13 @@ function ContextMenu({
     }, []);
 
     const handleAction = (action: VehicleAction) => {
-        dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+        if (action === 'show-route-history') {
+          dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+        } else if (action === 'show-details') {
+          dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
+        } else if (action === 'center-map') {
+          dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
+        }
         onClose();
     };
 
@@ -78,7 +84,7 @@ function ContextMenu({
                 style={{ top: position.y, left: position.x }}
             >
                 <div className="px-2 py-1.5 text-sm font-semibold border-b border-border mb-1">
-                    {vehicle.vehicleId}
+                    {vehicle.id}
                 </div>
                 <div className="flex flex-col">
                     {contextMenuItems.map((item) => {
@@ -117,6 +123,10 @@ function MobileContextMenuDrawer({
     const handleAction = (action: VehicleAction) => {
         if (action === 'show-route-history') {
              dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+        } else if (action === 'show-details') {
+            dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
+        } else if (action === 'center-map') {
+          dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
         }
         onOpenChange(false);
     };
@@ -125,7 +135,7 @@ function MobileContextMenuDrawer({
         <Drawer open={isOpen} onOpenChange={onOpenChange}>
             <DrawerContent>
                 <DrawerHeader className="text-left">
-                    <DrawerTitle>{vehicle.vehicleId}</DrawerTitle>
+                    <DrawerTitle>{vehicle.id}</DrawerTitle>
                 </DrawerHeader>
                 <div className="p-4 pt-0">
                     <div className="flex flex-col gap-1">
@@ -156,7 +166,7 @@ export function VehicleMarker({
 }: VehicleMarkerProps) {
   const { state, dispatch } = useFleet();
   const { selectedVehicle } = state;
-  const isSelected = selectedVehicle?.vehicleId === vehicle.vehicleId;
+  const isSelected = selectedVehicle?.id === vehicle.id;
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -242,5 +252,3 @@ export function VehicleMarker({
     </>
   );
 }
-
-    

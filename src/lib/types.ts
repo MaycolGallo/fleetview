@@ -1,7 +1,7 @@
 export type VehicleStatus = 'active' | 'idle' | 'out-of-service';
 
 export interface Vehicle {
-  vehicleId: string;
+  id: string; // The document ID from Firestore is the vehicleId
   latitude: number;
   longitude: number;
   status: VehicleStatus;

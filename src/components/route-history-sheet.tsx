@@ -80,7 +80,7 @@ function RouteHistoryContent({ onSegmentSelect }: { onSegmentSelect: (index: num
     return (
         <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
             <CardHeader>
-              <CardTitle>Route History: {vehicle?.vehicleId}</CardTitle>
+              <CardTitle>Route History: {vehicle?.id}</CardTitle>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Milestone className="w-4 h-4 text-primary" />

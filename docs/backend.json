@@ -6,10 +6,6 @@
       "type": "object",
       "description": "Represents a vehicle in the fleet.",
       "properties": {
-        "vehicleId": {
-          "type": "string",
-          "description": "Unique identifier for the vehicle."
-        },
         "latitude": {
           "type": "number",
           "description": "The current latitude of the vehicle."
@@ -37,7 +33,6 @@
         }
       },
       "required": [
-        "vehicleId",
         "latitude",
         "longitude",
         "status",

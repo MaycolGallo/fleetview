@@ -24,7 +24,7 @@ const sampleDrivers = [
   'Fernando Morales', 'Valeria Castillo', 'Ricardo Sanchez', 'Isabella Ramirez', 'Matias Flores'
 ];
 
-function generateVehicle(index: number): Vehicle {
+function generateVehicle(index: number): Omit<Vehicle, 'id'> & { vehicleId: string } {
   const status = getRandomStatus();
   let speedKph;
   switch (status) {
@@ -52,6 +52,6 @@ function generateVehicle(index: number): Vehicle {
 }
 
 export function GET(req: NextRequest) {
-  const vehicles: Vehicle[] = Array.from({ length: 50 }, (_, i) => generateVehicle(i));
+  const vehicles = Array.from({ length: 50 }, (_, i) => generateVehicle(i));
   return NextResponse.json(vehicles);
 }

@@ -152,7 +152,7 @@ function MapControl() {
       return [routeHistoryVehicle];
     }
     return vehicles.filter(v => 
-      visibleVehicleIds.has(v.vehicleId) &&
+      visibleVehicleIds.has(v.id) &&
       (statusFilter === 'all' || v.status === statusFilter)
     );
   }, [vehicles, statusFilter, routeHistoryVehicle, visibleVehicleIds]);
@@ -161,7 +161,7 @@ function MapControl() {
     <>
         {filteredVehicles.map((vehicle) => (
             <VehicleMarker
-              key={vehicle.vehicleId}
+              key={vehicle.id}
               vehicle={vehicle}
             />
         ))}

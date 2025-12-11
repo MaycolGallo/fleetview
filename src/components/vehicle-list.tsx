@@ -54,19 +54,19 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
             <div className="flex flex-col gap-1 p-2">
                 {listVehicles.map(vehicle => {
                     const StatusIcon = statusDetails[vehicle.status].icon;
-                    const isVisible = visibleVehicleIds.has(vehicle.vehicleId);
+                    const isVisible = visibleVehicleIds.has(vehicle.id);
                     return (
                         <div
-                            key={vehicle.vehicleId}
+                            key={vehicle.id}
                             className={cn(
                                 "flex items-center gap-3 p-2 rounded-md text-left transition-colors text-sm",
-                                selectedVehicle?.vehicleId === vehicle.vehicleId && "bg-sidebar-accent text-sidebar-accent-foreground"
+                                selectedVehicle?.id === vehicle.id && "bg-sidebar-accent text-sidebar-accent-foreground"
                             )}
                         >
                             <Checkbox
                                 checked={isVisible}
-                                onCheckedChange={() => handleVisibilityChange(vehicle.vehicleId)}
-                                aria-label={`Toggle visibility of ${vehicle.vehicleId}`}
+                                onCheckedChange={() => handleVisibilityChange(vehicle.id)}
+                                aria-label={`Toggle visibility of ${vehicle.id}`}
                                 className="flex-shrink-0"
                             />
                             <button
@@ -80,7 +80,7 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
                             >
                                 <StatusIcon className={cn("w-5 h-5 flex-shrink-0", statusDetails[vehicle.status].className)} />
                                 <div className="flex-1 truncate">
-                                    <p className="font-semibold truncate">{vehicle.vehicleId}</p>
+                                    <p className="font-semibold truncate">{vehicle.id}</p>
                                     <p className="text-xs text-muted-foreground truncate">
                                         {vehicle.latitude.toFixed(4)}, {vehicle.longitude.toFixed(4)}
                                     </p>

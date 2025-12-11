@@ -20,7 +20,6 @@ export type SimulateVehicleTelemetryInput =
   z.infer<typeof SimulateVehicleTelemetryInputSchema>;
 
 const VehicleTelemetrySchema = z.object({
-  vehicleId: z.string().describe('Unique identifier for the vehicle.'),
   latitude: z.number().describe('The latitude of the vehicle.'),
   longitude: z.number().describe('The longitude of the vehicle.'),
   status: z
@@ -44,7 +43,7 @@ const prompt = ai.definePrompt({
   name: 'simulateVehicleTelemetryPrompt',
   input: {schema: SimulateVehicleTelemetryInputSchema},
   output: {schema: SimulateVehicleTelemetryOutputSchema},
-  prompt: `You are a vehicle telemetry simulator. Generate realistic telemetry data for the specified number of vehicles. The data should include vehicle ID, latitude, longitude, and status (active, idle, or out-of-service). Each vehicle's data must be self-consistent.
+  prompt: `You are a vehicle telemetry simulator. Generate realistic telemetry data for the specified number of vehicles. The data should include latitude, longitude, and status (active, idle, or out-of-service). Each vehicle's data must be self-consistent.
 
 All vehicles must be located within the metropolitan area of Lima, Peru (approximate latitude -12.046, longitude -77.042).
 

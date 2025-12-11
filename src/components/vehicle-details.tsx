@@ -48,7 +48,7 @@ export function VehicleDetails() {
     <Sheet open={!!selectedVehicle} onOpenChange={handleOpenChange}>
       <SheetContent className="w-[380px] sm:w-[420px]">
         <SheetHeader>
-          <SheetTitle>{selectedVehicle.vehicleId}</SheetTitle>
+          <SheetTitle>{selectedVehicle.id}</SheetTitle>
           <div className="text-sm text-muted-foreground">
             <Badge
               variant={
