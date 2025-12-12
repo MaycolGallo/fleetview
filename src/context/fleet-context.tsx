@@ -2,9 +2,19 @@
 'use client';
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react';
-import { useCollection, useFirestore, useMemoFirebase, useFirebase } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { useQuery } from '@tanstack/react-query';
 import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
+
+const fetchVehicles = async (): Promise<Vehicle[]> => {
+  const res = await fetch('/api/vehicles');
+  if (!res.ok) {
+    throw new Error('Failed to fetch vehicles');
+  }
+  const data = await res.json();
+  // The mock API returns vehicleId, we'll map it to id for consistency
+  return data.map((v: any) => ({ ...v, id: v.vehicleId }));
+};
+
 
 // 1. Define the state shape
 interface FleetState {
@@ -87,11 +97,16 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
-       const newVisibleIds = new Set(action.payload.map(v => v.id));
+       // When vehicles are set for the first time, make them all visible.
+       // On subsequent updates, preserve the existing visibility state.
+       const newVisibleIds = state.vehicles.length === 0 
+          ? new Set(action.payload.map(v => v.id))
+          : new Set(state.visibleVehicleIds);
+
        return {
          ...state,
          vehicles: action.payload,
-         visibleVehicleIds: newVisibleIds
+         visibleVehicleIds: newVisibleIds,
        };
     }
     case 'SET_STATUS_FILTER':
@@ -247,23 +262,20 @@ const FleetContext = createContext<FleetContextValue | undefined>(undefined);
 // 6. Create the Provider component
 export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useReducer(fleetReducer, getInitialState());
-    const firestore = useFirestore();
-    const { user } = useFirebase();
-    
-    const vehiclesQuery = useMemoFirebase(() => {
-        // Only create the query if we have a signed-in user.
-        if (!firestore || !user) return null;
-        return query(collection(firestore, 'vehicles'));
-    }, [firestore, user]);
 
-    const { data: vehiclesData, isLoading: isLoadingFirestore, error } = useCollection<Omit<Vehicle, 'id'>>(vehiclesQuery);
+    const {
+      data: vehiclesData,
+      isLoading: isLoadingVehicles,
+      error,
+    } = useQuery<Vehicle[], Error>({
+      queryKey: ['vehicles'],
+      queryFn: fetchVehicles,
+      refetchInterval: 5000, // Refetch every 5 seconds
+    });
     
-    // isLoadingVehicles should be true if Firestore is loading or if there's no user yet.
-    const isLoadingVehicles = isLoadingFirestore || !user;
-
     useEffect(() => {
         if (vehiclesData) {
-          dispatch({ type: 'SET_VEHICLES', payload: vehiclesData as Vehicle[] });
+          dispatch({ type: 'SET_VEHICLES', payload: vehiclesData });
         }
     }, [vehiclesData]);
 
