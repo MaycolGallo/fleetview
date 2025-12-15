@@ -113,7 +113,7 @@ function MapControl() {
     routeHistoryVehicle,
     routePath,
     highlightedSegment,
-    routeSegmentToFit,
+    mapViewport,
     visibleVehicleIds,
   } = state;
 
@@ -128,21 +128,38 @@ function MapControl() {
     }
   }, [map]);
 
+
   useEffect(() => {
-    if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
-  
-    if (routeSegmentToFit.length === 1) {
-      map.panTo(routeSegmentToFit[0]);
-      if (map.getZoom()! < 15) {
-        map.setZoom(15);
+    if (!map) return;
+
+    switch (mapViewport.type) {
+      case 'pan_to_vehicle': {
+        const { latitude, longitude } = mapViewport.payload;
+        map.panTo({ lat: latitude, lng: longitude });
+        if (map.getZoom()! < 15) {
+          map.setZoom(15);
+        }
+        break;
       }
-    } else {
-      const bounds = new google.maps.LatLngBounds();
-      routeSegmentToFit.forEach(point => bounds.extend(point));
-      map.fitBounds(bounds, 100);
+      case 'fit_bounds':
+      case 'fit_route': {
+        const points = mapViewport.payload;
+        if (points && points.length > 0) {
+          if (points.length === 1) {
+            map.panTo(points[0]);
+            if (map.getZoom()! < 15) {
+                map.setZoom(15);
+            }
+          } else {
+            const bounds = new google.maps.LatLngBounds();
+            points.forEach(point => bounds.extend(point));
+            map.fitBounds(bounds, 100);
+          }
+        }
+        break;
+      }
     }
-  }, [map, routeSegmentToFit]);
-  
+  }, [map, mapViewport]);
 
   const filteredVehicles = useMemo(() => {
     if (routeHistoryVehicle) {

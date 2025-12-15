@@ -18,6 +18,13 @@ const fetchVehicles = async (): Promise<Vehicle[]> => {
 
 
 // 1. Define the state shape
+type MapViewport = 
+  | { type: 'initial' }
+  | { type: 'pan_to_vehicle', payload: Vehicle }
+  | { type: 'fit_bounds', payload: { lat: number, lng: number }[] }
+  | { type: 'fit_route', payload: { lat: number, lng: number }[] };
+
+
 interface FleetState {
   vehicles: Vehicle[];
   statusFilter: VehicleStatus | 'all';
@@ -27,11 +34,11 @@ interface FleetState {
   routeEvents: RouteEvent[];
   isRouteSheetOpen: boolean;
   isLoadingRoute: boolean;
-  routeSegmentToFit: { lat: number; lng: number }[] | null;
   selectedSegmentIndex: number | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
   visibleVehicleIds: Set<string>;
   isMapDark: boolean;
+  mapViewport: MapViewport;
 }
 
 // 2. Define the actions
@@ -60,11 +67,11 @@ const getInitialState = (): FleetState => ({
   routeEvents: [],
   isRouteSheetOpen: false,
   isLoadingRoute: false,
-  routeSegmentToFit: null,
   selectedSegmentIndex: null,
   highlightedSegment: null,
   visibleVehicleIds: new Set(),
   isMapDark: true,
+  mapViewport: { type: 'initial' },
 });
 
 // Helper function to calculate segment points
@@ -87,7 +94,7 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
     }
     
     return { 
-        segmentPoints: segmentPoints.length > 0 ? segmentPoints : null, 
+        segmentPoints: segmentPoints.length > 0 ? segmentPoints : [], 
         highlightedSegment: segmentPoints.length > 1 ? segmentPoints : null 
     };
 }
@@ -98,10 +105,15 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
       const existingVisibleIds = state.vehicles.length > 0 ? state.visibleVehicleIds : new Set(action.payload.map(v => v.id));
+      const visibleVehicles = action.payload.filter(v => existingVisibleIds.has(v.id));
+      const newBounds = visibleVehicles.length > 0
+          ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
+          : [];
        return {
          ...state,
          vehicles: action.payload,
          visibleVehicleIds: existingVisibleIds,
+         mapViewport: state.mapViewport.type === 'initial' ? { type: 'fit_bounds', payload: newBounds } : state.mapViewport,
        };
     }
     case 'SET_STATUS_FILTER':
@@ -109,26 +121,30 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
-        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
-        const newBounds = visibleVehicles.length > 0
-          ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
-          : null;
+         const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
+          const newBounds = visibleVehicles.length > 0
+            ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
+            : [];
         return { 
             ...state, 
-            selectedVehicle: null, 
-            routeSegmentToFit: newBounds
+            selectedVehicle: null,
+            mapViewport: { type: 'fit_bounds', payload: newBounds }
         };
       }
       return { 
         ...state, 
-        selectedVehicle: action.payload, 
-        routeSegmentToFit: [{ lat: action.payload.latitude, lng: action.payload.longitude }] 
+        selectedVehicle: action.payload,
+        mapViewport: { type: 'pan_to_vehicle', payload: action.payload }
       };
     }
 
     case 'SET_ROUTE_SHEET_OPEN':
       // If we're closing the sheet, also go back to the main fleet view.
       if (action.payload === false && state.isRouteSheetOpen === true) {
+        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
+        const newBounds = visibleVehicles.length > 0
+            ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
+            : [];
         return {
           ...state,
           routeHistoryVehicle: null,
@@ -136,10 +152,10 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
           routeEvents: [],
           selectedVehicle: null,
           isRouteSheetOpen: false,
-          routeSegmentToFit: null,
           highlightedSegment: null,
           selectedSegmentIndex: null,
           isLoadingRoute: false,
+          mapViewport: { type: 'fit_bounds', payload: newBounds },
         }
       }
       return { ...state, isRouteSheetOpen: action.payload };
@@ -159,22 +175,27 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         routePath: action.payload.routePoints,
         routeEvents: action.payload.routeEvents,
         isRouteSheetOpen: true,
-        routeSegmentToFit: action.payload.routePoints.length > 0 ? action.payload.routePoints : null,
+        mapViewport: { type: 'fit_route', payload: action.payload.routePoints },
       };
 
-    case 'BACK_TO_FLEET':
-      return {
-        ...state,
-        routeHistoryVehicle: null,
-        routePath: null,
-        routeEvents: [],
-        selectedVehicle: null,
-        isRouteSheetOpen: false,
-        routeSegmentToFit: null,
-        highlightedSegment: null,
-        selectedSegmentIndex: null,
-        isLoadingRoute: false,
-      };
+    case 'BACK_TO_FLEET': {
+        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
+        const newBounds = visibleVehicles.length > 0
+            ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
+            : [];
+        return {
+            ...state,
+            routeHistoryVehicle: null,
+            routePath: null,
+            routeEvents: [],
+            selectedVehicle: null,
+            isRouteSheetOpen: false,
+            highlightedSegment: null,
+            selectedSegmentIndex: null,
+            isLoadingRoute: false,
+            mapViewport: { type: 'fit_bounds', payload: newBounds },
+        };
+    }
 
     case 'SELECT_ROUTE_SEGMENT': {
       const segmentIndex = action.payload;
@@ -184,15 +205,15 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
           ...state,
           selectedSegmentIndex: null,
           highlightedSegment: null,
-          routeSegmentToFit: state.routePath, // Fit entire route
+          mapViewport: { type: 'fit_route', payload: state.routePath || [] },
         };
       }
       const { segmentPoints, highlightedSegment } = getSegmentPoints(state, segmentIndex);
       return {
         ...state,
         selectedSegmentIndex: segmentIndex,
-        routeSegmentToFit: segmentPoints,
         highlightedSegment: highlightedSegment,
+        mapViewport: segmentPoints ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
       };
     }
     
@@ -210,8 +231,8 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         return {
             ...state,
             selectedSegmentIndex: segmentIndex,
-            routeSegmentToFit: segmentPoints,
             highlightedSegment: highlightedSegment,
+             mapViewport: segmentPoints ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
         };
     }
 
@@ -274,24 +295,6 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
           dispatch({ type: 'SET_VEHICLES', payload: vehiclesData });
         }
     }, [vehiclesData]);
-
-    // Effect to pan/zoom map when routeHistoryVehicle changes
-    useEffect(() => {
-      if (state.routeHistoryVehicle) {
-        // This effect will be triggered when a route is loaded.
-        // The reducer for SET_ROUTE_HISTORY already handles fitting the route bounds.
-      } else {
-        // When we are not in route history view, fit all visible vehicles.
-        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
-        if (visibleVehicles.length > 0 && !state.selectedVehicle) {
-             const points = visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }));
-             // We dispatch this as a new action or reuse an existing one.
-             // For now, let's assume we want this behavior on initial load and when returning to fleet.
-             // This might require a new action type like 'FIT_VISIBLE_VEHICLES'.
-             // To avoid complexity, let's handle this in the component that triggers the view change.
-        }
-      }
-    }, [state.routeHistoryVehicle, state.vehicles, state.visibleVehicleIds, state.selectedVehicle]);
 
 
     useEffect(() => {
