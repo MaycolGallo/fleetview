@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -39,7 +40,6 @@ const DrawerContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
 >(({ className, children, ...props }, ref) => (
   <DrawerPortal>
-    <DrawerOverlay />
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
@@ -48,7 +48,6 @@ const DrawerContent = React.forwardRef<
       )}
       {...props}
     >
-      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
       {children}
     </DrawerPrimitive.Content>
   </DrawerPortal>
@@ -104,6 +103,24 @@ const DrawerDescription = React.forwardRef<
 ))
 DrawerDescription.displayName = DrawerPrimitive.Description.displayName
 
+
+const DrawerHandle = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(({ className, ...props }, ref) => (
+  <div
+    ref={ref}
+    className={cn("mx-auto h-2 w-[100px] rounded-full bg-muted", className)}
+    {...props}
+  />
+));
+DrawerHandle.displayName = "DrawerHandle";
+
+
+// Add the Root property to the exported object
+const Root = Drawer;
+const NestedRoot = DrawerPrimitive.NestedRoot;
+
 export {
   Drawer,
   DrawerPortal,
@@ -115,4 +132,7 @@ export {
   DrawerFooter,
   DrawerTitle,
   DrawerDescription,
+  DrawerHandle,
+  Root,
+  NestedRoot
 }
