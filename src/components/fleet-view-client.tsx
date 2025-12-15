@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { useFleet } from '@/context/fleet-context';
 import { VehicleDetails } from './vehicle-details';
+import { ClientOnly } from './client-only';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -86,6 +87,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         <header className="absolute top-0 left-0 p-4 z-20">
           <div className="flex flex-col items-start gap-2">
             <div className="rounded-lg shadow-md border border-zinc-700 bg-zinc-900/90 backdrop-blur-sm p-1 flex items-start gap-1">
+              <ClientOnly>
                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hover:bg-zinc-700/80">
@@ -137,7 +139,9 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                        </div>
                     </PopoverContent>
                 </Popover>
+              </ClientOnly>
 
+              <ClientOnly>
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hover:bg-zinc-700/80">
@@ -161,6 +165,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
+              </ClientOnly>
             </div>
             
             {routeHistoryVehicle && (
