@@ -121,7 +121,6 @@ export function VehicleDetails() {
     return (
         <Drawer.Root open={!!selectedVehicle} onOpenChange={handleOpenChange} snapPoints={[0.4, 1]} activeSnapPoint={0.4}>
             <Drawer.Portal>
-                 <Drawer.Overlay className="fixed inset-0 bg-black/40" />
                 <Drawer.Content className='bg-zinc-900/95 backdrop-blur-sm'>
                     <div className="p-4 overflow-auto">
                         <Drawer.Handle className="mb-4" />
