@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { APIProvider, Map, useMap, ColorScheme } from '@vis.gl/react-google-maps';
@@ -128,7 +129,7 @@ function MapControl() {
   }, [map]);
 
   useEffect(() => {
-    if (!map || !routeSegmentToFit) return;
+    if (!map || !routeSegmentToFit || routeSegmentToFit.length === 0) return;
   
     if (routeSegmentToFit.length === 1) {
       map.panTo(routeSegmentToFit[0]);
@@ -142,10 +143,6 @@ function MapControl() {
     }
   }, [map, routeSegmentToFit]);
   
-  const handleMapClick = () => {
-    dispatch({ type: 'SELECT_VEHICLE', payload: null });
-  };
-
 
   const filteredVehicles = useMemo(() => {
     if (routeHistoryVehicle) {
@@ -178,7 +175,7 @@ export function FleetMap({ apiKey }: FleetMapProps) {
   const { isMapDark } = state;
   
   const handleMapClick = () => {
-    dispatch({ type: 'SELECT_VEHICLE', payload: null });
+    dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
   };
 
   return (

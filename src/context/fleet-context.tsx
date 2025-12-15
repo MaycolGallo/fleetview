@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react';
@@ -97,11 +98,11 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
-      const newVisibleIds = new Set(action.payload.map(v => v.id));
+      const existingVisibleIds = state.vehicles.length > 0 ? state.visibleVehicleIds : new Set(action.payload.map(v => v.id));
        return {
          ...state,
          vehicles: action.payload,
-         visibleVehicleIds: newVisibleIds,
+         visibleVehicleIds: existingVisibleIds,
        };
     }
     case 'SET_STATUS_FILTER':
@@ -111,17 +112,18 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         return { 
           ...state, 
           selectedVehicle: action.payload,
-          routeSegmentToFit: null, // Don't pan on simple select
         };
     
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
-        // When deselecting, fit all visible vehicles into view
         const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
+        const newBounds = visibleVehicles.length > 0
+          ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
+          : null;
         return { 
             ...state, 
             selectedVehicle: null, 
-            routeSegmentToFit: visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude })) 
+            routeSegmentToFit: newBounds
         };
       }
       return { 
