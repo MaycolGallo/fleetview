@@ -34,7 +34,7 @@ export function VehicleDetails() {
 
   const handleOpenChange = (isOpen: boolean) => {
     if (!isOpen) {
-      dispatch({ type: 'SELECT_VEHICLE', payload: null });
+      dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
     }
   };
 

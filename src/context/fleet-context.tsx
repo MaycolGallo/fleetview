@@ -38,7 +38,6 @@ interface FleetState {
 type FleetAction =
   | { type: 'SET_VEHICLES'; payload: Vehicle[] }
   | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus | 'all' }
-  | { type: 'SELECT_VEHICLE'; payload: Vehicle | null }
   | { type: 'PAN_TO_VEHICLE'; payload: Vehicle | null }
   | { type: 'START_ROUTE_LOADING'; payload: Vehicle }
   | { type: 'SET_ROUTE_HISTORY'; payload: { routePoints: { lat: number; lng: number }[]; routeEvents: RouteEvent[] } }
@@ -107,12 +106,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     }
     case 'SET_STATUS_FILTER':
       return { ...state, statusFilter: action.payload };
-
-    case 'SELECT_VEHICLE':
-        return { 
-          ...state, 
-          selectedVehicle: action.payload,
-        };
     
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
