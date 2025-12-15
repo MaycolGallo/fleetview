@@ -97,12 +97,7 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
-       // When vehicles are set for the first time, make them all visible.
-       // On subsequent updates, preserve the existing visibility state.
-       const newVisibleIds = state.vehicles.length === 0 
-          ? new Set(action.payload.map(v => v.id))
-          : new Set(state.visibleVehicleIds);
-
+      const newVisibleIds = new Set(action.payload.map(v => v.id));
        return {
          ...state,
          vehicles: action.payload,
@@ -121,7 +116,13 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
-        return { ...state, selectedVehicle: null, routeSegmentToFit: null };
+        // When deselecting, fit all visible vehicles into view
+        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
+        return { 
+            ...state, 
+            selectedVehicle: null, 
+            routeSegmentToFit: visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude })) 
+        };
       }
       return { 
         ...state, 
@@ -278,6 +279,52 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
           dispatch({ type: 'SET_VEHICLES', payload: vehiclesData });
         }
     }, [vehiclesData]);
+
+    // Effect to pan/zoom map when routeHistoryVehicle changes
+    useEffect(() => {
+      if (state.routeHistoryVehicle) {
+        // This effect will be triggered when a route is loaded.
+        // The reducer for SET_ROUTE_HISTORY already handles fitting the route bounds.
+      } else {
+        // When we are not in route history view, fit all visible vehicles.
+        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
+        if (visibleVehicles.length > 0 && !state.selectedVehicle) {
+             const points = visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }));
+             // We dispatch this as a new action or reuse an existing one.
+             // For now, let's assume we want this behavior on initial load and when returning to fleet.
+             // This might require a new action type like 'FIT_VISIBLE_VEHICLES'.
+             // To avoid complexity, let's handle this in the component that triggers the view change.
+        }
+      }
+    }, [state.routeHistoryVehicle, state.vehicles, state.visibleVehicleIds, state.selectedVehicle]);
+
+
+    useEffect(() => {
+        const { routeHistoryVehicle } = state;
+        if (!routeHistoryVehicle) return;
+
+        const fetchRoute = async () => {
+            try {
+                const response = await fetch('/api/routes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        startLat: routeHistoryVehicle.latitude,
+                        startLng: routeHistoryVehicle.longitude,
+                    }),
+                });
+                if (!response.ok) throw new Error('Failed to fetch route');
+                const data = await response.json();
+                dispatch({ type: 'SET_ROUTE_HISTORY', payload: data });
+            } catch (error) {
+                console.error("Error fetching route", error);
+                dispatch({ type: 'BACK_TO_FLEET' }); // Go back if route fails
+            }
+        };
+
+        fetchRoute();
+    }, [state.routeHistoryVehicle]);
+
 
     return (
         <FleetContext.Provider value={{ state, dispatch, isLoadingVehicles, error }}>
