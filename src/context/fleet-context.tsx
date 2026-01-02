@@ -344,6 +344,8 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     } = useQuery<Vehicle[], Error>({
       queryKey: ['vehicles'],
       queryFn: fetchVehicles,
+      refetchInterval: false,
+      refetchOnWindowFocus: false,
     });
     
     useEffect(() => {
@@ -395,5 +397,7 @@ export const useFleet = () => {
     }
     return context;
 };
+
+    
 
     
