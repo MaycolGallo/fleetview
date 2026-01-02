@@ -344,7 +344,6 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     } = useQuery<Vehicle[], Error>({
       queryKey: ['vehicles'],
       queryFn: fetchVehicles,
-      refetchInterval: 5000, // Refetch every 5 seconds
     });
     
     useEffect(() => {
