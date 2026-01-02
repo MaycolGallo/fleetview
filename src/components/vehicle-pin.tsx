@@ -3,6 +3,7 @@
 
 import { cn } from '@/lib/utils';
 import type { VehicleStatus } from '@/lib/types';
+import React from 'react';
 
 interface VehiclePinProps {
   status: VehicleStatus;
@@ -15,11 +16,11 @@ const statusColors = {
   'out-of-service': '#F44336', // Red
 };
 
-export function VehiclePin({ status, isSelected }: VehiclePinProps) {
+export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) => {
   return (
     <div
       className={cn(
-        'transition-all duration-1000 ease-in-out transform-gpu cursor-pointer',
+        'transition-transform duration-1000 ease-in-out transform-gpu cursor-pointer',
         isSelected ? 'scale-125 z-10' : 'scale-100'
       )}
       style={{ 
@@ -49,4 +50,6 @@ export function VehiclePin({ status, isSelected }: VehiclePinProps) {
       </div>
     </div>
   );
-}
+});
+
+VehiclePin.displayName = 'VehiclePin';
