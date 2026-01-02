@@ -104,7 +104,7 @@ function RoutePolyline({
 
 function MapControl() {
   const map = useMap();
-  const { state, dispatch } = useFleet();
+  const { state } = useFleet();
   const { toast } = useToast();
 
   const {
@@ -118,7 +118,7 @@ function MapControl() {
   } = state;
 
   const handleRouteClick = (pointIndex: number) => {
-    dispatch({ type: 'SELECT_MAP_SEGMENT', payload: pointIndex });
+    state.dispatch({ type: 'SELECT_MAP_SEGMENT', payload: pointIndex });
   };
 
   useEffect(() => {
@@ -188,11 +188,11 @@ function MapControl() {
 
 
 export function FleetMap({ apiKey }: FleetMapProps) {
-  const { state, dispatch } = useFleet();
+  const { state } = useFleet();
   const { isMapDark } = state;
   
   const handleMapClick = () => {
-    dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
+    state.dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
   };
 
   return (

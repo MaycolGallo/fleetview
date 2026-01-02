@@ -2,9 +2,9 @@
 "use client";
 
 import type { Vehicle } from '@/lib/types';
-import { Marker, useMap } from '@vis.gl/react-google-maps';
+import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -16,7 +16,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useFleet } from '@/context/fleet-context';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 
 export type VehicleAction = 
@@ -78,7 +78,6 @@ function ContextMenu({
                 onContextMenu={(e) => {
                     e.preventDefault();
                     onClose();
-                    console.log(e)
                 }}
             />
             <div
@@ -163,28 +162,6 @@ function MobileContextMenuDrawer({
     )
 }
 
-function AnimatedVehiclePin({ vehicle, onLeftClick }: { vehicle: Vehicle, onLeftClick: (e: React.MouseEvent) => void }) {
-  const { state } = useFleet();
-  const { selectedVehicle } = state;
-  const isSelected = selectedVehicle?.id === vehicle.id;
-
-  return (
-    <motion.div
-        onClick={onLeftClick}
-        animate={{ scale: isSelected ? 1.25 : 1 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-        className="cursor-pointer"
-        style={{
-            filter: isSelected ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))',
-            zIndex: isSelected ? 10 : 1,
-        }}
-    >
-      <VehiclePin status={vehicle.status} isSelected={isSelected} />
-    </motion.div>
-  );
-}
-
-
 export function VehicleMarker({ 
   vehicle, 
 }: VehicleMarkerProps) {
@@ -193,8 +170,10 @@ export function VehicleMarker({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
-  const { dispatch } = useFleet();
-  const map = useMap();
+  const { state, dispatch } = useFleet();
+  const { selectedVehicle } = state;
+
+  const isSelected = selectedVehicle?.id === vehicle.id;
 
   const handleContextMenu = (e: google.maps.MapMouseEvent) => {
     e.domEvent.preventDefault();
@@ -204,8 +183,8 @@ export function VehicleMarker({
     setContextMenuOpen(true);
   };
   
-  const handleLeftClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleLeftClick = (e: google.maps.MapMouseEvent) => {
+    e.domEvent.stopPropagation();
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
   }
 
@@ -230,30 +209,36 @@ export function VehicleMarker({
   };
 
   const handleTouchMove = () => {
-    // Cancel long press if finger moves
     if (pressTimer.current) {
       clearTimeout(pressTimer.current);
       pressTimer.current = null;
     }
   };
-  
-  if (!map) return null;
 
   return (
     <>
-      <Marker 
+      <AdvancedMarker 
+        key={vehicle.id}
         position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+        onClick={handleLeftClick}
         onContextMenu={handleContextMenu}
-        // These events are attached to the marker component itself, but the click area is the inner div
       >
          <div 
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
          >
-            <AnimatedVehiclePin vehicle={vehicle} onLeftClick={handleLeftClick} />
+             <motion.div
+                animate={{ scale: isSelected ? 1.25 : 1 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+                style={{
+                    zIndex: isSelected ? 10 : 1,
+                }}
+            >
+                <VehiclePin status={vehicle.status} isSelected={isSelected} />
+            </motion.div>
          </div>
-      </Marker>
+      </AdvancedMarker>
 
       {contextMenuOpen && !isMobile && (
         <ContextMenu
