@@ -1,10 +1,10 @@
 
-"use client";
+'use client';
 
 import type { Vehicle } from '@/lib/types';
-import { AdvancedMarker } from '@vis.gl/react-google-maps';
+import { useMap } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -16,7 +16,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useFleet } from '@/context/fleet-context';
-import { motion } from 'framer-motion';
+import { motion, useAnimate } from 'framer-motion';
 
 
 export type VehicleAction = 
@@ -27,10 +27,6 @@ export type VehicleAction =
   | 'view-alerts'
   | 'maintenance'
   ;
-
-interface VehicleMarkerProps {
-  vehicle: Vehicle;
-}
 
 const contextMenuItems = [
   { action: 'show-route-history' as VehicleAction, label: 'Show Route History', icon: History },
@@ -162,32 +158,64 @@ function MobileContextMenuDrawer({
     )
 }
 
-export function VehicleMarker({ 
-  vehicle, 
-}: VehicleMarkerProps) {
+function AnimatedVehicleMarker({ vehicle }: { vehicle: Vehicle }) {
+  const map = useMap();
+  const [scope, animate] = useAnimate();
+  const [markerContainer, setMarkerContainer] = useState<HTMLElement | null>(null);
+
+  const { state, dispatch } = useFleet();
+  const { selectedVehicle } = state;
+  const isSelected = selectedVehicle?.id === vehicle.id;
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
-  const { state, dispatch } = useFleet();
-  const { selectedVehicle } = state;
 
-  const isSelected = selectedVehicle?.id === vehicle.id;
 
-  const handleContextMenu = (e: google.maps.MapMouseEvent) => {
-    e.domEvent.preventDefault();
-    e.domEvent.stopPropagation();
-    if (isMobile) return;
-    setContextMenuPosition({ x: e.domEvent.clientX, y: e.domEvent.clientY });
-    setContextMenuOpen(true);
-  };
+  useEffect(() => {
+    if (!map) return;
+    // The Map instances provides a custom div to render markers on.
+    // This is the recommended way to handle custom markers.
+    const container = map.getDiv().querySelector<HTMLElement>('div[style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;"]');
+    setMarkerContainer(container);
+  }, [map]);
+
+
+  useEffect(() => {
+    if (!scope.current) return;
+
+    const projection = map?.getProjection();
+    const point = projection?.fromLatLngToDivPixel(
+        new google.maps.LatLng(vehicle.latitude, vehicle.longitude)
+    );
+
+    if (point) {
+        animate(scope.current, { 
+          left: point.x, 
+          top: point.y,
+        }, {
+          duration: 1, // Smooth transition for 1 second
+          ease: 'easeInOut'
+        });
+    }
+
+  }, [vehicle.latitude, vehicle.longitude, map, animate, scope]);
   
-  const handleLeftClick = (e: google.maps.MapMouseEvent) => {
-    e.domEvent.stopPropagation();
+  
+  const handleLeftClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
   }
 
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isMobile) return;
+    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    setContextMenuOpen(true);
+  };
+  
   const handleTouchStart = (e: React.TouchEvent) => {
     e.stopPropagation();
     pressTimer.current = setTimeout(() => {
@@ -215,36 +243,33 @@ export function VehicleMarker({
     }
   };
 
-  return (
-    <>
-      <AdvancedMarker 
-        key={vehicle.id}
-        position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-        onClick={handleLeftClick}
-        onContextMenu={handleContextMenu}
-      >
-         <div 
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onTouchMove={handleTouchMove}
-         >
-             <motion.div
-                layout
-                key={vehicle.id}
-                initial={false}
-                transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                animate={{ scale: isSelected ? 1.25 : 1 }}
-                style={{
-                    zIndex: isSelected ? 10 : 1,
-                    transformOrigin: 'bottom center'
-                }}
-            >
-                <VehiclePin status={vehicle.status} isSelected={isSelected} />
-            </motion.div>
-         </div>
-      </AdvancedMarker>
 
-      {contextMenuOpen && !isMobile && (
+  if (!markerContainer) return null;
+
+  return createPortal(
+    <>
+      <motion.div
+        ref={scope}
+        className="absolute"
+        style={{
+          transform: 'translate(-50%, -100%)',
+          zIndex: isSelected ? 10 : 1,
+        }}
+        animate={{ scale: isSelected ? 1.25 : 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      >
+        <div
+          onClick={handleLeftClick}
+          onContextMenu={handleContextMenu}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchMove}
+        >
+          <VehiclePin status={vehicle.status} isSelected={isSelected} />
+        </div>
+      </motion.div>
+
+       {contextMenuOpen && !isMobile && (
         <ContextMenu
           vehicle={vehicle}
           position={contextMenuPosition}
@@ -259,6 +284,10 @@ export function VehicleMarker({
             vehicle={vehicle}
         />
       )}
-    </>
+    </>,
+    markerContainer
   );
 }
+
+
+export const VehicleMarker = React.memo(AnimatedVehicleMarker);
