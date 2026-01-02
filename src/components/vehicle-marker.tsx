@@ -167,65 +167,17 @@ function AnimatedVehiclePin({ vehicle, onLeftClick }: { vehicle: Vehicle, onLeft
   const { state } = useFleet();
   const { selectedVehicle } = state;
   const isSelected = selectedVehicle?.id === vehicle.id;
-  
-  const map = useMap();
-  const [pixelPosition, setPixelPosition] = useState<{ x: number; y: number } | null>(null);
-  const prevPixelPosition = useRef<{ x: number; y: number } | null>(null);
 
-  useEffect(() => {
-    if (!map) return;
-
-    const updatePosition = () => {
-      const point = map.getProjection()?.fromLatLngToDivPixel(
-        new google.maps.LatLng(vehicle.latitude, vehicle.longitude)
-      );
-      
-      if (point) {
-        if (!pixelPosition) {
-           // Set initial position without animation
-           prevPixelPosition.current = point;
-        } else {
-           prevPixelPosition.current = pixelPosition;
-        }
-        setPixelPosition(point);
-      }
-    };
-    
-    // Initial position
-    updatePosition();
-    
-    // Update on map move
-    const moveListener = map.addListener('bounds_changed', updatePosition);
-    return () => google.maps.event.removeListener(moveListener);
-
-  }, [map, vehicle.latitude, vehicle.longitude]);
-
-
-  if (!pixelPosition || !prevPixelPosition.current) {
-    return null;
-  }
-  
   return (
     <motion.div
-      initial={false}
-      animate={{
-        x: pixelPosition.x,
-        y: pixelPosition.y,
-      }}
-      transition={{
-        type: "spring",
-        stiffness: 50,
-        damping: 20,
-        mass: 0.5,
-      }}
-      style={{
-        position: 'absolute',
-        // Offset the pin so the tip is at the exact lat/lng
-        left: -20, // half of width (40px / 2)
-        top: -56, // height (56px)
-        willChange: 'transform'
-      }}
-      onClick={onLeftClick}
+        onClick={onLeftClick}
+        animate={{ scale: isSelected ? 1.25 : 1 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 10 }}
+        className="cursor-pointer"
+        style={{
+            filter: isSelected ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))',
+            zIndex: isSelected ? 10 : 1,
+        }}
     >
       <VehiclePin status={vehicle.status} isSelected={isSelected} />
     </motion.div>
@@ -236,19 +188,19 @@ function AnimatedVehiclePin({ vehicle, onLeftClick }: { vehicle: Vehicle, onLeft
 export function VehicleMarker({ 
   vehicle, 
 }: VehicleMarkerProps) {
-  const { state, dispatch } = useFleet();
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
+  const { dispatch } = useFleet();
   const map = useMap();
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleContextMenu = (e: google.maps.MapMouseEvent) => {
+    e.domEvent.preventDefault();
+    e.domEvent.stopPropagation();
     if (isMobile) return;
-    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    setContextMenuPosition({ x: e.domEvent.clientX, y: e.domEvent.clientY });
     setContextMenuOpen(true);
   };
   
@@ -289,9 +241,12 @@ export function VehicleMarker({
 
   return (
     <>
-      <Marker>
+      <Marker 
+        position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+        onContextMenu={handleContextMenu}
+        // These events are attached to the marker component itself, but the click area is the inner div
+      >
          <div 
-            onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}

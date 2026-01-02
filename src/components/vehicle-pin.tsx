@@ -4,6 +4,7 @@
 import { cn } from '@/lib/utils';
 import type { VehicleStatus } from '@/lib/types';
 import React from 'react';
+import { motion } from 'framer-motion';
 
 interface VehiclePinProps {
   status: VehicleStatus;
@@ -20,19 +21,15 @@ export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) =
   return (
     <div
       className={cn(
-        'transition-transform duration-300 ease-in-out cursor-pointer',
-        isSelected ? 'scale-125 z-10' : 'scale-100'
+        'transition-transform duration-1000 ease-linear cursor-pointer'
       )}
-      style={{ 
-        filter: isSelected ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))',
-      }}
     >
       <div className="relative w-10 h-14">
         <svg
           viewBox="0 0 38 54"
           className="w-full h-full"
         >
-          <path 
+          <motion.path 
             fill={statusColors[status]}
             d="M19 0C8.5 0 0 8.5 0 19.1C0 32.9 19 54 19 54S38 32.9 38 19.1C38 8.5 29.5 0 19 0Z" 
           />
