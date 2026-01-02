@@ -54,7 +54,8 @@ type FleetAction =
   | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: string }
   | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: string[], visible: boolean } }
-  | { type: 'SET_MAP_DARK_MODE', payload: boolean };
+  | { type: 'SET_MAP_DARK_MODE', payload: boolean }
+  | { type: 'SIMULATE_VEHICLE_MOVE', payload: string };
 
 
 // 3. Define the initial state
@@ -104,16 +105,31 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
-      const existingVisibleIds = state.vehicles.length > 0 ? state.visibleVehicleIds : new Set(action.payload.map(v => v.id));
-      const visibleVehicles = action.payload.filter(v => existingVisibleIds.has(v.id));
+      // If this is the first time we're setting vehicles, make them all visible by default
+      const newVisibleIds = state.vehicles.length === 0 
+        ? new Set(action.payload.map(v => v.id))
+        : state.visibleVehicleIds;
+    
+      const visibleVehicles = action.payload.filter(v => newVisibleIds.has(v.id));
+
       const newBounds = visibleVehicles.length > 0
           ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
           : [];
+
+      // Update the selected vehicle instance if it exists
+      const updatedSelectedVehicle = state.selectedVehicle
+        ? action.payload.find(v => v.id === state.selectedVehicle!.id) || null
+        : null;
+
        return {
          ...state,
          vehicles: action.payload,
-         visibleVehicleIds: existingVisibleIds,
-         mapViewport: state.mapViewport.type === 'initial' ? { type: 'fit_bounds', payload: newBounds } : state.mapViewport,
+         selectedVehicle: updatedSelectedVehicle,
+         visibleVehicleIds: newVisibleIds,
+         // Only change viewport on initial load
+         mapViewport: state.mapViewport.type === 'initial' && newBounds.length > 0 
+          ? { type: 'fit_bounds', payload: newBounds } 
+          : state.mapViewport,
        };
     }
     case 'SET_STATUS_FILTER':
@@ -121,6 +137,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
+         // This is a deselection event
          const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
           const newBounds = visibleVehicles.length > 0
             ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
@@ -131,6 +148,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             mapViewport: { type: 'fit_bounds', payload: newBounds }
         };
       }
+      // This is a selection event
       return { 
         ...state, 
         selectedVehicle: action.payload,
@@ -260,6 +278,21 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       return { ...state, isMapDark: action.payload };
     }
 
+    case 'SIMULATE_VEHICLE_MOVE': {
+      const newVehicles = state.vehicles.map(v => {
+        if (v.id === action.payload) {
+          return {
+            ...v,
+            latitude: v.latitude + (Math.random() - 0.5) * 0.01,
+            longitude: v.longitude + (Math.random() - 0.5) * 0.01,
+          };
+        }
+        return v;
+      });
+      return { ...state, vehicles: newVehicles };
+    }
+
+
     default:
       return state;
   }
@@ -339,3 +372,5 @@ export const useFleet = () => {
     }
     return context;
 };
+
+    

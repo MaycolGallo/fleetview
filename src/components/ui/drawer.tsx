@@ -103,23 +103,19 @@ const DrawerDescription = React.forwardRef<
 ))
 DrawerDescription.displayName = DrawerPrimitive.Description.displayName
 
-
 const DrawerHandle = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("mx-auto h-2 w-[100px] rounded-full bg-muted", className)}
+    className={cn("mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted", className)}
     {...props}
   />
 ));
 DrawerHandle.displayName = "DrawerHandle";
 
-
-// Add the Root property to the exported object
-const Root = Drawer;
-const NestedRoot = DrawerPrimitive.NestedRoot;
+const NestedDrawer = DrawerPrimitive.NestedRoot;
 
 export {
   Drawer,
@@ -133,6 +129,5 @@ export {
   DrawerTitle,
   DrawerDescription,
   DrawerHandle,
-  Root,
-  NestedRoot
+  NestedDrawer as NestedDrawer,
 }

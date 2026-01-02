@@ -28,6 +28,7 @@ import {
 import { useFleet } from '@/context/fleet-context';
 import { VehicleDetails } from './vehicle-details';
 import { ClientOnly } from './client-only';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './ui/resizable';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -48,6 +49,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     vehicles,
     statusFilter,
     routeHistoryVehicle,
+    selectedVehicle,
     isMapDark,
     visibleVehicleIds,
   } = state;
@@ -63,6 +65,12 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const handleMapThemeToggle = (isDark: boolean) => {
     dispatch({ type: 'SET_MAP_DARK_MODE', payload: isDark });
+  }
+  
+  const onPanelLayout = (sizes: number[]) => {
+    if (sizes[1] < 10) {
+      dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
+    }
   }
 
   const listVehicles = useMemo(() => {
@@ -178,11 +186,24 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             )}
           </div>
         </header>
-        <main className="h-full w-full z-10">
-          <FleetMap apiKey={apiKey} />
-        </main>
-        
-        <VehicleDetails />
+
+        <ResizablePanelGroup
+            direction="horizontal"
+            className="h-full w-full"
+            onLayout={onPanelLayout}
+        >
+            <ResizablePanel defaultSize={100}>
+                <main className="h-full w-full z-10">
+                  <FleetMap apiKey={apiKey} />
+                </main>
+            </ResizablePanel>
+            {selectedVehicle && <ResizableHandle withHandle />}
+            {selectedVehicle && (
+                <ResizablePanel defaultSize={25} maxSize={30} minSize={20} collapsible={true} collapsedSize={0}>
+                    <VehicleDetails />
+                </ResizablePanel>
+            )}
+        </ResizablePanelGroup>
         
         {state.isLoadingRoute && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30">
@@ -196,3 +217,5 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       </div>
   );
 }
+
+    
