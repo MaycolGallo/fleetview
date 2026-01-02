@@ -187,23 +187,25 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           </div>
         </header>
 
-        <ResizablePanelGroup
-            direction="horizontal"
-            className="h-full w-full"
-            onLayout={onPanelLayout}
-        >
-            <ResizablePanel defaultSize={100}>
-                <main className="h-full w-full z-10">
-                  <FleetMap apiKey={apiKey} />
-                </main>
-            </ResizablePanel>
-            {selectedVehicle && <ResizableHandle withHandle />}
-            {selectedVehicle && (
-                <ResizablePanel defaultSize={25} maxSize={30} minSize={20} collapsible={true} collapsedSize={0}>
-                    <VehicleDetails />
+        <ClientOnly>
+            <ResizablePanelGroup
+                direction="horizontal"
+                className="h-full w-full"
+                onLayout={onPanelLayout}
+            >
+                <ResizablePanel defaultSize={100}>
+                    <main className="h-full w-full z-10">
+                      <FleetMap apiKey={apiKey} />
+                    </main>
                 </ResizablePanel>
-            )}
-        </ResizablePanelGroup>
+                {selectedVehicle && <ResizableHandle withHandle />}
+                {selectedVehicle && (
+                    <ResizablePanel defaultSize={25} maxSize={30} minSize={20} collapsible={true} collapsedSize={0}>
+                        <VehicleDetails />
+                    </ResizablePanel>
+                )}
+            </ResizablePanelGroup>
+        </ClientOnly>
         
         {state.isLoadingRoute && (
             <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30">
