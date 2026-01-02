@@ -7,7 +7,8 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerPortal,
-  DrawerOverlay
+  DrawerOverlay,
+  DrawerHandle
 } from '@/components/ui/drawer';
 import { useFleet } from '@/context/fleet-context';
 import { Badge } from './ui/badge';
@@ -133,12 +134,12 @@ export function VehicleDetails() {
 
   if (isMobile) {
     return (
-        <Drawer.Root open={!!selectedVehicle} onOpenChange={handleOpenChange} snapPoints={[0.5, 1]} activeSnapPoint={0.5}>
+        <Drawer open={!!selectedVehicle} onOpenChange={handleOpenChange} snapPoints={[0.5, 1]} activeSnapPoint={0.5}>
             <DrawerPortal>
                 <DrawerOverlay className="bg-transparent" />
-                <Drawer.Content className='bg-zinc-900/95 backdrop-blur-sm mt-0'>
+                <DrawerContent className='bg-zinc-900/95 backdrop-blur-sm mt-0'>
                     <div className="p-4 overflow-auto h-[50vh]">
-                        <Drawer.Handle className="mb-4" />
+                        <DrawerHandle className="mb-4" />
                         <DrawerHeader className='p-0 text-left'>
                             <DrawerTitle>{selectedVehicle.id}</DrawerTitle>
                         </DrawerHeader>
@@ -179,9 +180,9 @@ export function VehicleDetails() {
                             <Move className="mr-2 h-4 w-4" /> Simulate Move
                         </Button>
                     </div>
-                </Drawer.Content>
+                </DrawerContent>
             </DrawerPortal>
-        </Drawer.Root>
+        </Drawer>
     )
   }
 
