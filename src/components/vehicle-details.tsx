@@ -190,5 +190,3 @@ export function VehicleDetails() {
     <VehicleDetailsContent />
   );
 }
-
-    
