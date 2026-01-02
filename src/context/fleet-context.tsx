@@ -281,10 +281,13 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     case 'SIMULATE_VEHICLE_MOVE': {
       const newVehicles = state.vehicles.map(v => {
         if (v.id === action.payload) {
+          // Simulate a small move
+          const newLat = v.latitude + (Math.random() - 0.5) * 0.001;
+          const newLng = v.longitude + (Math.random() - 0.5) * 0.001;
           return {
             ...v,
-            latitude: v.latitude + (Math.random() - 0.5) * 0.01,
-            longitude: v.longitude + (Math.random() - 0.5) * 0.01,
+            latitude: newLat,
+            longitude: newLng,
           };
         }
         return v;
