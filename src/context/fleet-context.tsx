@@ -17,6 +17,15 @@ const fetchVehicles = async (): Promise<Vehicle[]> => {
 };
 
 
+// A small, circular route in Lima for simulation purposes.
+const SIMULATION_ROUTE = [
+  { lat: -12.045, lng: -77.040 },
+  { lat: -12.048, lng: -77.042 },
+  { lat: -12.050, lng: -77.038 },
+  { lat: -12.047, lng: -77.036 },
+];
+
+
 // 1. Define the state shape
 type MapViewport = 
   | { type: 'initial' }
@@ -39,6 +48,7 @@ interface FleetState {
   visibleVehicleIds: Set<string>;
   isMapDark: boolean;
   mapViewport: MapViewport;
+  simulationStep: Record<string, number>;
 }
 
 // 2. Define the actions
@@ -73,6 +83,7 @@ const getInitialState = (): FleetState => ({
   visibleVehicleIds: new Set(),
   isMapDark: true,
   mapViewport: { type: 'initial' },
+  simulationStep: {},
 });
 
 // Helper function to calculate segment points
@@ -279,20 +290,30 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     }
 
     case 'SIMULATE_VEHICLE_MOVE': {
+      const vehicleId = action.payload;
+      const currentStep = state.simulationStep[vehicleId] || 0;
+      const nextStep = (currentStep + 1) % SIMULATION_ROUTE.length;
+      const newCoords = SIMULATION_ROUTE[nextStep];
+
       const newVehicles = state.vehicles.map(v => {
-        if (v.id === action.payload) {
-          // Simulate a small move
-          const newLat = v.latitude + (Math.random() - 0.5) * 0.001;
-          const newLng = v.longitude + (Math.random() - 0.5) * 0.001;
+        if (v.id === vehicleId) {
           return {
             ...v,
-            latitude: newLat,
-            longitude: newLng,
+            latitude: newCoords.lat,
+            longitude: newCoords.lng,
           };
         }
         return v;
       });
-      return { ...state, vehicles: newVehicles };
+
+      return {
+        ...state,
+        vehicles: newVehicles,
+        simulationStep: {
+          ...state.simulationStep,
+          [vehicleId]: nextStep
+        }
+      };
     }
 
 
