@@ -2,9 +2,9 @@
 "use client";
 
 import type { Vehicle } from '@/lib/types';
-import { AdvancedMarker } from '@vis.gl/react-google-maps';
+import { Marker, useMap } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -16,6 +16,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { useFleet } from '@/context/fleet-context';
+import { motion, AnimatePresence } from 'framer-motion';
 
 
 export type VehicleAction = 
@@ -162,17 +163,86 @@ function MobileContextMenuDrawer({
     )
 }
 
+function AnimatedVehiclePin({ vehicle, onLeftClick }: { vehicle: Vehicle, onLeftClick: (e: React.MouseEvent) => void }) {
+  const { state } = useFleet();
+  const { selectedVehicle } = state;
+  const isSelected = selectedVehicle?.id === vehicle.id;
+  
+  const map = useMap();
+  const [pixelPosition, setPixelPosition] = useState<{ x: number; y: number } | null>(null);
+  const prevPixelPosition = useRef<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (!map) return;
+
+    const updatePosition = () => {
+      const point = map.getProjection()?.fromLatLngToDivPixel(
+        new google.maps.LatLng(vehicle.latitude, vehicle.longitude)
+      );
+      
+      if (point) {
+        if (!pixelPosition) {
+           // Set initial position without animation
+           prevPixelPosition.current = point;
+        } else {
+           prevPixelPosition.current = pixelPosition;
+        }
+        setPixelPosition(point);
+      }
+    };
+    
+    // Initial position
+    updatePosition();
+    
+    // Update on map move
+    const moveListener = map.addListener('bounds_changed', updatePosition);
+    return () => google.maps.event.removeListener(moveListener);
+
+  }, [map, vehicle.latitude, vehicle.longitude]);
+
+
+  if (!pixelPosition || !prevPixelPosition.current) {
+    return null;
+  }
+  
+  return (
+    <motion.div
+      initial={false}
+      animate={{
+        x: pixelPosition.x,
+        y: pixelPosition.y,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 50,
+        damping: 20,
+        mass: 0.5,
+      }}
+      style={{
+        position: 'absolute',
+        // Offset the pin so the tip is at the exact lat/lng
+        left: -20, // half of width (40px / 2)
+        top: -56, // height (56px)
+        willChange: 'transform'
+      }}
+      onClick={onLeftClick}
+    >
+      <VehiclePin status={vehicle.status} isSelected={isSelected} />
+    </motion.div>
+  );
+}
+
+
 export function VehicleMarker({ 
   vehicle, 
 }: VehicleMarkerProps) {
   const { state, dispatch } = useFleet();
-  const { selectedVehicle } = state;
-  const isSelected = selectedVehicle?.id === vehicle.id;
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
+  const map = useMap();
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -214,26 +284,21 @@ export function VehicleMarker({
       pressTimer.current = null;
     }
   };
+  
+  if (!map) return null;
 
   return (
     <>
-      <AdvancedMarker
-        position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
-        onClick={(e) => {
-          // This onClick is for the AdvancedMarker itself, which can interfere with our custom logic
-          // We let our own div's onClick handle it to prevent double-firing.
-        }}
-      >
-        <div 
-          onClick={handleLeftClick} 
-          onContextMenu={handleContextMenu}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onTouchMove={handleTouchMove}
-        >
-          <VehiclePin status={vehicle.status} isSelected={isSelected} />
-        </div>
-      </AdvancedMarker>
+      <Marker>
+         <div 
+            onContextMenu={handleContextMenu}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchMove}
+         >
+            <AnimatedVehiclePin vehicle={vehicle} onLeftClick={handleLeftClick} />
+         </div>
+      </Marker>
 
       {contextMenuOpen && !isMobile && (
         <ContextMenu

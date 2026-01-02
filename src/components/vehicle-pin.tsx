@@ -20,7 +20,7 @@ export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) =
   return (
     <div
       className={cn(
-        'transition-transform duration-1000 ease-in-out transform-gpu cursor-pointer',
+        'transition-transform duration-300 ease-in-out cursor-pointer',
         isSelected ? 'scale-125 z-10' : 'scale-100'
       )}
       style={{ 
