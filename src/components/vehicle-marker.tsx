@@ -2,22 +2,23 @@
 'use client';
 
 import type { Vehicle } from '@/lib/types';
-import { useMap } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, useMap } from '@vis-gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import {
   Drawer,
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
+  DrawerPortal,
+  DrawerOverlay,
+  DrawerHandle
 } from "@/components/ui/drawer";
 import { useFleet } from '@/context/fleet-context';
-import { motion, useAnimate } from 'framer-motion';
-
 
 export type VehicleAction = 
   | 'show-route-history'
@@ -46,7 +47,7 @@ function ContextMenu({
   position: { x: number; y: number };
   onClose: () => void;
 }) {
-    const [portalNode, setPortalNode] = useState<HTMLElement | null>(null);
+    const [portalNode, setPortalNode] = React.useState<HTMLElement | null>(null);
     const { dispatch } = useFleet();
 
     React.useEffect(() => {
@@ -130,39 +131,39 @@ function MobileContextMenuDrawer({
 
     return (
         <Drawer open={isOpen} onOpenChange={onOpenChange}>
-            <DrawerContent>
-                <DrawerHeader className="text-left">
-                    <DrawerTitle>{vehicle.id}</DrawerTitle>
-                </DrawerHeader>
-                <div className="p-4 pt-0">
-                    <div className="flex flex-col gap-1">
-                         {contextMenuItems.map((item) => {
-                            const Icon = item.icon;
-                            return (
-                                <Button
-                                    key={item.action}
-                                    variant="ghost"
-                                    size="lg"
-                                    className="w-full justify-start text-base py-6"
-                                    onClick={() => handleAction(item.action)}
-                                >
-                                    <Icon className="mr-3 h-5 w-5" />
-                                    {item.label}
-                                </Button>
-                            );
-                        })}
+             <DrawerPortal>
+                <DrawerOverlay />
+                <DrawerContent>
+                    <DrawerHandle />
+                    <DrawerHeader className="text-left">
+                        <DrawerTitle>{vehicle.id}</DrawerTitle>
+                    </DrawerHeader>
+                    <div className="p-4 pt-0">
+                        <div className="flex flex-col gap-1">
+                            {contextMenuItems.map((item) => {
+                                const Icon = item.icon;
+                                return (
+                                    <Button
+                                        key={item.action}
+                                        variant="ghost"
+                                        size="lg"
+                                        className="w-full justify-start text-base py-6"
+                                        onClick={() => handleAction(item.action)}
+                                    >
+                                        <Icon className="mr-3 h-5 w-5" />
+                                        {item.label}
+                                    </Button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
-            </DrawerContent>
+                </DrawerContent>
+            </DrawerPortal>
         </Drawer>
     )
 }
 
-function AnimatedVehicleMarker({ vehicle }: { vehicle: Vehicle }) {
-  const map = useMap();
-  const [scope, animate] = useAnimate();
-  const [markerContainer, setMarkerContainer] = useState<HTMLElement | null>(null);
-
+function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   const { state, dispatch } = useFleet();
   const { selectedVehicle } = state;
   const isSelected = selectedVehicle?.id === vehicle.id;
@@ -172,47 +173,16 @@ function AnimatedVehicleMarker({ vehicle }: { vehicle: Vehicle }) {
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
 
-
-  useEffect(() => {
-    if (!map) return;
-    // The Map instances provides a custom div to render markers on.
-    // This is the recommended way to handle custom markers.
-    const container = map.getDiv().querySelector<HTMLElement>('div[style="position: absolute; top: 0px; left: 0px; width: 100%; height: 100%;"]');
-    setMarkerContainer(container);
-  }, [map]);
-
-
-  useEffect(() => {
-    if (!scope.current) return;
-
-    const projection = map?.getProjection();
-    const point = projection?.fromLatLngToDivPixel(
-        new google.maps.LatLng(vehicle.latitude, vehicle.longitude)
-    );
-
-    if (point) {
-        animate(scope.current, { 
-          left: point.x, 
-          top: point.y,
-        }, {
-          duration: 1, // Smooth transition for 1 second
-          ease: 'easeInOut'
-        });
-    }
-
-  }, [vehicle.latitude, vehicle.longitude, map, animate, scope]);
-  
-  
-  const handleLeftClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleLeftClick = (e: google.maps.MapMouseEvent | React.MouseEvent) => {
+    e.domEvent.stopPropagation();
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
   }
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleContextMenu = (e: google.maps.MapMouseEvent) => {
+    e.domEvent.preventDefault();
+    e.domEvent.stopPropagation();
     if (isMobile) return;
-    setContextMenuPosition({ x: e.clientX, y: e.clientY });
+    setContextMenuPosition({ x: e.domEvent.clientX, y: e.domEvent.clientY });
     setContextMenuOpen(true);
   };
   
@@ -244,30 +214,23 @@ function AnimatedVehicleMarker({ vehicle }: { vehicle: Vehicle }) {
   };
 
 
-  if (!markerContainer) return null;
-
-  return createPortal(
+  return (
     <>
-      <motion.div
-        ref={scope}
-        className="absolute"
-        style={{
-          transform: 'translate(-50%, -100%)',
-          zIndex: isSelected ? 10 : 1,
-        }}
-        animate={{ scale: isSelected ? 1.25 : 1 }}
-        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      <AdvancedMarker
+        key={vehicle.id}
+        position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+        onClick={handleLeftClick}
+        onContextMenu={handleContextMenu}
+        // zIndex is not a direct prop, but we can manage it with styling if needed
       >
         <div
-          onClick={handleLeftClick}
-          onContextMenu={handleContextMenu}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           onTouchMove={handleTouchMove}
         >
           <VehiclePin status={vehicle.status} isSelected={isSelected} />
         </div>
-      </motion.div>
+      </AdvancedMarker>
 
        {contextMenuOpen && !isMobile && (
         <ContextMenu
@@ -284,10 +247,9 @@ function AnimatedVehicleMarker({ vehicle }: { vehicle: Vehicle }) {
             vehicle={vehicle}
         />
       )}
-    </>,
-    markerContainer
+    </>
   );
 }
 
 
-export const VehicleMarker = React.memo(AnimatedVehicleMarker);
+export const VehicleMarker = React.memo(MarkerWithEvents);
