@@ -21,7 +21,7 @@ export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) =
   return (
     <div
       className={cn(
-        'transition-transform duration-1000 ease-linear cursor-pointer'
+        'cursor-pointer'
       )}
     >
       <div className="relative w-10 h-14">

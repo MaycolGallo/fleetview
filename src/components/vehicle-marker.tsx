@@ -229,10 +229,14 @@ export function VehicleMarker({
             onTouchMove={handleTouchMove}
          >
              <motion.div
+                layout
+                key={vehicle.id}
+                initial={false}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 animate={{ scale: isSelected ? 1.25 : 1 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 10 }}
                 style={{
                     zIndex: isSelected ? 10 : 1,
+                    transformOrigin: 'bottom center'
                 }}
             >
                 <VehiclePin status={vehicle.status} isSelected={isSelected} />
