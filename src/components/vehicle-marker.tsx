@@ -4,7 +4,7 @@
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -52,7 +52,7 @@ function ContextMenu({
     const [portalNode, setPortalNode] = useState<HTMLElement | null>(null);
     const { dispatch } = useFleet();
 
-    useEffect(() => {
+    React.useEffect(() => {
         setPortalNode(document.body);
     }, []);
 
@@ -60,7 +60,7 @@ function ContextMenu({
         if (action === 'show-route-history') {
           dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
         } else if (action === 'show-details') {
-          dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
+          dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
         } else if (action === 'center-map') {
           dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
         }
@@ -77,6 +77,7 @@ function ContextMenu({
                 onContextMenu={(e) => {
                     e.preventDefault();
                     onClose();
+                    console.log(e)
                 }}
             />
             <div
@@ -124,7 +125,7 @@ function MobileContextMenuDrawer({
         if (action === 'show-route-history') {
              dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
         } else if (action === 'show-details') {
-            dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
+            dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
         } else if (action === 'center-map') {
           dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
         }

@@ -19,10 +19,12 @@ export function VehiclePin({ status, isSelected }: VehiclePinProps) {
   return (
     <div
       className={cn(
-        'transition-transform duration-300 transform-gpu cursor-pointer',
+        'transition-all duration-1000 ease-in-out transform-gpu cursor-pointer',
         isSelected ? 'scale-125 z-10' : 'scale-100'
       )}
-      style={{ filter: isSelected ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }}
+      style={{ 
+        filter: isSelected ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))',
+      }}
     >
       <div className="relative w-10 h-14">
         <svg
