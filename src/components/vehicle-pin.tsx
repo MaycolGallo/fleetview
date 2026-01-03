@@ -19,17 +19,20 @@ const statusColors = {
 
 export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) => {
   return (
-    <div
-      className={cn(
-        'cursor-pointer'
-      )}
+    <motion.div
+      className={cn('cursor-pointer transform-origin-bottom')}
+      initial={{ scale: 0, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      style={{ transformOrigin: '50% 100%'}} // Ensures scaling originates from the bottom center
     >
       <div className="relative w-10 h-14">
         <svg
           viewBox="0 0 38 54"
-          className="w-full h-full"
+          className="w-full h-full drop-shadow-lg"
+          
         >
-          <motion.path 
+          <path 
             fill={statusColors[status]}
             d="M19 0C8.5 0 0 8.5 0 19.1C0 32.9 19 54 19 54S38 32.9 38 19.1C38 8.5 29.5 0 19 0Z" 
           />
@@ -45,7 +48,7 @@ export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) =
             </svg>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 });
 
