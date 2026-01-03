@@ -2,13 +2,13 @@
 'use client';
 
 import type { Vehicle } from '@/lib/types';
-import { AdvancedMarker, useMap } from '@vis-gl/react-google-maps';
+import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { useIsMobile } from '@/hooks/use-is-mobile';
+import { useIsMobile } from '../hooks/use-mobile'; 
 import {
   Drawer,
   DrawerContent,
@@ -178,11 +178,11 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
   }
 
-  const handleContextMenu = (e: google.maps.MapMouseEvent) => {
-    e.domEvent.preventDefault();
-    e.domEvent.stopPropagation();
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (isMobile) return;
-    setContextMenuPosition({ x: e.domEvent.clientX, y: e.domEvent.clientY });
+    setContextMenuPosition({ x: e.clientX, y: e.clientY });
     setContextMenuOpen(true);
   };
   
@@ -220,10 +220,9 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
         key={vehicle.id}
         position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
         onClick={handleLeftClick}
-        onContextMenu={handleContextMenu}
-        // zIndex is not a direct prop, but we can manage it with styling if needed
       >
         <div
+          onContextMenu={handleContextMenu}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           onTouchMove={handleTouchMove}
