@@ -2,11 +2,11 @@
 'use client';
 
 import type { Vehicle, VehicleAction } from '@/lib/types';
-import { useMap } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, MouseEvent } from 'react';
 import { Button } from "@/components/ui/button";
-import { History, MapPin, Info, Navigation, AlertCircle, Settings, Move } from 'lucide-react';
+import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useIsMobile } from '../hooks/use-mobile';
 import {
@@ -19,7 +19,7 @@ import {
   DrawerHandle
 } from "@/components/ui/drawer";
 import { useFleet } from '@/context/fleet-context';
-import { motion } from 'framer-motion';
+import { useAnimatedPosition } from '@/hooks/use-animated-position';
 
 
 const contextMenuItems = [
@@ -156,62 +156,6 @@ function MobileContextMenuDrawer({
     )
 }
 
-// This is a wrapper for the AdvancedMarker that will host our custom animated div.
-const CustomAdvancedMarker = (props: React.PropsWithChildren<{
-    position: {lat: number, lng: number}
-    onClick: (e: any) => void
-    onContextMenu: (e: any) => void;
-    vehicleId: string
-}>) => {
-    const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
-    const [markerContent, setMarkerContent] = useState<HTMLDivElement | null>(null);
-    const map = useMap();
-
-    useEffect(() => {
-        if (!markerContent) {
-            const div = document.createElement('div');
-            div.setAttribute('data-vehicle-id', props.vehicleId);
-            setMarkerContent(div);
-            return;
-        }
-
-        if (!map) return;
-
-        const marker = new google.maps.marker.AdvancedMarkerElement({
-            map: map,
-            position: props.position,
-            content: markerContent,
-        });
-
-        const clickListener = marker.addListener('click', props.onClick);
-        
-        // AdvancedMarkerElement doesn't have a built-in contextmenu event,
-        // so we add it to the content div.
-        markerContent.addEventListener('contextmenu', props.onContextMenu);
-
-
-        markerRef.current = marker;
-
-        return () => {
-            if (markerRef.current) {
-                clickListener.remove();
-                markerContent.removeEventListener('contextmenu', props.onContextMenu);
-                markerRef.current.map = null;
-            }
-        };
-    }, [markerContent, map, props.vehicleId]);
-    
-    useEffect(() => {
-        if (markerRef.current) {
-            markerRef.current.position = props.position;
-        }
-    }, [props.position])
-
-
-    return markerContent ? createPortal(props.children, markerContent) : null;
-};
-
-
 function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   const { state, dispatch } = useFleet();
   const { selectedVehicle } = state;
@@ -222,8 +166,12 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
 
-  const handleLeftClick = (e: google.maps.MapMouseEvent | React.MouseEvent) => {
-    if ('domEvent' in e) {
+  const targetPosition = { lat: vehicle.latitude, lng: vehicle.longitude };
+  const animatedPosition = useAnimatedPosition(targetPosition);
+
+
+  const handleLeftClick = (e: google.maps.MapMouseEvent | MouseEvent) => {
+    if ('domEvent' in e && e.domEvent) {
       e.domEvent.stopPropagation();
     } else {
       e.stopPropagation();
@@ -269,24 +217,20 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
 
   return (
     <>
-      <CustomAdvancedMarker
+      <AdvancedMarker
         key={vehicle.id}
-        position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
+        position={animatedPosition}
         onClick={handleLeftClick}
-        onContextMenu={handleContextMenu}
-        vehicleId={vehicle.id}
       >
-        <motion.div
-            initial={{ scale: 1 }}
-            animate={{ scale: isSelected ? 1.2 : 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            onTouchMove={handleTouchMove}
+        <div
+          onContextMenu={handleContextMenu}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchMove={handleTouchMove}
         >
           <VehiclePin status={vehicle.status} isSelected={isSelected} />
-        </motion.div>
-      </CustomAdvancedMarker>
+        </div>
+      </AdvancedMarker>
 
        {contextMenuOpen && !isMobile && (
         <ContextMenu
@@ -307,22 +251,4 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   );
 }
 
-const AnimatedVehicleMarkerWrapper = ({ vehicle }: { vehicle: Vehicle }) => {
-    const map = useMap();
-    const [position, setPosition] = useState<google.maps.LatLng | null>(null);
-
-    useEffect(() => {
-        if(!map) return;
-        const newPos = new google.maps.LatLng(vehicle.latitude, vehicle.longitude);
-        setPosition(newPos);
-    }, [vehicle.latitude, vehicle.longitude, map]);
-
-    if (!map || !position) return null;
-
-    return (
-        <MarkerWithEvents vehicle={vehicle} />
-    )
-}
-
-
-export const AnimatedVehicleMarker = React.memo(AnimatedVehicleMarkerWrapper);
+export const AnimatedVehicleMarker = React.memo(MarkerWithEvents);
