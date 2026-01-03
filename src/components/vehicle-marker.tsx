@@ -2,7 +2,7 @@
 'use client';
 
 import type { Vehicle } from '@/lib/types';
-import { AdvancedMarker } from '@vis-gl/react-google-maps';
+import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
