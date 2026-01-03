@@ -5,7 +5,7 @@
 import { APIProvider, Map, useMap, ColorScheme } from '@vis.gl/react-google-maps';
 import type { Vehicle, RouteHistory } from '@/lib/types';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { VehicleMarker } from './vehicle-marker';
+import { AnimatedVehicleMarker } from './vehicle-marker';
 import { useFleet } from '@/context/fleet-context';
 import { useToast } from '@/hooks/use-toast';
 
@@ -174,7 +174,7 @@ function MapControl() {
   return (
     <>
         {filteredVehicles.map((vehicle) => (
-            <VehicleMarker
+            <AnimatedVehicleMarker
               key={vehicle.id}
               vehicle={vehicle}
             />
@@ -191,7 +191,11 @@ export function FleetMap({ apiKey }: FleetMapProps) {
   const { state, dispatch } = useFleet();
   const { isMapDark } = state;
   
-  const handleMapClick = () => {
+  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+    // prevent clicks on markers from closing the details panel
+    if (e.domEvent.target instanceof HTMLElement && e.domEvent.target.closest('[data-vehicle-id]')) {
+      return;
+    }
     dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
   };
 

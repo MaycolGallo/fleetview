@@ -29,6 +29,7 @@ import { useFleet } from '@/context/fleet-context';
 import { VehicleDetails } from './vehicle-details';
 import { ClientOnly } from './client-only';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from './ui/resizable';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -68,8 +69,11 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   }
   
   const onPanelLayout = (sizes: number[]) => {
-    if (sizes[1] < 10) {
-      dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
+    // When the resizable panel is collapsed, deselect the vehicle
+    if (sizes.length > 1 && sizes[1] < 5) {
+      if (selectedVehicle) {
+        dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
+      }
     }
   }
 
@@ -193,17 +197,27 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 className="h-full w-full"
                 onLayout={onPanelLayout}
             >
-                <ResizablePanel defaultSize={100}>
+                <ResizablePanel defaultSize={100} minSize={30}>
                     <main className="h-full w-full z-10">
                       <FleetMap apiKey={apiKey} />
                     </main>
                 </ResizablePanel>
-                {selectedVehicle && <ResizableHandle withHandle />}
-                {selectedVehicle && (
-                    <ResizablePanel defaultSize={25} maxSize={30} minSize={20} collapsible={true} collapsedSize={0}>
+                <AnimatePresence>
+                  {selectedVehicle && (
+                    <motion.div
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: '25%', opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="!min-w-0" // override min-width for animation
+                    >
+                      <ResizablePanel defaultSize={100} maxSize={100} minSize={100} collapsible={false} asChild>
                         <VehicleDetails />
-                    </ResizablePanel>
-                )}
+                      </ResizablePanel>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {selectedVehicle && <ResizableHandle withHandle />}
             </ResizablePanelGroup>
         </ClientOnly>
         
@@ -219,7 +233,3 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       </div>
   );
 }
-
-    
-
-    
