@@ -2,7 +2,7 @@
 'use client';
 
 import type { Vehicle } from '@/lib/types';
-import { AdvancedMarker } from '@vis.gl/react-google-maps';
+import { AdvancedMarker } from '@vis-gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
 import React, { useState, useRef } from 'react';
 import { Button } from "@/components/ui/button";
@@ -174,7 +174,11 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   const isMobile = useIsMobile();
 
   const handleLeftClick = (e: google.maps.MapMouseEvent | React.MouseEvent) => {
-    e.domEvent.stopPropagation();
+    if ('domEvent' in e) {
+      e.domEvent.stopPropagation();
+    } else {
+      e.stopPropagation();
+    }
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
   }
 
