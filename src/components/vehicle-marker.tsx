@@ -1,12 +1,12 @@
 
 'use client';
 
-import type { Vehicle } from '@/lib/types';
-import { AdvancedMarker, useMap, Pin } from '@vis.gl/react-google-maps';
+import type { Vehicle, VehicleAction } from '@/lib/types';
+import { useMap } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
+import { History, MapPin, Info, Navigation, AlertCircle, Settings, Move } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useIsMobile } from '../hooks/use-mobile';
 import {
@@ -19,17 +19,8 @@ import {
   DrawerHandle
 } from "@/components/ui/drawer";
 import { useFleet } from '@/context/fleet-context';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
-
-export type VehicleAction = 
-  | 'show-route-history'
-  | 'center-map'
-  | 'show-details'
-  | 'track-vehicle'
-  | 'view-alerts'
-  | 'maintenance'
-  ;
 
 const contextMenuItems = [
   { action: 'show-route-history' as VehicleAction, label: 'Show Route History', icon: History },
@@ -169,10 +160,12 @@ function MobileContextMenuDrawer({
 const CustomAdvancedMarker = (props: React.PropsWithChildren<{
     position: {lat: number, lng: number}
     onClick: (e: any) => void
+    onContextMenu: (e: any) => void;
     vehicleId: string
 }>) => {
     const markerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
     const [markerContent, setMarkerContent] = useState<HTMLDivElement | null>(null);
+    const map = useMap();
 
     useEffect(() => {
         if (!markerContent) {
@@ -182,23 +175,31 @@ const CustomAdvancedMarker = (props: React.PropsWithChildren<{
             return;
         }
 
+        if (!map) return;
+
         const marker = new google.maps.marker.AdvancedMarkerElement({
-            map: useMap(),
+            map: map,
             position: props.position,
             content: markerContent,
         });
 
-        marker.addListener('click', props.onClick);
+        const clickListener = marker.addListener('click', props.onClick);
+        
+        // AdvancedMarkerElement doesn't have a built-in contextmenu event,
+        // so we add it to the content div.
+        markerContent.addEventListener('contextmenu', props.onContextMenu);
+
 
         markerRef.current = marker;
 
         return () => {
             if (markerRef.current) {
-                google.maps.event.clearInstanceListeners(markerRef.current);
+                clickListener.remove();
+                markerContent.removeEventListener('contextmenu', props.onContextMenu);
                 markerRef.current.map = null;
             }
         };
-    }, [markerContent, props.vehicleId]);
+    }, [markerContent, map, props.vehicleId]);
     
     useEffect(() => {
         if (markerRef.current) {
@@ -221,8 +222,12 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
 
-  const handleLeftClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleLeftClick = (e: google.maps.MapMouseEvent | React.MouseEvent) => {
+    if ('domEvent' in e) {
+      e.domEvent.stopPropagation();
+    } else {
+      e.stopPropagation();
+    }
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
   }
 
@@ -268,13 +273,13 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
         key={vehicle.id}
         position={{ lat: vehicle.latitude, lng: vehicle.longitude }}
         onClick={handleLeftClick}
+        onContextMenu={handleContextMenu}
         vehicleId={vehicle.id}
       >
         <motion.div
             initial={{ scale: 1 }}
             animate={{ scale: isSelected ? 1.2 : 1 }}
             transition={{ type: 'spring', stiffness: 400, damping: 10 }}
-            onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
