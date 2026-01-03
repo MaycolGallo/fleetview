@@ -297,6 +297,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
       const newVehicles = state.vehicles.map(v => {
         if (v.id === vehicleId) {
+          // Create a new object for the updated vehicle to ensure reference changes
           return {
             ...v,
             latitude: newCoords.lat,
@@ -401,3 +402,4 @@ export const useFleet = () => {
     
 
     
+
