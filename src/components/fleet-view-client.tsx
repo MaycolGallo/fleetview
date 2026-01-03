@@ -211,7 +211,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                       className="!min-w-0" // override min-width for animation
                     >
-                      <ResizablePanel defaultSize={100} maxSize={100} minSize={100} collapsible={false} asChild>
+                      <ResizablePanel defaultSize={100} maxSize={100} minSize={100} collapsible={false}>
                         <VehicleDetails />
                       </ResizablePanel>
                     </motion.div>
