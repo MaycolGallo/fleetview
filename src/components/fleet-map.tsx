@@ -125,6 +125,7 @@ function MapControl() {
     // Load the geometry library when the map is available
     if (map) {
       google.maps.importLibrary('geometry');
+      google.maps.importLibrary('marker');
     }
   }, [map]);
 
@@ -192,7 +193,6 @@ export function FleetMap({ apiKey }: FleetMapProps) {
   const { isMapDark } = state;
   
   const handleMapClick = (e: google.maps.MapMouseEvent) => {
-    // prevent clicks on markers from closing the details panel
     if (e.domEvent.target instanceof HTMLElement && e.domEvent.target.closest('[data-vehicle-id]')) {
       return;
     }
