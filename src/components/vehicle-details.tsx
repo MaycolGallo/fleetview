@@ -71,7 +71,7 @@ function VehicleDetailsContent() {
                         <DetailItem icon={Tag} label="ID Vehículo" value={selectedVehicle.id_vehiculo} />
                         <DetailItem icon={Gauge} label="Velocidad" value={selectedVehicle.velocidad} unit="km/h" />
                         <DetailItem icon={Rss} label="Odómetro" value={parseFloat(selectedVehicle.odometro).toLocaleString()} unit="km" />
-                        <DetailItem icon={Wind} label="Rumbo" value={selectedVehicle.rumbo}° />
+                        <DetailItem icon={Wind} label="Rumbo" value={selectedVehicle.rumbo} unit="°" />
                          <DetailItem 
                             icon={Clock} 
                             label="Última Fecha" 
@@ -155,7 +155,7 @@ export function VehicleDetails() {
                                     <DetailItem icon={Tag} label="ID Vehículo" value={selectedVehicle.id_vehiculo} />
                                     <DetailItem icon={Gauge} label="Velocidad" value={selectedVehicle.velocidad} unit="km/h" />
                                     <DetailItem icon={Rss} label="Odómetro" value={parseFloat(selectedVehicle.odometro).toLocaleString()} unit="km" />
-                                    <DetailItem icon={Wind} label="Rumbo" value={selectedVehicle.rumbo}° />
+                                    <DetailItem icon={Wind} label="Rumbo" value={selectedVehicle.rumbo} unit="°" />
                                     <DetailItem 
                                         icon={Clock} 
                                         label="Última Fecha" 
