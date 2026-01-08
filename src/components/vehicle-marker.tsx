@@ -215,6 +215,8 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
       pressTimer.current = null;
     }
   };
+  
+  const pinRotate = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
 
 
   return (
@@ -231,18 +233,25 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             data-vehicle-id={vehicle.id}
-            className="relative"
-            animate={{ scale: isSelected ? 1.2 : 1 }}
+            className="relative cursor-pointer"
+            animate={{ 
+              scale: isSelected ? 1.2 : 1,
+              rotate: pinRotate,
+            }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
             style={{ transformOrigin: '50% 100%'}}
         >
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-10 mb-1">
-                 <div className="px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md whitespace-nowrap">
-                    {vehicle.velocidad} km/h
-                </div>
-            </div>
-            
-            <VehiclePin status={vehicle.status} isSelected={isSelected} rumbo={vehicle.rumbo} />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-10 mb-1">
+              <motion.div
+                className="px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md whitespace-nowrap"
+                animate={{ rotate: -pinRotate }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                  {vehicle.velocidad} km/h
+              </motion.div>
+          </div>
+          
+          <VehiclePin status={vehicle.status} isSelected={isSelected} rumbo={vehicle.rumbo} />
         </motion.div>
       </AdvancedMarker>
 
