@@ -50,7 +50,7 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
        {/* Directional Arrow */}
       <div 
         className="absolute bottom-[-8px] left-1/2 -translate-x-1/2 w-0 h-0 transition-transform duration-300"
-        style={{ transform: `translateX(-50%) rotate(${rumbo}deg)` }}
+        style={{ transform: `rotate(${rumbo}deg)` }}
       >
         <svg width="20" height="20" viewBox="0 0 20 20" className="transform -translate-x-1/2 -translate-y-1/2">
             <path d="M10 0 L20 20 L10 15 L0 20 Z" fill={color} className="drop-shadow-lg" />
