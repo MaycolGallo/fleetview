@@ -223,8 +223,8 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
         position={animatedPosition}
         zIndex={isSelected ? 10 : 1}
       >
-        <div className="relative bottom-10">
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md">
+        <div className="relative bottom-14">
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md mb-1">
             {vehicle.velocidad} km/h
           </div>
         </div>
