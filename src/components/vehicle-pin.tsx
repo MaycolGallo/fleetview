@@ -41,7 +41,7 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
           />
         </svg>
         <motion.div 
-            className="absolute top-[13px] left-1/2 -translate-x-1/2 w-7 h-7 bg-card rounded-full items-center justify-center"
+            className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 bg-card rounded-full"
             initial={{ rotate: iconRotate }}
             animate={{ rotate: iconRotate }}
             transition={{ duration: 0.3, ease: "easeOut" }}
