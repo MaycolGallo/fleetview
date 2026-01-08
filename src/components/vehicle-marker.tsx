@@ -172,9 +172,6 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
   const animatedPosition = useAnimatedPosition(targetPosition);
   
-  const rotation = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
-
-
   const handleLeftClick = (e: google.maps.MapMouseEvent | MouseEvent) => {
     if ('domEvent' in e && e.domEvent) {
       e.domEvent.stopPropagation();
@@ -235,21 +232,16 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
             onTouchMove={handleTouchMove}
             data-vehicle-id={vehicle.id}
             className="relative"
-            initial={{ scale: 0, opacity: 0, rotate: rotation }}
-            animate={{ scale: isSelected ? 1.2 : 1, opacity: 1, rotate: rotation }}
+            animate={{ scale: isSelected ? 1.2 : 1 }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
             style={{ transformOrigin: '50% 100%'}}
         >
-            <motion.div 
-                className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-1 whitespace-nowrap"
-                initial={{ rotate: -rotation }}
-                animate={{ rotate: -rotation }}
-                transition={{ duration: 0.3, ease: "easeOut" }}
-            >
-                <div className="px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-10 mb-1">
+                 <div className="px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md whitespace-nowrap">
                     {vehicle.velocidad} km/h
                 </div>
-            </motion.div>
+            </div>
+            
             <VehiclePin status={vehicle.status} isSelected={isSelected} rumbo={vehicle.rumbo} />
         </motion.div>
       </AdvancedMarker>
