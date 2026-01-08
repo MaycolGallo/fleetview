@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -10,25 +11,24 @@ import {
   DrawerOverlay,
   DrawerHandle
 } from '@/components/ui/drawer';
-import { useFleet } from '@/context/fleet-context';
+import { useFleet, statusDetailsMap } from '@/context/fleet-context';
 import { Badge } from './ui/badge';
-import { User, Gauge, Fuel, Wrench, Calendar, Move } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { Move, Gauge, Tag, Rss, Clock, Wind, BarChart, Battery, BatteryFull } from 'lucide-react';
+import { format, fromUnixTime } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Progress } from './ui/progress';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 
 function DetailItem({ icon: Icon, label, value, unit }: { icon: React.ElementType, label: string, value: React.ReactNode, unit?: string }) {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between text-sm">
       <div className="flex items-center gap-3 text-muted-foreground">
-        <Icon className="w-5 h-5" />
+        <Icon className="w-4 h-4" />
         <span className="font-medium">{label}</span>
       </div>
       <div className="font-semibold text-foreground">
-        {value} {unit && <span className="text-sm font-normal text-muted-foreground">{unit}</span>}
+        {value} {unit && <span className="text-xs font-normal text-muted-foreground">{unit}</span>}
       </div>
     </div>
   )
@@ -46,71 +46,64 @@ function VehicleDetailsContent() {
     
     if (!selectedVehicle) return null;
 
-    const isOutofService = selectedVehicle.status === 'out-of-service';
+    const statusDetail = statusDetailsMap[selectedVehicle.status];
 
     return (
        <div className="flex flex-col h-full bg-zinc-900/95 backdrop-blur-sm border-l border-zinc-800">
            <div className="p-4">
-                <h2 className="text-lg font-semibold">{selectedVehicle.id}</h2>
+                <h2 className="text-lg font-semibold">Placa: {selectedVehicle.placa}</h2>
                 <div className="text-sm text-muted-foreground pt-1">
                     <Badge
-                        variant={
-                            selectedVehicle.status === 'active'
-                            ? 'default'
-                            : selectedVehicle.status === 'idle'
-                            ? 'secondary'
-                            : 'destructive'
-                        }
                         className="capitalize"
+                        style={{ backgroundColor: statusDetail.color, color: '#fff' }}
                     >
-                        {selectedVehicle.status.replace('-', ' ')}
+                        {selectedVehicle.nombre_estado}
                     </Badge>
                 </div>
            </div>
            <Separator />
-            <div className="p-4 space-y-6 overflow-y-auto flex-1">
+            <div className="p-4 space-y-4 overflow-y-auto flex-1">
                 <Card>
                     <CardHeader className='p-4'>
-                        <CardTitle className='text-base'>Current Status</CardTitle>
+                        <CardTitle className='text-base'>Información Actual</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-4 pt-0 space-y-4">
-                        <DetailItem icon={User} label="Driver" value={selectedVehicle.driverName} />
-                        <DetailItem icon={Gauge} label="Speed" value={selectedVehicle.speedKph} unit="km/h" />
-                        <div className="space-y-2">
-                            <DetailItem icon={Fuel} label="Fuel Level" value={`${selectedVehicle.fuelLevel}%`} />
-                            <Progress value={selectedVehicle.fuelLevel} className="h-2" />
-                        </div>
+                    <CardContent className="p-4 pt-0 space-y-3">
+                        <DetailItem icon={Tag} label="ID Vehículo" value={selectedVehicle.id_vehiculo} />
+                        <DetailItem icon={Gauge} label="Velocidad" value={selectedVehicle.velocidad} unit="km/h" />
+                        <DetailItem icon={Rss} label="Odómetro" value={parseFloat(selectedVehicle.odometro).toLocaleString()} unit="km" />
+                        <DetailItem icon={Wind} label="Rumbo" value={selectedVehicle.rumbo}° />
+                         <DetailItem 
+                            icon={Clock} 
+                            label="Última Fecha" 
+                            value={format(fromUnixTime(selectedVehicle.fecha), 'Pp')} 
+                        />
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className='p-4'>
-                        <CardTitle className='text-base'>Maintenance</CardTitle>
+                        <CardTitle className='text-base'>Batería</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-4 pt-0 space-y-4">
+                    <CardContent className="p-4 pt-0 space-y-3">
                         <DetailItem 
-                            icon={Wrench} 
-                            label="Last Service" 
-                            value={format(new Date(selectedVehicle.lastMaintenance), 'PPP')} 
+                            icon={Battery}
+                            label="GPS" 
+                            value={selectedVehicle.bateria} 
+                            unit="V"
                         />
                         <DetailItem 
-                            icon={Calendar} 
-                            label="Time since" 
-                            value={formatDistanceToNow(new Date(selectedVehicle.lastMaintenance), { addSuffix: true })}
+                            icon={BatteryFull} 
+                            label="Vehículo" 
+                            value={selectedVehicle.bateria_vehiculo}
+                            unit="V"
                         />
                     </CardContent>
                 </Card>
-                
-                {isOutofService && (
-                    <div className="rounded-lg border border-destructive/50 bg-destructive/10 text-destructive p-4 text-sm">
-                        This vehicle is currently out of service. Speed and location data may not be up-to-date.
-                    </div>
-                )}
             </div>
             <Separator />
             <div className='p-4'>
                 <Button onClick={handleSimulateMove} className="w-full">
-                    <Move className="mr-2 h-4 w-4" /> Simulate Move
+                    <Move className="mr-2 h-4 w-4" /> Simular Movimiento
                 </Button>
             </div>
         </div>
@@ -131,53 +124,68 @@ export function VehicleDetails() {
   if (!selectedVehicle) {
     return null;
   }
+  
+  const statusDetail = statusDetailsMap[selectedVehicle.status];
 
   if (isMobile) {
     return (
-        <Drawer open={!!selectedVehicle} onOpenChange={handleOpenChange} snapPoints={[0.5, 1]} activeSnapPoint={0.5}>
+        <Drawer open={!!selectedVehicle} onOpenChange={handleOpenChange} snapPoints={[0.6, 1]} activeSnapPoint={0.6}>
             <DrawerPortal>
                 <DrawerOverlay className="bg-transparent" />
                 <DrawerContent className='bg-zinc-900/95 backdrop-blur-sm mt-0'>
-                    <div className="p-4 overflow-auto h-[50vh]">
+                    <div className="p-4 overflow-auto h-[60vh]">
                         <DrawerHandle className="mb-4" />
                         <DrawerHeader className='p-0 text-left'>
-                            <DrawerTitle>{selectedVehicle.id}</DrawerTitle>
+                            <DrawerTitle>Placa: {selectedVehicle.placa}</DrawerTitle>
+                             <div className="text-sm text-muted-foreground pt-1">
+                                <Badge
+                                    className="capitalize"
+                                    style={{ backgroundColor: statusDetail.color, color: '#fff' }}
+                                >
+                                    {selectedVehicle.nombre_estado}
+                                </Badge>
+                            </div>
                         </DrawerHeader>
-                        <div className="py-6 space-y-6">
+                        <div className="py-6 space-y-4">
                             <Card>
                                 <CardHeader className='p-4'>
-                                    <CardTitle className='text-base'>Current Status</CardTitle>
+                                    <CardTitle className='text-base'>Información Actual</CardTitle>
                                 </CardHeader>
-                                <CardContent className="p-4 pt-0 space-y-4">
-                                    <DetailItem icon={User} label="Driver" value={selectedVehicle.driverName} />
-                                    <DetailItem icon={Gauge} label="Speed" value={selectedVehicle.speedKph} unit="km/h" />
-                                    <div className="space-y-2">
-                                        <DetailItem icon={Fuel} label="Fuel Level" value={`${selectedVehicle.fuelLevel}%`} />
-                                        <Progress value={selectedVehicle.fuelLevel} className="h-2" />
-                                    </div>
+                                <CardContent className="p-4 pt-0 space-y-3">
+                                    <DetailItem icon={Tag} label="ID Vehículo" value={selectedVehicle.id_vehiculo} />
+                                    <DetailItem icon={Gauge} label="Velocidad" value={selectedVehicle.velocidad} unit="km/h" />
+                                    <DetailItem icon={Rss} label="Odómetro" value={parseFloat(selectedVehicle.odometro).toLocaleString()} unit="km" />
+                                    <DetailItem icon={Wind} label="Rumbo" value={selectedVehicle.rumbo}° />
+                                    <DetailItem 
+                                        icon={Clock} 
+                                        label="Última Fecha" 
+                                        value={format(fromUnixTime(selectedVehicle.fecha), 'Pp')} 
+                                    />
                                 </CardContent>
                             </Card>
 
                             <Card>
                                 <CardHeader className='p-4'>
-                                    <CardTitle className='text-base'>Maintenance</CardTitle>
+                                    <CardTitle className='text-base'>Batería</CardTitle>
                                 </CardHeader>
-                                <CardContent className="p-4 pt-0 space-y-4">
+                                <CardContent className="p-4 pt-0 space-y-3">
                                     <DetailItem 
-                                        icon={Wrench} 
-                                        label="Last Service" 
-                                        value={format(new Date(selectedVehicle.lastMaintenance), 'PPP')} 
+                                        icon={Battery}
+                                        label="GPS" 
+                                        value={selectedVehicle.bateria} 
+                                        unit="V"
                                     />
                                     <DetailItem 
-                                        icon={Calendar} 
-                                        label="Time since" 
-                                        value={formatDistanceToNow(new Date(selectedVehicle.lastMaintenance), { addSuffix: true })}
+                                        icon={BatteryFull} 
+                                        label="Vehículo" 
+                                        value={selectedVehicle.bateria_vehiculo}
+                                        unit="V"
                                     />
                                 </CardContent>
                             </Card>
                         </div>
                          <Button onClick={() => dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: selectedVehicle.id })} className="w-full">
-                            <Move className="mr-2 h-4 w-4" /> Simulate Move
+                            <Move className="mr-2 h-4 w-4" /> Simular Movimiento
                         </Button>
                     </div>
                 </DrawerContent>

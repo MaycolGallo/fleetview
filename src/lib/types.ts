@@ -1,15 +1,19 @@
-export type VehicleStatus = 'active' | 'idle' | 'out-of-service';
+export type VehicleStatus = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10';
 
 export interface Vehicle {
-  id: string; // vehicleId from the API is mapped to id
-  vehicleId: string;
-  latitude: number;
-  longitude: number;
+  id: number;
+  lat: number;
+  lng: number;
+  id_vehiculo: number;
+  placa: string;
+  velocidad: number;
+  odometro: string;
+  rumbo: number;
   status: VehicleStatus;
-  driverName: string;
-  speedKph: number;
-  fuelLevel: number; // Percentage
-  lastMaintenance: string; // ISO Date string
+  nombre_estado: string;
+  fecha: number;
+  bateria: string;
+  bateria_vehiculo: string;
 }
 
 export interface RouteEvent {

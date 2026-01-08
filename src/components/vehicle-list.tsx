@@ -4,30 +4,14 @@
 import type { Vehicle } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { AlertCircle, CheckCircle, Clock } from "lucide-react";
 import { useMemo } from "react";
 import { Badge } from "./ui/badge";
 import { Checkbox } from "./ui/checkbox";
-import { useFleet } from "@/context/fleet-context";
+import { useFleet, statusDetailsMap } from "@/context/fleet-context";
 
 interface VehicleListProps {
     onVehicleSelect: () => void;
 }
-
-const statusDetails = {
-    'active': {
-        icon: CheckCircle,
-        className: 'text-green-400',
-    },
-    'idle': {
-        icon: Clock,
-        className: 'text-amber-400',
-    },
-    'out-of-service': {
-        icon: AlertCircle,
-        className: 'text-red-400',
-    }
-};
 
 export function VehicleList({ onVehicleSelect }: VehicleListProps) {
     const { state, dispatch } = useFleet();
@@ -38,7 +22,7 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
         onVehicleSelect();
     };
 
-    const handleVisibilityChange = (vehicleId: string) => {
+    const handleVisibilityChange = (vehicleId: number) => {
         dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: vehicleId });
     };
 
@@ -53,7 +37,8 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
         <ScrollArea className="h-full">
             <div className="flex flex-col gap-1 p-2">
                 {listVehicles.map(vehicle => {
-                    const StatusIcon = statusDetails[vehicle.status].icon;
+                    const statusDetail = statusDetailsMap[vehicle.status];
+                    const StatusIcon = statusDetail.icon;
                     const isVisible = visibleVehicleIds.has(vehicle.id);
                     return (
                         <div
@@ -66,7 +51,7 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
                             <Checkbox
                                 checked={isVisible}
                                 onCheckedChange={() => handleVisibilityChange(vehicle.id)}
-                                aria-label={`Toggle visibility of ${vehicle.id}`}
+                                aria-label={`Toggle visibility of ${vehicle.placa}`}
                                 className="flex-shrink-0"
                             />
                             <button
@@ -78,18 +63,15 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
                                 )}
                                 disabled={!isVisible}
                             >
-                                <StatusIcon className={cn("w-5 h-5 flex-shrink-0", statusDetails[vehicle.status].className)} />
+                                <StatusIcon className={cn("w-5 h-5 flex-shrink-0")} style={{color: statusDetail.color}} />
                                 <div className="flex-1 truncate">
-                                    <p className="font-semibold truncate">{vehicle.id}</p>
+                                    <p className="font-semibold truncate">{vehicle.placa}</p>
                                     <p className="text-xs text-muted-foreground truncate">
-                                        {vehicle.latitude.toFixed(4)}, {vehicle.longitude.toFixed(4)}
+                                        {vehicle.lat.toFixed(4)}, {vehicle.lng.toFixed(4)}
                                     </p>
                                 </div>
-                                <Badge variant={
-                                    vehicle.status === 'active' ? 'default' :
-                                    vehicle.status === 'idle' ? 'secondary' : 'destructive'
-                                } className="capitalize text-xs h-5">
-                                    {vehicle.status.replace('-', ' ')}
+                                <Badge variant="outline" className="capitalize text-xs h-5">
+                                    {vehicle.velocidad} km/h
                                 </Badge>
                             </button>
                         </div>

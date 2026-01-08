@@ -1,28 +1,26 @@
 
+
 "use client";
 
 import { cn } from '@/lib/utils';
 import type { VehicleStatus } from '@/lib/types';
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useFleet, statusDetailsMap } from '@/context/fleet-context';
 
 interface VehiclePinProps {
   status: VehicleStatus;
   isSelected: boolean;
 }
 
-const statusColors = {
-  'active': '#4CAF50', // Green
-  'idle': '#FFC107',   // Amber
-  'out-of-service': '#F44336', // Red
-};
-
 export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) => {
+  const color = statusDetailsMap[status]?.color || '#9E9E9E';
+
   return (
     <motion.div
       className={cn('cursor-pointer transform-origin-bottom')}
       initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
+      animate={{ scale: isSelected ? 1.2 : 1, opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       style={{ transformOrigin: '50% 100%'}} // Ensures scaling originates from the bottom center
     >
@@ -33,7 +31,7 @@ export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) =
           
         >
           <path 
-            fill={statusColors[status]}
+            fill={color}
             d="M19 0C8.5 0 0 8.5 0 19.1C0 32.9 19 54 19 54S38 32.9 38 19.1C38 8.5 29.5 0 19 0Z" 
           />
         </svg>

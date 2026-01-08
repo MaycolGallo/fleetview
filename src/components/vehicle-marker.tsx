@@ -1,10 +1,11 @@
 
+
 'use client';
 
-import type { Vehicle, VehicleAction } from '@/lib/types';
-import { AdvancedMarker, useMap } from '@vis.gl/react-google-maps';
+import type { Vehicle } from '@/lib/types';
+import { useMap, AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useRef, useEffect, MouseEvent } from 'react';
+import React, { useState, useRef, MouseEvent, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -21,6 +22,7 @@ import {
 import { useFleet } from '@/context/fleet-context';
 import { useAnimatedPosition } from '@/hooks/use-animated-position';
 
+type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'view-alerts' | 'maintenance';
 
 const contextMenuItems = [
   { action: 'show-route-history' as VehicleAction, label: 'Show Route History', icon: History },
@@ -75,7 +77,7 @@ function ContextMenu({
                 style={{ top: position.y, left: position.x }}
             >
                 <div className="px-2 py-1.5 text-sm font-semibold border-b border-border mb-1">
-                    {vehicle.id}
+                    {vehicle.placa}
                 </div>
                 <div className="flex flex-col">
                     {contextMenuItems.map((item) => {
@@ -129,7 +131,7 @@ function MobileContextMenuDrawer({
                 <DrawerContent>
                     <DrawerHandle />
                     <DrawerHeader className="text-left">
-                        <DrawerTitle>{vehicle.id}</DrawerTitle>
+                        <DrawerTitle>{vehicle.placa}</DrawerTitle>
                     </DrawerHeader>
                     <div className="p-4 pt-0">
                         <div className="flex flex-col gap-1">
@@ -166,14 +168,14 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
 
-  const targetPosition = { lat: vehicle.latitude, lng: vehicle.longitude };
+  const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
   const animatedPosition = useAnimatedPosition(targetPosition);
 
 
   const handleLeftClick = (e: google.maps.MapMouseEvent | MouseEvent) => {
     if ('domEvent' in e && e.domEvent) {
       e.domEvent.stopPropagation();
-    } else {
+    } else if (e.stopPropagation) {
       e.stopPropagation();
     }
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
@@ -227,6 +229,7 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           onTouchMove={handleTouchMove}
+          data-vehicle-id={vehicle.id}
         >
           <VehiclePin status={vehicle.status} isSelected={isSelected} />
         </div>

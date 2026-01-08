@@ -3,12 +3,10 @@
 "use client";
 
 import { APIProvider, Map, useMap, ColorScheme } from '@vis.gl/react-google-maps';
-import type { Vehicle, RouteHistory } from '@/lib/types';
+import type { Vehicle } from '@/lib/types';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { AnimatedVehicleMarker } from './vehicle-marker';
 import { useFleet } from '@/context/fleet-context';
-import { useToast } from '@/hooks/use-toast';
-
 
 interface FleetMapProps {
   apiKey: string;
@@ -105,16 +103,15 @@ function RoutePolyline({
 function MapControl() {
   const map = useMap();
   const { state, dispatch } = useFleet();
-  const { toast } = useToast();
 
   const {
     vehicles,
     statusFilter,
     routeHistoryVehicle,
-    routePath,
-    highlightedSegment,
     mapViewport,
     visibleVehicleIds,
+    highlightedSegment,
+    routePath
   } = state;
 
   const handleRouteClick = (pointIndex: number) => {
@@ -135,8 +132,8 @@ function MapControl() {
 
     switch (mapViewport.type) {
       case 'pan_to_vehicle': {
-        const { latitude, longitude } = mapViewport.payload;
-        map.panTo({ lat: latitude, lng: longitude });
+        const { lat, lng } = mapViewport.payload;
+        map.panTo({ lat: lat, lng: lng });
         if (map.getZoom()! < 15) {
           map.setZoom(15);
         }

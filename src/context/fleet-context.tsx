@@ -5,6 +5,8 @@
 import { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
+import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle } from 'lucide-react';
+
 
 const fetchVehicles = async (): Promise<Vehicle[]> => {
   const res = await fetch('/api/vehicles');
@@ -12,8 +14,7 @@ const fetchVehicles = async (): Promise<Vehicle[]> => {
     throw new Error('Failed to fetch vehicles');
   }
   const data = await res.json();
-  // The mock API returns vehicleId, we'll map it to id for consistency
-  return data.map((v: any) => ({ ...v, id: v.vehicleId }));
+  return data;
 };
 
 
@@ -45,7 +46,7 @@ interface FleetState {
   isLoadingRoute: boolean;
   selectedSegmentIndex: number | null;
   highlightedSegment: { lat: number; lng: number }[] | null;
-  visibleVehicleIds: Set<string>;
+  visibleVehicleIds: Set<number>;
   isMapDark: boolean;
   mapViewport: MapViewport;
   simulationStep: Record<string, number>;
@@ -62,10 +63,10 @@ type FleetAction =
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
   | { type: 'SELECT_MAP_SEGMENT'; payload: number }
   | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean }
-  | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: string }
-  | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: string[], visible: boolean } }
+  | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: number }
+  | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: number[], visible: boolean } }
   | { type: 'SET_MAP_DARK_MODE', payload: boolean }
-  | { type: 'SIMULATE_VEHICLE_MOVE', payload: string };
+  | { type: 'SIMULATE_VEHICLE_MOVE', payload: number };
 
 
 // 3. Define the initial state
@@ -111,6 +112,22 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
     };
 }
 
+export const statusDetailsMap: { [key in VehicleStatus]: { name: string; color: string; icon: React.ElementType; } } = {
+  '0': { name: 'Sin Cobertura', color: '#9E9E9E', icon: AlertCircle }, // Grey
+  '1': { name: 'Detenido y Apagado', color: '#757575', icon: PowerOff }, // Dark Grey
+  '2': { name: 'Detenido y Encendido', color: '#FFC107', icon: Clock }, // Amber
+  '3': { name: 'Exceso de Velocidad', color: '#FF5722', icon: Siren }, // Deep Orange
+  '4': { name: 'Alarma de Pánico', color: '#E91E63', icon: Siren }, // Pink
+  '5': { name: 'Alarma de Puerta', color: '#673AB7', icon: DoorOpen }, // Deep Purple
+  '6': { name: 'Transitando', color: '#4CAF50', icon: Car }, // Green
+  '7': { name: 'Batería GPS Desc.', color: '#F44336', icon: BatteryWarning }, // Red
+  '8': { name: 'Batería GPS Baja', color: '#FF9800', icon: Battery }, // Orange
+  '9': { name: 'Motor Apagado Remoto', color: '#03A9F4', icon: PowerCircle }, // Light Blue
+  '10': { name: 'Motor Encendido Remoto', color: '#8BC34A', icon: Power }, // Light Green
+};
+
+export const ALL_STATUSES = Object.keys(statusDetailsMap) as VehicleStatus[];
+
 
 // 4. Create the reducer function
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
@@ -124,7 +141,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       const visibleVehicles = action.payload.filter(v => newVisibleIds.has(v.id));
 
       const newBounds = visibleVehicles.length > 0
-          ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
+          ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
           : [];
 
       // Update the selected vehicle instance if it exists
@@ -151,7 +168,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
          // This is a deselection event
          const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
           const newBounds = visibleVehicles.length > 0
-            ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
+            ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
             : [];
         return { 
             ...state, 
@@ -172,7 +189,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       if (action.payload === false && state.isRouteSheetOpen === true) {
         const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
         const newBounds = visibleVehicles.length > 0
-            ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
+            ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
             : [];
         return {
           ...state,
@@ -210,7 +227,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     case 'BACK_TO_FLEET': {
         const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
         const newBounds = visibleVehicles.length > 0
-            ? visibleVehicles.map(v => ({ lat: v.latitude, lng: v.longitude }))
+            ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
             : [];
         return {
             ...state,
@@ -295,21 +312,13 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       const nextStep = (currentStep + 1) % SIMULATION_ROUTE.length;
       const newCoords = SIMULATION_ROUTE[nextStep];
 
-      const newVehicles = state.vehicles.map(v => {
-        if (v.id === vehicleId) {
-          // Create a new object for the updated vehicle to ensure reference changes
-          return {
-            ...v,
-            latitude: newCoords.lat,
-            longitude: newCoords.lng,
-          };
-        }
-        return v;
-      });
-
       return {
         ...state,
-        vehicles: newVehicles,
+        vehicles: state.vehicles.map(v => 
+          v.id === vehicleId
+            ? { ...v, lat: newCoords.lat, lng: newCoords.lng }
+            : v
+        ),
         simulationStep: {
           ...state.simulationStep,
           [vehicleId]: nextStep
@@ -366,8 +375,8 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        startLat: routeHistoryVehicle.latitude,
-                        startLng: routeHistoryVehicle.longitude,
+                        startLat: routeHistoryVehicle.lat,
+                        startLng: routeHistoryVehicle.lng,
                     }),
                 });
                 if (!response.ok) throw new Error('Failed to fetch route');
@@ -398,8 +407,3 @@ export const useFleet = () => {
     }
     return context;
 };
-
-    
-
-    
-

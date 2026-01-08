@@ -2,7 +2,7 @@
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useFleet } from "@/context/fleet-context";
+import { useFleet, statusDetailsMap, ALL_STATUSES } from "@/context/fleet-context";
 import type { VehicleStatus } from "@/lib/types";
 
 interface VehicleFiltersProps {}
@@ -22,13 +22,15 @@ export function VehicleFilters(props: VehicleFiltersProps) {
           id="status-filter" 
           className="w-full h-10"
         >
-          <SelectValue placeholder="Filter by status" />
+          <SelectValue placeholder="Filtrar por estado" />
         </SelectTrigger>
         <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
-          <SelectItem value="all">All Vehicles</SelectItem>
-          <SelectItem value="active">Active</SelectItem>
-          <SelectItem value="idle">Idle</SelectItem>
-          <SelectItem value="out-of-service">Out of Service</SelectItem>
+          <SelectItem value="all">Todos los Vehículos</SelectItem>
+          {ALL_STATUSES.map(status => (
+            <SelectItem key={status} value={status}>
+                {statusDetailsMap[status].name}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>
