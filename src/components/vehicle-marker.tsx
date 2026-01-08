@@ -220,9 +220,20 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   return (
     <>
       <AdvancedMarker
+        position={animatedPosition}
+        zIndex={isSelected ? 10 : 1}
+      >
+        <div className="relative bottom-10">
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md">
+            {vehicle.velocidad} km/h
+          </div>
+        </div>
+      </AdvancedMarker>
+      <AdvancedMarker
         key={vehicle.id}
         position={animatedPosition}
         onClick={handleLeftClick}
+        zIndex={isSelected ? 5 : 0}
       >
         <div 
           onContextMenu={handleContextMenu}
@@ -232,9 +243,6 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
           data-vehicle-id={vehicle.id}
           className="relative flex flex-col items-center"
         >
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md z-10">
-                {vehicle.velocidad} km/h
-            </div>
             <VehiclePin status={vehicle.status} isSelected={isSelected} rumbo={vehicle.rumbo} />
         </div>
       </AdvancedMarker>
