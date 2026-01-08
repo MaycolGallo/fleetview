@@ -53,6 +53,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     selectedVehicle,
     isMapDark,
     visibleVehicleIds,
+    pinRotationMode
   } = state;
 
   const handleBackToFleet = () => {
@@ -66,6 +67,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const handleMapThemeToggle = (isDark: boolean) => {
     dispatch({ type: 'SET_MAP_DARK_MODE', payload: isDark });
+  }
+
+  const handlePinRotationModeToggle = (isRotated: boolean) => {
+    dispatch({ type: 'SET_PIN_ROTATION_MODE', payload: isRotated ? 'pin' : 'arrow' });
   }
   
   const onPanelLayout = (sizes: number[]) => {
@@ -122,6 +127,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                                         {areAllFilteredVisible ? 'Hide All' : 'Show All'}
                                     </Label>
                                 </div>
+                            </div>
+                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-2">
                                   <Switch 
                                     id="dark-map" 
@@ -129,6 +136,14 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                                     onCheckedChange={handleMapThemeToggle}
                                   />
                                   <Label htmlFor="dark-map">Dark Map</Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  <Switch 
+                                    id="rotate-pins" 
+                                    checked={pinRotationMode === 'pin'}
+                                    onCheckedChange={handlePinRotationModeToggle}
+                                  />
+                                  <Label htmlFor="rotate-pins">Rotate Pins</Label>
                                 </div>
                             </div>
                           </div>

@@ -50,6 +50,7 @@ interface FleetState {
   isMapDark: boolean;
   mapViewport: MapViewport;
   simulationStep: Record<string, number>;
+  pinRotationMode: 'arrow' | 'pin';
 }
 
 // 2. Define the actions
@@ -66,6 +67,7 @@ type FleetAction =
   | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: number }
   | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: number[], visible: boolean } }
   | { type: 'SET_MAP_DARK_MODE', payload: boolean }
+  | { type: 'SET_PIN_ROTATION_MODE', payload: 'arrow' | 'pin' }
   | { type: 'SIMULATE_VEHICLE_MOVE', payload: number };
 
 
@@ -85,6 +87,7 @@ const getInitialState = (): FleetState => ({
   isMapDark: true,
   mapViewport: { type: 'initial' },
   simulationStep: {},
+  pinRotationMode: 'arrow',
 });
 
 // Helper function to calculate segment points
@@ -304,6 +307,10 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     
     case 'SET_MAP_DARK_MODE': {
       return { ...state, isMapDark: action.payload };
+    }
+
+    case 'SET_PIN_ROTATION_MODE': {
+      return { ...state, pinRotationMode: action.payload };
     }
 
     case 'SIMULATE_VEHICLE_MOVE': {
