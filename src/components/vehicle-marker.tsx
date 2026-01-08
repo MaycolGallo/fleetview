@@ -225,14 +225,14 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
         onClick={handleLeftClick}
       >
         <div 
-          className="flex flex-col items-center"
+          className="relative flex flex-col items-center"
           onContextMenu={handleContextMenu}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           onTouchMove={handleTouchMove}
           data-vehicle-id={vehicle.id}
         >
-          <div className="mb-1 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md">
+          <div className="mb-1 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md z-10">
             {vehicle.velocidad} km/h
           </div>
           <VehiclePin status={vehicle.status} isSelected={isSelected} rumbo={vehicle.rumbo} />
