@@ -172,6 +172,8 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
   const animatedPosition = useAnimatedPosition(targetPosition);
   
+  const pinRotate = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
+
   const handleLeftClick = (e: google.maps.MapMouseEvent | MouseEvent) => {
     if ('domEvent' in e && e.domEvent) {
       e.domEvent.stopPropagation();
@@ -215,9 +217,6 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
       pressTimer.current = null;
     }
   };
-  
-  const pinRotate = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
-
 
   return (
     <>
@@ -233,26 +232,25 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             data-vehicle-id={vehicle.id}
-            className="relative cursor-pointer"
+            className="relative cursor-pointer p-4"
             animate={{ 
               scale: isSelected ? 1.2 : 1,
               rotate: pinRotate,
             }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            style={{ transformOrigin: '50% 100%'}}
         >
-          <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-10 mb-1"
+          <motion.div
+            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-10"
+            animate={{ rotate: -pinRotate }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-            <motion.div
-              className="flex items-center gap-1.5 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md whitespace-nowrap"
-              animate={{ rotate: pinRotationMode === 'pin' ? -vehicle.rumbo : 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            <div
+              className="flex items-center gap-1.5 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md whitespace-nowrap mb-1"
             >
                 <Gauge className="w-3 h-3" />
                 <span>{vehicle.velocidad} km/h</span>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
           
           <VehiclePin status={vehicle.status} isSelected={isSelected} />
         </motion.div>
