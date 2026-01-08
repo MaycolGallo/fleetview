@@ -19,7 +19,11 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
   const color = statusDetailsMap[status]?.color || '#9E9E9E';
 
   const showArrow = pinRotationMode === 'arrow';
-  const pinRotate = pinRotationMode === 'pin' ? rumbo : 0;
+  // Pin rotation is now handled by the parent marker component
+  const pinRotate = 0; 
+  
+  // Counter-rotate the icon if the parent is rotating
+  const iconRotate = pinRotationMode === 'pin' ? -rumbo : 0;
   
   return (
     <div
@@ -41,7 +45,7 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
             </svg>
             <motion.div 
               className="relative z-10 w-7 h-7 bg-card rounded-full flex items-center justify-center top-[-7px]"
-              animate={{ rotate: -pinRotate }}
+              animate={{ rotate: iconRotate }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-card-foreground">

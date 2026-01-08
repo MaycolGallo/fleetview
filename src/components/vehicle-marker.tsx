@@ -232,7 +232,7 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             data-vehicle-id={vehicle.id}
-            className="relative cursor-pointer p-4"
+            className="relative cursor-pointer"
             animate={{ 
               scale: isSelected ? 1.2 : 1,
               rotate: pinRotate,
@@ -240,19 +240,19 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
           <motion.div
-            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-10"
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-10"
             animate={{ rotate: -pinRotate }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
             <div
-              className="flex items-center gap-1.5 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md whitespace-nowrap mb-1"
+              className="flex items-center gap-1.5 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md whitespace-nowrap"
             >
                 <Gauge className="w-3 h-3" />
                 <span>{vehicle.velocidad} km/h</span>
             </div>
           </motion.div>
           
-          <VehiclePin status={vehicle.status} isSelected={isSelected} />
+          <VehiclePin status={vehicle.status} isSelected={isSelected} rumbo={vehicle.rumbo} />
         </motion.div>
       </AdvancedMarker>
 
