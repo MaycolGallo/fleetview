@@ -11,14 +11,15 @@ import { useFleet, statusDetailsMap } from '@/context/fleet-context';
 interface VehiclePinProps {
   status: VehicleStatus;
   isSelected: boolean;
+  rumbo: number;
 }
 
-export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) => {
+export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinProps) => {
   const color = statusDetailsMap[status]?.color || '#9E9E9E';
 
   return (
     <motion.div
-      className={cn('cursor-pointer transform-origin-bottom')}
+      className={cn('cursor-pointer transform-origin-bottom relative')}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ scale: isSelected ? 1.2 : 1, opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
@@ -45,6 +46,15 @@ export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) =
                 <path d="M5 10h14"/>
             </svg>
         </div>
+      </div>
+       {/* Directional Arrow */}
+      <div 
+        className="absolute bottom-[-8px] left-1/2 -translate-x-1/2 w-0 h-0 transition-transform duration-300"
+        style={{ transform: `translateX(-50%) rotate(${rumbo}deg)` }}
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" className="transform -translate-x-1/2 -translate-y-1/2">
+            <path d="M10 0 L20 20 L10 15 L0 20 Z" fill={color} className="drop-shadow-lg" />
+        </svg>
       </div>
     </motion.div>
   );

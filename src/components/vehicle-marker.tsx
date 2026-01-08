@@ -231,7 +231,7 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
           onTouchMove={handleTouchMove}
           data-vehicle-id={vehicle.id}
         >
-          <VehiclePin status={vehicle.status} isSelected={isSelected} />
+          <VehiclePin status={vehicle.status} isSelected={isSelected} rumbo={vehicle.rumbo} />
         </div>
       </AdvancedMarker>
 
