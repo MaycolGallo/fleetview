@@ -27,7 +27,7 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
       className={cn('cursor-pointer transform-origin-bottom relative')}
       initial={{ scale: 0, opacity: 0, rotate: rotate }}
       animate={{ scale: isSelected ? 1.2 : 1, opacity: 1, rotate: rotate }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
       style={{ transformOrigin: '50% 100%'}} // Ensures scaling originates from the bottom center
     >
       <div className="relative w-10 h-14">
@@ -41,12 +41,12 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
           />
         </svg>
         <motion.div 
-            className="absolute top-[6px] left-1/2 -translate-x-1/2 w-7 h-7 bg-card rounded-full flex items-center justify-center"
+            className="absolute top-[13px] left-1/2 -translate-x-1/2 w-7 h-7 bg-card rounded-full items-center justify-center"
             initial={{ rotate: iconRotate }}
             animate={{ rotate: iconRotate }}
             transition={{ duration: 0.3, ease: "easeOut" }}
         >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-card-foreground">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-card-foreground absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                 <path d="M14 16.5V14a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2.5"/>
                 <path d="M14 16.5a2.5 2.5 0 1 1-5 0"/>
                 <path d="M6 14H2.5v-2a2 2 0 0 1 2-2H8"/>
