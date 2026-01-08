@@ -10,20 +10,14 @@ import { useFleet, statusDetailsMap } from '@/context/fleet-context';
 interface VehiclePinProps {
   status: VehicleStatus;
   isSelected: boolean;
-  rumbo: number;
 }
 
-export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinProps) => {
+export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) => {
   const { state } = useFleet();
   const { pinRotationMode } = state;
-  const color = statusDetailsMap[status]?.color || '#9E9E9E';
+  const color = statusDetailsMap[status as keyof typeof statusDetailsMap]?.color || '#9E9E9E';
 
   const showArrow = pinRotationMode === 'arrow';
-  // Pin rotation is now handled by the parent marker component
-  const pinRotate = 0; 
-  
-  // Counter-rotate the icon if the parent is rotating
-  const iconRotate = pinRotationMode === 'pin' ? -rumbo : 0;
   
   return (
     <div
@@ -45,7 +39,7 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
             </svg>
             <motion.div 
               className="relative z-10 w-7 h-7 bg-card rounded-full flex items-center justify-center top-[-7px]"
-              animate={{ rotate: iconRotate }}
+              animate={{ rotate: 0 }} // Keep icon upright
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-card-foreground">
@@ -63,7 +57,7 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
       {showArrow && (
         <div 
           className="absolute bottom-[-8px] left-1/2 w-0 h-0 transition-transform duration-300"
-          style={{ transform: `translateX(-50%) translateY(4px) rotate(${rumbo}deg)` }}
+          style={{ transform: `translateX(-50%) translateY(4px) rotate(0deg)` }} // Arrow rotation handled by parent
         >
           <svg width="20" height="20" viewBox="0 0 20 20" className="transform -translate-x-1/2 -translate-y-1/2">
               <path d="M10 0 L20 20 L10 15 L0 20 Z" fill={color} className="drop-shadow-lg" />

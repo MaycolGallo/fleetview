@@ -5,7 +5,7 @@
 import { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
-import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle } from 'lucide-react';
+import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle, WifiOff, Wrench } from 'lucide-react';
 
 
 const fetchVehicles = async (): Promise<Vehicle[]> => {
@@ -115,21 +115,24 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
     };
 }
 
-export const statusDetailsMap: { [key in VehicleStatus]: { name: string; color: string; icon: React.ElementType; } } = {
-  '0': { name: 'Sin Cobertura', color: '#9E9E9E', icon: AlertCircle }, // Grey
-  '1': { name: 'Detenido y Apagado', color: '#757575', icon: PowerOff }, // Dark Grey
-  '2': { name: 'Detenido y Encendido', color: '#FFC107', icon: Clock }, // Amber
-  '3': { name: 'Exceso de Velocidad', color: '#FF5722', icon: Siren }, // Deep Orange
-  '4': { name: 'Alarma de Pánico', color: '#E91E63', icon: Siren }, // Pink
-  '5': { name: 'Alarma de Puerta', color: '#673AB7', icon: DoorOpen }, // Deep Purple
-  '6': { name: 'Transitando', color: '#4CAF50', icon: Car }, // Green
-  '7': { name: 'Batería GPS Desc.', color: '#F44336', icon: BatteryWarning }, // Red
-  '8': { name: 'Batería GPS Baja', color: '#FF9800', icon: Battery }, // Orange
-  '9': { name: 'Motor Apagado Remoto', color: '#03A9F4', icon: PowerCircle }, // Light Blue
-  '10': { name: 'Motor Encendido Remoto', color: '#8BC34A', icon: Power }, // Light Green
+export const statusDetailsMap: { [key in VehicleStatus | '99']: { name: string; color: string; icon: React.ElementType; } } = {
+  '0': { name: 'Libre', color: '#FFDDCC', icon: PowerOff }, 
+  '1': { name: 'SRalenti', color: '#115599', icon: Clock },
+  '2': { name: 'Libre', color: '#000000', icon: PowerOff },
+  '4': { name: 'Ralenti', color: '#CC66CC', icon: Clock }, 
+  '5': { name: 'Estacionado', color: '#666666', icon: PowerOff }, 
+  '6': { name: 'Transitando', color: '#00CC33', icon: Car },
+  '7': { name: 'Bloqueado', color: '#003399', icon: AlertCircle }, 
+  '8': { name: 'Desconeccion de Bateria', color: '#FF66B0', icon: BatteryWarning }, 
+  '9': { name: 'Mantenimiento', color: '#000000', icon: Wrench }, 
+  '10': { name: 'Motor Encendido Remoto', color: '#8BC34A', icon: Power }, // Kept old, not in image
+  '99': { name: 'Modo sleep o no envia', color: '#FFEB3B', icon: WifiOff },
+  // Original statuses not in the image, kept for fallback
+  '3': { name: 'Exceso de Velocidad', color: '#FF5722', icon: Siren },
 };
 
-export const ALL_STATUSES = Object.keys(statusDetailsMap) as VehicleStatus[];
+
+export const ALL_STATUSES = Object.keys(statusDetailsMap) as (VehicleStatus | '99')[];
 
 
 // 4. Create the reducer function
