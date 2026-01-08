@@ -30,7 +30,7 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       style={{ transformOrigin: '50% 100%'}} // Ensures scaling originates from the bottom center
     >
-      <div className="relative w-10 h-14">
+      <div className="relative w-10 h-14 flex items-start justify-center pt-[5px]">
         <svg
           viewBox="0 0 38 54"
           className="w-full h-full drop-shadow-lg absolute inset-0"
@@ -41,26 +41,19 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
           />
         </svg>
         <motion.div 
-            className="absolute w-7 h-7 bg-card rounded-full"
-            style={{
-              top: '35%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-            }}
+            className="relative z-10 w-7 h-7 bg-card rounded-full flex items-center justify-center"
             initial={{ rotate: iconRotate }}
             animate={{ rotate: iconRotate }}
             transition={{ duration: 0.3, ease: "easeOut" }}
         >
-            <div className="relative w-full h-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-card-foreground">
-                    <path d="M14 16.5V14a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2.5"/>
-                    <path d="M14 16.5a2.5 2.5 0 1 1-5 0"/>
-                    <path d="M6 14H2.5v-2a2 2 0 0 1 2-2H8"/>
-                    <path d="M18 14h3.5v-2a2 2 0 0 0-2-2H16"/>
-                    <path d="M5 10l1.5-4.5A2 2 0 0 1 8.5 4h7a2 2 0 0 1 2 1.5L19 10"/>
-                    <path d="M5 10h14"/>
-                </svg>
-            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-card-foreground">
+                <path d="M14 16.5V14a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2.5"/>
+                <path d="M14 16.5a2.5 2.5 0 1 1-5 0"/>
+                <path d="M6 14H2.5v-2a2 2 0 0 1 2-2H8"/>
+                <path d="M18 14h3.5v-2a2 2 0 0 0-2-2H16"/>
+                <path d="M5 10l1.5-4.5A2 2 0 0 1 8.5 4h7a2 2 0 0 1 2 1.5L19 10"/>
+                <path d="M5 10h14"/>
+            </svg>
         </motion.div>
       </div>
       {showArrow && (
