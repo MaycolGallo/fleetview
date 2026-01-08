@@ -1,6 +1,6 @@
 
 
-"use client";
+'use client';
 
 import { cn } from '@/lib/utils';
 import type { VehicleStatus } from '@/lib/types';
