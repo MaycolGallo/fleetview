@@ -41,7 +41,12 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
           />
         </svg>
         <motion.div 
-            className="absolute top-[35%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 bg-card rounded-full"
+            className="absolute w-7 h-7 bg-card rounded-full"
+            style={{
+              top: '35%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}
             initial={{ rotate: iconRotate }}
             animate={{ rotate: iconRotate }}
             transition={{ duration: 0.3, ease: "easeOut" }}
@@ -60,8 +65,8 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
       </div>
       {showArrow && (
         <div 
-          className="absolute bottom-[-8px] left-1/2 -translate-x-1/2 w-0 h-0 transition-transform duration-300"
-          style={{ transform: `translateY(4px) rotate(${rumbo}deg)` }}
+          className="absolute bottom-[-8px] left-1/2 w-0 h-0 transition-transform duration-300"
+          style={{ transform: `translateX(-50%) translateY(4px) rotate(${rumbo}deg)` }}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" className="transform -translate-x-1/2 -translate-y-1/2">
               <path d="M10 0 L20 20 L10 15 L0 20 Z" fill={color} className="drop-shadow-lg" />
