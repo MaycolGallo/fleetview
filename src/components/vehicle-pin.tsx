@@ -10,9 +10,10 @@ import { useFleet, statusDetailsMap } from '@/context/fleet-context';
 interface VehiclePinProps {
   status: VehicleStatus;
   isSelected: boolean;
+  rotation: number;
 }
 
-export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) => {
+export const VehiclePin = React.memo(({ status, isSelected, rotation }: VehiclePinProps) => {
   const { state } = useFleet();
   const { pinRotationMode } = state;
   const color = statusDetailsMap[status as keyof typeof statusDetailsMap]?.color || '#9E9E9E';
@@ -20,9 +21,11 @@ export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) =
   const showArrow = pinRotationMode === 'arrow';
   
   return (
-    <div
+    <motion.div
       className={cn('transform-origin-bottom relative')}
       style={{ transformOrigin: '50% 100%'}}
+      animate={{ rotate: rotation }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
       <div
         className="relative w-10 h-14"
@@ -39,7 +42,7 @@ export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) =
             </svg>
             <motion.div 
               className="relative z-10 w-7 h-7 bg-card rounded-full flex items-center justify-center top-[-7px]"
-              animate={{ rotate: 0 }} // Keep icon upright
+              animate={{ rotate: -rotation }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-card-foreground">
@@ -57,14 +60,14 @@ export const VehiclePin = React.memo(({ status, isSelected }: VehiclePinProps) =
       {showArrow && (
         <div 
           className="absolute bottom-[-8px] left-1/2 w-0 h-0 transition-transform duration-300"
-          style={{ transform: `translateX(-50%) translateY(4px) rotate(0deg)` }} // Arrow rotation handled by parent
+          style={{ transform: `translateX(-50%) translateY(4px) rotate(0deg)` }}
         >
           <svg width="20" height="20" viewBox="0 0 20 20" className="transform -translate-x-1/2 -translate-y-1/2">
               <path d="M10 0 L20 20 L10 15 L0 20 Z" fill={color} className="drop-shadow-lg" />
           </svg>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 });
 
