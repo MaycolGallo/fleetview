@@ -3,11 +3,11 @@
 'use client';
 
 import type { Vehicle } from '@/lib/types';
-import { useMap, AdvancedMarker } from '@vis.gl/react-google-maps';
+import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useRef, MouseEvent, useEffect } from 'react';
+import React, { useState, useRef, MouseEvent } from 'react';
 import { Button } from "@/components/ui/button";
-import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
+import { History, MapPin, Info, Navigation, AlertCircle, Settings, Gauge } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useIsMobile } from '../hooks/use-mobile';
 import {
@@ -241,17 +241,20 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
             style={{ transformOrigin: '50% 100%'}}
         >
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-10 mb-1">
-              <motion.div
-                className="px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md whitespace-nowrap"
-                animate={{ rotate: -pinRotate }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                  {vehicle.velocidad} km/h
-              </motion.div>
+          <div
+            className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-10 mb-1"
+          >
+            <motion.div
+              className="flex items-center gap-1.5 px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md whitespace-nowrap"
+              animate={{ rotate: pinRotationMode === 'pin' ? -vehicle.rumbo : 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            >
+                <Gauge className="w-3 h-3" />
+                <span>{vehicle.velocidad} km/h</span>
+            </motion.div>
           </div>
           
-          <VehiclePin status={vehicle.status} isSelected={isSelected} rumbo={vehicle.rumbo} />
+          <VehiclePin status={vehicle.status} isSelected={isSelected} />
         </motion.div>
       </AdvancedMarker>
 
