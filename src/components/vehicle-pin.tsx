@@ -18,19 +18,15 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
   const { pinRotationMode } = state;
   const color = statusDetailsMap[status]?.color || '#9E9E9E';
 
-  const rotate = pinRotationMode === 'pin' ? rumbo : 0;
   const showArrow = pinRotationMode === 'arrow';
   const iconRotate = pinRotationMode === 'pin' ? -rumbo : 0;
 
   return (
-    <motion.div
+    <div
       className={cn('cursor-pointer transform-origin-bottom relative')}
-      initial={{ scale: 0, opacity: 0, rotate: rotate }}
-      animate={{ scale: isSelected ? 1.2 : 1, opacity: 1, rotate: rotate }}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
       style={{ transformOrigin: '50% 100%'}} // Ensures scaling originates from the bottom center
     >
-      <div className="relative w-10 h-14 flex items-start justify-center pt-[5px]">
+      <div className="relative w-10 h-14 flex items-center justify-center">
         <svg
           viewBox="0 0 38 54"
           className="w-full h-full drop-shadow-lg absolute inset-0"
@@ -41,7 +37,7 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
           />
         </svg>
         <motion.div 
-            className="relative z-10 w-7 h-7 bg-card rounded-full flex items-center justify-center"
+            className="relative z-10 w-7 h-7 bg-card rounded-full flex items-center justify-center top-[-7px]"
             initial={{ rotate: iconRotate }}
             animate={{ rotate: iconRotate }}
             transition={{ duration: 0.3, ease: "easeOut" }}
@@ -66,7 +62,7 @@ export const VehiclePin = React.memo(({ status, isSelected, rumbo }: VehiclePinP
           </svg>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 });
 

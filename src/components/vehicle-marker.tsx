@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/drawer";
 import { useFleet } from '@/context/fleet-context';
 import { useAnimatedPosition } from '@/hooks/use-animated-position';
+import { motion } from 'framer-motion';
 
 type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'view-alerts' | 'maintenance';
 
@@ -160,7 +161,7 @@ function MobileContextMenuDrawer({
 
 function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   const { state, dispatch } = useFleet();
-  const { selectedVehicle } = state;
+  const { selectedVehicle, pinRotationMode } = state;
   const isSelected = selectedVehicle?.id === vehicle.id;
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
@@ -170,6 +171,8 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
 
   const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
   const animatedPosition = useAnimatedPosition(targetPosition);
+  
+  const rotation = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
 
 
   const handleLeftClick = (e: google.maps.MapMouseEvent | MouseEvent) => {
@@ -223,21 +226,32 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
         key={vehicle.id}
         position={animatedPosition}
         onClick={handleLeftClick}
-        zIndex={isSelected ? 5 : 0}
+        zIndex={isSelected ? 10 : 1}
       >
-        <div 
-          onContextMenu={handleContextMenu}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-          onTouchMove={handleTouchMove}
-          data-vehicle-id={vehicle.id}
-          className="relative flex flex-col items-center"
+        <motion.div 
+            onContextMenu={handleContextMenu}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            onTouchMove={handleTouchMove}
+            data-vehicle-id={vehicle.id}
+            className="relative"
+            initial={{ scale: 0, opacity: 0, rotate: rotation }}
+            animate={{ scale: isSelected ? 1.2 : 1, opacity: 1, rotate: rotation }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            style={{ transformOrigin: '50% 100%'}}
         >
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-1 whitespace-nowrap px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md">
-              {vehicle.velocidad} km/h
-          </div>
-          <VehiclePin status={vehicle.status} isSelected={isSelected} rumbo={vehicle.rumbo} />
-        </div>
+            <motion.div 
+                className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-1 whitespace-nowrap"
+                initial={{ rotate: -rotation }}
+                animate={{ rotate: -rotation }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+            >
+                <div className="px-2 py-1 bg-background/80 backdrop-blur-sm border border-border text-foreground text-xs font-semibold rounded-md shadow-md">
+                    {vehicle.velocidad} km/h
+                </div>
+            </motion.div>
+            <VehiclePin status={vehicle.status} isSelected={isSelected} rumbo={vehicle.rumbo} />
+        </motion.div>
       </AdvancedMarker>
 
        {contextMenuOpen && !isMobile && (
