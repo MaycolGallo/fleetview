@@ -44,14 +44,14 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
           {/* Centered Icon with counter-rotation */}
           <div
             className="absolute left-0 w-10 flex justify-center"
-            style={{ top: '7px' }}
+            style={{ top: '6px' }}
           >
             <motion.div 
-              className="w-7 h-7 bg-white rounded-full flex items-center justify-center"
+              className="w-6 h-6 bg-white rounded-full flex items-center justify-center"
               animate={{ rotate: -rotation }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-                  <Car className="w-5 h-5" style={{ color: color }} />
+                  <Car className="w-4 h-4" style={{ color: color }} />
             </motion.div>
           </div>
       </motion.div>
