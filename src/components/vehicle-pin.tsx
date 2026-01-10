@@ -1,3 +1,4 @@
+
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -21,13 +22,15 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
   
   return (
       <motion.div
-        className='relative w-10 h-12'
+        className='relative w-10 h-10 flex items-center justify-center'
         animate={{ rotate: rotation }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
       >
-          <svg
-              viewBox="0 0 38 54"
-              className="w-full h-full drop-shadow-lg"
+          {/* Background Pin Shape */}
+          <div className="absolute inset-0">
+             <svg
+                viewBox="0 0 38 54"
+                className="w-10 h-12 drop-shadow-lg"
               >
               <path 
                   fill={color}
@@ -35,9 +38,12 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
                   strokeWidth="2"
                   d="M19 0C8.5 0 0 8.5 0 19.1C0 32.9 19 54 19 54S38 32.9 38 19.1C38 8.5 29.5 0 19 0Z" 
               />
-          </svg>
+            </svg>
+          </div>
+          
+          {/* Centered Icon with counter-rotation */}
           <motion.div 
-            className="absolute inset-0 flex justify-center items-center pb-[26px]"
+            className="absolute top-[-1px] left-[1px] w-9 h-9 flex items-center justify-center"
             animate={{ rotate: -rotation }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
