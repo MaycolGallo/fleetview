@@ -39,8 +39,20 @@ function VehicleDetailsContent() {
     const { selectedVehicle } = state;
 
     const handleSimulateMove = () => {
-      if (selectedVehicle) {
+      if (!selectedVehicle) return;
+      
+      const updateAction = () => {
         dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: selectedVehicle.id });
+      };
+
+      // @ts-ignore
+      if (document.startViewTransition) {
+        // @ts-ignore
+        document.startViewTransition(() => {
+          updateAction();
+        });
+      } else {
+        updateAction();
       }
     };
     
@@ -127,6 +139,24 @@ export function VehicleDetails() {
   
   const statusDetail = statusDetailsMap[selectedVehicle.status];
 
+  const handleSimulateMove = () => {
+    if (!selectedVehicle) return;
+
+    const updateAction = () => {
+      dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: selectedVehicle.id });
+    };
+
+    // @ts-ignore
+    if (document.startViewTransition) {
+      // @ts-ignore
+      document.startViewTransition(() => {
+        updateAction();
+      });
+    } else {
+      updateAction();
+    }
+  };
+
   if (isMobile) {
     return (
         <Drawer open={!!selectedVehicle} onOpenChange={handleOpenChange} snapPoints={[0.6, 1]} activeSnapPoint={0.6}>
@@ -184,7 +214,7 @@ export function VehicleDetails() {
                                 </CardContent>
                             </Card>
                         </div>
-                         <Button onClick={() => dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: selectedVehicle.id })} className="w-full">
+                         <Button onClick={handleSimulateMove} className="w-full">
                             <Move className="mr-2 h-4 w-4" /> Simular Movimiento
                         </Button>
                     </div>
