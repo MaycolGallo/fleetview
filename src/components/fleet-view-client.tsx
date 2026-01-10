@@ -29,7 +29,7 @@ interface FleetViewClientProps {
 
 export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const { state, dispatch, isLoadingVehicles, error } = useFleet();
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const {
     vehicles,
