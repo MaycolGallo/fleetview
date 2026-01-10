@@ -22,7 +22,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
   
   return (
       <motion.div
-        className='relative w-10 h-10 flex items-center justify-center'
+        className='relative w-10 h-10'
         animate={{ rotate: rotation }}
         transition={{ type: "spring", stiffness: 400, damping: 17 }}
       >
@@ -43,7 +43,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
           
           {/* Centered Icon with counter-rotation */}
           <motion.div 
-            className="absolute inset-0 flex items-center justify-center pb-[16px]"
+            className="absolute inset-0 flex items-center justify-center pb-[14px]"
             animate={{ rotate: -rotation }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
