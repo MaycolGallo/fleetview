@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState } from 'react';
@@ -47,7 +48,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   
   const onPanelLayout = (sizes: number[]) => {
     // When the resizable panel is collapsed, deselect the vehicle
-    if (sizes.length > 1 && sizes[1] < 5) {
+    if (sizes.length > 1 && sizes[0] < 5) {
       if (selectedVehicle) {
         dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
       }
@@ -68,6 +69,52 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         className="relative h-full w-full bg-background"
         onLayout={onPanelLayout}
     >
+      <ResizablePanel 
+        defaultSize={30} 
+        minSize={20}
+        collapsible={true}
+        collapsedSize={0}
+      >
+        <div className="h-full w-full flex flex-col">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={selectedVehicle ? 'details' : 'list'}
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -50 }}
+                    transition={{ duration: 0.3 }}
+                    className="h-full w-full"
+                >
+                    {selectedVehicle ? (
+                        <ClientOnly>
+                            <VehicleDetails />
+                        </ClientOnly>
+                    ) : (
+                        <div className="h-full flex flex-col">
+                            <div className="p-4 border-b">
+                                <h2 className="text-lg font-semibold">Vehicles</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    {vehicles.length} vehicles available
+                                </p>
+                            </div>
+                            <div className="flex-1 overflow-y-auto">
+                                {isLoadingVehicles ? (
+                                    <div className="p-4 flex flex-col gap-2">
+                                        {Array.from({ length: 10 }).map((_, i) => (
+                                        <Skeleton key={i} className="h-16 w-full" />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <VehicleList onVehicleSelect={() => {}} />
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </motion.div>
+            </AnimatePresence>
+        </div>
+      </ResizablePanel>
+      <ResizableHandle withHandle />
       <ResizablePanel defaultSize={70} minSize={30}>
         <div className="relative h-full w-full">
             <FleetMap apiKey={apiKey} />
@@ -99,52 +146,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 </div>
             )}
             <RouteHistorySheet />
-        </div>
-      </ResizablePanel>
-      <ResizableHandle withHandle />
-      <ResizablePanel 
-        defaultSize={30} 
-        minSize={20}
-        collapsible={true}
-        collapsedSize={0}
-      >
-        <div className="h-full w-full flex flex-col">
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={selectedVehicle ? 'details' : 'list'}
-                    initial={{ opacity: 0, x: 50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 50 }}
-                    transition={{ duration: 0.3 }}
-                    className="h-full w-full"
-                >
-                    {selectedVehicle ? (
-                        <ClientOnly>
-                            <VehicleDetails />
-                        </ClientOnly>
-                    ) : (
-                        <div className="h-full flex flex-col">
-                            <div className="p-4 border-b">
-                                <h2 className="text-lg font-semibold">Vehicles</h2>
-                                <p className="text-sm text-muted-foreground">
-                                    {vehicles.length} vehicles available
-                                </p>
-                            </div>
-                            <div className="flex-1 overflow-y-auto">
-                                {isLoadingVehicles ? (
-                                    <div className="p-4 flex flex-col gap-2">
-                                        {Array.from({ length: 10 }).map((_, i) => (
-                                        <Skeleton key={i} className="h-16 w-full" />
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <VehicleList onVehicleSelect={() => {}} />
-                                )}
-                            </div>
-                        </div>
-                    )}
-                </motion.div>
-            </AnimatePresence>
         </div>
       </ResizablePanel>
     </ResizablePanelGroup>
