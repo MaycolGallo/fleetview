@@ -38,8 +38,9 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
               />
           </svg>
           <motion.div 
-            className="absolute inset-0 flex items-center justify-center pb-5"
+            className="absolute inset-0 flex items-center justify-center"
             animate={{ rotate: rotation === 0 ? 0 : -rotation }}
+            style={{ paddingBottom: '1.25rem' }} // This pushes the content up into the head of the pin
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
               <div className='w-7 h-7 bg-white rounded-full flex items-center justify-center'>
