@@ -18,43 +18,33 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
   const { pinRotationMode } = state;
   const color = statusDetailsMap[vehicle.status as keyof typeof statusDetailsMap]?.color || '#9E9E9E';
 
-  const isTeardrop = isSelected || vehicle.status === '3';
   const rotation = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
   
-  if (isTeardrop) {
-    return (
-        <motion.div
-          className='relative w-8 h-10'
-          animate={{ rotate: rotation }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        >
-            <svg
-                viewBox="0 0 38 54"
-                className="w-full h-full drop-shadow-lg"
-                >
-                <path 
-                    fill={color}
-                    stroke="#FFFFFF"
-                    strokeWidth="2"
-                    d="M19 0C8.5 0 0 8.5 0 19.1C0 32.9 19 54 19 54S38 32.9 38 19.1C38 8.5 29.5 0 19 0Z" 
-                />
-            </svg>
-            <motion.div 
-              className="absolute inset-0 flex items-center justify-center top-[-7px]"
-              animate={{ rotate: -rotation }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-                <Car className="w-5 h-5 text-white" />
-            </motion.div>
-        </motion.div>
-    );
-  }
-
-  // Circular marker
   return (
-    <div className='relative flex items-center justify-center w-8 h-8 rounded-full border-2 border-white shadow-lg' style={{ backgroundColor: color }}>
-        <Car className="w-5 h-5 text-white" />
-    </div>
+      <motion.div
+        className='relative w-10 h-12'
+        animate={{ rotate: rotation }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      >
+          <svg
+              viewBox="0 0 38 54"
+              className="w-full h-full drop-shadow-lg"
+              >
+              <path 
+                  fill={color}
+                  stroke="#FFFFFF"
+                  strokeWidth="2"
+                  d="M19 0C8.5 0 0 8.5 0 19.1C0 32.9 19 54 19 54S38 32.9 38 19.1C38 8.5 29.5 0 19 0Z" 
+              />
+          </svg>
+          <motion.div 
+            className="absolute inset-0 flex items-center justify-center top-[-9px]"
+            animate={{ rotate: -rotation }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          >
+              <Car className="w-6 h-6 text-white" />
+          </motion.div>
+      </motion.div>
   );
 });
 
