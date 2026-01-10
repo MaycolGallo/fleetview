@@ -172,10 +172,8 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
   const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
   const animatedPosition = useAnimatedPosition(targetPosition);
   
-  const pinRotate = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
-  const statusDetail = statusDetailsMap[vehicle.status as keyof typeof statusDetailsMap] || statusDetailsMap['0'];
-  const infoColor = statusDetail.color;
-
+  const rotation = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
+  
   const handleLeftClick = (e: google.maps.MapMouseEvent | MouseEvent) => {
     if ('domEvent' in e && e.domEvent) {
       e.domEvent.stopPropagation();
@@ -220,6 +218,8 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
     }
   };
 
+  const isTeardrop = isSelected || vehicle.status === '3';
+
   return (
     <>
       <AdvancedMarker
@@ -234,30 +234,21 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             data-vehicle-id={vehicle.id}
-            className="relative cursor-pointer"
+            className="relative cursor-pointer flex justify-center items-center"
             animate={{ 
-              scale: isSelected ? 1.2 : 1,
+              scale: isSelected ? 1.1 : 1,
             }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-            <div
-                className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full z-10 mb-1"
-                style={{ transform: `translateX(-50%) translateY(-100%) rotate(${pinRotate}deg)`}}
-            >
-              <motion.div
-                animate={{ rotate: -pinRotate }}
-                className="flex items-center gap-1.5 px-2 py-1 text-white text-xs font-semibold rounded-md shadow-md whitespace-nowrap"
-                style={{ backgroundColor: infoColor }}
-              >
-                  <Gauge className="w-3 h-3" />
-                  <span>{vehicle.velocidad} km/h</span>
-              </motion.div>
-            </div>
+          <div className='absolute bottom-full left-1/2 -translate-x-1/2 mb-2'>
+              <div className='bg-background/80 backdrop-blur-sm shadow-md rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap'>
+                {vehicle.placa}
+              </div>
+          </div>
           
           <VehiclePin 
-            status={vehicle.status} 
+            vehicle={vehicle}
             isSelected={isSelected} 
-            rotation={pinRotate}
           />
         </motion.div>
       </AdvancedMarker>

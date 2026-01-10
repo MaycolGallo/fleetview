@@ -84,10 +84,10 @@ const getInitialState = (): FleetState => ({
   selectedSegmentIndex: null,
   highlightedSegment: null,
   visibleVehicleIds: new Set(),
-  isMapDark: true,
+  isMapDark: false,
   mapViewport: { type: 'initial' },
   simulationStep: {},
-  pinRotationMode: 'arrow',
+  pinRotationMode: 'pin',
 });
 
 // Helper function to calculate segment points
@@ -116,21 +116,19 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 }
 
 export const statusDetailsMap: { [key in VehicleStatus | '99']: { name: string; color: string; icon: React.ElementType; } } = {
-  '0': { name: 'Libre', color: '#FFDDCC', icon: PowerOff }, 
-  '1': { name: 'SRalenti', color: '#115599', icon: Clock },
-  '2': { name: 'Libre', color: '#000000', icon: PowerOff },
-  '4': { name: 'Ralenti', color: '#CC66CC', icon: Clock }, 
-  '5': { name: 'Estacionado', color: '#666666', icon: PowerOff }, 
-  '6': { name: 'Transitando', color: '#00CC33', icon: Car },
-  '7': { name: 'Bloqueado', color: '#003399', icon: AlertCircle }, 
-  '8': { name: 'Desconeccion de Bateria', color: '#FF66B0', icon: BatteryWarning }, 
-  '9': { name: 'Mantenimiento', color: '#000000', icon: Wrench }, 
-  '10': { name: 'Motor Encendido Remoto', color: '#8BC34A', icon: Power }, // Kept old, not in image
-  '99': { name: 'Modo sleep o no envia', color: '#FFEB3B', icon: WifiOff },
-  // Original statuses not in the image, kept for fallback
-  '3': { name: 'Exceso de Velocidad', color: '#FF5722', icon: Siren },
+  '0': { name: 'Libre', color: '#64B5F6', icon: PowerOff }, 
+  '1': { name: 'SRalenti', color: '#FFB74D', icon: Clock },
+  '2': { name: 'Libre', color: '#64B5F6', icon: PowerOff },
+  '3': { name: 'Exceso de Velocidad', color: '#d32f2f', icon: Siren },
+  '4': { name: 'Ralenti', color: '#FFB74D', icon: Clock }, 
+  '5': { name: 'Estacionado', color: '#9E9E9E', icon: PowerOff }, 
+  '6': { name: 'Transitando', color: '#4CAF50', icon: Car },
+  '7': { name: 'Bloqueado', color: '#7B1FA2', icon: AlertCircle }, 
+  '8': { name: 'Desconeccion de Bateria', color: '#d32f2f', icon: BatteryWarning }, 
+  '9': { name: 'Mantenimiento', color: '#5D4037', icon: Wrench }, 
+  '10': { name: 'Motor Encendido Remoto', color: '#8BC34A', icon: Power },
+  '99': { name: 'Modo sleep o no envia', color: '#FFEE58', icon: WifiOff },
 };
-
 
 export const ALL_STATUSES = Object.keys(statusDetailsMap) as (VehicleStatus | '99')[];
 

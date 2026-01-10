@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -9,11 +10,13 @@ interface VehicleFiltersProps {}
 
 export function VehicleFilters(props: VehicleFiltersProps) {
   const { state, dispatch } = useFleet();
-  const { statusFilter } = state;
+  const { statusFilter, vehicles } = state;
   
   const onFilterChange = (filter: 'all' | VehicleStatus) => {
     dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
   }
+
+  const count = vehicles.length;
 
   return (
     <div className="grid gap-2">
@@ -25,12 +28,15 @@ export function VehicleFilters(props: VehicleFiltersProps) {
           <SelectValue placeholder="Filtrar por estado" />
         </SelectTrigger>
         <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
-          <SelectItem value="all">Todos los Vehículos</SelectItem>
-          {ALL_STATUSES.map(status => (
-            <SelectItem key={status} value={status}>
-                {statusDetailsMap[status].name}
-            </SelectItem>
-          ))}
+          <SelectItem value="all">All Vehicles ({count})</SelectItem>
+          {ALL_STATUSES.map(status => {
+            const statusCount = vehicles.filter(v => v.status === status).length;
+            return (
+                <SelectItem key={status} value={status}>
+                    {statusDetailsMap[status].name} ({statusCount})
+                </SelectItem>
+            )
+          })}
         </SelectContent>
       </Select>
     </div>

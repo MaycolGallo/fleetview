@@ -178,8 +178,8 @@ function MapControl() {
             />
         ))}
 
-      <RoutePolyline routePath={routePath} color="#FFC107" weight={5} zIndex={1} onClick={handleRouteClick} />
-      <RoutePolyline routePath={highlightedSegment} color="#FFFFFF" weight={7} zIndex={2} />
+      <RoutePolyline routePath={routePath} color="#16a34a" weight={5} zIndex={1} onClick={handleRouteClick} />
+      <RoutePolyline routePath={highlightedSegment} color="#f59e0b" weight={7} zIndex={2} />
     </>
   );
 }
