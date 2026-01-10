@@ -116,17 +116,17 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 }
 
 export const statusDetailsMap: { [key in VehicleStatus]: { name: string; color: string; icon: React.ElementType; } } = {
-  '0': { name: 'Sin Cobertura', color: '#B0BEC5', icon: WifiOff },
-  '1': { name: 'Vehiculo Detenido y Apagado', color: '#757575', icon: PowerOff },
-  '2': { name: 'Vehiculo Detenido y Encendido', color: '#FFB74D', icon: Power },
-  '3': { name: 'Exceso de Velocidad', color: '#d32f2f', icon: Siren },
-  '4': { name: 'Alarma de Panico', color: '#F06292', icon: AlertCircle },
-  '5': { name: 'Alarma de Puerta', color: '#FF8A65', icon: DoorOpen },
-  '6': { name: 'El vehiculo esta transitando', color: '#4CAF50', icon: Car },
-  '7': { name: 'Bateria del GPS Desconectada', color: '#d32f2f', icon: BatteryWarning },
-  '8': { name: 'Bateria del GPS Baja', color: '#FFC107', icon: Battery },
-  '9': { name: 'Motor Apagado via Remoto', color: '#90A4AE', icon: PowerCircle },
-  '10': { name: 'Motor Encendido via Remoto', color: '#AED581', icon: PowerCircle },
+    '0': { name: 'Sin Cobertura', color: '#B0BEC5', icon: WifiOff },
+    '1': { name: 'Vehiculo Detenido y Apagado', color: '#333333', icon: PowerOff },
+    '2': { name: 'Vehiculo Detenido y Encendido', color: '#F1C40F', icon: Power },
+    '3': { name: 'Exceso de Velocidad', color: '#E74C3C', icon: Siren },
+    '4': { name: 'Alarma de Panico', color: '#9B59B6', icon: AlertCircle },
+    '5': { name: 'Alarma de Puerta', color: '#E67E22', icon: DoorOpen },
+    '6': { name: 'El vehiculo esta transitando', color: '#2ECC71', icon: Car },
+    '7': { name: 'Bateria del GPS Desconectada', color: '#E74C3C', icon: BatteryWarning },
+    '8': { name: 'Bateria del GPS Baja', color: '#F39C12', icon: Battery },
+    '9': { name: 'Motor Apagado via Remoto', color: '#7F8C8D', icon: PowerCircle },
+    '10': { name: 'Motor Encendido via Remoto', color: '#27AE60', icon: PowerCircle },
 };
 
 export const ALL_STATUSES = Object.keys(statusDetailsMap) as VehicleStatus[];

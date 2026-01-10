@@ -2,7 +2,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
-import type { Vehicle, VehicleStatus } from '@/lib/types';
+import type { Vehicle } from '@/lib/types';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useFleet, statusDetailsMap } from '@/context/fleet-context';
@@ -42,6 +42,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
             <motion.div 
               className="absolute inset-0 flex items-center justify-center top-[-7px]"
               animate={{ rotate: -rotation }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
                 <Car className="w-5 h-5 text-white" />
             </motion.div>

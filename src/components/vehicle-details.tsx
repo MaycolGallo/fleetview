@@ -72,8 +72,8 @@ export function VehicleDetails() {
                 <h2 className="text-lg font-semibold">{selectedVehicle.placa}</h2>
                 <div className="text-sm text-muted-foreground">
                     <Badge
-                        className="capitalize"
-                        style={{ backgroundColor: statusDetail.color, color: '#fff' }}
+                        className="capitalize text-white"
+                        style={{ backgroundColor: statusDetail.color }}
                     >
                         {statusDetail.name}
                     </Badge>

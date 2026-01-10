@@ -215,7 +215,6 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
     }
   };
 
-  const isTeardrop = isSelected || vehicle.status === '3';
   const color = statusDetailsMap[vehicle.status as keyof typeof statusDetailsMap]?.color || '#9E9E9E';
 
   return (
@@ -232,42 +231,23 @@ function MarkerWithEvents({ vehicle }: { vehicle: Vehicle }) {
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             data-vehicle-id={vehicle.id}
-            className="relative cursor-pointer flex justify-center items-center p-4"
+            className="relative cursor-pointer flex justify-center items-center"
             animate={{ 
               scale: isSelected ? 1.2 : 1,
             }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
-          <div 
-            className='absolute top-0 left-1/2'
-            style={{
-                transform: `translateX(-50%) translateY(-100%) translateY(-5px)`
-            }}
-           >
-                <motion.div
-                    className="relative"
-                     animate={{ 
-                        rotate: pinRotationMode === 'pin' ? vehicle.rumbo : 0,
-                    }}
-                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            <div
+                className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10"
+            >
+                <div
+                    style={{ backgroundColor: color }}
+                    className="flex items-center gap-1 shadow-md rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-white"
                 >
-                     <motion.div 
-                        className='absolute bottom-full left-1/2 mb-1 z-10'
-                        style={{
-                            transform: `translateX(-50%)`
-                        }}
-                        animate={{ 
-                           rotate: pinRotationMode === 'pin' ? -vehicle.rumbo : 0,
-                        }}
-                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                    >
-                        <div style={{ backgroundColor: color }} className='flex items-center gap-1 bg-background/80 backdrop-blur-sm shadow-md rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-white'>
-                            <Gauge className='w-3 h-3' />
-                            {vehicle.velocidad}
-                        </div>
-                    </motion.div>
-                </motion.div>
-          </div>
+                    <Gauge className="w-3 h-3" />
+                    <span>{vehicle.velocidad}</span>
+                </div>
+            </div>
           
           <VehiclePin 
             vehicle={vehicle}
