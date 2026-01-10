@@ -5,7 +5,7 @@
 import { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
-import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle, WifiOff, Wrench } from 'lucide-react';
+import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle, WifiOff } from 'lucide-react';
 
 
 const fetchVehicles = async (): Promise<Vehicle[]> => {
@@ -115,22 +115,21 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
     };
 }
 
-export const statusDetailsMap: { [key in VehicleStatus | '99']: { name: string; color: string; icon: React.ElementType; } } = {
-  '0': { name: 'Libre', color: '#64B5F6', icon: PowerOff }, 
-  '1': { name: 'SRalenti', color: '#FFB74D', icon: Clock },
-  '2': { name: 'Libre', color: '#64B5F6', icon: PowerOff },
+export const statusDetailsMap: { [key in VehicleStatus]: { name: string; color: string; icon: React.ElementType; } } = {
+  '0': { name: 'Sin Cobertura', color: '#B0BEC5', icon: WifiOff },
+  '1': { name: 'Vehiculo Detenido y Apagado', color: '#757575', icon: PowerOff },
+  '2': { name: 'Vehiculo Detenido y Encendido', color: '#FFB74D', icon: Power },
   '3': { name: 'Exceso de Velocidad', color: '#d32f2f', icon: Siren },
-  '4': { name: 'Ralenti', color: '#FFB74D', icon: Clock }, 
-  '5': { name: 'Estacionado', color: '#9E9E9E', icon: PowerOff }, 
-  '6': { name: 'Transitando', color: '#4CAF50', icon: Car },
-  '7': { name: 'Bloqueado', color: '#7B1FA2', icon: AlertCircle }, 
-  '8': { name: 'Desconeccion de Bateria', color: '#d32f2f', icon: BatteryWarning }, 
-  '9': { name: 'Mantenimiento', color: '#5D4037', icon: Wrench }, 
-  '10': { name: 'Motor Encendido Remoto', color: '#8BC34A', icon: Power },
-  '99': { name: 'Modo sleep o no envia', color: '#FFEE58', icon: WifiOff },
+  '4': { name: 'Alarma de Panico', color: '#F06292', icon: AlertCircle },
+  '5': { name: 'Alarma de Puerta', color: '#FF8A65', icon: DoorOpen },
+  '6': { name: 'El vehiculo esta transitando', color: '#4CAF50', icon: Car },
+  '7': { name: 'Bateria del GPS Desconectada', color: '#d32f2f', icon: BatteryWarning },
+  '8': { name: 'Bateria del GPS Baja', color: '#FFC107', icon: Battery },
+  '9': { name: 'Motor Apagado via Remoto', color: '#90A4AE', icon: PowerCircle },
+  '10': { name: 'Motor Encendido via Remoto', color: '#AED581', icon: PowerCircle },
 };
 
-export const ALL_STATUSES = Object.keys(statusDetailsMap) as (VehicleStatus | '99')[];
+export const ALL_STATUSES = Object.keys(statusDetailsMap) as VehicleStatus[];
 
 
 // 4. Create the reducer function
@@ -362,8 +361,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     } = useQuery<Vehicle[], Error>({
       queryKey: ['vehicles'],
       queryFn: fetchVehicles,
-      refetchInterval: false,
-      refetchOnWindowFocus: false,
+      refetchInterval: false, // Turned off for dev
     });
     
     useEffect(() => {

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -7,6 +6,7 @@ import type { Vehicle, VehicleStatus } from '@/lib/types';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useFleet, statusDetailsMap } from '@/context/fleet-context';
+import { Car } from 'lucide-react';
 
 interface VehiclePinProps {
   vehicle: Vehicle;
@@ -19,12 +19,12 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
   const color = statusDetailsMap[vehicle.status as keyof typeof statusDetailsMap]?.color || '#9E9E9E';
 
   const isTeardrop = isSelected || vehicle.status === '3';
+  const rotation = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
   
   if (isTeardrop) {
-    const rotation = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
     return (
         <motion.div
-          className='relative w-10 h-14'
+          className='relative w-8 h-10'
           animate={{ rotate: rotation }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
@@ -43,7 +43,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
               className="absolute inset-0 flex items-center justify-center top-[-7px]"
               animate={{ rotate: -rotation }}
             >
-                <span className='font-bold text-white text-sm drop-shadow-sm'>{vehicle.velocidad}</span>
+                <Car className="w-5 h-5 text-white" />
             </motion.div>
         </motion.div>
     );
@@ -52,7 +52,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
   // Circular marker
   return (
     <div className='relative flex items-center justify-center w-8 h-8 rounded-full border-2 border-white shadow-lg' style={{ backgroundColor: color }}>
-        <span className='font-bold text-white text-xs drop-shadow-sm'>{vehicle.velocidad}</span>
+        <Car className="w-5 h-5 text-white" />
     </div>
   );
 });
