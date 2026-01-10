@@ -38,8 +38,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
               />
           </svg>
           <motion.div 
-            className="absolute inset-0 flex items-center justify-center"
-            style={{ top: '-18%' }}
+            className="absolute inset-0 flex items-center justify-center pb-5"
             animate={{ rotate: rotation === 0 ? 0 : -rotation }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
