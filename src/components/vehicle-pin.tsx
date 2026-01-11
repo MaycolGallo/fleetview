@@ -42,32 +42,35 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
                 </svg>
               </div>
               
-               <div
-                  className="absolute left-0 w-full flex justify-center"
-                  style={{ top: '6px' }}
-                >
-                <div
-                  className="w-6 h-6 bg-white rounded-full flex items-center justify-center"
-                >
-                      <Car className="w-4 h-4" style={{ color: color }} />
+              <div
+                className="absolute w-full h-full flex justify-center items-start"
+                style={{ top: '6px' }}
+              >
+                <div className="relative w-6 h-6 flex items-center justify-center bg-white rounded-full">
+                   <motion.div
+                      className='w-full h-full'
+                      animate={{ rotate: vehicle.rumbo }}
+                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                    >
+                        <svg
+                          width="100%"
+                          height="100%"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                              d="M2 13L12 2L22 13L12 9L2 13Z"
+                              fill={color}
+                              stroke="white"
+                              strokeWidth="0.75"
+                              strokeLinejoin="round"
+                            />
+                        </svg>
+                    </motion.div>
                 </div>
               </div>
           </motion.div>
-
-           {/* Heading Arrow */}
-          <div className="absolute bottom-[-10px] w-full h-full flex justify-center items-end">
-              <motion.div
-                animate={{ rotate: vehicle.rumbo, y: 4 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                  <Navigation
-                    className="h-5 w-5 drop-shadow-md"
-                    fill='black'
-                    stroke='white'
-                    strokeWidth={1.5}
-                  />
-            </motion.div>
-        </div>
       </div>
   );
 });
