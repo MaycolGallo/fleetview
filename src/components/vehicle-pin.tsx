@@ -5,7 +5,7 @@ import type { Vehicle } from '@/lib/types';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useFleet, statusDetailsMap } from '@/context/fleet-context';
-import { Car } from 'lucide-react';
+import { Car, Navigation } from 'lucide-react';
 
 interface VehiclePinProps {
   vehicle: Vehicle;
@@ -17,49 +17,57 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
   const { pinRotationMode } = state;
   const color = statusDetailsMap[vehicle.status as keyof typeof statusDetailsMap]?.color || '#9E9E9E';
 
-  const rotation = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
+  const rotation = 0;
   
   return (
-      <motion.div
-        className={cn(
-          'w-10 h-14 relative flex items-center justify-center',
-        )}
-        animate={{ rotate: rotation }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      >
-        <div
-            className={cn(
-                "absolute transition-colors duration-300",
-            )}
-            style={{
-                width: 0,
-                height: 0,
-                borderLeft: '18px solid transparent',
-                borderRight: '18px solid transparent',
-                borderTop: `28px solid ${color}`,
-                top: '18px',
-                borderRadius: '5px',
-            }}
-        />
-        <div
-            className={cn(
-                "absolute w-9 h-9 rounded-full transition-colors duration-300",
-                "flex items-center justify-center"
-            )}
-            style={{ 
-                backgroundColor: color,
-                top: 0
-            }}
-        >
-            <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center">
-                <Car className="w-5 h-5" style={{ color: color }}/>
-            </div>
+      <div className='relative w-10 h-14 flex flex-col items-center'>
+          {/* Main Pin */}
+          <motion.div
+            className='relative w-10 h-12'
+            animate={{ rotate: rotation }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          >
+              <div className="absolute top-0 left-0 w-10 h-12">
+                 <svg
+                    viewBox="0 0 38 54"
+                    className="w-full h-full drop-shadow-lg"
+                  >
+                  <path 
+                      fill={color}
+                      stroke="#FFFFFF"
+                      strokeWidth="2"
+                      d="M19 0C8.5 0 0 8.5 0 19.1C0 32.9 19 54 19 54S38 32.9 38 19.1C38 8.5 29.5 0 19 0Z" 
+                  />
+                </svg>
+              </div>
+              
+               <div
+                  className="absolute left-0 w-full flex justify-center"
+                  style={{ top: '6px' }}
+                >
+                <div
+                  className="w-6 h-6 bg-white rounded-full flex items-center justify-center"
+                >
+                      <Car className="w-4 h-4" style={{ color: color }} />
+                </div>
+              </div>
+          </motion.div>
+
+           {/* Heading Arrow */}
+          <div className="absolute bottom-[-10px] w-full h-full flex justify-center items-end">
+              <motion.div
+                animate={{ rotate: vehicle.rumbo, y: 4 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                  <Navigation
+                    className="h-5 w-5 drop-shadow-md"
+                    fill='black'
+                    stroke='white'
+                    strokeWidth={1.5}
+                  />
+            </motion.div>
         </div>
-        <div 
-            className="absolute w-2 h-2 bg-white rounded-full"
-            style={{ bottom: 0 }}
-        />
-      </motion.div>
+      </div>
   );
 });
 
