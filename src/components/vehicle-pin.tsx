@@ -18,16 +18,16 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
   const { pinRotationMode } = state;
   const color = statusDetailsMap[vehicle.status as keyof typeof statusDetailsMap]?.color || '#9E9E9E';
 
-  const rotation = 0; // Temporarily disable pin rotation as requested
+  const rotation = 0;
   
   return (
       <div className='relative w-10 h-14 flex flex-col items-center'>
+          {/* Main Pin */}
           <motion.div
-            className='relative w-10 h-12' // Adjusted height
+            className='relative w-10 h-12'
             animate={{ rotate: rotation }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
-              {/* Background Pin Shape */}
               <div className="absolute top-0 left-0 w-10 h-12">
                  <svg
                     viewBox="0 0 38 54"
@@ -42,9 +42,8 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
                 </svg>
               </div>
               
-              {/* Centered Icon */}
                <div
-                  className="absolute w-full h-full flex justify-center items-start"
+                  className="absolute left-0 w-full flex justify-center"
                   style={{ top: '6px' }}
                 >
                 <div
@@ -56,19 +55,19 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
           </motion.div>
 
            {/* Heading Arrow */}
-          <motion.div
-            className="absolute bottom-[-4px] left-1/2 -translate-x-1/2"
-            style={{ originY: '50%' }}
-            animate={{ rotate: vehicle.rumbo }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          >
-              <Navigation
-                className="h-5 w-5 drop-shadow-md"
-                fill='black'
-                stroke='white'
-                strokeWidth={1.5}
-              />
-        </motion.div>
+          <div className="absolute bottom-[-10px] w-full h-full flex justify-center items-end">
+              <motion.div
+                animate={{ rotate: vehicle.rumbo, y: 4 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                  <Navigation
+                    className="h-5 w-5 drop-shadow-md"
+                    fill='black'
+                    stroke='white'
+                    strokeWidth={1.5}
+                  />
+            </motion.div>
+        </div>
       </div>
   );
 });
