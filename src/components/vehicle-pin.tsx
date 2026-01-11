@@ -23,7 +23,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
   return (
       <div className='relative w-10 h-14 flex flex-col items-center'>
           <motion.div
-            className='relative w-10 h-10'
+            className='relative w-10 h-12' // Adjusted height
             animate={{ rotate: rotation }}
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
@@ -42,34 +42,33 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
                 </svg>
               </div>
               
-              {/* Centered Icon with counter-rotation */}
+              {/* Centered Icon */}
                <div
-                  className="absolute w-full h-full flex justify-center items-start"
-                  style={{ top: '6px' }}
+                  className="absolute inset-0 flex justify-center items-start pt-[6px]"
                 >
-                <motion.div
+                <div
                   className="w-6 h-6 bg-white rounded-full flex items-center justify-center"
-                  animate={{ rotate: -rotation }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
                       <Car className="w-4 h-4" style={{ color: color }} />
-                </motion.div>
+                </div>
               </div>
-          </motion.div>
 
-           {/* Heading Arrow */}
-            <motion.div
-              className="absolute bottom-0"
-              style={{ originY: '115%' }}
-              animate={{ rotate: vehicle.rumbo }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <Navigation
-                className="h-5 w-5 drop-shadow-md"
-                fill='black'
-                stroke='white'
-                strokeWidth={1.5}
-              />
+               {/* Heading Arrow */}
+              <motion.div
+                className="absolute inset-0 flex justify-center items-end"
+                style={{ originY: '50%' }}
+                animate={{ rotate: vehicle.rumbo }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                  <div className='absolute bottom-[-4px]'>
+                    <Navigation
+                      className="h-5 w-5 drop-shadow-md"
+                      fill='black'
+                      stroke='white'
+                      strokeWidth={1.5}
+                    />
+                  </div>
+            </motion.div>
           </motion.div>
       </div>
   );
