@@ -6,7 +6,7 @@ import type { Vehicle } from '@/lib/types';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useFleet, statusDetailsMap } from '@/context/fleet-context';
-import { Car, ArrowUp } from 'lucide-react';
+import { Car, Navigation } from 'lucide-react';
 
 interface VehiclePinProps {
   vehicle: Vehicle;
@@ -44,7 +44,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
               
               {/* Centered Icon with counter-rotation */}
               <div
-                className="absolute left-0 w-10 flex justify-center"
+                className="absolute w-full h-full flex justify-center"
                 style={{ top: '6px' }}
               >
                 <motion.div 
@@ -64,8 +64,9 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
               animate={{ rotate: vehicle.rumbo }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <ArrowUp
-                className="h-5 w-5 text-white bg-slate-800 rounded-full p-0.5 shadow-lg border border-slate-600"
+              <Navigation
+                className="h-5 w-5 text-white bg-slate-800 rounded-full p-1 shadow-lg border border-slate-600"
+                fill='white'
               />
           </motion.div>
       </div>
