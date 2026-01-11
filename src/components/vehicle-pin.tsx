@@ -44,7 +44,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
               
               {/* Centered Icon */}
                <div
-                  className="absolute inset-0 flex justify-center items-start pt-[6px]"
+                  className="absolute w-full h-full flex justify-center items-start pt-[6px]"
                 >
                 <div
                   className="w-6 h-6 bg-white rounded-full flex items-center justify-center"
@@ -52,24 +52,22 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
                       <Car className="w-4 h-4" style={{ color: color }} />
                 </div>
               </div>
-
-               {/* Heading Arrow */}
-              <motion.div
-                className="absolute inset-0 flex justify-center items-end"
-                style={{ originY: '50%' }}
-                animate={{ rotate: vehicle.rumbo }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                  <div className='absolute bottom-[-4px]'>
-                    <Navigation
-                      className="h-5 w-5 drop-shadow-md"
-                      fill='black'
-                      stroke='white'
-                      strokeWidth={1.5}
-                    />
-                  </div>
-            </motion.div>
           </motion.div>
+
+           {/* Heading Arrow */}
+          <motion.div
+            className="absolute bottom-[-4px] left-1/2 -translate-x-1/2"
+            style={{ originY: '50%' }}
+            animate={{ rotate: vehicle.rumbo }}
+            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          >
+              <Navigation
+                className="h-5 w-5 drop-shadow-md"
+                fill='black'
+                stroke='white'
+                strokeWidth={1.5}
+              />
+        </motion.div>
       </div>
   );
 });
