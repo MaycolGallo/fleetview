@@ -18,7 +18,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
   const { pinRotationMode } = state;
   const color = statusDetailsMap[vehicle.status as keyof typeof statusDetailsMap]?.color || '#9E9E9E';
 
-  const rotation = pinRotationMode === 'pin' ? vehicle.rumbo : 0;
+  const rotation = 0; // Temporarily disable pin rotation as requested
   
   return (
       <div className='relative w-10 h-14 flex flex-col items-center'>
@@ -43,11 +43,11 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
               </div>
               
               {/* Centered Icon with counter-rotation */}
-              <div
-                className="absolute w-full h-full flex justify-center"
-                style={{ top: '6px' }}
-              >
-                <motion.div 
+               <div
+                  className="absolute w-full h-full flex justify-center items-start"
+                  style={{ top: '6px' }}
+                >
+                <motion.div
                   className="w-6 h-6 bg-white rounded-full flex items-center justify-center"
                   animate={{ rotate: -rotation }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -65,8 +65,10 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <Navigation
-                className="h-5 w-5 text-white bg-slate-800 rounded-full p-1 shadow-lg border border-slate-600"
-                fill='white'
+                className="h-5 w-5 drop-shadow-md"
+                fill='black'
+                stroke='white'
+                strokeWidth={1.5}
               />
           </motion.div>
       </div>
