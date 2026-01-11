@@ -1,4 +1,3 @@
-
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -6,7 +5,7 @@ import type { Vehicle } from '@/lib/types';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useFleet, statusDetailsMap } from '@/context/fleet-context';
-import { Car, Navigation } from 'lucide-react';
+import { Navigation } from 'lucide-react';
 
 interface VehiclePinProps {
   vehicle: Vehicle;
