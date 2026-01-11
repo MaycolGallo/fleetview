@@ -44,7 +44,8 @@ export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) 
               
               {/* Centered Icon */}
                <div
-                  className="absolute w-full h-full flex justify-center items-start pt-[6px]"
+                  className="absolute w-full h-full flex justify-center items-start"
+                  style={{ top: '6px' }}
                 >
                 <div
                   className="w-6 h-6 bg-white rounded-full flex items-center justify-center"
