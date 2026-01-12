@@ -14,6 +14,8 @@ import {
   Flag,
   Clock,
   Milestone,
+  AlertTriangle,
+  Truck,
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
@@ -27,9 +29,10 @@ interface RouteHistorySheetProps {}
 
 const statusIcons = {
   start: PlayCircle,
-  driving: Car,
+  driving: Truck,
   stop: PauseCircle,
   end: Flag,
+  event: AlertTriangle,
 };
 
 function formatDuration(minutes: number) {
@@ -119,7 +122,7 @@ function RouteHistoryContent({ onSegmentSelect }: { onSegmentSelect: (index: num
                   {events.map((event, index) => {
                     const Icon = statusIcons[event.status];
                     const isSelected = selectedSegmentIndex === index;
-                    const isClickable = event.status !== 'stop';
+                    const isClickable = event.status !== 'start' && event.status !== 'end';
 
                     return (
                       <div
@@ -154,12 +157,12 @@ function RouteHistoryContent({ onSegmentSelect }: { onSegmentSelect: (index: num
                           <div className="pt-2">
                              <p className={cn(
                                  "font-semibold capitalize text-sm transition-colors",
-                                 isSelected && isClickable ? 'text-primary-foreground' : 'text-foreground'
+                                 isSelected && isClickable ? 'text-primary' : 'text-foreground'
                               )}>
-                              {event.status}
+                              {event.description}
                             </p>
                             <p className="text-xs text-muted-foreground whitespace-normal pt-1 px-1 h-10">
-                              {event.description}
+                              {/* Sub-description if any */}
                             </p>
                             <div className="mt-1 flex flex-col items-center gap-1 text-xs text-muted-foreground">
                               <span>

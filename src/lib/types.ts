@@ -18,7 +18,7 @@ export interface Vehicle {
 
 export interface RouteEvent {
   timestamp: string;
-  status: 'start' | 'stop' | 'driving' | 'end';
+  status: 'start' | 'stop' | 'driving' | 'end' | 'event';
   distanceKm: number;
   durationMinutes: number;
   description: string;
@@ -27,4 +27,25 @@ export interface RouteEvent {
 export interface RouteHistory {
   routePoints: { lat: number; lng: number }[];
   routeEvents: RouteEvent[];
+}
+
+export interface VehicleHistoryPoint {
+  id: number;
+  id_vehiculo: number;
+  coordenadas: string;
+  tramas_validas: number;
+  id_estado: number;
+  velocidad: number;
+  rumbo: number;
+  odometro: number;
+  horometro: number;
+  numero_satelites: number;
+  nivel_bateria: number;
+  temperatura: number;
+  senal_gsm: number;
+  nivel_bateria_vehicular: number;
+  id_cliente: number;
+  din: number;
+  fecha: number;
+  altitud: number;
 }

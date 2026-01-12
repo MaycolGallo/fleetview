@@ -5,7 +5,7 @@
 import { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
-import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle, WifiOff } from 'lucide-react';
+import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle, WifiOff, Wrench, Ban, Key, Truck } from 'lucide-react';
 
 
 const fetchVehicles = async (): Promise<Vehicle[]> => {
@@ -16,7 +16,6 @@ const fetchVehicles = async (): Promise<Vehicle[]> => {
   const data = await res.json();
   return data;
 };
-
 
 // A small, circular route in Lima for simulation purposes.
 const SIMULATION_ROUTE = [
@@ -94,11 +93,19 @@ const getInitialState = (): FleetState => ({
 const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
     if (!state.routePath || !state.routeEvents || state.routePath.length === 0) return { segmentPoints: [], highlightedSegment: null };
 
-    const pointsPerEvent = state.routeEvents.length > 1 ? Math.floor((state.routePath.length - 1) / (state.routeEvents.length - 1)) : state.routePath.length;
-    const startPointIndex = segmentIndex * pointsPerEvent;
-    const endPointIndex = (segmentIndex === state.routeEvents.length - 1) 
+    let eventStartIndex = 0;
+    for(let i=0; i<segmentIndex; i++) {
+        if(state.routeEvents[i]?.status !== 'start' && state.routeEvents[i]?.status !== 'end') {
+            eventStartIndex++;
+        }
+    }
+
+    const pointsPerEvent = state.routeEvents.filter(e => e.status !== 'start' && e.status !== 'end').length > 1 ? Math.floor((state.routePath.length -1) / (state.routeEvents.filter(e => e.status !== 'start' && e.status !== 'end').length -1)) : state.routePath.length;
+    
+    const startPointIndex = eventStartIndex * pointsPerEvent;
+    const endPointIndex = (segmentIndex === state.routeEvents.length - 2)
       ? state.routePath.length - 1
-      : (segmentIndex + 1) * pointsPerEvent;
+      : (eventStartIndex + 1) * pointsPerEvent;
 
     let segmentPoints: { lat: number; lng: number }[] = [];
     if (startPointIndex >= endPointIndex) {
@@ -116,16 +123,16 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
 }
 
 export const statusDetailsMap: { [key in VehicleStatus]: { name: string; color: string; icon: React.ElementType; } } = {
-    '0': { name: 'Sin Cobertura', color: '#B0BEC5', icon: WifiOff },
-    '1': { name: 'Vehiculo Detenido y Apagado', color: '#333333', icon: PowerOff },
-    '2': { name: 'Vehiculo Detenido y Encendido', color: '#F1C40F', icon: Power },
+    '0': { name: 'Libre', color: '#B0BEC5', icon: Key }, // Assuming 'Libre' is 'Free'
+    '1': { name: 'SRalenti', color: '#78909C', icon: Clock }, // Slow Idle
+    '2': { name: 'Vehiculo Detenido y Encendido', color: '#F1C40F', icon: Power }, // Kept from old map
     '3': { name: 'Exceso de Velocidad', color: '#E74C3C', icon: Siren },
-    '4': { name: 'Alarma de Panico', color: '#9B59B6', icon: AlertCircle },
-    '5': { name: 'Alarma de Puerta', color: '#E67E22', icon: DoorOpen },
-    '6': { name: 'El vehiculo esta transitando', color: '#2ECC71', icon: Car },
-    '7': { name: 'Bateria del GPS Desconectada', color: '#E74C3C', icon: BatteryWarning },
-    '8': { name: 'Bateria del GPS Baja', color: '#F39C12', icon: Battery },
-    '9': { name: 'Motor Apagado via Remoto', color: '#7F8C8D', icon: PowerCircle },
+    '4': { name: 'Ralenti', color: '#9E9E9E', icon: PowerOff }, // Idle
+    '5': { name: 'Estacionado', color: '#666666', icon: Ban }, // Parked
+    '6': { name: 'Transitando', color: '#00CC33', icon: Truck }, // In Transit
+    '7': { name: 'Bloqueado', color: '#003399', icon: Ban }, // Blocked
+    '8': { name: 'Desconeccion de Bateria', color: '#FF66B0', icon: BatteryWarning }, // Battery disconnected
+    '9': { name: 'Mantenimiento', color: '#8D6E63', icon: Wrench }, // Maintenance
     '10': { name: 'Motor Encendido via Remoto', color: '#27AE60', icon: PowerCircle },
 };
 
@@ -270,16 +277,31 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         const pointIndex = action.payload;
         if (!state.routePath || !state.routeEvents || state.routeEvents.length <= 1) return state;
 
-        const pointsPerEvent = (state.routePath.length - 1) / (state.routeEvents.length - 1);
-        const segmentIndex = Math.floor(pointIndex / pointsPerEvent);
-        
-        // Don't re-select if already selected
-        if (state.selectedSegmentIndex === segmentIndex) return state;
+        const events = state.routeEvents.filter(e => e.status !== 'start' && e.status !== 'end');
+        const pointsPerEvent = events.length > 1 ? (state.routePath.length -1) / (events.length -1) : state.routePath.length;
 
-        const { segmentPoints, highlightedSegment } = getSegmentPoints(state, segmentIndex);
+        const segmentIndex = Math.min(events.length - 1, Math.floor(pointIndex / pointsPerEvent));
+        
+        // Find the corresponding index in the original routeEvents array
+        let originalIndex = -1;
+        let eventCounter = -1;
+        for (let i = 0; i < state.routeEvents.length; i++) {
+            const event = state.routeEvents[i];
+            if (event.status !== 'start' && event.status !== 'end') {
+                eventCounter++;
+                if (eventCounter === segmentIndex) {
+                    originalIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (originalIndex === -1 || state.selectedSegmentIndex === originalIndex) return state;
+       
+        const { segmentPoints, highlightedSegment } = getSegmentPoints(state, originalIndex);
         return {
             ...state,
-            selectedSegmentIndex: segmentIndex,
+            selectedSegmentIndex: originalIndex,
             highlightedSegment: highlightedSegment,
              mapViewport: segmentPoints ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
         };
@@ -381,8 +403,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        startLat: routeHistoryVehicle.lat,
-                        startLng: routeHistoryVehicle.lng,
+                        vehicleId: routeHistoryVehicle.id, // Pass vehicle ID
                     }),
                 });
                 if (!response.ok) throw new Error('Failed to fetch route');
@@ -395,6 +416,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
         };
 
         fetchRoute();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.routeHistoryVehicle]);
 
 
