@@ -1,0 +1,93 @@
+
+"use client";
+
+import { useMap } from '@vis.gl/react-google-maps';
+import { useEffect, useRef } from 'react';
+
+export function RoutePolyline({
+  routePath,
+  color,
+  weight,
+  zIndex = 1,
+  onClick
+}: {
+  routePath: { lat: number; lng: number }[] | null,
+  color: string,
+  weight: number,
+  zIndex?: number,
+  onClick?: (pointIndex: number) => void
+}) {
+  const map = useMap();
+  const polylineRef = useRef<google.maps.Polyline | null>(null);
+
+  useEffect(() => {
+    if (polylineRef.current) {
+      polylineRef.current.setMap(null);
+    }
+
+    if (map && routePath && routePath.length > 0) {
+      const arrowIcon = {
+        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+        strokeOpacity: 1,
+        scale: 3,
+        strokeColor: zIndex === 1 ? '#FFFFFF' : color,
+        strokeWeight: 1,
+        fillColor: zIndex === 1 ? '#FFFFFF' : color,
+        fillOpacity: 1,
+      };
+
+      const newPolyline = new google.maps.Polyline({
+        path: routePath,
+        strokeColor: color,
+        strokeOpacity: 0.8,
+        strokeWeight: weight,
+        map: map,
+        zIndex: zIndex,
+        clickable: !!onClick,
+        icons: zIndex === 1 ? [{ // Only show arrows on the main route line
+          icon: arrowIcon,
+          offset: '0',
+          repeat: '50px'
+        }] : undefined,
+      });
+      polylineRef.current = newPolyline;
+
+      if (onClick) {
+        newPolyline.addListener('click', (e: google.maps.PolyMouseEvent) => {
+          if (!e.latLng || !routePath) return;
+
+          // Find the closest point on the polyline to the click event
+          let closestPointIndex = -1;
+          let minDistance = Infinity;
+
+          routePath.forEach((point, index) => {
+            const distance = google.maps.geometry.spherical.computeDistanceBetween(
+              e.latLng!,
+              new google.maps.LatLng(point.lat, point.lng)
+            );
+            if (distance < minDistance) {
+              minDistance = distance;
+              closestPointIndex = index;
+            }
+          });
+
+          if (closestPointIndex !== -1) {
+            onClick(closestPointIndex);
+          }
+        });
+      }
+
+    } else {
+        polylineRef.current = null;
+    }
+
+    return () => {
+      if (polylineRef.current) {
+        google.maps.event.clearInstanceListeners(polylineRef.current);
+        polylineRef.current.setMap(null);
+      }
+    };
+  }, [map, routePath, color, weight, zIndex, onClick]);
+
+  return null;
+}
