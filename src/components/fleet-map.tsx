@@ -7,6 +7,7 @@ import type { Vehicle } from '@/lib/types';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { AnimatedVehicleMarker } from './vehicle-marker';
 import { useFleet } from '@/context/fleet-context';
+import { LIGHT_MAP_ID, DARK_MAP_ID } from '@/lib/map-styles';
 
 interface FleetMapProps {
   apiKey: string;
@@ -156,6 +157,9 @@ function MapControl() {
         }
         break;
       }
+       // Add a default case to satisfy exhaustive check, though all types are handled.
+      default:
+        break;
     }
   }, [map, mapViewport]);
 
@@ -204,7 +208,7 @@ export function FleetMap({ apiKey }: FleetMapProps) {
             defaultZoom={13}
             gestureHandling={'greedy'}
             disableDefaultUI={true}
-            mapId={'a3b0c4d2e9f3g4h5'}
+            mapId={isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID}
             onClick={handleMapClick}
             colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
