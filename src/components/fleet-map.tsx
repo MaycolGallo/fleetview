@@ -159,7 +159,7 @@ function MapControl() {
     }
   }, [map, mapViewport]);
 
-  const filteredVehicles = useMemo(() => selectMapVehicles(state), [state]);
+  const filteredVehicles = useMemo(() => selectMapVehicles(state), [state.routeHistoryVehicle, state.vehicles, state.statusFilter, state.visibleVehicleIds]);
 
   return (
     <>

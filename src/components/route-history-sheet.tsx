@@ -48,7 +48,7 @@ function formatDuration(minutes: number) {
 function RouteHistoryContent({ onSegmentSelect }: { onSegmentSelect: (index: number) => void}) {
     const { state } = useFleet();
     const { routeEvents: events, routeHistoryVehicle: vehicle, selectedSegmentIndex } = state;
-    const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state]);
+    const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state.routeEvents]);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 

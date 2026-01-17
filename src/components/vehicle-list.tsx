@@ -28,7 +28,7 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
         dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
     }
 
-    const listVehicles = useMemo(() => selectFilteredVehicles(state), [state]);
+    const listVehicles = useMemo(() => selectFilteredVehicles(state), [state.vehicles, state.statusFilter, state.visibleVehicleIds]);
     
     return (
         <ScrollArea className="h-full">
