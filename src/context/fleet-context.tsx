@@ -38,7 +38,7 @@ interface FleetState {
   vehicles: Vehicle[];
   statusFilter: VehicleStatus | 'all';
   selectedVehicle: Vehicle | null;
-  routeHistoryVehicle: Vehicle | null;
+  historyVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[] | null;
   routeEvents: RouteEvent[];
   isRouteSheetOpen: boolean;
@@ -75,7 +75,7 @@ const getInitialState = (): FleetState => ({
   vehicles: [],
   statusFilter: 'all',
   selectedVehicle: null,
-  routeHistoryVehicle: null,
+  historyVehicle: null,
   routePath: null,
   routeEvents: [],
   isRouteSheetOpen: false,
@@ -203,7 +203,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             : [];
         return {
           ...state,
-          routeHistoryVehicle: null,
+          historyVehicle: null,
           routePath: null,
           routeEvents: [],
           selectedVehicle: null,
@@ -221,7 +221,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         ...state,
         selectedVehicle: null, // Clear selection when starting to load route
         isLoadingRoute: true,
-        routeHistoryVehicle: action.payload,
+        historyVehicle: action.payload,
       };
 
     case 'SET_ROUTE_HISTORY':
@@ -241,7 +241,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             : [];
         return {
             ...state,
-            routeHistoryVehicle: null,
+            historyVehicle: null,
             routePath: null,
             routeEvents: [],
             selectedVehicle: null,
@@ -375,8 +375,8 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
 };
 
 export const selectMapVehicles = (state: FleetState): Vehicle[] => {
-  if (state.routeHistoryVehicle) {
-    return [state.routeHistoryVehicle];
+  if (state.historyVehicle) {
+    return [state.historyVehicle];
   }
   return selectFilteredVehicles(state);
 };
@@ -434,8 +434,8 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     useEffect(() => {
-        const { routeHistoryVehicle } = state;
-        if (!routeHistoryVehicle) return;
+        const { historyVehicle } = state;
+        if (!historyVehicle) return;
 
         const fetchRoute = async () => {
             try {
@@ -443,7 +443,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        vehicleId: routeHistoryVehicle.id, // Pass vehicle ID
+                        vehicleId: historyVehicle.id, // Pass vehicle ID
                     }),
                 });
                 if (!response.ok) throw new Error('Failed to fetch route');
@@ -457,7 +457,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
 
         fetchRoute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.routeHistoryVehicle]);
+    }, [state.historyVehicle]);
 
 
     return (

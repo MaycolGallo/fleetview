@@ -33,7 +33,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const {
     vehicles,
-    routeHistoryVehicle,
+    historyVehicle,
     selectedVehicle,
   } = state;
 
@@ -123,7 +123,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
               </div>
 
                <AnimatePresence>
-                  {routeHistoryVehicle ? (
+                  {historyVehicle ? (
                       <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
