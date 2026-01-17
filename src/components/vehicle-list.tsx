@@ -5,7 +5,7 @@ import type { Vehicle } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useMemo } from "react";
-import { useFleet, statusDetailsMap } from "@/context/fleet-context";
+import { useFleet, statusDetailsMap, selectFilteredVehicles } from "@/context/fleet-context";
 import { Button } from "./ui/button";
 import { BarChart, Car, MapPin, Route } from "lucide-react";
 import { Badge } from "./ui/badge";
@@ -16,7 +16,7 @@ interface VehicleListProps {
 
 export function VehicleList({ onVehicleSelect }: VehicleListProps) {
     const { state, dispatch } = useFleet();
-    const { vehicles, statusFilter, selectedVehicle } = state;
+    const { selectedVehicle } = state;
 
     const handleSelect = (vehicle: Vehicle) => {
         dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
@@ -28,12 +28,7 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
         dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
     }
 
-    const listVehicles = useMemo(() => {
-        if (statusFilter === 'all') {
-            return vehicles;
-        }
-        return vehicles.filter(v => v.status === statusFilter);
-    }, [vehicles, statusFilter]);
+    const listVehicles = useMemo(() => selectFilteredVehicles(state), [state]);
     
     return (
         <ScrollArea className="h-full">

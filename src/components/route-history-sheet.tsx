@@ -21,8 +21,8 @@ import { format, parseISO } from 'date-fns';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useEffect, useRef } from 'react';
-import { useFleet } from '@/context/fleet-context';
+import React, { useEffect, useMemo, useRef } from 'react';
+import { useFleet, selectRouteSummary } from '@/context/fleet-context';
 
 
 interface RouteHistorySheetProps {}
@@ -48,23 +48,9 @@ function formatDuration(minutes: number) {
 function RouteHistoryContent({ onSegmentSelect }: { onSegmentSelect: (index: number) => void}) {
     const { state } = useFleet();
     const { routeEvents: events, routeHistoryVehicle: vehicle, selectedSegmentIndex } = state;
-    const totalDistance = events.reduce((sum, e) => sum + e.distanceKm, 0);
-    const totalDuration = events.reduce((sum, e) => sum + e.durationMinutes, 0);
+    const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state]);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-    const { totalStops, totalStopTime } = React.useMemo(() => {
-        return events.reduce(
-            (acc, event) => {
-                if (event.status === 'stop') {
-                    acc.totalStops += 1;
-                    acc.totalStopTime += event.durationMinutes;
-                }
-                return acc;
-            },
-            { totalStops: 0, totalStopTime: 0 }
-        );
-    }, [events]);
 
     useEffect(() => {
         itemRefs.current = itemRefs.current.slice(0, events.length);

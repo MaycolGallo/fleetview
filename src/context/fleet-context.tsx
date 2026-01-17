@@ -361,6 +361,46 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   }
 };
 
+// Selectors
+export const selectVisibleVehicles = (state: FleetState): Vehicle[] => {
+  return state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
+};
+
+export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
+  const visibleVehicles = selectVisibleVehicles(state);
+  if (state.statusFilter === 'all') {
+    return visibleVehicles;
+  }
+  return visibleVehicles.filter(v => v.status === state.statusFilter);
+};
+
+export const selectMapVehicles = (state: FleetState): Vehicle[] => {
+  if (state.routeHistoryVehicle) {
+    return [state.routeHistoryVehicle];
+  }
+  return selectFilteredVehicles(state);
+};
+
+export const selectRouteSummary = (state: FleetState) => {
+  const { routeEvents } = state;
+  if (!routeEvents || routeEvents.length === 0) {
+    return { totalDistance: 0, totalDuration: 0, totalStops: 0, totalStopTime: 0 };
+  }
+
+  return routeEvents.reduce(
+    (summary, event) => {
+      summary.totalDistance += event.distanceKm;
+      summary.totalDuration += event.durationMinutes;
+      if (event.status === 'stop') {
+        summary.totalStops += 1;
+        summary.totalStopTime += event.durationMinutes;
+      }
+      return summary;
+    },
+    { totalDistance: 0, totalDuration: 0, totalStops: 0, totalStopTime: 0 }
+  );
+};
+
 
 // 5. Create the context
 interface FleetContextValue {

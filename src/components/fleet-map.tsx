@@ -6,7 +6,7 @@ import { APIProvider, Map, useMap, ColorScheme } from '@vis.gl/react-google-maps
 import type { Vehicle } from '@/lib/types';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { AnimatedVehicleMarker } from './vehicle-marker';
-import { useFleet } from '@/context/fleet-context';
+import { useFleet, selectMapVehicles } from '@/context/fleet-context';
 import { LIGHT_MAP_ID, DARK_MAP_ID } from '@/lib/map-styles';
 
 interface FleetMapProps {
@@ -106,11 +106,7 @@ function MapControl() {
   const { state, dispatch } = useFleet();
 
   const {
-    vehicles,
-    statusFilter,
-    routeHistoryVehicle,
     mapViewport,
-    visibleVehicleIds,
     highlightedSegment,
     routePath
   } = state;
@@ -163,15 +159,7 @@ function MapControl() {
     }
   }, [map, mapViewport]);
 
-  const filteredVehicles = useMemo(() => {
-    if (routeHistoryVehicle) {
-      return [routeHistoryVehicle];
-    }
-    return vehicles.filter(v => 
-      visibleVehicleIds.has(v.id) &&
-      (statusFilter === 'all' || v.status === statusFilter)
-    );
-  }, [vehicles, statusFilter, routeHistoryVehicle, visibleVehicleIds]);
+  const filteredVehicles = useMemo(() => selectMapVehicles(state), [state]);
 
   return (
     <>
