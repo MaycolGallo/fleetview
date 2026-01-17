@@ -86,7 +86,7 @@ const getInitialState = (): FleetState => ({
   isMapDark: false,
   mapViewport: { type: 'initial' },
   simulationStep: {},
-  pinRotationMode: 'pin',
+  pinRotationMode: 'arrow',
 });
 
 // Helper function to calculate segment points
