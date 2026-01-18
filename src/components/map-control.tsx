@@ -27,15 +27,13 @@ export function MapControl() {
     // Load the geometry library when the map is available
     google.maps.importLibrary('geometry');
     google.maps.importLibrary('marker');
-
-    // The map click/drag listeners have been removed to prevent recentering issues.
-    // Deselection now happens by clicking the "back" button in the vehicle details pane.
-
   }, [map]);
 
 
   useEffect(() => {
-    if (!map) return;
+    if (!map || mapViewport.type === 'idle' || mapViewport.type === 'initial') {
+      return;
+    }
 
     switch (mapViewport.type) {
       case 'pan_to_vehicle': {
@@ -63,11 +61,14 @@ export function MapControl() {
         }
         break;
       }
-       // Add a default case to satisfy exhaustive check, though all types are handled.
       default:
         break;
     }
-  }, [map, mapViewport]);
+    // After the viewport action is handled, dispatch an action to signify completion.
+    // This prevents the action from being re-triggered on subsequent renders.
+    dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
+
+  }, [map, mapViewport, dispatch]);
 
   const mapVehicles = useMemo(() => selectMapVehicles(state), [state.historyVehicle, state.vehicles, state.statusFilter, state.visibleVehicleIds]);
 

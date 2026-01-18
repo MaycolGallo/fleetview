@@ -28,6 +28,7 @@ const SIMULATION_ROUTE = [
 // 1. Define the state shape
 type MapViewport = 
   | { type: 'initial' }
+  | { type: 'idle' }
   | { type: 'pan_to_vehicle', payload: Vehicle }
   | { type: 'fit_bounds', payload: { lat: number, lng: number }[] }
   | { type: 'fit_route', payload: { lat: number, lng: number }[] };
@@ -66,7 +67,8 @@ type FleetAction =
   | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: number[], visible: boolean } }
   | { type: 'SET_MAP_DARK_MODE', payload: boolean }
   | { type: 'SET_PIN_ROTATION_MODE', payload: 'arrow' | 'pin' }
-  | { type: 'SIMULATE_VEHICLE_MOVE', payload: number };
+  | { type: 'SIMULATE_VEHICLE_MOVE', payload: number }
+  | { type: 'VIEWPORT_ACTION_COMPLETE' };
 
 
 // 3. Define the initial state
@@ -365,6 +367,10 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       };
     }
 
+    case 'VIEWPORT_ACTION_COMPLETE': {
+        return { ...state, mapViewport: { type: 'idle' } };
+    }
+
 
     default:
       return state;
@@ -467,7 +473,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
 
         fetchRoute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.historyVehicle]);
+    }, [state.historyVehicle?.id]); // Depend on ID to prevent re-fetching when position changes
 
 
     return (
