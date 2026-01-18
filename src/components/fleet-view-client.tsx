@@ -1,14 +1,13 @@
 
-"use client";
+'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import type { Vehicle } from '@/lib/types';
 import dynamic from 'next/dynamic';
 import { VehicleFilters } from './vehicle-filters';
 import { RouteHistorySheet } from './route-history-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, HardDriveUpload, ListFilter, PanelLeft, SlidersHorizontal } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, PanelLeft } from 'lucide-react';
 import { VehicleList } from './vehicle-list';
 import { Skeleton } from './ui/skeleton';
 import { useFleet } from '@/context/fleet-context';
@@ -36,6 +35,12 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     historyVehicle,
     selectedVehicle,
   } = state;
+
+  useEffect(() => {
+    if (historyVehicle) {
+      setIsPanelOpen(false);
+    }
+  }, [historyVehicle]);
 
   const handleBackToFleet = () => {
     dispatch({ type: 'BACK_TO_FLEET' });
@@ -108,19 +113,28 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           <FleetMap apiKey={apiKey} />
 
           <div className="absolute top-0 left-0 p-4 z-10 w-full flex items-start justify-between">
-              <div className='flex gap-2 items-start'>
-                <Button 
-                    variant="secondary"
-                    size="icon"
-                    onClick={() => setIsPanelOpen(!isPanelOpen)} 
-                    className='shadow-lg'
-                >
-                    <PanelLeft className={cn("transition-transform", isPanelOpen && "rotate-180")} />
-                </Button>
-                <div className="bg-card/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-border/20 max-w-sm">
-                    <VehicleFilters />
-                </div>
-              </div>
+              <AnimatePresence>
+                {!historyVehicle && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className='flex gap-2 items-start'
+                    >
+                        <Button 
+                            variant="secondary"
+                            size="icon"
+                            onClick={() => setIsPanelOpen(!isPanelOpen)} 
+                            className='shadow-lg'
+                        >
+                            <PanelLeft className={cn("transition-transform", isPanelOpen && "rotate-180")} />
+                        </Button>
+                        <div className="bg-card/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-border/20 max-w-sm">
+                            <VehicleFilters />
+                        </div>
+                    </motion.div>
+                )}
+              </AnimatePresence>
 
                <AnimatePresence>
                   {historyVehicle ? (
