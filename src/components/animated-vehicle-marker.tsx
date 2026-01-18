@@ -6,7 +6,7 @@ import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
 import React, { useState, useRef, MouseEvent } from 'react';
 import { Gauge } from 'lucide-react';
-import { useIsMobile } from '../hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useFleet, statusDetailsMap } from '@/context/fleet-context';
 import { useAnimatedPosition } from '@/hooks/use-animated-position';
 import { motion } from 'framer-motion';

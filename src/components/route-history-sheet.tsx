@@ -16,7 +16,12 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const { isRouteSheetOpen } = state;
 
   const handleOpenChange = (isOpen: boolean) => {
-    dispatch({ type: 'SET_ROUTE_SHEET_OPEN', payload: isOpen });
+    // When the sheet is closed by any means (swipe, drag, etc.),
+    // we dispatch the action to go back to the main fleet view,
+    // which handles all the necessary state cleanup.
+    if (!isOpen) {
+      dispatch({ type: 'BACK_TO_FLEET' });
+    }
   }
 
   const handleSegmentSelect = (segmentIndex: number) => {

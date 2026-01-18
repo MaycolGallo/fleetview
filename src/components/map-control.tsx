@@ -10,7 +10,6 @@ import { RoutePolyline } from './route-polyline';
 export function MapControl() {
   const map = useMap();
   const { state, dispatch } = useFleet();
-  const didDrag = useRef(false);
 
   const {
     mapViewport,
@@ -29,28 +28,10 @@ export function MapControl() {
     google.maps.importLibrary('geometry');
     google.maps.importLibrary('marker');
 
-    // Add native map event listeners
-    const clickListener = map.addListener('click', (e: google.maps.MapMouseEvent) => {
-        // The marker's own click handler should call stopPropagation, which
-        // prevents this listener from firing on a marker click.
-        if (didDrag.current) {
-            didDrag.current = false;
-            return;
-        }
-        dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
-    });
+    // The map click/drag listeners have been removed to prevent recentering issues.
+    // Deselection now happens by clicking the "back" button in the vehicle details pane.
 
-    const dragListener = map.addListener('dragstart', () => {
-        didDrag.current = true;
-    });
-
-    // Cleanup listeners on unmount
-    return () => {
-        clickListener.remove();
-        dragListener.remove();
-    }
-
-  }, [map, dispatch]);
+  }, [map]);
 
 
   useEffect(() => {

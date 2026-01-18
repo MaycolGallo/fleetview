@@ -175,12 +175,9 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
-        // This is a deselection event. ONLY deselect the vehicle.
-        // DO NOT change the viewport. Let the user control the map.
-        return {
-          ...state,
-          selectedVehicle: null,
-        };
+        // Deselection. Clear the selected vehicle but do not change the viewport.
+        // This is handled by user interaction (e.g., back button in details).
+        return { ...state, selectedVehicle: null };
       }
       // This is a selection event
       return {
@@ -191,25 +188,8 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     }
 
     case 'SET_ROUTE_SHEET_OPEN':
-      // If we're closing the sheet, also go back to the main fleet view.
-      if (action.payload === false && state.isRouteSheetOpen === true) {
-        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
-        const newBounds = visibleVehicles.length > 0
-            ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
-            : [];
-        return {
-          ...state,
-          historyVehicle: null,
-          routePath: null,
-          routeEvents: [],
-          selectedVehicle: null,
-          isRouteSheetOpen: false,
-          highlightedSegment: null,
-          selectedSegmentIndex: null,
-          isLoadingRoute: false,
-          mapViewport: { type: 'fit_bounds', payload: newBounds },
-        }
-      }
+      // This action now only controls the visibility of the sheet.
+      // The logic for cleaning up the state is centralized in BACK_TO_FLEET.
       return { ...state, isRouteSheetOpen: action.payload };
 
     case 'START_ROUTE_LOADING':
@@ -224,8 +204,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         const { routePoints, routeEvents } = action.payload;
         const startOfRoute = routePoints && routePoints.length > 0 ? routePoints[0] : null;
 
-        // The vehicle object for history view is already in state.historyVehicle.
-        // We need to update its position to the start of the route.
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute
             ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng }
             : state.historyVehicle;
