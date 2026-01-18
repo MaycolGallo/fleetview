@@ -175,20 +175,16 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
-         // This is a deselection event
-         const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
-          const newBounds = visibleVehicles.length > 0
-            ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
-            : [];
-        return { 
-            ...state, 
-            selectedVehicle: null,
-            mapViewport: { type: 'fit_bounds', payload: newBounds }
+        // This is a deselection event. ONLY deselect the vehicle.
+        // DO NOT change the viewport. Let the user control the map.
+        return {
+          ...state,
+          selectedVehicle: null,
         };
       }
       // This is a selection event
-      return { 
-        ...state, 
+      return {
+        ...state,
         selectedVehicle: action.payload,
         mapViewport: { type: 'pan_to_vehicle', payload: action.payload }
       };
