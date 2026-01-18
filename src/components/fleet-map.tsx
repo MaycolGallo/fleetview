@@ -38,7 +38,7 @@ export function FleetMap({ apiKey }: FleetMapProps) {
             disableDefaultUI={true}
             mapId={isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID}
             onClick={handleMapClick}
-            onDragstart={() => { didDrag.current = true; }}
+            onDragStart={() => { didDrag.current = true; }}
             colorScheme={isMapDark ? ColorScheme.dark : ColorScheme.light}
         >
           <MapControl />
