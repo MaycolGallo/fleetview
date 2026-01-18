@@ -224,15 +224,26 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         historyVehicle: action.payload,
       };
 
-    case 'SET_ROUTE_HISTORY':
-      return {
-        ...state,
-        isLoadingRoute: false,
-        routePath: action.payload.routePoints,
-        routeEvents: action.payload.routeEvents,
-        isRouteSheetOpen: true,
-        mapViewport: { type: 'fit_route', payload: action.payload.routePoints },
-      };
+    case 'SET_ROUTE_HISTORY': {
+        const { routePoints, routeEvents } = action.payload;
+        const startOfRoute = routePoints && routePoints.length > 0 ? routePoints[0] : null;
+
+        // The vehicle object for history view is already in state.historyVehicle.
+        // We need to update its position to the start of the route.
+        const updatedHistoryVehicle = state.historyVehicle && startOfRoute
+            ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng }
+            : state.historyVehicle;
+
+        return {
+            ...state,
+            isLoadingRoute: false,
+            routePath: routePoints,
+            routeEvents: routeEvents,
+            isRouteSheetOpen: true,
+            historyVehicle: updatedHistoryVehicle,
+            mapViewport: { type: 'fit_route', payload: routePoints },
+        };
+    }
 
     case 'BACK_TO_FLEET': {
         const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
@@ -255,20 +266,34 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'SELECT_ROUTE_SEGMENT': {
       const segmentIndex = action.payload;
+      
+      // Deselect if clicking the same segment
       if (state.selectedSegmentIndex === segmentIndex) {
-        // Deselect if clicking the same segment
+        const startOfRoute = state.routePath ? state.routePath[0] : null;
         return {
           ...state,
           selectedSegmentIndex: null,
           highlightedSegment: null,
+          historyVehicle: state.historyVehicle && startOfRoute ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng } : state.historyVehicle,
           mapViewport: { type: 'fit_route', payload: state.routePath || [] },
         };
       }
+
       const { segmentPoints, highlightedSegment } = getSegmentPoints(state, segmentIndex);
+
+      if (!segmentPoints || segmentPoints.length === 0) return state;
+
+      const startOfSegment = segmentPoints[0];
+      
+      const updatedHistoryVehicle = state.historyVehicle
+        ? { ...state.historyVehicle, lat: startOfSegment.lat, lng: startOfSegment.lng }
+        : null;
+
       return {
         ...state,
         selectedSegmentIndex: segmentIndex,
         highlightedSegment: highlightedSegment,
+        historyVehicle: updatedHistoryVehicle,
         mapViewport: segmentPoints ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
       };
     }
@@ -299,11 +324,21 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         if (originalIndex === -1 || state.selectedSegmentIndex === originalIndex) return state;
        
         const { segmentPoints, highlightedSegment } = getSegmentPoints(state, originalIndex);
+
+        if (!segmentPoints || segmentPoints.length === 0) return state;
+        
+        const startOfSegment = segmentPoints[0];
+      
+        const updatedHistoryVehicle = state.historyVehicle
+          ? { ...state.historyVehicle, lat: startOfSegment.lat, lng: startOfSegment.lng }
+          : null;
+
         return {
             ...state,
             selectedSegmentIndex: originalIndex,
             highlightedSegment: highlightedSegment,
-             mapViewport: segmentPoints ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
+            historyVehicle: updatedHistoryVehicle,
+            mapViewport: segmentPoints ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
         };
     }
 

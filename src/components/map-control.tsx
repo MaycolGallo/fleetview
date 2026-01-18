@@ -65,11 +65,11 @@ export function MapControl() {
     }
   }, [map, mapViewport]);
 
-  const filteredVehicles = useMemo(() => selectMapVehicles(state), [state.routeHistoryVehicle, state.vehicles, state.statusFilter, state.visibleVehicleIds]);
+  const mapVehicles = useMemo(() => selectMapVehicles(state), [state.historyVehicle, state.vehicles, state.statusFilter, state.visibleVehicleIds]);
 
   return (
     <>
-        {filteredVehicles.map((vehicle) => (
+        {mapVehicles.map((vehicle) => (
             <AnimatedVehicleMarker
               key={vehicle.id}
               vehicle={vehicle}
