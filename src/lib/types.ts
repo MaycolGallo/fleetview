@@ -30,22 +30,29 @@ export interface RouteHistory {
 }
 
 export interface VehicleHistoryPoint {
-  id: number;
+  id: string;
   id_vehiculo: number;
   coordenadas: string;
   tramas_validas: number;
-  id_estado: number;
-  velocidad: number;
+  id_estado: string;
+  velocidad: string;
   rumbo: number;
-  odometro: number;
-  horometro: number;
+  odometro: string;
+  horometro: string;
   numero_satelites: number;
-  nivel_bateria: number;
-  temperatura: number;
+  nivel_bateria: string;
+  temperatura: string;
   senal_gsm: number;
-  nivel_bateria_vehicular: number;
+  nivel_bateria_vehicular: string;
   id_cliente: number;
   din: number;
   fecha: number;
   altitud: number;
+  codigo: number;
+  param1: string;
+  param2: string;
+  param3: string;
+  param4: string;
+  created_at: string;
+  updated_at: string | null;
 }
