@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react';
@@ -100,7 +99,8 @@ const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
         }
     }
 
-    const pointsPerEvent = state.routeEvents.filter(e => e.status !== 'start' && e.status !== 'end').length > 1 ? Math.floor((state.routePath.length -1) / (state.routeEvents.filter(e => e.status !== 'start' && e.status !== 'end').length -1)) : state.routePath.length;
+    const events = state.routeEvents.filter(e => e.status !== 'start' && e.status !== 'end');
+    const pointsPerEvent = events.length > 1 ? Math.floor((state.routePath.length -1) / (events.length -1)) : state.routePath.length;
     
     const startPointIndex = eventStartIndex * pointsPerEvent;
     const endPointIndex = (segmentIndex === state.routeEvents.length - 2)
@@ -176,7 +176,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
         // Deselection. Clear the selected vehicle but do not change the viewport.
-        // This is handled by user interaction (e.g., back button in details).
         return { ...state, selectedVehicle: null };
       }
       // This is a selection event
@@ -244,11 +243,13 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       // Deselect if clicking the same segment
       if (state.selectedSegmentIndex === segmentIndex) {
         const startOfRoute = state.routePath ? state.routePath[0] : null;
+        const updatedHistoryVehicle = state.historyVehicle && startOfRoute ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng } : state.historyVehicle;
+
         return {
           ...state,
           selectedSegmentIndex: null,
           highlightedSegment: null,
-          historyVehicle: state.historyVehicle && startOfRoute ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng } : state.historyVehicle,
+          historyVehicle: updatedHistoryVehicle,
           mapViewport: { type: 'fit_route', payload: state.routePath || [] },
         };
       }

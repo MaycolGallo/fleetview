@@ -2,7 +2,7 @@
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useFleet, selectMapVehicles } from '@/context/fleet-context';
 import { AnimatedVehicleMarker } from './animated-vehicle-marker';
 import { RoutePolyline } from './route-polyline';
