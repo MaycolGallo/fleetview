@@ -2,7 +2,7 @@
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useFleet, selectMapVehicles } from '@/context/fleet-context';
 import { AnimatedVehicleMarker } from './animated-vehicle-marker';
 import { RoutePolyline } from './route-polyline';
@@ -10,6 +10,7 @@ import { RoutePolyline } from './route-polyline';
 export function MapControl() {
   const map = useMap();
   const { state, dispatch } = useFleet();
+  const didDrag = useRef(false);
 
   const {
     mapViewport,
@@ -22,12 +23,34 @@ export function MapControl() {
   };
 
   useEffect(() => {
+    if (!map) return;
+
     // Load the geometry library when the map is available
-    if (map) {
-      google.maps.importLibrary('geometry');
-      google.maps.importLibrary('marker');
+    google.maps.importLibrary('geometry');
+    google.maps.importLibrary('marker');
+
+    // Add native map event listeners
+    const clickListener = map.addListener('click', (e: google.maps.MapMouseEvent) => {
+        // The marker's own click handler should call stopPropagation, which
+        // prevents this listener from firing on a marker click.
+        if (didDrag.current) {
+            didDrag.current = false;
+            return;
+        }
+        dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
+    });
+
+    const dragListener = map.addListener('dragstart', () => {
+        didDrag.current = true;
+    });
+
+    // Cleanup listeners on unmount
+    return () => {
+        clickListener.remove();
+        dragListener.remove();
     }
-  }, [map]);
+
+  }, [map, dispatch]);
 
 
   useEffect(() => {
