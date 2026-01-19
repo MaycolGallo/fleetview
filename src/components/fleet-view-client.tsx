@@ -103,34 +103,29 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           <FleetMap apiKey={apiKey} />
 
           <div className="absolute top-0 left-0 p-4 z-10">
-              {!historyVehicle && (
-                  <div
-                      style={{ viewTransitionName: 'filters-transition' }}
-                      className='flex gap-2 items-start'
-                  >
-                      <Button 
-                          variant="secondary"
-                          size="icon"
-                          onClick={() => setIsPanelOpen(!isPanelOpen)} 
-                          className='shadow-lg'
-                      >
-                          <PanelLeft className={cn("transition-transform", isPanelOpen && "rotate-180")} />
-                      </Button>
-                      <div className="bg-card/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-border/20 max-w-sm">
-                          <VehicleFilters />
-                      </div>
-                  </div>
-              )}
+            {!historyVehicle ? (
+                <div style={{ viewTransitionName: 'filters-transition' }} className='flex gap-2 items-start'>
+                    <Button 
+                        variant="secondary"
+                        size="icon"
+                        onClick={() => setIsPanelOpen(!isPanelOpen)} 
+                        className='shadow-lg'
+                    >
+                        <PanelLeft className={cn("transition-transform", isPanelOpen && "rotate-180")} />
+                    </Button>
+                    <div className="bg-card/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-border/20 max-w-sm">
+                        <VehicleFilters />
+                    </div>
+                </div>
+            ) : null}
 
-              {historyVehicle && !state.isLoadingRoute ? (
-                  <div
-                    style={{ viewTransitionName: 'back-button-transition' }}
-                  >
-                      <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg">
-                      <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet View
-                      </Button>
-                  </div>
-              ) : null}
+            {historyVehicle && !state.isLoadingRoute ? (
+                <div style={{ viewTransitionName: 'back-button-transition' }}>
+                    <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet View
+                    </Button>
+                </div>
+            ) : null}
           </div>
 
             {state.isLoadingRoute && (
