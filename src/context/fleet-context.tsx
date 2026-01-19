@@ -464,7 +464,15 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
                 });
                 if (!response.ok) throw new Error('Failed to fetch route');
                 const data = await response.json();
-                dispatch({ type: 'SET_ROUTE_HISTORY', payload: data });
+                // @ts-ignore
+                if (document.startViewTransition) {
+                    // @ts-ignore
+                    document.startViewTransition(() => {
+                        dispatch({ type: 'SET_ROUTE_HISTORY', payload: data });
+                    });
+                } else {
+                    dispatch({ type: 'SET_ROUTE_HISTORY', payload: data });
+                }
             } catch (error) {
                 console.error("Error fetching route", error);
                 dispatch({ type: 'BACK_TO_FLEET' }); // Go back if route fails
