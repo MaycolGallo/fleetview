@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -116,9 +115,9 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
               <AnimatePresence>
                 {!historyVehicle && (
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                        initial={{ opacity: 0, x: -100 }}
+                        animate={{ opacity: 1, x: 0, transition: { duration: 0.3 } }}
+                        exit={{ opacity: 0, x: -100, transition: { duration: 0.3 } }}
                         className='flex gap-2 items-start'
                     >
                         <Button 
@@ -139,9 +138,9 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                <AnimatePresence>
                   {historyVehicle ? (
                       <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
+                          initial={{ opacity: 0, y: -50 }}
+                          animate={{ opacity: 1, y: 0, transition: { duration: 0.3 } }}
+                          exit={{ opacity: 0, y: -50, transition: { duration: 0.3 } }}
                       >
                           <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg">
                           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet View
@@ -151,14 +150,21 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
               </AnimatePresence>
           </div>
 
-          {state.isLoadingRoute && (
-              <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30">
-                  <div className="flex items-center gap-2 text-foreground">
-                      <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
-                      <p>Generating route...</p>
-                  </div>
-              </div>
-          )}
+          <AnimatePresence>
+            {state.isLoadingRoute && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30"
+                >
+                    <div className="flex items-center gap-2 text-foreground">
+                        <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
+                        <p>Generating route...</p>
+                    </div>
+                </motion.div>
+            )}
+          </AnimatePresence>
 
           <RouteHistorySheet />
       </div>
