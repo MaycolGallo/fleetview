@@ -102,7 +102,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       <div className="flex-1 relative h-full w-full">
           <FleetMap apiKey={apiKey} />
 
-          <div className="absolute top-0 left-0 p-4 z-10 w-full flex items-start justify-between">
+          <div className="absolute top-0 left-0 p-4 z-10">
               {!historyVehicle && (
                   <div
                       style={{ viewTransitionName: 'filters-transition' }}
