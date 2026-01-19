@@ -133,14 +133,14 @@
       animation: 0.3s ease-in forwards slide-out-to-top;
     }
     ::view-transition-new(back-button-transition) {
-      animation: 0.3s ease-out backwards slide-in-from-top;
+      animation: 0.3s ease-out 0.1s backwards slide-in-from-top;
     }
     
     ::view-transition-old(route-sheet-transition) {
       animation: 0.4s ease-in forwards slide-out-to-bottom;
     }
     ::view-transition-new(route-sheet-transition) {
-      animation: 0.4s ease-out backwards slide-in-from-bottom;
+      animation: 0.4s ease-out 0.2s backwards slide-in-from-bottom;
     }
     
     ::view-transition-old(loading-transition) {
