@@ -85,4 +85,53 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .vehicle-marker {
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .vehicle-marker.selected {
+      transform: scale(1.2);
+  }
+  .vehicle-pin-main, .vehicle-pin-arrow {
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+@layer utilities {
+    @keyframes slide-out-to-left { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+    @keyframes slide-in-from-left { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+    
+    @keyframes slide-out-to-top { from { transform: translateY(0); } to { transform: translateY(-100%); } }
+    @keyframes slide-in-from-top { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
+    @keyframes slide-out-to-bottom { from { transform: translateY(0); } to { transform: translateY(100%); } }
+    @keyframes slide-in-from-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+    ::view-transition-old(filters-transition) {
+      animation: 0.3s ease-out both slide-out-to-left, 0.3s ease-out both fade-out;
+    }
+    ::view-transition-new(filters-transition) {
+      animation: 0.3s ease-out 0.1s both slide-in-from-left, 0.3s ease-out 0.1s both fade-in;
+    }
+
+    ::view-transition-old(back-button-transition) {
+      animation: 0.3s ease-out both slide-out-to-top, 0.3s ease-out both fade-out;
+    }
+    ::view-transition-new(back-button-transition) {
+      animation: 0.3s ease-out 0.1s both slide-in-from-top, 0.3s ease-out 0.1s both fade-in;
+    }
+
+    ::view-transition-old(route-sheet-transition) {
+      animation: 0.5s cubic-bezier(0.32, 0, 0.67, 0) both slide-out-to-bottom, 0.3s ease-out both fade-out;
+    }
+    ::view-transition-new(route-sheet-transition) {
+      animation: 0.5s cubic-bezier(0.33, 1, 0.68, 1) both slide-in-from-bottom;
+    }
+    
+    ::view-transition-old(loading-transition) {
+      animation: 0.3s ease-out both fade-out;
+    }
+    ::view-transition-new(loading-transition) {
+      animation: 0.3s ease-in both fade-in;
+    }
 }

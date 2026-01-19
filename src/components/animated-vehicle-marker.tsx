@@ -9,9 +9,9 @@ import { Gauge } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFleet, statusDetailsMap } from '@/context/fleet-context';
 import { useAnimatedPosition } from '@/hooks/use-animated-position';
-import { motion } from 'framer-motion';
 import { VehicleContextMenu } from './vehicle-context-menu';
 import { VehicleMobileContextMenu } from './vehicle-mobile-context-menu';
+import { cn } from '@/lib/utils';
 
 function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
   const { state, dispatch } = useFleet();
@@ -80,17 +80,16 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
         onClick={handleLeftClick}
         zIndex={isSelected ? 10 : 1}
       >
-        <motion.div
+        <div
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             data-vehicle-id={vehicle.id}
-            className="relative cursor-pointer flex justify-center items-center"
-            animate={{
-              scale: isSelected ? 1.2 : 1,
-            }}
-            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+            className={cn(
+                "relative cursor-pointer flex justify-center items-center transition-transform duration-300",
+                isSelected && 'scale-125'
+            )}
         >
             <div
                 className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10"
@@ -108,7 +107,7 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
             vehicle={vehicle}
             isSelected={isSelected}
           />
-        </motion.div>
+        </div>
       </AdvancedMarker>
 
        {contextMenuOpen && !isMobile && (

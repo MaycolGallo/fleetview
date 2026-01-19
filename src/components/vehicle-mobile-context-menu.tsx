@@ -39,7 +39,15 @@ export function VehicleMobileContextMenu({
 
     const handleAction = (action: VehicleAction) => {
         if (action === 'show-route-history') {
-             dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+             // @ts-ignore
+            if (document.startViewTransition) {
+                // @ts-ignore
+                document.startViewTransition(() => {
+                    dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+                });
+            } else {
+                dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+            }
         } else if (action === 'show-details') {
             dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
         } else if (action === 'center-map') {

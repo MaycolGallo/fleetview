@@ -25,7 +25,15 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
 
     const handleShowRoute = (e: React.MouseEvent, vehicle: Vehicle) => {
         e.stopPropagation();
-        dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+        // @ts-ignore
+        if (document.startViewTransition) {
+            // @ts-ignore
+            document.startViewTransition(() => {
+              dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+            });
+        } else {
+            dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+        }
     }
 
     const listVehicles = useMemo(() => selectFilteredVehicles(state), [state.vehicles, state.statusFilter, state.visibleVehicleIds]);

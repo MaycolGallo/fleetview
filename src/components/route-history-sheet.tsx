@@ -4,7 +4,6 @@
 
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useFleet } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
 
@@ -16,11 +15,16 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const { isRouteSheetOpen } = state;
 
   const handleOpenChange = (isOpen: boolean) => {
-    // When the sheet is closed by any means (swipe, drag, etc.),
-    // we dispatch the action to go back to the main fleet view,
-    // which handles all the necessary state cleanup.
     if (!isOpen) {
-      dispatch({ type: 'BACK_TO_FLEET' });
+        // @ts-ignore
+        if (document.startViewTransition) {
+            // @ts-ignore
+            document.startViewTransition(() => {
+                dispatch({ type: 'BACK_TO_FLEET' });
+            });
+        } else {
+            dispatch({ type: 'BACK_TO_FLEET' });
+        }
     }
   }
 
@@ -39,18 +43,15 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   }
 
   return (
-    <AnimatePresence>
+    <>
       {isRouteSheetOpen && (
-        <motion.div
-          initial={{ y: "100%" }}
-          animate={{ y: 0 }}
-          exit={{ y: "100%" }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        <div
+          style={{ viewTransitionName: 'route-sheet-transition' }}
           className="absolute bottom-4 left-4 right-4 z-20"
         >
           <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }
