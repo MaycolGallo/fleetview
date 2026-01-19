@@ -122,7 +122,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                   </div>
               )}
 
-              {historyVehicle ? (
+              {historyVehicle && !state.isLoadingRoute ? (
                   <div
                     style={{ viewTransitionName: 'back-button-transition' }}
                   >
