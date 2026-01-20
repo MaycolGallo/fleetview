@@ -52,7 +52,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         
         playbackIndexRef.current++;
 
-        timeoutId = setTimeout(playNextPoint, 200);
+        timeoutId = setTimeout(playNextPoint, 10);
     };
 
     playNextPoint();
