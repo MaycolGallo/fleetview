@@ -21,10 +21,6 @@ export function MapControl() {
     selectedSegmentIndex,
   } = state;
 
-  const handleSegmentClick = (segmentIndex: number) => {
-    dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: segmentIndex });
-  };
-
   useEffect(() => {
     if (!map) return;
     google.maps.importLibrary('geometry');
@@ -72,6 +68,11 @@ export function MapControl() {
 
   const mapVehicles = useMemo(() => selectMapVehicles(state), [state]);
 
+  const fullMovingPath = useMemo(() => {
+    if (!routePath) return null;
+    return routePath.flat();
+  }, [routePath]);
+
   return (
     <>
         {mapVehicles.map((vehicle) => (
@@ -81,26 +82,13 @@ export function MapControl() {
             />
         ))}
 
-      {routePath && routePath.map((path, index) => {
-          const movingSegments = routeSegments.map((seg, i) => ({...seg, originalIndex: i})).filter(seg => seg.id_estado === '6');
-          const originalIndex = movingSegments[index]?.originalIndex;
-          
-          if (originalIndex === undefined || originalIndex === selectedSegmentIndex) {
-              return null;
-          }
-
-          return (
-            <RoutePolyline 
-              key={`main-route-${originalIndex}`} 
-              routePath={path} 
-              color="#16a34a" 
-              weight={5} 
-              zIndex={1} 
-              onClick={() => handleSegmentClick(originalIndex)}
-              showArrows={true} 
-            />
-          );
-      })}
+      <RoutePolyline
+        routePath={fullMovingPath}
+        color="#16a34a"
+        weight={5}
+        zIndex={1}
+        showArrows={true}
+      />
       
       <RoutePolyline
         routePath={highlightedSegment}
@@ -108,7 +96,6 @@ export function MapControl() {
         weight={7}
         zIndex={2}
         showArrows={true}
-        onClick={selectedSegmentIndex !== null ? () => handleSegmentClick(selectedSegmentIndex) : undefined}
       />
 
       {selectedSegmentIndex === null && routeSegments.map((segment, index) => {
