@@ -11,10 +11,13 @@ import {
   Clock,
   Milestone,
   Truck,
+  Play,
+  Pause,
 } from 'lucide-react';
 import { format, fromUnixTime } from 'date-fns';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { useFleetState, selectRouteSummary, routeStatusDetailsMap } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch, selectRouteSummary, routeStatusDetailsMap } from '@/context/fleet-context';
+import { Button } from '@/components/ui/button';
 
 interface RouteHistoryContentProps {
     onSegmentSelect: (index: number) => void;
@@ -43,7 +46,8 @@ function formatDuration(minutes: number) {
 
 export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProps) {
     const { state } = useFleetState();
-    const { routeSegments: segments, historyVehicle: vehicle, selectedSegmentIndex } = state;
+    const dispatch = useFleetDispatch();
+    const { routeSegments: segments, historyVehicle: vehicle, selectedSegmentIndex, isRoutePlaying } = state;
     const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state]);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -62,40 +66,56 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
         }
     }, [selectedSegmentIndex]);
 
+    const handlePlayPause = () => {
+        if (isRoutePlaying) {
+            dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
+        } else {
+            dispatch({ type: 'START_ROUTE_PLAYBACK' });
+        }
+    };
+
     return (
         <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
             <CardHeader>
-              <CardTitle>Route History: {vehicle?.placa}</CardTitle>
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Milestone className="w-4 h-4 text-primary" />
-                  <span>
-                    Total Distance:{' '}
-                    <strong className="text-foreground">
-                      {totalDistance.toFixed(1)} km
-                    </strong>
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-primary" />
-                  <span>
-                    Total Time:{' '}
-                    <strong className="text-foreground">
-                      {formatDuration(totalDuration)}
-                    </strong>
-                  </span>
-                </div>
-                {totalStops > 0 && (
+              <div className="flex justify-between items-start gap-4">
+                <div>
+                  <CardTitle>Route History: {vehicle?.placa}</CardTitle>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground mt-2">
                     <div className="flex items-center gap-2">
-                        <ParkingSquare className="w-4 h-4 text-primary" />
-                        <span>
-                            {totalStops} stops{' '}
-                            <strong className="text-foreground">
-                                ({formatDuration(totalStopTime)})
-                            </strong>
-                        </span>
+                      <Milestone className="w-4 h-4 text-primary" />
+                      <span>
+                        Total Distance:{' '}
+                        <strong className="text-foreground">
+                          {totalDistance.toFixed(1)} km
+                        </strong>
+                      </span>
                     </div>
-                )}
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-primary" />
+                      <span>
+                        Total Time:{' '}
+                        <strong className="text-foreground">
+                          {formatDuration(totalDuration)}
+                        </strong>
+                      </span>
+                    </div>
+                    {totalStops > 0 && (
+                        <div className="flex items-center gap-2">
+                            <ParkingSquare className="w-4 h-4 text-primary" />
+                            <span>
+                                {totalStops} stops{' '}
+                                <strong className="text-foreground">
+                                    ({formatDuration(totalStopTime)})
+                                </strong>
+                            </span>
+                        </div>
+                    )}
+                  </div>
+                </div>
+                <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0">
+                    {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                    <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
+                </Button>
               </div>
             </CardHeader>
             <CardContent className="pb-4 flex-1">

@@ -6,7 +6,7 @@ import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 interface RouteHistorySheetProps {}
 
@@ -14,7 +14,58 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const isMobile = useIsMobile();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isRouteSheetOpen } = state;
+  const { isRouteSheetOpen, isRoutePlaying, routeSegments } = state;
+  const playbackIndexRef = useRef(0);
+
+  const movingPoints = useMemo(() => {
+    if (!isRouteSheetOpen) return [];
+    return routeSegments
+        .filter(seg => seg.id_estado === '6')
+        .flatMap(seg => seg.records.map(r => {
+            const [lat, lng] = r.coordenadas.split(',').map(Number);
+            return { lat, lng, rumbo: r.rumbo };
+        }));
+  }, [isRouteSheetOpen, routeSegments]);
+
+  useEffect(() => {
+    if (!isRoutePlaying) {
+      return;
+    }
+
+    if (movingPoints.length === 0) {
+        dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
+        return;
+    }
+
+    if (playbackIndexRef.current >= movingPoints.length) {
+        playbackIndexRef.current = 0;
+    }
+
+    const playNextPoint = () => {
+        if (playbackIndexRef.current >= movingPoints.length) {
+            dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
+            playbackIndexRef.current = 0;
+            return;
+        }
+
+        const point = movingPoints[playbackIndexRef.current];
+        dispatch({ type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: point });
+        
+        playbackIndexRef.current++;
+
+        const timeoutId = setTimeout(playNextPoint, 200);
+        dispatch({ type: 'SET_PLAYBACK_TIMEOUT', payload: timeoutId });
+    };
+
+    playNextPoint();
+    
+    return () => {
+        if (state.playbackTimeoutId) {
+            clearTimeout(state.playbackTimeoutId);
+            dispatch({ type: 'SET_PLAYBACK_TIMEOUT', payload: null });
+        }
+    };
+  }, [isRoutePlaying, dispatch, movingPoints, state.playbackTimeoutId]);
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
@@ -31,6 +82,8 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   }, [dispatch]);
 
   const handleSegmentSelect = useCallback((segmentIndex: number) => {
+    dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
+    playbackIndexRef.current = 0;
     dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: segmentIndex });
   }, [dispatch]);
   
