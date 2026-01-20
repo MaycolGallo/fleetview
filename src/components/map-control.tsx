@@ -7,6 +7,8 @@ import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fl
 import { AnimatedVehicleMarker } from './animated-vehicle-marker';
 import { RoutePolyline } from './route-polyline';
 import { EventMarker } from './event-marker';
+import { AdvancedMarker } from '@vis.gl/react-google-maps';
+import { Flag, Play } from 'lucide-react';
 
 export function MapControl() {
   const map = useMap();
@@ -111,6 +113,43 @@ export function MapControl() {
         }
         return null;
       })}
+
+      {routeSegments.length > 0 && selectedSegmentIndex === null && (
+        <>
+            <AdvancedMarker
+                position={routeSegments[0].startPoint}
+                zIndex={1}
+            >
+                <div className="flex flex-col items-center">
+                    <div className="bg-card/90 backdrop-blur-sm text-foreground text-xs font-semibold px-2 py-1 rounded-md shadow-md mb-1 whitespace-nowrap">
+                        Start
+                    </div>
+                    <div
+                        className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-card"
+                        style={{ backgroundColor: '#00CC33' }}
+                    >
+                        <Play className="w-4 h-4 text-white fill-white" />
+                    </div>
+                </div>
+            </AdvancedMarker>
+
+            <AdvancedMarker
+              position={routeSegments[routeSegments.length - 1].endPoint}
+              zIndex={2}
+            >
+              <div className="flex flex-col items-center">
+                <div className="bg-card/90 backdrop-blur-sm text-foreground text-xs font-semibold px-2 py-1 rounded-md shadow-md mb-1 whitespace-nowrap">
+                  Finish
+                </div>
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-card bg-destructive"
+                >
+                  <Flag className="w-4 h-4 text-white" />
+                </div>
+              </div>
+            </AdvancedMarker>
+        </>
+      )}
     </>
   );
 }
