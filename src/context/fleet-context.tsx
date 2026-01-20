@@ -4,7 +4,7 @@
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, VehicleStatus, RouteSegment, VehicleHistoryPoint } from '@/lib/types';
+import type { Vehicle, VehicleStatus, RouteSegment, VehicleHistoryPoint, MapViewport } from '@/lib/types';
 import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle, WifiOff, Wrench, Ban, Key, Truck, ParkingSquare } from 'lucide-react';
 
 
@@ -27,14 +27,6 @@ const SIMULATION_ROUTE = [
 
 
 // 1. Define the state shape
-type MapViewport = 
-  | { type: 'initial' }
-  | { type: 'idle' }
-  | { type: 'pan_to_vehicle', payload: Vehicle }
-  | { type: 'fit_bounds', payload: { lat: number, lng: number }[] }
-  | { type: 'fit_route', payload: { lat: number, lng: number }[] };
-
-
 interface FleetState {
   vehicles: Vehicle[];
   statusFilter: VehicleStatus | 'all';
@@ -233,25 +225,36 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       }
 
       const segment = state.routeSegments[segmentIndex];
-      if (!segment || segment.id_estado !== '6') return state;
+      if (!segment) return state;
 
-      const segmentPoints = segment.records.map(r => {
-        const [lat, lng] = r.coordenadas.split(',').map(Number);
-        return { lat, lng };
-      });
-      
-      const startRecord = segment.records[0];
-      
-      const updatedHistoryVehicle = state.historyVehicle
-        ? { ...state.historyVehicle, lat: segment.startPoint.lat, lng: segment.startPoint.lng, rumbo: startRecord.rumbo }
-        : null;
+      let segmentPoints: { lat: number; lng: number }[] = [];
+      let newMapViewport: MapViewport = state.mapViewport;
+      let updatedHistoryVehicle = state.historyVehicle;
+
+      if (segment.id_estado === '6') { // Moving segment
+        segmentPoints = segment.records.map(r => {
+            const [lat, lng] = r.coordenadas.split(',').map(Number);
+            return { lat, lng };
+        });
+        newMapViewport = segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport;
+        const startRecord = segment.records[0];
+        if (updatedHistoryVehicle) {
+            updatedHistoryVehicle = { ...updatedHistoryVehicle, lat: segment.startPoint.lat, lng: segment.startPoint.lng, rumbo: startRecord.rumbo };
+        }
+      } else { // Parked or Idle segment
+        segmentPoints = []; // No path to highlight for a stop.
+        newMapViewport = { type: 'pan_to_vehicle', payload: { ...state.historyVehicle!, lat: segment.startPoint.lat, lng: segment.startPoint.lng }};
+        if (updatedHistoryVehicle) {
+            updatedHistoryVehicle = { ...updatedHistoryVehicle, lat: segment.startPoint.lat, lng: segment.startPoint.lng };
+        }
+      }
 
       return {
         ...state,
         selectedSegmentIndex: segmentIndex,
-        highlightedSegment: segmentPoints,
+        highlightedSegment: segment.id_estado === '6' ? segmentPoints : null, 
         historyVehicle: updatedHistoryVehicle,
-        mapViewport: segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
+        mapViewport: newMapViewport,
       };
     }
 

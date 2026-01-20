@@ -125,35 +125,31 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
                     const statusInfo = routeStatusDetailsMap[segment.id_estado] || { icon: Milestone, name: 'Event', color: '#888' };
                     const Icon = statusInfo.icon;
                     const isSelected = selectedSegmentIndex === index;
-                    const isClickable = segment.id_estado === '6';
 
                     return (
                       <div
                         key={index}
                         ref={el => itemRefs.current[index] = el}
                         className={cn(
-                          "flex-shrink-0 group transition-all duration-300",
-                           isSelected && isClickable ? 'scale-105' : 'scale-100'
+                          "flex-shrink-0 group transition-all duration-300 cursor-pointer",
+                           isSelected ? 'scale-105' : 'scale-100'
                         )}
                         style={{ width: '200px'}}
-                        onClick={isClickable ? () => onSegmentSelect(index) : undefined}
+                        onClick={() => onSegmentSelect(index)}
                       >
-                        <div className={cn(
-                          "relative flex flex-col items-center text-center h-full",
-                          isClickable ? "cursor-pointer" : "cursor-default"
-                        )}>
+                        <div className="relative flex flex-col items-center text-center h-full">
                           {/* Timeline line */}
                           {index < segments.length - 1 && (
                              <div className={cn(
                                 "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
-                                isSelected && isClickable ? 'bg-primary' : 'bg-border group-hover:bg-primary'
+                                isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                             )} />
                           )}
 
                           <div className={cn(
                               "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
-                               isSelected && isClickable ? 'ring-primary' : 'ring-card',
-                               isClickable && 'group-hover:ring-primary'
+                               isSelected ? 'ring-primary' : 'ring-card',
+                               'group-hover:ring-primary'
                           )}>
                             <Icon className="h-5 w-5" style={{color: statusInfo.color}} />
                           </div>
@@ -161,7 +157,7 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
                           <div className="pt-2">
                              <p className={cn(
                                  "font-semibold capitalize text-sm transition-colors",
-                                 isSelected && isClickable ? 'text-primary' : 'text-foreground'
+                                 isSelected ? 'text-primary' : 'text-foreground'
                               )}>
                               {segment.description}
                             </p>

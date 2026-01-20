@@ -39,7 +39,7 @@ export function EventMarker({ position, duration, status }: EventMarkerProps) {
 
     return (
         <AdvancedMarker position={position} zIndex={2}>
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center" style={{ transform: 'translate(15px, -15px)' }}>
                 {/* The label with duration */}
                 <div className="bg-card/80 backdrop-blur-sm text-foreground text-xs font-semibold px-2 py-1 rounded-md shadow-md mb-1 whitespace-nowrap">
                     {formatDuration(duration)}
