@@ -28,6 +28,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   }, [isRouteSheetOpen, routeSegments]);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
     if (!isRoutePlaying) {
       return;
     }
@@ -37,14 +38,14 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         return;
     }
 
+    // If starting playback from the end, reset to the beginning.
     if (playbackIndexRef.current >= movingPoints.length) {
-        playbackIndexRef.current = 0;
+      playbackIndexRef.current = 0;
     }
 
     const playNextPoint = () => {
         if (playbackIndexRef.current >= movingPoints.length) {
             dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
-            playbackIndexRef.current = 0;
             return;
         }
 
@@ -53,16 +54,14 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         
         playbackIndexRef.current++;
 
-        const timeoutId = setTimeout(playNextPoint, 200);
-        dispatch({ type: 'SET_PLAYBACK_TIMEOUT', payload: timeoutId });
+        timeoutId = setTimeout(playNextPoint, 200);
     };
 
     playNextPoint();
     
     return () => {
-        if (state.playbackTimeoutId) {
-            clearTimeout(state.playbackTimeoutId);
-            dispatch({ type: 'SET_PLAYBACK_TIMEOUT', payload: null });
+        if (timeoutId) {
+            clearTimeout(timeoutId);
         }
     };
   }, [isRoutePlaying, dispatch, movingPoints]);
