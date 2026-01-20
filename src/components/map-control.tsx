@@ -6,6 +6,7 @@ import React, { useEffect, useMemo } from 'react';
 import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fleet-context';
 import { AnimatedVehicleMarker } from './animated-vehicle-marker';
 import { RoutePolyline } from './route-polyline';
+import { EventMarker } from './event-marker';
 
 export function MapControl() {
   const map = useMap();
@@ -109,6 +110,20 @@ export function MapControl() {
         showArrows={true}
         onClick={selectedSegmentIndex !== null ? () => handleSegmentClick(selectedSegmentIndex) : undefined}
       />
+
+      {selectedSegmentIndex === null && routeSegments.map((segment, index) => {
+        if (segment.id_estado === '4' || segment.id_estado === '5') {
+          return (
+            <EventMarker
+              key={`event-${index}`}
+              position={segment.startPoint}
+              duration={segment.durationMinutes}
+              status={segment.id_estado}
+            />
+          );
+        }
+        return null;
+      })}
     </>
   );
 }
