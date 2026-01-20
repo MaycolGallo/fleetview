@@ -52,7 +52,6 @@ interface FleetState {
   simulationStep: Record<string, number>;
   pinRotationMode: 'arrow' | 'pin';
   isRoutePlaying: boolean;
-  playbackTimeoutId: NodeJS.Timeout | null;
 }
 
 // 2. Define the actions
@@ -73,7 +72,6 @@ type FleetAction =
   | { type: 'VIEWPORT_ACTION_COMPLETE' }
   | { type: 'START_ROUTE_PLAYBACK' }
   | { type: 'PAUSE_ROUTE_PLAYBACK' }
-  | { type: 'SET_PLAYBACK_TIMEOUT', payload: NodeJS.Timeout | null }
   | { type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: number, lng: number, rumbo: number } };
 
 
@@ -95,7 +93,6 @@ const getInitialState = (): FleetState => ({
   simulationStep: {},
   pinRotationMode: 'arrow',
   isRoutePlaying: false,
-  playbackTimeoutId: null,
 });
 
 
@@ -184,10 +181,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng }
             : state.historyVehicle;
         
-        if (state.playbackTimeoutId) {
-            clearTimeout(state.playbackTimeoutId);
-        }
-
         return {
             ...state,
             isLoadingRoute: false,
@@ -196,7 +189,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             isRouteSheetOpen: true,
             historyVehicle: updatedHistoryVehicle,
             isRoutePlaying: false,
-            playbackTimeoutId: null,
             mapViewport: { type: 'fit_route', payload: routePoints.flat() },
         };
     }
@@ -207,10 +199,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
             : [];
         
-        if (state.playbackTimeoutId) {
-            clearTimeout(state.playbackTimeoutId);
-        }
-
         return {
             ...state,
             historyVehicle: null,
@@ -222,7 +210,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             selectedSegmentIndex: null,
             isLoadingRoute: false,
             isRoutePlaying: false,
-            playbackTimeoutId: null,
             mapViewport: { type: 'fit_bounds', payload: newBounds },
         };
     }
@@ -325,19 +312,9 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         };
 
     case 'PAUSE_ROUTE_PLAYBACK':
-        if (state.playbackTimeoutId) {
-            clearTimeout(state.playbackTimeoutId);
-        }
         return {
             ...state,
             isRoutePlaying: false,
-            playbackTimeoutId: null,
-        };
-    
-    case 'SET_PLAYBACK_TIMEOUT':
-        return {
-            ...state,
-            playbackTimeoutId: action.payload,
         };
 
     case 'UPDATE_HISTORY_VEHICLE_POSITION':
