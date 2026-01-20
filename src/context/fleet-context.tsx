@@ -3,8 +3,8 @@
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
-import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle, WifiOff, Wrench, Ban, Key, Truck } from 'lucide-react';
+import type { Vehicle, VehicleStatus, RouteSegment, VehicleHistoryPoint } from '@/lib/types';
+import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle, WifiOff, Wrench, Ban, Key, Truck, ParkingSquare } from 'lucide-react';
 
 
 const fetchVehicles = async (): Promise<Vehicle[]> => {
@@ -40,7 +40,7 @@ interface FleetState {
   selectedVehicle: Vehicle | null;
   historyVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[] | null;
-  routeEvents: RouteEvent[];
+  routeSegments: RouteSegment[];
   isRouteSheetOpen: boolean;
   isLoadingRoute: boolean;
   selectedSegmentIndex: number | null;
@@ -58,7 +58,7 @@ type FleetAction =
   | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus | 'all' }
   | { type: 'PAN_TO_VEHICLE'; payload: Vehicle | null }
   | { type: 'START_ROUTE_LOADING'; payload: Vehicle }
-  | { type: 'SET_ROUTE_HISTORY'; payload: { routePoints: { lat: number; lng: number }[]; routeEvents: RouteEvent[] } }
+  | { type: 'SET_ROUTE_HISTORY'; payload: { routePoints: { lat: number; lng: number }[]; segments: RouteSegment[] } }
   | { type: 'BACK_TO_FLEET' }
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
   | { type: 'SELECT_MAP_SEGMENT'; payload: number }
@@ -78,7 +78,7 @@ const getInitialState = (): FleetState => ({
   selectedVehicle: null,
   historyVehicle: null,
   routePath: null,
-  routeEvents: [],
+  routeSegments: [],
   isRouteSheetOpen: false,
   isLoadingRoute: false,
   selectedSegmentIndex: null,
@@ -90,53 +90,27 @@ const getInitialState = (): FleetState => ({
   pinRotationMode: 'arrow',
 });
 
-// Helper function to calculate segment points
-const getSegmentPoints = (state: FleetState, segmentIndex: number) => {
-    if (!state.routePath || !state.routeEvents || state.routePath.length === 0) return { segmentPoints: [], highlightedSegment: null };
-
-    let eventStartIndex = 0;
-    for(let i=0; i<segmentIndex; i++) {
-        if(state.routeEvents[i]?.status !== 'start' && state.routeEvents[i]?.status !== 'end') {
-            eventStartIndex++;
-        }
-    }
-
-    const events = state.routeEvents.filter(e => e.status !== 'start' && e.status !== 'end');
-    const pointsPerEvent = events.length > 1 ? Math.floor((state.routePath.length -1) / (events.length -1)) : state.routePath.length;
-    
-    const startPointIndex = eventStartIndex * pointsPerEvent;
-    const endPointIndex = (segmentIndex === state.routeEvents.length - 2)
-      ? state.routePath.length - 1
-      : (eventStartIndex + 1) * pointsPerEvent;
-
-    let segmentPoints: { lat: number; lng: number }[] = [];
-    if (startPointIndex >= endPointIndex) {
-      if (state.routePath[startPointIndex]) {
-        segmentPoints = [state.routePath[startPointIndex]];
-      }
-    } else {
-      segmentPoints = state.routePath.slice(startPointIndex, endPointIndex + 1);
-    }
-    
-    return { 
-        segmentPoints: segmentPoints.length > 0 ? segmentPoints : [], 
-        highlightedSegment: segmentPoints.length > 1 ? segmentPoints : null 
-    };
-}
 
 export const statusDetailsMap: { [key in VehicleStatus]: { name: string; color: string; icon: React.ElementType; } } = {
-    '0': { name: 'Libre', color: '#B0BEC5', icon: Key }, // Assuming 'Libre' is 'Free'
-    '1': { name: 'SRalenti', color: '#78909C', icon: Clock }, // Slow Idle
-    '2': { name: 'Vehiculo Detenido y Encendido', color: '#F1C40F', icon: Power }, // Kept from old map
+    '0': { name: 'Libre', color: '#B0BEC5', icon: Key },
+    '1': { name: 'SRalenti', color: '#78909C', icon: Clock },
+    '2': { name: 'Vehiculo Detenido y Encendido', color: '#F1C40F', icon: Power },
     '3': { name: 'Exceso de Velocidad', color: '#E74C3C', icon: Siren },
-    '4': { name: 'Ralenti', color: '#9E9E9E', icon: PowerOff }, // Idle
-    '5': { name: 'Estacionado', color: '#666666', icon: Ban }, // Parked
-    '6': { name: 'Transitando', color: '#00CC33', icon: Truck }, // In Transit
-    '7': { name: 'Bloqueado', color: '#003399', icon: Ban }, // Blocked
-    '8': { name: 'Desconeccion de Bateria', color: '#FF66B0', icon: BatteryWarning }, // Battery disconnected
-    '9': { name: 'Mantenimiento', color: '#8D6E63', icon: Wrench }, // Maintenance
+    '4': { name: 'Ralenti', color: '#9E9E9E', icon: PowerOff },
+    '5': { name: 'Estacionado', color: '#666666', icon: Ban },
+    '6': { name: 'Transitando', color: '#00CC33', icon: Truck },
+    '7': { name: 'Bloqueado', color: '#003399', icon: Ban },
+    '8': { name: 'Desconeccion de Bateria', color: '#FF66B0', icon: BatteryWarning },
+    '9': { name: 'Mantenimiento', color: '#8D6E63', icon: Wrench },
     '10': { name: 'Motor Encendido via Remoto', color: '#27AE60', icon: PowerCircle },
 };
+
+export const routeStatusDetailsMap: { [key: string]: { name: string; color: string; icon: React.ElementType; } } = {
+  '4': { name: 'Idle', color: '#9E9E9E', icon: Clock },
+  '5': { name: 'Parked', color: '#666666', icon: ParkingSquare },
+  '6': { name: 'Moving', color: '#00CC33', icon: Truck },
+};
+
 
 export const ALL_STATUSES = Object.keys(statusDetailsMap) as VehicleStatus[];
 
@@ -145,7 +119,6 @@ export const ALL_STATUSES = Object.keys(statusDetailsMap) as VehicleStatus[];
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
-      // If this is the first time we're setting vehicles, make them all visible by default
       const newVisibleIds = state.vehicles.length === 0 
         ? new Set(action.payload.map(v => v.id))
         : state.visibleVehicleIds;
@@ -156,7 +129,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
           ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
           : [];
 
-      // Update the selected vehicle instance if it exists
       const updatedSelectedVehicle = state.selectedVehicle
         ? action.payload.find(v => v.id === state.selectedVehicle!.id) || null
         : null;
@@ -166,7 +138,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
          vehicles: action.payload,
          selectedVehicle: updatedSelectedVehicle,
          visibleVehicleIds: newVisibleIds,
-         // Only change viewport on initial load
          mapViewport: state.mapViewport.type === 'initial' && newBounds.length > 0 
           ? { type: 'fit_bounds', payload: newBounds } 
           : state.mapViewport,
@@ -177,10 +148,8 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
-        // Deselection. Clear the selected vehicle but do not change the viewport.
         return { ...state, selectedVehicle: null };
       }
-      // This is a selection event
       return {
         ...state,
         selectedVehicle: action.payload,
@@ -189,20 +158,18 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     }
 
     case 'SET_ROUTE_SHEET_OPEN':
-      // This action now only controls the visibility of the sheet.
-      // The logic for cleaning up the state is centralized in BACK_TO_FLEET.
       return { ...state, isRouteSheetOpen: action.payload };
 
     case 'START_ROUTE_LOADING':
       return {
         ...state,
-        selectedVehicle: null, // Clear selection when starting to load route
+        selectedVehicle: null,
         isLoadingRoute: true,
         historyVehicle: action.payload,
       };
 
     case 'SET_ROUTE_HISTORY': {
-        const { routePoints, routeEvents } = action.payload;
+        const { routePoints, segments } = action.payload;
         const startOfRoute = routePoints && routePoints.length > 0 ? routePoints[0] : null;
 
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute
@@ -213,7 +180,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             ...state,
             isLoadingRoute: false,
             routePath: routePoints,
-            routeEvents: routeEvents,
+            routeSegments: segments,
             isRouteSheetOpen: true,
             historyVehicle: updatedHistoryVehicle,
             mapViewport: { type: 'fit_route', payload: routePoints },
@@ -229,7 +196,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             ...state,
             historyVehicle: null,
             routePath: null,
-            routeEvents: [],
+            routeSegments: [],
             selectedVehicle: null,
             isRouteSheetOpen: false,
             highlightedSegment: null,
@@ -242,7 +209,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     case 'SELECT_ROUTE_SEGMENT': {
       const segmentIndex = action.payload;
       
-      // Deselect if clicking the same segment
       if (state.selectedSegmentIndex === segmentIndex) {
         const startOfRoute = state.routePath ? state.routePath[0] : null;
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng } : state.historyVehicle;
@@ -256,66 +222,70 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         };
       }
 
-      const { segmentPoints, highlightedSegment } = getSegmentPoints(state, segmentIndex);
+      const segment = state.routeSegments[segmentIndex];
+      if (!segment || segment.id_estado !== '6') return state;
 
-      if (!segmentPoints || segmentPoints.length === 0) return state;
-
-      const startOfSegment = segmentPoints[0];
+      const segmentPoints = segment.records.map(r => {
+        const [lat, lng] = r.coordenadas.split(',').map(Number);
+        return { lat, lng };
+      });
+      
+      const startRecord = segment.records[0];
       
       const updatedHistoryVehicle = state.historyVehicle
-        ? { ...state.historyVehicle, lat: startOfSegment.lat, lng: startOfSegment.lng }
+        ? { ...state.historyVehicle, lat: segment.startPoint.lat, lng: segment.startPoint.lng, rumbo: startRecord.rumbo }
         : null;
 
       return {
         ...state,
         selectedSegmentIndex: segmentIndex,
-        highlightedSegment: highlightedSegment,
+        highlightedSegment: segmentPoints,
         historyVehicle: updatedHistoryVehicle,
-        mapViewport: segmentPoints ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
+        mapViewport: segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
       };
     }
     
     case 'SELECT_MAP_SEGMENT': {
         const pointIndex = action.payload;
-        if (!state.routePath || !state.routeEvents || state.routeEvents.length <= 1) return state;
+        if (!state.routePath || !state.routeSegments || state.routeSegments.length <= 1) return state;
 
-        const events = state.routeEvents.filter(e => e.status !== 'start' && e.status !== 'end');
-        const pointsPerEvent = events.length > 1 ? (state.routePath.length -1) / (events.length -1) : state.routePath.length;
+        let pointCounter = 0;
+        let targetSegmentOriginalIndex = -1;
 
-        const segmentIndex = Math.min(events.length - 1, Math.floor(pointIndex / pointsPerEvent));
-        
-        // Find the corresponding index in the original routeEvents array
-        let originalIndex = -1;
-        let eventCounter = -1;
-        for (let i = 0; i < state.routeEvents.length; i++) {
-            const event = state.routeEvents[i];
-            if (event.status !== 'start' && event.status !== 'end') {
-                eventCounter++;
-                if (eventCounter === segmentIndex) {
-                    originalIndex = i;
+        for (let i = 0; i < state.routeSegments.length; i++) {
+            const segment = state.routeSegments[i];
+            if (segment.id_estado === '6') {
+                const segmentLength = segment.records.length;
+                if (pointIndex < pointCounter + segmentLength) {
+                    targetSegmentOriginalIndex = i;
                     break;
                 }
+                pointCounter += segmentLength;
             }
         }
-
-        if (originalIndex === -1 || state.selectedSegmentIndex === originalIndex) return state;
-       
-        const { segmentPoints, highlightedSegment } = getSegmentPoints(state, originalIndex);
-
-        if (!segmentPoints || segmentPoints.length === 0) return state;
         
-        const startOfSegment = segmentPoints[0];
-      
+        if (targetSegmentOriginalIndex === -1 || state.selectedSegmentIndex === targetSegmentOriginalIndex) return state;
+
+        const segment = state.routeSegments[targetSegmentOriginalIndex];
+        if (!segment || segment.id_estado !== '6') return state;
+
+        const segmentPoints = segment.records.map(r => {
+          const [lat, lng] = r.coordenadas.split(',').map(Number);
+          return { lat, lng };
+        });
+        
+        const startRecord = segment.records[0];
+        
         const updatedHistoryVehicle = state.historyVehicle
-          ? { ...state.historyVehicle, lat: startOfSegment.lat, lng: startOfSegment.lng }
+          ? { ...state.historyVehicle, lat: segment.startPoint.lat, lng: segment.startPoint.lng, rumbo: startRecord.rumbo }
           : null;
 
         return {
             ...state,
-            selectedSegmentIndex: originalIndex,
-            highlightedSegment: highlightedSegment,
+            selectedSegmentIndex: targetSegmentOriginalIndex,
+            highlightedSegment: segmentPoints,
             historyVehicle: updatedHistoryVehicle,
-            mapViewport: segmentPoints ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
+            mapViewport: segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
         };
     }
 
@@ -398,18 +368,18 @@ export const selectMapVehicles = (state: FleetState): Vehicle[] => {
 };
 
 export const selectRouteSummary = (state: FleetState) => {
-  const { routeEvents } = state;
-  if (!routeEvents || routeEvents.length === 0) {
+  const { routeSegments } = state;
+  if (!routeSegments || routeSegments.length === 0) {
     return { totalDistance: 0, totalDuration: 0, totalStops: 0, totalStopTime: 0 };
   }
 
-  return routeEvents.reduce(
-    (summary, event) => {
-      summary.totalDistance += event.distanceKm;
-      summary.totalDuration += event.durationMinutes;
-      if (event.status === 'stop') {
+  return routeSegments.reduce(
+    (summary, segment) => {
+      summary.totalDistance += segment.distanceKm;
+      summary.totalDuration += segment.durationMinutes;
+      if (segment.id_estado === '5') {
         summary.totalStops += 1;
-        summary.totalStopTime += event.durationMinutes;
+        summary.totalStopTime += segment.durationMinutes;
       }
       return summary;
     },
@@ -440,7 +410,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     } = useQuery<Vehicle[], Error>({
       queryKey: ['vehicles'],
       queryFn: fetchVehicles,
-      refetchInterval: false, // Turned off for dev
+      refetchInterval: false,
     });
     
     useEffect(() => {
@@ -452,7 +422,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const { historyVehicle } = state;
-        if (!historyVehicle) return;
+        if (!historyVehicle || !state.isLoadingRoute) return;
 
         const fetchRoute = async () => {
             try {
@@ -460,14 +430,13 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        vehicleId: historyVehicle.id, // Pass vehicle ID
+                        vehicleId: historyVehicle.id,
                     }),
                 });
                 if (!response.ok) throw new Error('Failed to fetch route');
                 const data = await response.json();
-                // @ts-ignore
+                
                 if (document.startViewTransition) {
-                    // @ts-ignore
                     document.startViewTransition(() => {
                         dispatch({ type: 'SET_ROUTE_HISTORY', payload: data });
                     });
@@ -476,13 +445,13 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             } catch (error) {
                 console.error("Error fetching route", error);
-                dispatch({ type: 'BACK_TO_FLEET' }); // Go back if route fails
+                dispatch({ type: 'BACK_TO_FLEET' });
             }
         };
 
         fetchRoute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.historyVehicle?.id]); // Depend on ID to prevent re-fetching when position changes
+    }, [state.historyVehicle?.id, state.isLoadingRoute]);
 
     const stateContextValue = useMemo(() => ({
         state,

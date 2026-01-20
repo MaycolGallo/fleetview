@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import type { RouteHistory, VehicleHistoryPoint } from '@/lib/types';
+import type { RouteHistory, VehicleHistoryPoint, RouteSegment } from '@/lib/types';
 
 // This is a mock data source. In a real application, you would fetch this from a database.
 const vehicleHistoryData: VehicleHistoryPoint[] = [
@@ -24,111 +24,66 @@ const vehicleHistoryData: VehicleHistoryPoint[] = [
   {"id":"9","id_vehiculo":643,"coordenadas":"-14.0800,-75.7320","tramas_validas":1,"id_estado":"5","velocidad":"0.00","rumbo":195,"odometro":"8882.50","horometro":"0","numero_satelites":10,"nivel_bateria":"3.8","temperatura":"26","senal_gsm":24,"nivel_bateria_vehicular":"12.6","id_cliente":132,"din":2,"fecha":1768665000,"altitud":0,"codigo":5,"param1":"Estacionado","param2":"El vehiculo se encuentra estacionado","param3":"#666666","param4":"FFFFFF","created_at":"2025-12-17T16:10:00Z","updated_at":null}
 ];
 
+function parseCoords(coordenadas: string): { lat: number; lng: number } {
+  const [lat, lng] = coordenadas.split(',').map(Number);
+  return { lat, lng };
+}
 
-const statusTypeMap: { [key: number]: 'stop' | 'driving' | 'event' } = {
-  0: 'event',
-  1: 'stop',
-  2: 'event',
-  4: 'stop', // Ralenti
-  5: 'stop', // Estacionado
-  6: 'driving', // Transitando
-  7: 'event',
-  8: 'event',
-  9: 'event',
-  99: 'event',
-};
 
-function processHistory(history: VehicleHistoryPoint[]) {
+function processHistory(history: VehicleHistoryPoint[]): RouteHistory {
   if (history.length === 0) {
-    return { routePoints: [], routeEvents: [] };
+    return { segments: [], routePoints: [] };
   }
 
   // Ensure history is sorted by date
   history.sort((a, b) => a.fecha - b.fecha);
 
-  const routePoints = history
-    .filter(p => p.id_estado === '6')
-    .map(p => {
-      const [lat, lng] = p.coordenadas.split(',').map(Number);
-      return { lat, lng };
-    });
+  const segments: RouteSegment[] = [];
+  if (history.length > 0) {
+      let currentSegmentRecords: VehicleHistoryPoint[] = [history[0]];
 
-  const routeEvents: any[] = [];
+      for (let i = 1; i < history.length; i++) {
+          if (history[i].id_estado !== currentSegmentRecords[0].id_estado) {
+              segments.push(createSegment(currentSegmentRecords));
+              currentSegmentRecords = [history[i]];
+          } else {
+              currentSegmentRecords.push(history[i]);
+          }
+      }
+      segments.push(createSegment(currentSegmentRecords));
+  }
   
-  // Add Start Event
-  routeEvents.push({
-    timestamp: new Date(history[0].fecha * 1000).toISOString(),
-    status: 'start',
-    distanceKm: 0,
-    durationMinutes: 0,
-    description: 'Trip started',
-  });
+  const routePoints = segments
+    .filter(s => s.id_estado === '6')
+    .flatMap(s => s.records.map(r => parseCoords(r.coordenadas)));
 
-  let segmentStartIndex = 0;
-  for (let i = 1; i < history.length; i++) {
-    // If the status code changes, the previous segment has ended.
-    if (history[i].codigo !== history[segmentStartIndex].codigo) {
-      const segment = history.slice(segmentStartIndex, i);
-      const segmentStartPoint = segment[0];
-      const segmentEndPoint = segment[segment.length - 1];
-      
-      const durationMs = (segmentEndPoint.fecha - segmentStartPoint.fecha) * 1000;
-      const durationMinutes = durationMs / (1000 * 60);
+  return { segments, routePoints };
+}
 
-      const distanceKm = parseFloat(segmentEndPoint.odometro) - parseFloat(segmentStartPoint.odometro);
-      
-      const segmentStatus = statusTypeMap[segmentStartPoint.codigo] || 'event';
+function createSegment(records: VehicleHistoryPoint[]): RouteSegment {
+    const firstRecord = records[0];
+    const lastRecord = records[records.length - 1];
 
-      // Only add segments that have a duration
-      if (durationMinutes > 0) {
-        routeEvents.push({
-          timestamp: new Date(segmentEndPoint.fecha * 1000).toISOString(),
-          status: segmentStatus,
-          distanceKm: Math.abs(distanceKm),
-          durationMinutes: durationMinutes,
-          description: segmentStartPoint.param1 || `Event Code: ${segmentStartPoint.codigo}`
-        });
-      }
-      
-      segmentStartIndex = i;
-    }
-  }
+    const durationMs = (lastRecord.fecha - firstRecord.fecha) * 1000;
+    const durationMinutes = durationMs / (1000 * 60);
 
-  // Add the final segment
-  const finalSegment = history.slice(segmentStartIndex);
-  if (finalSegment.length > 0) {
-      const finalSegmentStartPoint = finalSegment[0];
-      const finalSegmentEndPoint = finalSegment[finalSegment.length - 1];
+    const distanceKm = parseFloat(lastRecord.odometro) - parseFloat(firstRecord.odometro);
 
-      const finalDurationMs = (finalSegmentEndPoint.fecha - finalSegmentStartPoint.fecha) * 1000;
-      const finalDurationMinutes = finalDurationMs / (1000 * 60);
-      const finalDistanceKm = parseFloat(finalSegmentEndPoint.odometro) - parseFloat(finalSegmentStartPoint.odometro);
-      const finalStatus = statusTypeMap[finalSegmentStartPoint.codigo] || 'event';
-      
-      // Only add final segment if it has duration
-      if (finalDurationMinutes > 0) {
-        routeEvents.push({
-            timestamp: new Date(finalSegmentEndPoint.fecha * 1000).toISOString(),
-            status: finalStatus,
-            distanceKm: Math.abs(finalDistanceKm),
-            durationMinutes: finalDurationMinutes,
-            description: finalSegmentStartPoint.param1 || `Event Code: ${finalSegmentStartPoint.codigo}`
-        });
-      }
-  }
-
-
-  // Add End event
-  routeEvents.push({
-    timestamp: new Date(history[history.length - 1].fecha * 1000).toISOString(),
-    status: 'end',
-    distanceKm: 0,
-    durationMinutes: 0,
-    description: 'Trip ended',
-  });
-
-
-  return { routePoints, routeEvents };
+    const totalSpeed = records.reduce((sum, record) => sum + parseFloat(record.velocidad), 0);
+    const avgSpeed = records.length > 0 ? totalSpeed / records.length : 0;
+    
+    return {
+      id_estado: firstRecord.id_estado,
+      description: firstRecord.param1,
+      durationMinutes: durationMinutes,
+      distanceKm: Math.abs(distanceKm),
+      avgSpeed: avgSpeed,
+      startTime: firstRecord.fecha,
+      endTime: lastRecord.fecha,
+      startPoint: parseCoords(firstRecord.coordenadas),
+      endPoint: parseCoords(lastRecord.coordenadas),
+      records: records,
+    };
 }
 
 
@@ -139,12 +94,7 @@ export async function POST(req: NextRequest) {
 
     // In a real app, you would filter by vehicleId.
     // For this mock, we use the same data for all vehicles.
-    const { routePoints, routeEvents } = processHistory(vehicleHistoryData);
-
-    const routeHistory: RouteHistory = {
-      routePoints,
-      routeEvents,
-    };
+    const routeHistory = processHistory(vehicleHistoryData);
 
     return NextResponse.json(routeHistory);
   } catch (error) {

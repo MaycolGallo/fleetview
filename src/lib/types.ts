@@ -16,19 +16,6 @@ export interface Vehicle {
   bateria_vehiculo: string;
 }
 
-export interface RouteEvent {
-  timestamp: string;
-  status: 'start' | 'stop' | 'driving' | 'end' | 'event';
-  distanceKm: number;
-  durationMinutes: number;
-  description: string;
-}
-
-export interface RouteHistory {
-  routePoints: { lat: number; lng: number }[];
-  routeEvents: RouteEvent[];
-}
-
 export interface VehicleHistoryPoint {
   id: string;
   id_vehiculo: number;
@@ -55,4 +42,24 @@ export interface VehicleHistoryPoint {
   param4: string;
   created_at: string;
   updated_at: string | null;
+}
+
+export interface RouteSegment {
+  id_estado: string;
+  description: string;
+  durationMinutes: number;
+  distanceKm: number;
+  avgSpeed: number;
+  startTime: number;
+  endTime: number;
+  startPoint: { lat: number; lng: number };
+  endPoint: { lat: number; lng: number };
+  records: VehicleHistoryPoint[];
+}
+
+export interface RouteHistory {
+  // Simplified path connecting only the moving segments
+  routePoints: { lat: number; lng: number }[];
+  // Detailed segments
+  segments: RouteSegment[];
 }

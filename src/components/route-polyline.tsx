@@ -9,13 +9,15 @@ export function RoutePolyline({
   color,
   weight,
   zIndex = 1,
-  onClick
+  onClick,
+  showArrows = false,
 }: {
   routePath: { lat: number; lng: number }[] | null,
   color: string,
   weight: number,
   zIndex?: number,
-  onClick?: (pointIndex: number) => void
+  onClick?: (pointIndex: number) => void,
+  showArrows?: boolean,
 }) {
   const map = useMap();
   const polylineRef = useRef<google.maps.Polyline | null>(null);
@@ -30,9 +32,9 @@ export function RoutePolyline({
         path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
         strokeOpacity: 1,
         scale: 3,
-        strokeColor: zIndex === 1 ? '#FFFFFF' : color,
+        strokeColor: color,
         strokeWeight: 1,
-        fillColor: zIndex === 1 ? '#FFFFFF' : color,
+        fillColor: color,
         fillOpacity: 1,
       };
 
@@ -44,10 +46,10 @@ export function RoutePolyline({
         map: map,
         zIndex: zIndex,
         clickable: !!onClick,
-        icons: zIndex === 1 ? [{ // Only show arrows on the main route line
+        icons: showArrows ? [{
           icon: arrowIcon,
           offset: '0',
-          repeat: '50px'
+          repeat: '75px'
         }] : undefined,
       });
       polylineRef.current = newPolyline;
@@ -56,7 +58,6 @@ export function RoutePolyline({
         newPolyline.addListener('click', (e: google.maps.PolyMouseEvent) => {
           if (!e.latLng || !routePath) return;
 
-          // Find the closest point on the polyline to the click event
           let closestPointIndex = -1;
           let minDistance = Infinity;
 
@@ -87,7 +88,7 @@ export function RoutePolyline({
         polylineRef.current.setMap(null);
       }
     };
-  }, [map, routePath, color, weight, zIndex, onClick]);
+  }, [map, routePath, color, weight, zIndex, onClick, showArrows]);
 
   return null;
 }

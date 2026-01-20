@@ -24,8 +24,6 @@ export function MapControl() {
 
   useEffect(() => {
     if (!map) return;
-
-    // Load the geometry library when the map is available
     google.maps.importLibrary('geometry');
     google.maps.importLibrary('marker');
   }, [map]);
@@ -65,8 +63,6 @@ export function MapControl() {
       default:
         break;
     }
-    // After the viewport action is handled, dispatch an action to signify completion.
-    // This prevents the action from being re-triggered on subsequent renders.
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
 
   }, [map, mapViewport, dispatch]);
@@ -83,7 +79,7 @@ export function MapControl() {
         ))}
 
       <RoutePolyline routePath={routePath} color="#16a34a" weight={5} zIndex={1} onClick={handleRouteClick} />
-      <RoutePolyline routePath={highlightedSegment} color="#f59e0b" weight={7} zIndex={2} />
+      <RoutePolyline routePath={highlightedSegment} color="#f59e0b" weight={7} zIndex={2} showArrows={true} />
     </>
   );
 }
