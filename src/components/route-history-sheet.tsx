@@ -51,7 +51,6 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
     const playNextPoint = () => {
         const currentIndex = playbackIndexRef.current;
         
-        // Safety check in case isRoutePlaying changed during the timeout
         if (!isRoutePlaying || currentIndex >= movingPoints.length) {
             dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
             cleanup();
@@ -59,26 +58,27 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         }
 
         const currentPoint = movingPoints[currentIndex];
-        dispatch({ type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: currentPoint.lat, lng: currentPoint.lng, rumbo: currentPoint.rumbo } });
-
         const nextIndex = currentIndex + 1;
-        playbackIndexRef.current = nextIndex;
-
+        
+        let delay;
         if (nextIndex < movingPoints.length) {
             const nextPoint = movingPoints[nextIndex];
             const timeDiffSeconds = nextPoint.fecha - currentPoint.fecha;
             
-            // Speed up real time. Higher number = faster playback.
             const PLAYBACK_SPEED_MULTIPLIER = 100;
-            let delay = (timeDiffSeconds * 1000) / PLAYBACK_SPEED_MULTIPLIER;
-
-            // Clamp the delay to ensure a smooth animation, not too fast, not too slow.
-            // Min: 50ms (~20fps), Max: 500ms (half a second)
+            delay = (timeDiffSeconds * 1000) / PLAYBACK_SPEED_MULTIPLIER;
             delay = Math.max(50, Math.min(delay, 500));
+        } else {
+            delay = 200; // Final animation
+        }
 
+        dispatch({ type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: currentPoint.lat, lng: currentPoint.lng, rumbo: currentPoint.rumbo, animationDuration: delay } });
+        
+        playbackIndexRef.current = nextIndex;
+
+        if (nextIndex < movingPoints.length) {
             timeoutRef.current = setTimeout(playNextPoint, delay);
         } else {
-             // Reached the end of the points
              dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
              cleanup();
         }

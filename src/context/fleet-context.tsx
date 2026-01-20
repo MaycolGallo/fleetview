@@ -52,6 +52,7 @@ interface FleetState {
   simulationStep: Record<string, number>;
   pinRotationMode: 'arrow' | 'pin';
   isRoutePlaying: boolean;
+  playbackAnimationDuration: number;
 }
 
 // 2. Define the actions
@@ -72,7 +73,7 @@ type FleetAction =
   | { type: 'VIEWPORT_ACTION_COMPLETE' }
   | { type: 'START_ROUTE_PLAYBACK' }
   | { type: 'PAUSE_ROUTE_PLAYBACK' }
-  | { type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: number, lng: number, rumbo: number } };
+  | { type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: number, lng: number, rumbo: number, animationDuration: number } };
 
 
 // 3. Define the initial state
@@ -93,6 +94,7 @@ const getInitialState = (): FleetState => ({
   simulationStep: {},
   pinRotationMode: 'arrow',
   isRoutePlaying: false,
+  playbackAnimationDuration: 1000,
 });
 
 
@@ -317,16 +319,20 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             isRoutePlaying: false,
         };
 
-    case 'UPDATE_HISTORY_VEHICLE_POSITION':
+    case 'UPDATE_HISTORY_VEHICLE_POSITION': {
         if (!state.historyVehicle) return state;
+        const { lat, lng, rumbo, animationDuration } = action.payload;
         return {
             ...state,
             historyVehicle: {
                 ...state.historyVehicle,
-                ...action.payload,
-            }
+                lat,
+                lng,
+                rumbo,
+            },
+            playbackAnimationDuration: animationDuration,
         };
-
+    }
 
     default:
       return state;

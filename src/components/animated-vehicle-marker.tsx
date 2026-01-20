@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { selectedVehicle, isRoutePlaying, historyVehicle } = state;
+  const { selectedVehicle, isRoutePlaying, historyVehicle, playbackAnimationDuration } = state;
   const isSelected = selectedVehicle?.id === vehicle.id;
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
@@ -25,12 +25,13 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
 
   const isPlaybackMarker = historyVehicle?.id === vehicle.id;
   const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
-  const animatedPosition = useAnimatedPosition(targetPosition);
+  
+  // Use the dynamic duration during playback, otherwise a default for regular clicks.
+  const animationDuration = (isPlaybackMarker && isRoutePlaying) ? playbackAnimationDuration : 1000;
+  const animatedPosition = useAnimatedPosition(targetPosition, { duration: animationDuration });
 
-  // During playback, we want the marker to snap to the exact location from the data.
-  // The useAnimatedPosition hook is for smooth transitions when clicking, but it causes a lag during rapid playback.
-  // By using the targetPosition directly, the marker will perfectly follow the polyline.
-  const position = isPlaybackMarker && isRoutePlaying ? targetPosition : animatedPosition;
+  // We now always use the animated position for smooth movement.
+  const position = animatedPosition;
 
   const handleLeftClick = (e: google.maps.MapMouseEvent | MouseEvent) => {
     if ('domEvent' in e && e.domEvent) {
