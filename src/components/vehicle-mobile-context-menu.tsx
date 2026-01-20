@@ -11,7 +11,7 @@ import {
   DrawerOverlay,
   DrawerHandle
 } from "@/components/ui/drawer";
-import { useFleet } from '@/context/fleet-context';
+import { useFleetDispatch } from '@/context/fleet-context';
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import type { Vehicle } from "@/lib/types";
 
@@ -35,7 +35,7 @@ export function VehicleMobileContextMenu({
     onOpenChange: (isOpen: boolean) => void;
     vehicle: Vehicle;
 }) {
-    const { dispatch } = useFleet();
+    const dispatch = useFleetDispatch();
 
     const handleAction = (action: VehicleAction) => {
         if (action === 'show-route-history') {

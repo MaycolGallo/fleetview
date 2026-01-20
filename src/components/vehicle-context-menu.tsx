@@ -6,7 +6,7 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
 import type { Vehicle } from '@/lib/types';
-import { useFleet } from '@/context/fleet-context';
+import { useFleetDispatch } from '@/context/fleet-context';
 
 type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'view-alerts' | 'maintenance';
 
@@ -29,7 +29,7 @@ export function VehicleContextMenu({
   onClose: () => void;
 }) {
     const [portalNode, setPortalNode] = React.useState<HTMLElement | null>(null);
-    const { dispatch } = useFleet();
+    const dispatch = useFleetDispatch();
 
     React.useEffect(() => {
         setPortalNode(document.body);

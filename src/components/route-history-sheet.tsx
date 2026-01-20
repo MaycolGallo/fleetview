@@ -4,17 +4,19 @@
 
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useFleet } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
+import { useCallback } from 'react';
 
 interface RouteHistorySheetProps {}
 
 export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const isMobile = useIsMobile();
-  const { state, dispatch } = useFleet();
+  const { state } = useFleetState();
+  const dispatch = useFleetDispatch();
   const { isRouteSheetOpen } = state;
 
-  const handleOpenChange = (isOpen: boolean) => {
+  const handleOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
         // @ts-ignore
         if (document.startViewTransition) {
@@ -26,11 +28,11 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
             dispatch({ type: 'BACK_TO_FLEET' });
         }
     }
-  }
+  }, [dispatch]);
 
-  const handleSegmentSelect = (segmentIndex: number) => {
+  const handleSegmentSelect = useCallback((segmentIndex: number) => {
     dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: segmentIndex });
-  };
+  }, [dispatch]);
   
   if (isMobile) {
     return (

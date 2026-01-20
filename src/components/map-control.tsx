@@ -3,13 +3,14 @@
 
 import { useMap } from '@vis.gl/react-google-maps';
 import React, { useEffect, useMemo } from 'react';
-import { useFleet, selectMapVehicles } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fleet-context';
 import { AnimatedVehicleMarker } from './animated-vehicle-marker';
 import { RoutePolyline } from './route-polyline';
 
 export function MapControl() {
   const map = useMap();
-  const { state, dispatch } = useFleet();
+  const { state } = useFleetState();
+  const dispatch = useFleetDispatch();
 
   const {
     mapViewport,
@@ -70,7 +71,7 @@ export function MapControl() {
 
   }, [map, mapViewport, dispatch]);
 
-  const mapVehicles = useMemo(() => selectMapVehicles(state), [state.historyVehicle, state.vehicles, state.statusFilter, state.visibleVehicleIds]);
+  const mapVehicles = useMemo(() => selectMapVehicles(state), [state]);
 
   return (
     <>

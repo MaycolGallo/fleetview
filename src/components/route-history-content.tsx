@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { useFleet, selectRouteSummary } from '@/context/fleet-context';
+import { useFleetState, selectRouteSummary } from '@/context/fleet-context';
 
 interface RouteHistoryContentProps {
     onSegmentSelect: (index: number) => void;
@@ -42,9 +42,9 @@ function formatDuration(minutes: number) {
 }
 
 export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProps) {
-    const { state } = useFleet();
+    const { state } = useFleetState();
     const { routeEvents: events, historyVehicle: vehicle, selectedSegmentIndex } = state;
-    const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state.routeEvents]);
+    const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state]);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 

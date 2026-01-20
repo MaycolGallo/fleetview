@@ -1,6 +1,7 @@
 
 'use client';
 
+import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -9,7 +10,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
-import { useFleet, statusDetailsMap } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch, statusDetailsMap } from '@/context/fleet-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ArrowLeft, Move, Gauge, Tag, Rss, Clock, Wind, BarChart, Battery, BatteryFull } from 'lucide-react';
 import { Badge } from './ui/badge';
@@ -31,15 +32,16 @@ function DetailItem({ icon: Icon, label, value, unit }: { icon: React.ElementTyp
   )
 }
 
-export function VehicleDetails() {
-  const { state, dispatch } = useFleet();
+function VehicleDetailsInternal() {
+  const { state } = useFleetState();
+  const dispatch = useFleetDispatch();
   const { selectedVehicle } = state;
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
-  };
+  }, [dispatch]);
   
-  const handleSimulateMove = () => {
+  const handleSimulateMove = useCallback(() => {
     if (!selectedVehicle) return;
     const updateAction = () => {
         dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: selectedVehicle.id });
@@ -54,7 +56,7 @@ export function VehicleDetails() {
       } else {
         updateAction();
       }
-  };
+  }, [dispatch, selectedVehicle]);
 
   if (!selectedVehicle) {
     return null;
@@ -126,3 +128,5 @@ export function VehicleDetails() {
     </div>
   );
 }
+
+export const VehicleDetails = React.memo(VehicleDetailsInternal);

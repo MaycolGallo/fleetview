@@ -1,7 +1,7 @@
 
 'use client';
 
-import { createContext, useContext, useReducer, useEffect, type Dispatch } from 'react';
+import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Vehicle, VehicleStatus, RouteEvent } from '@/lib/types';
 import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle, WifiOff, Wrench, Ban, Key, Truck } from 'lucide-react';
@@ -419,14 +419,15 @@ export const selectRouteSummary = (state: FleetState) => {
 
 
 // 5. Create the context
-interface FleetContextValue {
+interface FleetStateContextValue {
     state: FleetState;
-    dispatch: Dispatch<FleetAction>;
     isLoadingVehicles: boolean;
     error: Error | null;
 }
 
-const FleetContext = createContext<FleetContextValue | undefined>(undefined);
+const FleetStateContext = createContext<FleetStateContextValue | undefined>(undefined);
+const FleetDispatchContext = createContext<Dispatch<FleetAction> | undefined>(undefined);
+
 
 // 6. Create the Provider component
 export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
@@ -483,19 +484,35 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.historyVehicle?.id]); // Depend on ID to prevent re-fetching when position changes
 
+    const stateContextValue = useMemo(() => ({
+        state,
+        isLoadingVehicles,
+        error,
+    }), [state, isLoadingVehicles, error]);
+
 
     return (
-        <FleetContext.Provider value={{ state, dispatch, isLoadingVehicles, error }}>
-            {children}
-        </FleetContext.Provider>
+        <FleetStateContext.Provider value={stateContextValue}>
+            <FleetDispatchContext.Provider value={dispatch}>
+                {children}
+            </FleetDispatchContext.Provider>
+        </FleetStateContext.Provider>
     );
 };
 
-// 7. Create a custom hook to use the context
-export const useFleet = () => {
-    const context = useContext(FleetContext);
+// 7. Create custom hooks to use the contexts
+export const useFleetState = () => {
+    const context = useContext(FleetStateContext);
     if (context === undefined) {
-        throw new Error('useFleet must be used within a FleetProvider');
+        throw new Error('useFleetState must be used within a FleetProvider');
+    }
+    return context;
+};
+
+export const useFleetDispatch = () => {
+    const context = useContext(FleetDispatchContext);
+    if (context === undefined) {
+        throw new Error('useFleetDispatch must be used within a FleetProvider');
     }
     return context;
 };

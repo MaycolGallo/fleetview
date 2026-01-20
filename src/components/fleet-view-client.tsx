@@ -10,7 +10,7 @@ import { Button } from './ui/button';
 import { ArrowLeft, PanelLeft } from 'lucide-react';
 import { VehicleList } from './vehicle-list';
 import { Skeleton } from './ui/skeleton';
-import { useFleet } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { VehicleDetails } from './vehicle-details';
 import { ClientOnly } from './client-only';
 import { cn } from '@/lib/utils';
@@ -26,7 +26,8 @@ interface FleetViewClientProps {
 }
 
 export function FleetViewClient({ apiKey }: FleetViewClientProps) {
-  const { state, dispatch, isLoadingVehicles, error } = useFleet();
+  const { state, isLoadingVehicles, error } = useFleetState();
+  const dispatch = useFleetDispatch();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
 
   const {
@@ -102,30 +103,32 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       <div className="flex-1 relative h-full w-full">
           <FleetMap apiKey={apiKey} />
 
-          <div className="absolute top-0 left-0 p-4 z-10">
-            {!historyVehicle ? (
-                <div style={{ viewTransitionName: 'filters-transition' }} className='flex gap-2 items-start'>
-                    <Button 
-                        variant="secondary"
-                        size="icon"
-                        onClick={() => setIsPanelOpen(!isPanelOpen)} 
-                        className='shadow-lg'
-                    >
-                        <PanelLeft className={cn("transition-transform", isPanelOpen && "rotate-180")} />
-                    </Button>
-                    <div className="bg-card/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-border/20 max-w-sm">
-                        <VehicleFilters />
+          <div className="absolute top-0 left-0 p-4 z-10 w-[calc(100%-2rem)]">
+            <div className='relative w-full h-12'>
+                {!historyVehicle ? (
+                    <div style={{ viewTransitionName: 'filters-transition' }} className='flex gap-2 items-start absolute top-0 left-0'>
+                        <Button 
+                            variant="secondary"
+                            size="icon"
+                            onClick={() => setIsPanelOpen(!isPanelOpen)} 
+                            className='shadow-lg'
+                        >
+                            <PanelLeft className={cn("transition-transform", isPanelOpen && "rotate-180")} />
+                        </Button>
+                        <div className="bg-card/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-border/20 max-w-sm">
+                            <VehicleFilters />
+                        </div>
                     </div>
-                </div>
-            ) : null}
+                ) : null}
 
-            {historyVehicle && !state.isLoadingRoute ? (
-                <div style={{ viewTransitionName: 'back-button-transition' }}>
-                    <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet View
-                    </Button>
-                </div>
-            ) : null}
+                {historyVehicle && !state.isLoadingRoute ? (
+                    <div style={{ viewTransitionName: 'back-button-transition' }} className="absolute top-0 left-0">
+                        <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg">
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet View
+                        </Button>
+                    </div>
+                ) : null}
+            </div>
           </div>
 
             {state.isLoadingRoute && (

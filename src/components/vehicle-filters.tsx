@@ -2,19 +2,21 @@
 
 "use client";
 
+import React, { useCallback } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useFleet, statusDetailsMap, ALL_STATUSES } from "@/context/fleet-context";
+import { useFleetState, useFleetDispatch, statusDetailsMap, ALL_STATUSES } from "@/context/fleet-context";
 import type { VehicleStatus } from "@/lib/types";
 
 interface VehicleFiltersProps {}
 
-export function VehicleFilters(props: VehicleFiltersProps) {
-  const { state, dispatch } = useFleet();
+function VehicleFiltersInternal(props: VehicleFiltersProps) {
+  const { state } = useFleetState();
+  const dispatch = useFleetDispatch();
   const { statusFilter, vehicles } = state;
   
-  const onFilterChange = (filter: 'all' | VehicleStatus) => {
+  const onFilterChange = useCallback((filter: 'all' | VehicleStatus) => {
     dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
-  }
+  }, [dispatch]);
 
   const count = vehicles.length;
 
@@ -42,3 +44,5 @@ export function VehicleFilters(props: VehicleFiltersProps) {
     </div>
   );
 }
+
+export const VehicleFilters = React.memo(VehicleFiltersInternal);
