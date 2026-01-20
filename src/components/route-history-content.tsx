@@ -21,13 +21,24 @@ interface RouteHistoryContentProps {
 }
 
 function formatDuration(minutes: number) {
-  if (minutes < 1) return '< 1 min';
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  let result = '';
-  if (h > 0) result += `${h}h `;
-  if (m > 0) result += `${m}m`;
-  return result.trim();
+  if (minutes < 1) {
+    const seconds = Math.round(minutes * 60);
+    return `${seconds}s`;
+  }
+  
+  const totalMinutes = Math.round(minutes);
+  if (totalMinutes < 60) {
+      return `${totalMinutes}m`;
+  }
+
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  
+  let result = `${h}h`;
+  if (m > 0) {
+    result += ` ${m}m`;
+  }
+  return result;
 }
 
 export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProps) {
