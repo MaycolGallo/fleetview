@@ -16,7 +16,7 @@ export function RoutePolyline({
   color: string,
   weight: number,
   zIndex?: number,
-  onClick?: (pointIndex: number) => void,
+  onClick?: () => void,
   showArrows?: boolean,
 }) {
   const map = useMap();
@@ -55,26 +55,8 @@ export function RoutePolyline({
       polylineRef.current = newPolyline;
 
       if (onClick) {
-        newPolyline.addListener('click', (e: google.maps.PolyMouseEvent) => {
-          if (!e.latLng || !routePath) return;
-
-          let closestPointIndex = -1;
-          let minDistance = Infinity;
-
-          routePath.forEach((point, index) => {
-            const distance = google.maps.geometry.spherical.computeDistanceBetween(
-              e.latLng!,
-              new google.maps.LatLng(point.lat, point.lng)
-            );
-            if (distance < minDistance) {
-              minDistance = distance;
-              closestPointIndex = index;
-            }
-          });
-
-          if (closestPointIndex !== -1) {
-            onClick(closestPointIndex);
-          }
+        newPolyline.addListener('click', () => {
+          onClick();
         });
       }
 

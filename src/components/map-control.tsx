@@ -15,11 +15,13 @@ export function MapControl() {
   const {
     mapViewport,
     highlightedSegment,
-    routePath
+    routePath,
+    routeSegments,
+    selectedSegmentIndex,
   } = state;
 
-  const handleRouteClick = (pointIndex: number) => {
-    dispatch({ type: 'SELECT_MAP_SEGMENT', payload: pointIndex });
+  const handleSegmentClick = (segmentIndex: number) => {
+    dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: segmentIndex });
   };
 
   useEffect(() => {
@@ -78,8 +80,35 @@ export function MapControl() {
             />
         ))}
 
-      <RoutePolyline routePath={routePath} color="#16a34a" weight={5} zIndex={1} onClick={handleRouteClick} />
-      <RoutePolyline routePath={highlightedSegment} color="#f59e0b" weight={7} zIndex={2} showArrows={true} />
+      {routePath && routePath.map((path, index) => {
+          const movingSegments = routeSegments.map((seg, i) => ({...seg, originalIndex: i})).filter(seg => seg.id_estado === '6');
+          const originalIndex = movingSegments[index]?.originalIndex;
+          
+          if (originalIndex === undefined || originalIndex === selectedSegmentIndex) {
+              return null;
+          }
+
+          return (
+            <RoutePolyline 
+              key={`main-route-${originalIndex}`} 
+              routePath={path} 
+              color="#16a34a" 
+              weight={5} 
+              zIndex={1} 
+              onClick={() => handleSegmentClick(originalIndex)}
+              showArrows={true} 
+            />
+          );
+      })}
+      
+      <RoutePolyline
+        routePath={highlightedSegment}
+        color="#f59e0b"
+        weight={7}
+        zIndex={2}
+        showArrows={true}
+        onClick={selectedSegmentIndex !== null ? () => handleSegmentClick(selectedSegmentIndex) : undefined}
+      />
     </>
   );
 }

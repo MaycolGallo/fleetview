@@ -39,7 +39,7 @@ interface FleetState {
   statusFilter: VehicleStatus | 'all';
   selectedVehicle: Vehicle | null;
   historyVehicle: Vehicle | null;
-  routePath: { lat: number; lng: number }[] | null;
+  routePath: { lat: number; lng: number }[][] | null;
   routeSegments: RouteSegment[];
   isRouteSheetOpen: boolean;
   isLoadingRoute: boolean;
@@ -58,10 +58,9 @@ type FleetAction =
   | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus | 'all' }
   | { type: 'PAN_TO_VEHICLE'; payload: Vehicle | null }
   | { type: 'START_ROUTE_LOADING'; payload: Vehicle }
-  | { type: 'SET_ROUTE_HISTORY'; payload: { routePoints: { lat: number; lng: number }[]; segments: RouteSegment[] } }
+  | { type: 'SET_ROUTE_HISTORY'; payload: { routePoints: { lat: number; lng: number }[][]; segments: RouteSegment[] } }
   | { type: 'BACK_TO_FLEET' }
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
-  | { type: 'SELECT_MAP_SEGMENT'; payload: number }
   | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: number }
   | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: number[], visible: boolean } }
@@ -170,7 +169,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'SET_ROUTE_HISTORY': {
         const { routePoints, segments } = action.payload;
-        const startOfRoute = routePoints && routePoints.length > 0 ? routePoints[0] : null;
+        const startOfRoute = routePoints && routePoints.length > 0 && routePoints[0].length > 0 ? routePoints[0][0] : null;
 
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute
             ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng }
@@ -183,7 +182,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             routeSegments: segments,
             isRouteSheetOpen: true,
             historyVehicle: updatedHistoryVehicle,
-            mapViewport: { type: 'fit_route', payload: routePoints },
+            mapViewport: { type: 'fit_route', payload: routePoints.flat() },
         };
     }
 
@@ -210,7 +209,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       const segmentIndex = action.payload;
       
       if (state.selectedSegmentIndex === segmentIndex) {
-        const startOfRoute = state.routePath ? state.routePath[0] : null;
+        const startOfRoute = state.routePath && state.routePath.length > 0 && state.routePath[0].length > 0 ? state.routePath[0][0] : null;
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng } : state.historyVehicle;
 
         return {
@@ -218,7 +217,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
           selectedSegmentIndex: null,
           highlightedSegment: null,
           historyVehicle: updatedHistoryVehicle,
-          mapViewport: { type: 'fit_route', payload: state.routePath || [] },
+          mapViewport: { type: 'fit_route', payload: state.routePath?.flat() || [] },
         };
       }
 
@@ -243,50 +242,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         historyVehicle: updatedHistoryVehicle,
         mapViewport: segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
       };
-    }
-    
-    case 'SELECT_MAP_SEGMENT': {
-        const pointIndex = action.payload;
-        if (!state.routePath || !state.routeSegments || state.routeSegments.length <= 1) return state;
-
-        let pointCounter = 0;
-        let targetSegmentOriginalIndex = -1;
-
-        for (let i = 0; i < state.routeSegments.length; i++) {
-            const segment = state.routeSegments[i];
-            if (segment.id_estado === '6') {
-                const segmentLength = segment.records.length;
-                if (pointIndex < pointCounter + segmentLength) {
-                    targetSegmentOriginalIndex = i;
-                    break;
-                }
-                pointCounter += segmentLength;
-            }
-        }
-        
-        if (targetSegmentOriginalIndex === -1 || state.selectedSegmentIndex === targetSegmentOriginalIndex) return state;
-
-        const segment = state.routeSegments[targetSegmentOriginalIndex];
-        if (!segment || segment.id_estado !== '6') return state;
-
-        const segmentPoints = segment.records.map(r => {
-          const [lat, lng] = r.coordenadas.split(',').map(Number);
-          return { lat, lng };
-        });
-        
-        const startRecord = segment.records[0];
-        
-        const updatedHistoryVehicle = state.historyVehicle
-          ? { ...state.historyVehicle, lat: segment.startPoint.lat, lng: segment.startPoint.lng, rumbo: startRecord.rumbo }
-          : null;
-
-        return {
-            ...state,
-            selectedSegmentIndex: targetSegmentOriginalIndex,
-            highlightedSegment: segmentPoints,
-            historyVehicle: updatedHistoryVehicle,
-            mapViewport: segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport,
-        };
     }
 
     case 'TOGGLE_VEHICLE_VISIBILITY': {

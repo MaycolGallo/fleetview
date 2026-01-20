@@ -55,7 +55,7 @@ function processHistory(history: VehicleHistoryPoint[]): RouteHistory {
   
   const routePoints = segments
     .filter(s => s.id_estado === '6')
-    .flatMap(s => s.records.map(r => parseCoords(r.coordenadas)));
+    .map(s => s.records.map(r => parseCoords(r.coordenadas)));
 
   return { segments, routePoints };
 }

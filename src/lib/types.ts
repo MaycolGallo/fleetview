@@ -58,8 +58,8 @@ export interface RouteSegment {
 }
 
 export interface RouteHistory {
-  // Simplified path connecting only the moving segments
-  routePoints: { lat: number; lng: number }[];
+  // Array of paths for each moving segment
+  routePoints: { lat: number; lng: number }[][];
   // Detailed segments
   segments: RouteSegment[];
 }
