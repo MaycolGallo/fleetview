@@ -29,6 +29,8 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | null = null;
+    
+    // If not playing, do nothing and ensure cleanup.
     if (!isRoutePlaying) {
       return;
     }
@@ -38,7 +40,8 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         return;
     }
 
-    // Always reset to the beginning when playback starts.
+    // This effect runs whenever `isRoutePlaying` becomes true.
+    // We ALWAYS reset and start from the beginning.
     playbackIndexRef.current = 0;
 
     const playNextPoint = () => {
@@ -52,15 +55,16 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         
         playbackIndexRef.current++;
 
-        timeoutId = setTimeout(playNextPoint, 10);
+        timeoutId = setTimeout(playNextPoint, 50); // Slowed down animation
     };
 
     playNextPoint();
     
     return () => {
-        if (timeoutId) {
-            clearTimeout(timeoutId);
-        }
+      // Cleanup function to stop the loop when component unmounts or `isRoutePlaying` becomes false.
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     };
   }, [isRoutePlaying, dispatch, movingPoints]);
 
@@ -80,7 +84,6 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
 
   const handleSegmentSelect = useCallback((segmentIndex: number) => {
     dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
-    playbackIndexRef.current = 0;
     dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: segmentIndex });
   }, [dispatch]);
   
