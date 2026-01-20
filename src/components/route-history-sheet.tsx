@@ -38,10 +38,8 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         return;
     }
 
-    // If starting playback from the end, reset to the beginning.
-    if (playbackIndexRef.current >= movingPoints.length) {
-      playbackIndexRef.current = 0;
-    }
+    // Always reset to the beginning when playback starts.
+    playbackIndexRef.current = 0;
 
     const playNextPoint = () => {
         if (playbackIndexRef.current >= movingPoints.length) {
