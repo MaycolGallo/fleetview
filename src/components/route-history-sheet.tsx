@@ -65,7 +65,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
             dispatch({ type: 'SET_PLAYBACK_TIMEOUT', payload: null });
         }
     };
-  }, [isRoutePlaying, dispatch, movingPoints, state.playbackTimeoutId]);
+  }, [isRoutePlaying, dispatch, movingPoints]);
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
