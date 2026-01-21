@@ -521,14 +521,16 @@ function mapNewToOldStatus(newStatus: string): string {
     }
 }
 
+const descriptionMap: { [key: string]: string } = {
+    '5': 'Ralenti',
+    '6': 'Estacionado',
+    '7': 'Transitando'
+};
+
+
 export async function POST(req: NextRequest) {
   try {
     const { vehicleId } = await req.json();
-
-    const allData = newVehicleHistoryData.groups
-    .flatMap((group: any) => group.records || [])
-    .filter((record: any) => record && record.coordenadas);
-
 
     const segments: RouteSegment[] = newVehicleHistoryData.groups.map((group: any) => {
       const records = group.records;
@@ -554,7 +556,7 @@ export async function POST(req: NextRequest) {
 
       return {
         id_estado: mapNewToOldStatus(group.id_estado),
-        description: firstRecord.param1,
+        description: descriptionMap[group.id_estado as keyof typeof descriptionMap] || 'Unknown',
         durationMinutes: group.total_time_seconds / 60,
         distanceKm: group.total_distance_km,
         avgSpeed: group.avg_velocidad,
@@ -568,7 +570,7 @@ export async function POST(req: NextRequest) {
 
     const routePoints = segments
       .filter(s => s.id_estado === '6') // '6' is "Transitando" (Moving)
-      .map(s => s.records.map(r => parseCoords(r.coordenadas)));
+      .flatMap(s => s.records.map(r => parseCoords(r.coordenadas)));
 
     const routeHistory: RouteHistory = { segments, routePoints };
 
