@@ -17,8 +17,6 @@ export function MapControl() {
 
   const {
     mapViewport,
-    highlightedSegment,
-    routePath,
     routeSegments,
     selectedSegmentIndex,
   } = state;
@@ -70,65 +68,41 @@ export function MapControl() {
 
   const mapVehicles = useMemo(() => selectMapVehicles(state), [state]);
 
-  const fullMovingPath = useMemo(() => {
-    if (!routePath) return null;
-    return routePath.flat();
-  }, [routePath]);
-
   return (
     <>
-        {mapVehicles.map((vehicle) => (
-            <AnimatedVehicleMarker
-              key={vehicle.id}
-              vehicle={vehicle}
-            />
-        ))}
+      {mapVehicles.map((vehicle) => (
+        <AnimatedVehicleMarker
+          key={vehicle.id}
+          vehicle={vehicle}
+        />
+      ))}
 
-      {/* 1. Base polyline (not clickable) */}
-      <RoutePolyline
-        routePath={fullMovingPath}
-        color="#16a34a"
-        weight={5}
-        zIndex={1}
-        showArrows={true}
-      />
-
-      {/* 2. Clickable transparent overlays for each segment */}
       {routeSegments.map((segment, index) => {
-        if (segment.id_estado !== '6' || segment.records.length === 0) return null;
-
-        const path = segment.records.map(r => {
+        const isSelected = selectedSegmentIndex === index;
+        
+        if (segment.id_estado === '6') { // MOVING
+          const path = segment.records.map(r => {
             const [lat, lng] = r.coordenadas.split(',').map(Number);
             return { lat, lng };
-        });
-
-        const handleSegmentClick = () => {
+          });
+          
+          const handleSegmentClick = () => {
             dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index });
-        };
+          };
 
-        return (
-          <RoutePolyline
-            key={`clickable-segment-${index}`}
-            routePath={path}
-            color="transparent" // Invisible
-            weight={20} // Larger click target
-            zIndex={2}
-            onClick={handleSegmentClick}
-          />
-        );
-      })}
-      
-      {/* 3. Highlighted segment */}
-      <RoutePolyline
-        routePath={highlightedSegment}
-        color="#f59e0b"
-        weight={7}
-        zIndex={3}
-        showArrows={true}
-      />
-
-      {selectedSegmentIndex === null && routeSegments.map((segment, index) => {
-        if ((segment.id_estado === '4' || segment.id_estado === '5') && segment.durationMinutes > 0) {
+          return (
+            <RoutePolyline
+              key={`segment-${index}`}
+              routePath={path}
+              color={isSelected ? '#f59e0b' : '#16a34a'}
+              weight={isSelected ? 8 : 6}
+              zIndex={isSelected ? 4 : 2}
+              onClick={handleSegmentClick}
+              showArrows={true}
+            />
+          );
+        } else if ((segment.id_estado === '4' || segment.id_estado === '5') && selectedSegmentIndex === null) {
+          // IDLE or PARKED, show event marker only when no segment is selected
           return (
             <EventMarker
               key={`event-${index}`}
@@ -138,43 +112,44 @@ export function MapControl() {
             />
           );
         }
+        
         return null;
       })}
-
+      
       {routeSegments.length > 0 && selectedSegmentIndex === null && (
         <>
-            <AdvancedMarker
-                position={routeSegments[0].startPoint}
-                zIndex={4}
-            >
-                <div className="flex flex-col items-center">
-                    <div className="bg-card/90 backdrop-blur-sm text-foreground text-xs font-semibold px-2 py-1 rounded-md shadow-md mb-1 whitespace-nowrap">
-                        Start
-                    </div>
-                    <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-card"
-                        style={{ backgroundColor: '#00CC33' }}
-                    >
-                        <Play className="w-4 h-4 text-white fill-white" />
-                    </div>
-                </div>
-            </AdvancedMarker>
-
-            <AdvancedMarker
-              position={routeSegments[routeSegments.length - 1].endPoint}
-              zIndex={4}
-            >
-              <div className="flex flex-col items-center">
-                <div className="bg-card/90 backdrop-blur-sm text-foreground text-xs font-semibold px-2 py-1 rounded-md shadow-md mb-1 whitespace-nowrap">
-                  Finish
-                </div>
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-card bg-destructive"
-                >
-                  <Flag className="w-4 h-4 text-white" />
-                </div>
+          <AdvancedMarker
+            position={routeSegments[0].startPoint}
+            zIndex={4}
+          >
+            <div className="flex flex-col items-center">
+              <div className="bg-card/90 backdrop-blur-sm text-foreground text-xs font-semibold px-2 py-1 rounded-md shadow-md mb-1 whitespace-nowrap">
+                Start
               </div>
-            </AdvancedMarker>
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-card"
+                style={{ backgroundColor: '#00CC33' }}
+              >
+                <Play className="w-4 h-4 text-white fill-white" />
+              </div>
+            </div>
+          </AdvancedMarker>
+
+          <AdvancedMarker
+            position={routeSegments[routeSegments.length - 1].endPoint}
+            zIndex={4}
+          >
+            <div className="flex flex-col items-center">
+              <div className="bg-card/90 backdrop-blur-sm text-foreground text-xs font-semibold px-2 py-1 rounded-md shadow-md mb-1 whitespace-nowrap">
+                Finish
+              </div>
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-card bg-destructive"
+              >
+                <Flag className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          </AdvancedMarker>
         </>
       )}
     </>

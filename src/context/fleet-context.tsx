@@ -37,7 +37,6 @@ interface FleetState {
   isRouteSheetOpen: boolean;
   isLoadingRoute: boolean;
   selectedSegmentIndex: number | null;
-  highlightedSegment: { lat: number; lng: number }[] | null;
   visibleVehicleIds: Set<number>;
   isMapDark: boolean;
   mapViewport: MapViewport;
@@ -79,7 +78,6 @@ const getInitialState = (): FleetState => ({
   isRouteSheetOpen: false,
   isLoadingRoute: false,
   selectedSegmentIndex: null,
-  highlightedSegment: null,
   visibleVehicleIds: new Set(),
   isMapDark: false,
   mapViewport: { type: 'initial' },
@@ -200,7 +198,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             routeSegments: [],
             selectedVehicle: null,
             isRouteSheetOpen: false,
-            highlightedSegment: null,
             selectedSegmentIndex: null,
             isLoadingRoute: false,
             isRoutePlaying: false,
@@ -218,7 +215,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         return {
           ...state,
           selectedSegmentIndex: null,
-          highlightedSegment: null,
           historyVehicle: updatedHistoryVehicle,
           mapViewport: { type: 'fit_route', payload: state.routePath?.flat() || [] },
         };
@@ -227,12 +223,11 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       const segment = state.routeSegments[segmentIndex];
       if (!segment) return state;
 
-      let segmentPoints: { lat: number; lng: number }[] = [];
       let newMapViewport: MapViewport = state.mapViewport;
       let updatedHistoryVehicle = state.historyVehicle;
 
       if (segment.id_estado === '6') { // Moving segment
-        segmentPoints = segment.records.map(r => {
+        const segmentPoints = segment.records.map(r => {
             const [lat, lng] = r.coordenadas.split(',').map(Number);
             return { lat, lng };
         });
@@ -242,7 +237,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             updatedHistoryVehicle = { ...updatedHistoryVehicle, lat: segment.startPoint.lat, lng: segment.startPoint.lng, rumbo: startRecord.rumbo };
         }
       } else { // Parked or Idle segment
-        segmentPoints = []; // No path to highlight for a stop.
         newMapViewport = { type: 'pan_to_vehicle', payload: { ...state.historyVehicle!, lat: segment.startPoint.lat, lng: segment.startPoint.lng }};
         if (updatedHistoryVehicle) {
             updatedHistoryVehicle = { ...updatedHistoryVehicle, lat: segment.startPoint.lat, lng: segment.startPoint.lng };
@@ -252,7 +246,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       return {
         ...state,
         selectedSegmentIndex: segmentIndex,
-        highlightedSegment: segment.id_estado === '6' ? segmentPoints : null, 
         historyVehicle: updatedHistoryVehicle,
         mapViewport: newMapViewport,
       };
