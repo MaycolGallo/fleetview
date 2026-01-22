@@ -105,9 +105,9 @@ export const statusDetailsMap: { [key in VehicleStatus]: { name: string; color: 
 };
 
 export const routeStatusDetailsMap: { [key: string]: { name: string; color: string; icon: React.ElementType; } } = {
-  '5': { name: 'Ralenti', color: '#9E9E9E', icon: Clock },
-  '6': { name: 'Estacionado', color: '#666666', icon: ParkingSquare },
-  '7': { name: 'Transitando', color: '#00CC33', icon: Truck },
+  '4': { name: 'Ralenti', color: '#9E9E9E', icon: Clock },
+  '5': { name: 'Estacionado', color: '#666666', icon: ParkingSquare },
+  '6': { name: 'Transitando', color: '#00CC33', icon: Truck },
 };
 
 
@@ -231,7 +231,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       let newMapViewport: MapViewport = state.mapViewport;
       let updatedHistoryVehicle = state.historyVehicle;
 
-      if (segment.id_estado === '7') { // Moving segment
+      if (segment.id_estado === '6') { // Moving segment
         segmentPoints = segment.records.map(r => {
             const [lat, lng] = r.coordenadas.split(',').map(Number);
             return { lat, lng };
@@ -252,7 +252,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       return {
         ...state,
         selectedSegmentIndex: segmentIndex,
-        highlightedSegment: segment.id_estado === '7' ? segmentPoints : null, 
+        highlightedSegment: segment.id_estado === '6' ? segmentPoints : null, 
         historyVehicle: updatedHistoryVehicle,
         mapViewport: newMapViewport,
       };
@@ -372,7 +372,7 @@ export const selectRouteSummary = (state: FleetState) => {
     (summary, segment) => {
       summary.totalDistance += segment.distanceKm;
       summary.totalDuration += segment.durationMinutes;
-      if (segment.id_estado === '6') {
+      if (segment.id_estado === '5') {
         summary.totalStops += 1;
         summary.totalStopTime += segment.durationMinutes;
       }

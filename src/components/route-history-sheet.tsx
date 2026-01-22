@@ -21,7 +21,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const movingPoints = useMemo(() => {
     if (!isRouteSheetOpen) return [];
     return routeSegments
-        .filter(seg => seg.id_estado === '7')
+        .filter(seg => seg.id_estado === '6')
         .flatMap(seg => seg.records.map(r => {
             const [lat, lng] = r.coordenadas.split(',').map(Number);
             return { lat, lng, rumbo: r.rumbo, fecha: r.fecha };

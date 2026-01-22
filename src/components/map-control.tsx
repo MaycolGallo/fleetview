@@ -95,7 +95,7 @@ export function MapControl() {
 
       {/* 2. Clickable transparent overlays for each segment */}
       {routeSegments.map((segment, index) => {
-        if (segment.id_estado !== '7' || segment.records.length === 0) return null;
+        if (segment.id_estado !== '6' || segment.records.length === 0) return null;
 
         const path = segment.records.map(r => {
             const [lat, lng] = r.coordenadas.split(',').map(Number);
@@ -128,7 +128,7 @@ export function MapControl() {
       />
 
       {selectedSegmentIndex === null && routeSegments.map((segment, index) => {
-        if ((segment.id_estado === '5' || segment.id_estado === '6') && segment.durationMinutes > 0) {
+        if ((segment.id_estado === '4' || segment.id_estado === '5') && segment.durationMinutes > 0) {
           return (
             <EventMarker
               key={`event-${index}`}
