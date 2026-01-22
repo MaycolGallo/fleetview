@@ -524,20 +524,22 @@ export async function POST(req: NextRequest) {
     const { vehicleId } = await req.json();
 
     const segments: RouteSegment[] = newVehicleHistoryData.groups.map((group: any) => {
-      const records = group.records;
+      let records = group.records;
       if (!records || records.length === 0) {
           if (group.start_coords && group.end_coords) {
              const [startLat, startLng] = group.start_coords.split(',').map(Number);
-             records.push({
-                coordenadas: group.start_coords,
-                fecha: Math.floor(Date.now()/1000) - 1000,
-                param1: group.id_estado === '6' ? 'Parked' : 'Idle',
-             });
-             records.push({
-                coordenadas: group.end_coords,
-                fecha: Math.floor(Date.now()/1000),
-                param1: group.id_estado === '6' ? 'Parked' : 'Idle',
-             });
+             records = [
+                {
+                    coordenadas: group.start_coords,
+                    fecha: Math.floor(Date.now()/1000) - 1000,
+                    param1: group.id_estado === '6' ? 'Parked' : 'Idle',
+                },
+                {
+                    coordenadas: group.end_coords,
+                    fecha: Math.floor(Date.now()/1000),
+                    param1: group.id_estado === '6' ? 'Parked' : 'Idle',
+                }
+             ];
           } else {
             return null;
           }
