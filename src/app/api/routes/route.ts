@@ -1366,6 +1366,167 @@ const newVehicleHistoryData = {
                     "updated_at": null
                 }
             ]
+        },
+        {
+            "id_estado": "6",
+            "count": 3,
+            "total_time_seconds": 40,
+            "total_time_formatted": "40s",
+            "avg_velocidad": 20,
+            "max_velocidad": 25,
+            "total_distance_km": 0.3,
+            "start_coords": "-14.20403,-75.71428",
+            "end_coords": "-14.20600,-75.71200",
+            "records": [
+                {
+                    "id": "7737",
+                    "id_vehiculo": 643,
+                    "coordenadas": "-14.20403,-75.71428",
+                    "tramas_validas": 1,
+                    "id_estado": "6",
+                    "velocidad": "15.00",
+                    "rumbo": 150,
+                    "odometro": "9057.00",
+                    "horometro": "0.00",
+                    "numero_satelites": 0,
+                    "nivel_bateria": "3.72",
+                    "temperatura": "0.00",
+                    "senal_gsm": 25,
+                    "nivel_bateria_vehicular": "27.60",
+                    "id_cliente": 132,
+                    "din": 10,
+                    "fecha": 1768987150,
+                    "altitud": 0,
+                    "codigo": 6,
+                    "param1": "Transitando",
+                    "param2": "El vehiculo esta transitando",
+                    "param3": "#17C653",
+                    "param4": "000000",
+                    "created_at": "2025-12-17T15:46:46.078Z",
+                    "updated_at": null
+                },
+                {
+                    "id": "7738",
+                    "id_vehiculo": 643,
+                    "coordenadas": "-14.20500,-75.71350",
+                    "tramas_validas": 1,
+                    "id_estado": "6",
+                    "velocidad": "25.00",
+                    "rumbo": 145,
+                    "odometro": "9057.15",
+                    "horometro": "0.00",
+                    "numero_satelites": 0,
+                    "nivel_bateria": "3.72",
+                    "temperatura": "0.00",
+                    "senal_gsm": 26,
+                    "nivel_bateria_vehicular": "27.65",
+                    "id_cliente": 132,
+                    "din": 10,
+                    "fecha": 1768987170,
+                    "altitud": 0,
+                    "codigo": 6,
+                    "param1": "Transitando",
+                    "param2": "El vehiculo esta transitando",
+                    "param3": "#17C653",
+                    "param4": "000000",
+                    "created_at": "2025-12-17T15:46:46.078Z",
+                    "updated_at": null
+                },
+                {
+                    "id": "7739",
+                    "id_vehiculo": 643,
+                    "coordenadas": "-14.20600,-75.71200",
+                    "tramas_validas": 1,
+                    "id_estado": "6",
+                    "velocidad": "20.00",
+                    "rumbo": 140,
+                    "odometro": "9057.30",
+                    "horometro": "0.00",
+                    "numero_satelites": 0,
+                    "nivel_bateria": "3.72",
+                    "temperatura": "0.00",
+                    "senal_gsm": 27,
+                    "nivel_bateria_vehicular": "27.62",
+                    "id_cliente": 132,
+                    "din": 10,
+                    "fecha": 1768987190,
+                    "altitud": 0,
+                    "codigo": 6,
+                    "param1": "Transitando",
+                    "param2": "El vehiculo esta transitando",
+                    "param3": "#17C653",
+                    "param4": "000000",
+                    "created_at": "2025-12-17T15:46:46.078Z",
+                    "updated_at": null
+                }
+            ]
+        },
+        {
+            "id_estado": "5",
+            "count": 2,
+            "total_time_seconds": 60,
+            "total_time_formatted": "1m 0s",
+            "avg_velocidad": 0,
+            "max_velocidad": 0,
+            "total_distance_km": 0,
+            "start_coords": "-14.20600,-75.71200",
+            "end_coords": "-14.20600,-75.71200",
+            "records": [
+                {
+                    "id": "7740",
+                    "id_vehiculo": 643,
+                    "coordenadas": "-14.20600,-75.71200",
+                    "tramas_validas": 1,
+                    "id_estado": "5",
+                    "velocidad": "0.00",
+                    "rumbo": 140,
+                    "odometro": "9057.30",
+                    "horometro": "0.00",
+                    "numero_satelites": 0,
+                    "nivel_bateria": "3.72",
+                    "temperatura": "0.00",
+                    "senal_gsm": 28,
+                    "nivel_bateria_vehicular": "27.50",
+                    "id_cliente": 132,
+                    "din": 10,
+                    "fecha": 1768987220,
+                    "altitud": 0,
+                    "codigo": 4,
+                    "param1": "Estacionado",
+                    "param2": "Vehiculo estacionado con el motor apagado",
+                    "param3": "#d63384",
+                    "param4": "000000",
+                    "created_at": "2025-12-17T15:46:46.078Z",
+                    "updated_at": null
+                },
+                {
+                    "id": "7741",
+                    "id_vehiculo": 643,
+                    "coordenadas": "-14.20600,-75.71200",
+                    "tramas_validas": 1,
+                    "id_estado": "5",
+                    "velocidad": "0.00",
+                    "rumbo": 140,
+                    "odometro": "9057.30",
+                    "horometro": "0.00",
+                    "numero_satelites": 0,
+                    "nivel_bateria": "3.72",
+                    "temperatura": "0.00",
+                    "senal_gsm": 28,
+                    "nivel_bateria_vehicular": "27.51",
+                    "id_cliente": 132,
+                    "din": 10,
+                    "fecha": 1768987280,
+                    "altitud": 0,
+                    "codigo": 4,
+                    "param1": "Estacionado",
+                    "param2": "Vehiculo estacionado con el motor apagado",
+                    "param3": "#d63384",
+                    "param4": "000000",
+                    "created_at": "2025-12-17T15:46:46.078Z",
+                    "updated_at": null
+                }
+            ]
         }
     ]
 };
@@ -1425,7 +1586,7 @@ export async function POST(req: NextRequest) {
     }).filter((s: RouteSegment | null): s is RouteSegment => s !== null && s.records.length > 0);
 
     const routePoints = segments
-      .filter(s => s.id_estado === '6') // '6' is "Transitando" (Moving)
+      .filter(s => s.id_estado === '6')
       .map(s => s.records.map(r => parseCoords(r.coordenadas)));
 
     const routeHistory: RouteHistory = { segments, routePoints };
@@ -1436,3 +1597,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to generate route' }, { status: 500 });
   }
 }
+
+    
