@@ -74,6 +74,8 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
         }
     };
 
+    console.log(segments)
+
     return (
         <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
             <CardHeader>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
@@ -20,7 +21,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const movingPoints = useMemo(() => {
     if (!isRouteSheetOpen) return [];
     return routeSegments
-        .filter(seg => seg.id_estado === '6')
+        .filter(seg => seg.id_estado === '7')
         .flatMap(seg => seg.records.map(r => {
             const [lat, lng] = r.coordenadas.split(',').map(Number);
             return { lat, lng, rumbo: r.rumbo, fecha: r.fecha };
@@ -40,8 +41,10 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         return;
     }
     
-    cleanup();
-    playbackIndexRef.current = 0; // ALWAYS restart from the beginning
+    // If play is hit again, always restart from the beginning
+    if (playbackIndexRef.current >= movingPoints.length -1 || playbackIndexRef.current === 0) {
+        playbackIndexRef.current = 0;
+    }
     
     if (movingPoints.length === 0) {
         dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
@@ -51,7 +54,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
     const playNextPoint = () => {
         const currentIndex = playbackIndexRef.current;
         
-        if (!isRoutePlaying || currentIndex >= movingPoints.length) {
+        if (currentIndex >= movingPoints.length) {
             dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
             cleanup();
             return;
@@ -65,18 +68,18 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
             const nextPoint = movingPoints[nextIndex];
             const timeDiffSeconds = nextPoint.fecha - currentPoint.fecha;
             
-            const PLAYBACK_SPEED_MULTIPLIER = 100;
+            const PLAYBACK_SPEED_MULTIPLIER = 10;
             delay = (timeDiffSeconds * 1000) / PLAYBACK_SPEED_MULTIPLIER;
             delay = Math.max(50, Math.min(delay, 500));
         } else {
-            delay = 200; // Final animation
+            delay = 500; // Final animation
         }
 
         dispatch({ type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: currentPoint.lat, lng: currentPoint.lng, rumbo: currentPoint.rumbo, animationDuration: delay } });
         
         playbackIndexRef.current = nextIndex;
 
-        if (nextIndex < movingPoints.length) {
+        if (nextIndex < movingPoints.length && isRoutePlaying) {
             timeoutRef.current = setTimeout(playNextPoint, delay);
         } else {
              dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
@@ -89,7 +92,9 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
 
     // The effect's cleanup function handles pausing/stopping
     return cleanup;
-  }, [isRoutePlaying, dispatch, movingPoints]);
+  // This effect should only re-run when `isRoutePlaying` changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRoutePlaying, dispatch]);
 
 
   const handleOpenChange = useCallback((isOpen: boolean) => {

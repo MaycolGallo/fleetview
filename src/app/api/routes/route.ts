@@ -512,15 +512,6 @@ function parseCoords(coordenadas: string): { lat: number; lng: number } {
   return { lat, lng };
 }
 
-function mapNewToOldStatus(newStatus: string): string {
-    switch(newStatus) {
-        case '5': return '4'; // Ralenti -> Idle
-        case '6': return '5'; // Estacionado -> Parked
-        case '7': return '6'; // Transitando -> Moving
-        default: return newStatus;
-    }
-}
-
 const descriptionMap: { [key: string]: string } = {
     '5': 'Ralenti',
     '6': 'Estacionado',
@@ -555,7 +546,7 @@ export async function POST(req: NextRequest) {
       const lastRecord = records[records.length - 1];
 
       return {
-        id_estado: mapNewToOldStatus(group.id_estado),
+        id_estado: group.id_estado,
         description: descriptionMap[group.id_estado as keyof typeof descriptionMap] || 'Unknown',
         durationMinutes: group.total_time_seconds / 60,
         distanceKm: group.total_distance_km,
@@ -569,7 +560,7 @@ export async function POST(req: NextRequest) {
     }).filter((s: RouteSegment | null): s is RouteSegment => s !== null && s.records.length > 0);
 
     const routePoints = segments
-      .filter(s => s.id_estado === '6') // '6' is "Transitando" (Moving)
+      .filter(s => s.id_estado === '7') // '7' is "Transitando" (Moving)
       .map(s => s.records.map(r => parseCoords(r.coordenadas)));
 
     const routeHistory: RouteHistory = { segments, routePoints };

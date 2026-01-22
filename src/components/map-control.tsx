@@ -103,7 +103,7 @@ export function MapControl() {
       />
 
       {selectedSegmentIndex === null && routeSegments.map((segment, index) => {
-        if ((segment.id_estado === '4' || segment.id_estado === '5') && segment.durationMinutes > 0) {
+        if ((segment.id_estado === '5' || segment.id_estado === '6') && segment.durationMinutes > 0) {
           return (
             <EventMarker
               key={`event-${index}`}
