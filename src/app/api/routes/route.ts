@@ -503,7 +503,7 @@ const newVehicleHistoryData = {
                     "updated_at": null
                 }
             ]
-        },
+        }
     ]
 };
 
@@ -570,7 +570,7 @@ export async function POST(req: NextRequest) {
 
     const routePoints = segments
       .filter(s => s.id_estado === '6') // '6' is "Transitando" (Moving)
-      .flatMap(s => s.records.map(r => parseCoords(r.coordenadas)));
+      .map(s => s.records.map(r => parseCoords(r.coordenadas)));
 
     const routeHistory: RouteHistory = { segments, routePoints };
 

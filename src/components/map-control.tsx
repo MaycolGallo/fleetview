@@ -75,6 +75,8 @@ export function MapControl() {
     return routePath.flat();
   }, [routePath]);
 
+  console.log(routePath)
+
   return (
     <>
         {mapVehicles.map((vehicle) => (
