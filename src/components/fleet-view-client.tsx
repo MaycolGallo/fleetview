@@ -1,19 +1,17 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Vehicle } from '@/lib/types';
 import dynamic from 'next/dynamic';
 import { VehicleFilters } from './vehicle-filters';
 import { RouteHistorySheet } from './route-history-sheet';
 import { Button } from './ui/button';
 import { ArrowLeft, PanelLeft } from 'lucide-react';
-import { VehicleList } from './vehicle-list';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
-import { VehicleDetails } from './vehicle-details';
-import { ClientOnly } from './client-only';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { VehiclePanelContent } from './vehicle-panel-content';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -26,14 +24,13 @@ interface FleetViewClientProps {
 }
 
 export function FleetViewClient({ apiKey }: FleetViewClientProps) {
-  const { state, isLoadingVehicles, error } = useFleetState();
+  const { state, error } = useFleetState();
   const dispatch = useFleetDispatch();
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const {
-    vehicles,
     historyVehicle,
-    selectedVehicle,
   } = state;
 
   useEffect(() => {
@@ -53,6 +50,14 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         dispatch({ type: 'BACK_TO_FLEET' });
     }
   };
+
+  const handleVehicleSelect = () => {
+    if (isMobile) {
+      // The sheet is already open, do nothing.
+    } else {
+      if (!isPanelOpen) setIsPanelOpen(true);
+    }
+  };
   
   if (error) {
     return (
@@ -62,42 +67,26 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     );
   }
 
+  const panelContent = <VehiclePanelContent onVehicleSelect={handleVehicleSelect} />;
+
   return (
     <div className="relative h-full w-full flex">
-        {isPanelOpen && (
-          <div
-            className="h-full bg-background border-r flex-shrink-0 transition-all duration-300 w-[350px]"
-          >
-             <div className="h-full w-[350px] flex flex-col">
-                {selectedVehicle ? (
-                    <ClientOnly>
-                        <VehicleDetails />
-                    </ClientOnly>
-                ) : (
-                    <div className="h-full flex flex-col">
-                        <div className="p-4 border-b">
-                            <h2 className="text-lg font-semibold">Vehicles</h2>
-                            <p className="text-sm text-muted-foreground">
-                                {vehicles.length} vehicles available
-                            </p>
-                        </div>
-                        <div className="flex-1 overflow-y-auto">
-                            {isLoadingVehicles ? (
-                                <div className="p-4 flex flex-col gap-2">
-                                    {Array.from({ length: 10 }).map((_, i) => (
-                                    <Skeleton key={i} className="h-16 w-full" />
-                                    ))}
-                                </div>
-                            ) : (
-                                <VehicleList onVehicleSelect={() => {
-                                    if (!isPanelOpen) setIsPanelOpen(true);
-                                }} />
-                            )}
-                        </div>
-                    </div>
-                )}
+        {isMobile ? (
+          <Sheet open={isPanelOpen} onOpenChange={setIsPanelOpen}>
+            <SheetContent side="left" className="w-[85%] max-w-sm p-0 border-r-0">
+              {panelContent}
+            </SheetContent>
+          </Sheet>
+        ) : (
+          isPanelOpen && (
+            <div
+              className="h-full bg-background border-r flex-shrink-0 transition-all duration-300 w-[350px]"
+            >
+              <div className="h-full w-[350px] flex flex-col">
+                {panelContent}
+              </div>
             </div>
-          </div>
+          )
         )}
       
       <div className="flex-1 relative h-full w-full">
