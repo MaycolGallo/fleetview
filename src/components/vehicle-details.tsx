@@ -10,7 +10,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
-import { useFleetState, useFleetDispatch, statusDetailsMap } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ArrowLeft, Move, Gauge, Tag, Rss, Clock, Wind, BarChart, Battery, BatteryFull } from 'lucide-react';
 import { Badge } from './ui/badge';
@@ -62,8 +62,6 @@ function VehicleDetailsInternal() {
     return null;
   }
 
-  const statusDetail = statusDetailsMap[selectedVehicle.status];
-
   return (
     <div className="h-full flex flex-col">
         <div className="p-4 border-b flex items-center gap-3">
@@ -75,9 +73,9 @@ function VehicleDetailsInternal() {
                 <div className="text-sm text-muted-foreground">
                     <Badge
                         className="capitalize text-white"
-                        style={{ backgroundColor: statusDetail.color }}
+                        style={{ backgroundColor: selectedVehicle.color }}
                     >
-                        {statusDetail.name}
+                        {selectedVehicle.nombre_estado}
                     </Badge>
                 </div>
             </div>
@@ -88,7 +86,7 @@ function VehicleDetailsInternal() {
                     <CardTitle className='text-base'>Información Actual</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-3">
-                    <DetailItem icon={Tag} label="ID Vehículo" value={selectedVehicle.id_vehiculo} />
+                    <DetailItem icon={Tag} label="ID Vehículo" value={selectedVehicle.id} />
                     <DetailItem icon={Gauge} label="Velocidad" value={selectedVehicle.velocidad} unit="km/h" />
                     <DetailItem icon={Rss} label="Odómetro" value={parseFloat(selectedVehicle.odometro).toLocaleString()} unit="km" />
                     <DetailItem icon={Wind} label="Rumbo" value={selectedVehicle.rumbo} unit="°" />
@@ -102,20 +100,19 @@ function VehicleDetailsInternal() {
 
             <Card>
                 <CardHeader className='p-4'>
-                    <CardTitle className='text-base'>Batería</CardTitle>
+                    <CardTitle className='text-base'>Telemetría</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-3">
                      <DetailItem 
-                        icon={Battery}
-                        label="GPS" 
-                        value={selectedVehicle.bateria} 
-                        unit="V"
-                    />
-                     <DetailItem 
                         icon={BatteryFull} 
-                        label="Vehículo" 
+                        label="Batería Vehículo" 
                         value={selectedVehicle.bateria_vehiculo}
                         unit="V"
+                    />
+                    <DetailItem
+                        icon={Wifi}
+                        label="Señal GSM"
+                        value={selectedVehicle.senal_gsm}
                     />
                 </CardContent>
             </Card>

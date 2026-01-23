@@ -1,21 +1,44 @@
-export type VehicleStatus = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10';
 
+// The raw data structure returned from the /api/vehicles endpoint
+export interface RawVehicle {
+  id_ubicacion: number;
+  id_vehiculo: number;
+  coordenadas: string;
+  id_estado: number;
+  fecha: number;
+  velocidad: string;
+  rumbo: number;
+  odometro: string;
+  senal_gsm: number;
+  nivel_bateria_vehicular: string;
+  vehiculo: {
+    vehiculo_placa: string;
+  };
+  estado: {
+    id_estado: number;
+    param1: string; // Status name, e.g., "Transitando"
+    param3: string; // Status color hex, e.g., "#00CC33"
+  };
+}
+
+// The processed and flattened data structure used throughout the app's components and state
 export interface Vehicle {
   id: number;
   lat: number;
   lng: number;
-  id_vehiculo: number;
   placa: string;
   velocidad: number;
   odometro: string;
   rumbo: number;
-  status: VehicleStatus;
+  status: string; // id_estado as a string
   nombre_estado: string;
+  color: string;
   fecha: number;
-  bateria: string;
   bateria_vehiculo: string;
   senal_gsm: number;
 }
+
+export type VehicleStatus = string;
 
 export interface VehicleHistoryPoint {
   id: string;

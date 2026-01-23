@@ -1,12 +1,13 @@
+
 'use client';
 
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from './vehicle-pin';
-import React, { useState, useRef, MouseEvent, useCallback } from 'react';
+import React, { useState, useRef, MouseEvent } from 'react';
 import { Gauge } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useFleetState, useFleetDispatch, statusDetailsMap } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useAnimatedPosition } from '@/hooks/use-animated-position';
 import { VehicleContextMenu } from './vehicle-context-menu';
 import { VehicleMobileContextMenu } from './vehicle-mobile-context-menu';
@@ -77,7 +78,7 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
     }
   };
 
-  const color = statusDetailsMap[vehicle.status as keyof typeof statusDetailsMap]?.color || '#9E9E9E';
+  const color = vehicle.color || '#9E9E9E';
 
   return (
     <>

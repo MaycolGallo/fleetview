@@ -1,9 +1,8 @@
 
-
 "use client";
 
 import React, { useCallback, useMemo } from 'react';
-import { useFleetState, useFleetDispatch, statusDetailsMap, ALL_STATUSES } from "@/context/fleet-context";
+import { useFleetState, useFleetDispatch } from "@/context/fleet-context";
 import type { VehicleStatus } from "@/lib/types";
 import { MultiSelect } from './ui/multi-select';
 
@@ -19,15 +18,18 @@ function VehicleFiltersInternal(props: VehicleFiltersProps) {
   }, [dispatch]);
 
   const options = useMemo(() => {
-    const statusCounts = ALL_STATUSES.reduce((acc, status) => {
-        acc[status] = vehicles.filter(v => v.status === status).length;
-        return acc;
-    }, {} as Record<VehicleStatus, number>);
+    const statusMap = new Map<string, { name: string, count: number }>();
+    
+    vehicles.forEach(v => {
+      if (!statusMap.has(v.status)) {
+        statusMap.set(v.status, { name: v.nombre_estado, count: 0 });
+      }
+      statusMap.get(v.status)!.count++;
+    });
 
-    return ALL_STATUSES.map(status => ({
-        value: status,
-        label: `${statusDetailsMap[status].name} (${statusCounts[status]})`,
-        icon: statusDetailsMap[status].icon,
+    return Array.from(statusMap.entries()).map(([statusId, { name, count }]) => ({
+      value: statusId,
+      label: `${name} (${count})`,
     }));
   }, [vehicles]);
 

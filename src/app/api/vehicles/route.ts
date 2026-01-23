@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import type { Vehicle, VehicleStatus } from '@/lib/types';
+import type { RawVehicle } from '@/lib/types';
 
 // Lima, Peru bounding box
 const LIMA_BOUNDS = {
@@ -12,20 +12,19 @@ function getRandomCoordinate(min: number, max: number) {
   return Math.random() * (max - min) + min;
 }
 
-const statusMap: { [key in VehicleStatus]: string } = {
-  '0': 'Sin Cobertura',
-  '1': 'Vehiculo Detenido y Apagado',
-  '2': 'Vehiculo Detenido y Encendido',
-  '3': 'Exceso de Velocidad',
-  '4': 'Alarma de Panico',
-  '5': 'Alarma de Puerta',
-  '6': 'El vehiculo esta transitando',
-  '7': 'Bateria del GPS Desconectada',
-  '8': 'Bateria del GPS Baja',
-  '9': 'Motor Apagado via Remoto',
-  '10': 'Motor Encendido via Remoto',
-};
-
+const STATUS_DEFINITIONS = [
+    { id: 0, name: 'Libre', color: '#B0BEC5' },
+    { id: 1, name: 'SRalenti', color: '#78909C' },
+    { id: 2, name: 'Detenido y Encendido', color: '#F1C40F' },
+    { id: 3, name: 'Exceso de Velocidad', color: '#E74C3C' },
+    { id: 4, name: 'Ralenti', color: '#9E9E9E' },
+    { id: 5, name: 'Estacionado', color: '#666666' },
+    { id: 6, name: 'Transitando', color: '#00CC33' },
+    { id: 7, name: 'Bloqueado', color: '#003399' },
+    { id: 8, name: 'Batería Desconectada', color: '#FF66B0' },
+    { id: 9, name: 'Mantenimiento', color: '#8D6E63' },
+    { id: 10, name: 'Encendido Remoto', color: '#27AE60' },
+];
 
 const samplePlacas = [
   'ASG-831', 'B2H-576', 'C9A-123', 'D4F-987', 'E1G-456',
@@ -33,31 +32,38 @@ const samplePlacas = [
   'K4P-567', 'L6Q-890', 'M1R-109', 'N5S-876', 'P3T-543'
 ];
 
-function generateVehicle(index: number): Vehicle {
-  const status = (Math.floor(Math.random() * 11)).toString() as VehicleStatus;
+function generateVehicle(index: number): RawVehicle {
+  const statusDef = STATUS_DEFINITIONS[Math.floor(Math.random() * STATUS_DEFINITIONS.length)];
   
   let speed = 0;
-  if (status === '6') { // Transitando
+  if (statusDef.id === 6) { // Transitando
     speed = Math.floor(Math.random() * 60) + 20; // 20-79 km/h
-  } else if (status === '3') { // Exceso de velocidad
+  } else if (statusDef.id === 3) { // Exceso de velocidad
     speed = Math.floor(Math.random() * 40) + 80; // 80-119 km/h
   }
 
+  const lat = getRandomCoordinate(LIMA_BOUNDS.lat.min, LIMA_BOUNDS.lat.max);
+  const lng = getRandomCoordinate(LIMA_BOUNDS.lng.min, LIMA_BOUNDS.lng.max);
+
   return {
-    id: index,
-    lat: getRandomCoordinate(LIMA_BOUNDS.lat.min, LIMA_BOUNDS.lat.max),
-    lng: getRandomCoordinate(LIMA_BOUNDS.lng.min, LIMA_BOUNDS.lng.max),
+    id_ubicacion: 10000 + index,
     id_vehiculo: 1000 + index,
-    placa: samplePlacas[Math.floor(Math.random() * samplePlacas.length)],
-    velocidad: speed,
-    odometro: (Math.random() * 100000).toFixed(2),
-    rumbo: Math.floor(Math.random() * 360),
-    status: status,
-    nombre_estado: statusMap[status],
+    coordenadas: `${lat.toFixed(6)},${lng.toFixed(6)}`,
+    id_estado: statusDef.id,
     fecha: Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 3600), // Within the last hour
-    bateria: (Math.random() * (4.2 - 3.5) + 3.5).toFixed(2), // GPS battery
-    bateria_vehiculo: (Math.random() * (13.8 - 12.0) + 12.0).toFixed(2), // Vehicle battery
-    senal_gsm: Math.floor(Math.random() * 32), // Random signal strength 0-31
+    velocidad: speed.toFixed(2),
+    rumbo: Math.floor(Math.random() * 360),
+    odometro: (Math.random() * 100000).toFixed(2),
+    senal_gsm: Math.floor(Math.random() * 32),
+    nivel_bateria_vehicular: (Math.random() * (13.8 - 12.0) + 12.0).toFixed(2),
+    vehiculo: {
+      vehiculo_placa: samplePlacas[index % samplePlacas.length],
+    },
+    estado: {
+      id_estado: statusDef.id,
+      param1: statusDef.name,
+      param3: statusDef.color,
+    },
   };
 }
 

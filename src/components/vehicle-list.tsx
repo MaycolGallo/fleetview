@@ -5,7 +5,7 @@ import type { Vehicle } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import React, { useMemo, useCallback } from "react";
-import { useFleetState, useFleetDispatch, statusDetailsMap, selectFilteredVehicles } from "@/context/fleet-context";
+import { useFleetState, useFleetDispatch, selectFilteredVehicles } from "@/context/fleet-context";
 import { Car, Clock, Wifi, Battery } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { fromUnixTime, formatDistanceToNow } from 'date-fns';
@@ -23,7 +23,6 @@ const VehicleListItem = React.memo(({
     isSelected: boolean;
     onSelect: (vehicle: Vehicle) => void;
 }) => {
-    const statusDetail = statusDetailsMap[vehicle.status];
     return (
         <div
             className={cn(
@@ -34,12 +33,12 @@ const VehicleListItem = React.memo(({
         >
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: statusDetail.color}}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: vehicle.color}}>
                         <Car className="w-5 h-5 text-white" />
                     </div>
                     <div>
                         <p className="font-semibold">{vehicle.placa}</p>
-                        <p className="text-xs text-muted-foreground">{statusDetail.name}</p>
+                        <p className="text-xs text-muted-foreground">{vehicle.nombre_estado}</p>
                     </div>
                 </div>
                 <Badge variant="outline" className="capitalize">{vehicle.velocidad} km/h</Badge>

@@ -4,7 +4,6 @@
 import { cn } from '@/lib/utils';
 import type { Vehicle } from '@/lib/types';
 import React from 'react';
-import { useFleetState, statusDetailsMap } from '@/context/fleet-context';
 import { Car, Navigation } from 'lucide-react';
 
 interface VehiclePinProps {
@@ -13,8 +12,7 @@ interface VehiclePinProps {
 }
 
 export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) => {
-  const { state } = useFleetState();
-  const color = statusDetailsMap[vehicle.status as keyof typeof statusDetailsMap]?.color || '#9E9E9E';
+  const color = vehicle.color || '#9E9E9E';
 
   const rotation = 0;
   

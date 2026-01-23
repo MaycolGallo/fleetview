@@ -1,20 +1,37 @@
 
-
 'use client';
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, VehicleStatus, RouteSegment, VehicleHistoryPoint, MapViewport } from '@/lib/types';
-import { AlertCircle, Car, Clock, Power, PowerOff, Battery, BatteryWarning, DoorOpen, Siren, PowerCircle, WifiOff, Wrench, Ban, Key, Truck, ParkingSquare } from 'lucide-react';
+import type { Vehicle, VehicleStatus, RouteSegment, MapViewport, RawVehicle } from '@/lib/types';
+import { Key, Clock, Power, Siren, PowerOff, Ban, Truck, BatteryWarning, Wrench, PowerCircle, ParkingSquare } from 'lucide-react';
 
-
-const fetchVehicles = async (): Promise<Vehicle[]> => {
+const fetchAndProcessVehicles = async (): Promise<Vehicle[]> => {
   const res = await fetch('/api/vehicles');
   if (!res.ok) {
     throw new Error('Failed to fetch vehicles');
   }
-  const data = await res.json();
-  return data;
+  const rawData: RawVehicle[] = await res.json();
+  
+  // Map raw data to the app's processed Vehicle structure
+  return rawData.map(raw => {
+    const [lat, lng] = raw.coordenadas.split(',').map(Number);
+    return {
+      id: raw.id_vehiculo,
+      lat,
+      lng,
+      placa: raw.vehiculo.vehiculo_placa,
+      velocidad: parseFloat(raw.velocidad) || 0,
+      odometro: raw.odometro,
+      rumbo: raw.rumbo,
+      status: String(raw.id_estado),
+      nombre_estado: raw.estado.param1,
+      color: raw.estado.param3,
+      fecha: raw.fecha,
+      bateria_vehiculo: raw.nivel_bateria_vehicular,
+      senal_gsm: raw.senal_gsm,
+    };
+  });
 };
 
 // A small, circular route in Lima for simulation purposes.
@@ -87,29 +104,11 @@ const getInitialState = (): FleetState => ({
   playbackAnimationDuration: 1000,
 });
 
-
-export const statusDetailsMap: { [key in VehicleStatus]: { name: string; color: string; icon: React.ElementType; } } = {
-    '0': { name: 'Libre', color: '#B0BEC5', icon: Key },
-    '1': { name: 'SRalenti', color: '#78909C', icon: Clock },
-    '2': { name: 'Vehiculo Detenido y Encendido', color: '#F1C40F', icon: Power },
-    '3': { name: 'Exceso de Velocidad', color: '#E74C3C', icon: Siren },
-    '4': { name: 'Ralenti', color: '#9E9E9E', icon: PowerOff },
-    '5': { name: 'Estacionado', color: '#666666', icon: Ban },
-    '6': { name: 'Transitando', color: '#00CC33', icon: Truck },
-    '7': { name: 'Bloqueado', color: '#003399', icon: Ban },
-    '8': { name: 'Desconeccion de Bateria', color: '#FF66B0', icon: BatteryWarning },
-    '9': { name: 'Mantenimiento', color: '#8D6E63', icon: Wrench },
-    '10': { name: 'Motor Encendido via Remoto', color: '#27AE60', icon: PowerCircle },
-};
-
 export const routeStatusDetailsMap: { [key: string]: { name: string; color: string; icon: React.ElementType; } } = {
   '4': { name: 'Ralenti', color: '#9E9E9E', icon: Clock },
   '5': { name: 'Estacionado', color: '#666666', icon: ParkingSquare },
   '6': { name: 'Transitando', color: '#00CC33', icon: Truck },
 };
-
-
-export const ALL_STATUSES = Object.keys(statusDetailsMap) as VehicleStatus[];
 
 
 // 4. Create the reducer function
@@ -422,8 +421,8 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       error,
     } = useQuery<Vehicle[], Error>({
       queryKey: ['vehicles'],
-      queryFn: fetchVehicles,
-      refetchInterval: false,
+      queryFn: fetchAndProcessVehicles,
+      refetchInterval: 5000, // Refetch every 5 seconds
     });
     
     useEffect(() => {
@@ -450,6 +449,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
                 const data = await response.json();
                 
                 if (document.startViewTransition) {
+                    // @ts-ignore
                     document.startViewTransition(() => {
                         dispatch({ type: 'SET_ROUTE_HISTORY', payload: data });
                     });
@@ -468,9 +468,9 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
 
     const stateContextValue = useMemo(() => ({
         state,
-        isLoadingVehicles,
+        isLoadingVehicles: isLoadingVehicles && state.vehicles.length === 0, // Only show initial loading
         error,
-    }), [state, isLoadingVehicles, error]);
+    }), [state, isLoadingVehicles]);
 
 
     return (
