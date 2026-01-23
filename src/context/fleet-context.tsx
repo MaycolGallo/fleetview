@@ -207,63 +207,67 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'SELECT_ROUTE_SEGMENT': {
       const segmentIndex = action.payload;
+      const { selectedSegmentIndex, routeSegments, historyVehicle, routePath } = state;
 
-      // Handle DESELECTION by clicking the same segment again
-      if (state.selectedSegmentIndex === segmentIndex) {
-        const startSegment = state.routeSegments[0];
-        if (!startSegment || !state.historyVehicle) {
+      if (!historyVehicle) {
+        return state;
+      }
+      
+      if (selectedSegmentIndex === segmentIndex) {
+        const startSegment = routeSegments[0];
+        
+        if (!startSegment) {
              return { ...state, selectedSegmentIndex: null };
         }
         
-        // Reset vehicle to the properties of the first segment of the route
-        const updatedHistoryVehicle = {
-          ...state.historyVehicle,
+        const resetVehicle = {
+          ...historyVehicle,
           lat: startSegment.startPoint.lat,
           lng: startSegment.startPoint.lng,
           status: startSegment.id_estado as VehicleStatus,
-          velocidad: 0, // Reset to 0 for the start
+          velocidad: 0,
           rumbo: startSegment.records[0]?.rumbo || 0,
         };
 
         return {
           ...state,
           selectedSegmentIndex: null,
-          historyVehicle: updatedHistoryVehicle,
-          mapViewport: { type: 'fit_route', payload: state.routePath?.flat() || [] },
+          historyVehicle: resetVehicle,
+          mapViewport: { type: 'fit_route', payload: routePath?.flat() || [] },
         };
       }
 
-      // Handle SELECTION of a new segment
-      const segment = state.routeSegments[segmentIndex];
-      if (!segment || !state.historyVehicle) return state;
+      const segmentToSelect = routeSegments[segmentIndex];
 
-      let newMapViewport: MapViewport = state.mapViewport;
-      
-      // Update history vehicle with the selected segment's properties
-      const updatedHistoryVehicle = {
-        ...state.historyVehicle,
-        lat: segment.startPoint.lat, // Position at start of segment
-        lng: segment.startPoint.lng,
-        status: segment.id_estado as VehicleStatus,
-        velocidad: Math.round(segment.avgSpeed), // Use average speed for the segment
-        rumbo: segment.records[0]?.rumbo || state.historyVehicle.rumbo,
+      if (!segmentToSelect) {
+          return state;
+      }
+
+      const updatedVehicle = {
+        ...historyVehicle,
+        lat: segmentToSelect.startPoint.lat,
+        lng: segmentToSelect.startPoint.lng,
+        status: segmentToSelect.id_estado as VehicleStatus,
+        velocidad: Math.round(segmentToSelect.avgSpeed),
+        rumbo: segmentToSelect.records[0]?.rumbo || historyVehicle.rumbo,
       };
 
-      // Adjust viewport based on segment type
-      if (segment.id_estado === '6') { // Moving
-        const segmentPoints = segment.records.map(r => {
+      let newMapViewport: MapViewport;
+
+      if (segmentToSelect.id_estado === '6') {
+        const segmentPoints = segmentToSelect.records.map(r => {
           const [lat, lng] = r.coordenadas.split(',').map(Number);
           return { lat, lng };
         });
         newMapViewport = segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport;
-      } else { // Parked or Idle
-        newMapViewport = { type: 'pan_to_vehicle', payload: { ...updatedHistoryVehicle }};
+      } else {
+        newMapViewport = { type: 'pan_to_vehicle', payload: { ...updatedVehicle }};
       }
 
       return {
         ...state,
         selectedSegmentIndex: segmentIndex,
-        historyVehicle: updatedHistoryVehicle,
+        historyVehicle: updatedVehicle,
         mapViewport: newMapViewport,
       };
     }
