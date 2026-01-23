@@ -120,7 +120,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   if (isMobile) {
     return (
         <Drawer open={isRouteSheetOpen} onOpenChange={handleOpenChange}>
-            <DrawerContent className="h-[40%]">
+            <DrawerContent className="h-[50%]">
                 <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
             </DrawerContent>
       </Drawer>
@@ -132,7 +132,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
       {isRouteSheetOpen && (
         <div
           style={{ viewTransitionName: 'route-sheet-transition' }}
-          className="absolute bottom-4 left-4 right-4 z-20"
+          className="absolute bottom-4 left-4 right-4 z-20 h-[250px]"
         >
           <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
         </div>
