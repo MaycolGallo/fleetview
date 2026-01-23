@@ -1,18 +1,43 @@
 'use client';
 
-import { Drawer, DrawerContent, DrawerHandle } from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Button } from './ui/button';
+import { Clock, Milestone, ParkingSquare, Pause, Play } from 'lucide-react';
 
 interface RouteHistorySheetProps {}
+
+function formatDuration(minutes: number) {
+  if (minutes < 1) {
+    const seconds = Math.round(minutes * 60);
+    return `${seconds}s`;
+  }
+  
+  const totalMinutes = Math.round(minutes);
+  if (totalMinutes < 60) {
+      return `${totalMinutes}m`;
+  }
+
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  
+  let result = `${h}h`;
+  if (m > 0) {
+    result += ` ${m}m`;
+  }
+  return result;
+}
+
 
 export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const isMobile = useIsMobile();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isRouteSheetOpen, isRoutePlaying, routeSegments } = state;
+  const { isRouteSheetOpen, isRoutePlaying, routeSegments, historyVehicle } = state;
+  const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state]);
 
   const playbackIndexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -115,12 +140,64 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
     dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
     dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: segmentIndex });
   }, [dispatch]);
+
+   const handlePlayPause = useCallback(() => {
+    if (isRoutePlaying) {
+        dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
+    } else {
+        dispatch({ type: 'START_ROUTE_PLAYBACK' });
+    }
+  }, [dispatch, isRoutePlaying]);
   
   if (isMobile) {
     return (
         <Drawer open={isRouteSheetOpen} onOpenChange={handleOpenChange}>
             <DrawerContent className="h-[60%] flex flex-col">
                 <DrawerHandle />
+                <DrawerHeader className="text-left p-4 pt-0 pb-2 flex-shrink-0">
+                     <div className="flex justify-between items-start gap-4">
+                        <div>
+                            <DrawerTitle>Route History: {historyVehicle?.placa}</DrawerTitle>
+                            <DrawerDescription asChild>
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-2">
+                                    <div className="flex items-center gap-1.5">
+                                    <Milestone className="w-3 h-3 text-primary" />
+                                    <span>
+                                        Total Distance:{' '}
+                                        <strong className="text-foreground">
+                                        {totalDistance.toFixed(1)} km
+                                        </strong>
+                                    </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                    <Clock className="w-3 h-3 text-primary" />
+                                    <span>
+                                        Total Time:{' '}
+                                        <strong className="text-foreground">
+                                        {formatDuration(totalDuration)}
+                                        </strong>
+                                    </span>
+                                    </div>
+                                    {totalStops > 0 && (
+                                        <div className="flex items-center gap-1.5">
+                                            <ParkingSquare className="w-3 h-3 text-primary" />
+                                            <span>
+                                                {totalStops} stops{' '}
+                                                <strong className="text-foreground">
+                                                    ({formatDuration(totalStopTime)})
+                                                </strong>
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </DrawerDescription>
+                        </div>
+                        <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0">
+                            {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                            <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
+                        </Button>
+                    </div>
+                </DrawerHeader>
                 <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
             </DrawerContent>
       </Drawer>
