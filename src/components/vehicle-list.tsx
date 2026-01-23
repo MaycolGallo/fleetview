@@ -6,9 +6,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import React, { useMemo, useCallback } from "react";
 import { useFleetState, useFleetDispatch, statusDetailsMap, selectFilteredVehicles } from "@/context/fleet-context";
-import { Button } from "./ui/button";
-import { Car, MapPin, Route } from "lucide-react";
+import { Car, Clock, Wifi, Battery } from "lucide-react";
 import { Badge } from "./ui/badge";
+import { fromUnixTime, formatDistanceToNow } from 'date-fns';
 
 interface VehicleListProps {
     onVehicleSelect: () => void;
@@ -18,12 +18,10 @@ const VehicleListItem = React.memo(({
     vehicle,
     isSelected,
     onSelect,
-    onShowRoute,
 }: {
     vehicle: Vehicle;
     isSelected: boolean;
     onSelect: (vehicle: Vehicle) => void;
-    onShowRoute: (e: React.MouseEvent, vehicle: Vehicle) => void;
 }) => {
     const statusDetail = statusDetailsMap[vehicle.status];
     return (
@@ -47,15 +45,21 @@ const VehicleListItem = React.memo(({
                 <Badge variant="outline" className="capitalize">{vehicle.velocidad} km/h</Badge>
             </div>
            
-            <div className="flex justify-end gap-2 mt-3">
-                <Button size="sm" variant="ghost" onClick={() => onSelect(vehicle)}>
-                    <MapPin className="mr-2 h-4 w-4" />
-                    Locate
-                </Button>
-                <Button size="sm" variant="ghost" onClick={(e) => onShowRoute(e, vehicle)}>
-                    <Route className="mr-2 h-4 w-4" />
-                    History
-                </Button>
+            <div className="flex justify-between items-center mt-3 pt-3 border-t text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5" title="Last update">
+                    <Clock className="w-3 h-3" />
+                    <span className="capitalize">{formatDistanceToNow(fromUnixTime(vehicle.fecha), { addSuffix: true })}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1.5" title={`GSM Signal: ${vehicle.senal_gsm}`}>
+                        <Wifi className="w-3 h-3" />
+                        <span>{vehicle.senal_gsm}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5" title={`Vehicle Battery: ${vehicle.bateria_vehiculo}V`}>
+                        <Battery className="w-3 h-3" />
+                        <span>{parseFloat(vehicle.bateria_vehiculo).toFixed(1)}V</span>
+                    </div>
+                </div>
             </div>
         </div>
     )
@@ -73,19 +77,6 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
         onVehicleSelect();
     }, [dispatch, onVehicleSelect]);
 
-    const handleShowRoute = useCallback((e: React.MouseEvent, vehicle: Vehicle) => {
-        e.stopPropagation();
-        // @ts-ignore
-        if (document.startViewTransition) {
-            // @ts-ignore
-            document.startViewTransition(() => {
-              dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
-            });
-        } else {
-            dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
-        }
-    }, [dispatch]);
-
     const listVehicles = useMemo(() => selectFilteredVehicles(state), [state]);
     
     return (
@@ -97,7 +88,6 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
                         vehicle={vehicle}
                         isSelected={selectedVehicle?.id === vehicle.id}
                         onSelect={handleSelect}
-                        onShowRoute={handleShowRoute}
                     />
                 ))}
             </div>
