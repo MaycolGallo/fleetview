@@ -64,7 +64,7 @@ type FleetAction =
   | { type: 'VIEWPORT_ACTION_COMPLETE' }
   | { type: 'START_ROUTE_PLAYBACK' }
   | { type: 'PAUSE_ROUTE_PLAYBACK' }
-  | { type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: number, lng: number, rumbo: number, animationDuration: number } };
+  | { type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: number, lng: number, rumbo: number, velocidad: number, animationDuration: number } };
 
 
 // 3. Define the initial state
@@ -207,10 +207,23 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'SELECT_ROUTE_SEGMENT': {
       const segmentIndex = action.payload;
-      
+
+      // Handle DESELECTION by clicking the same segment again
       if (state.selectedSegmentIndex === segmentIndex) {
-        const startOfRoute = state.routePath && state.routePath.length > 0 && state.routePath[0].length > 0 ? state.routePath[0][0] : null;
-        const updatedHistoryVehicle = state.historyVehicle && startOfRoute ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng } : state.historyVehicle;
+        const startSegment = state.routeSegments[0];
+        if (!startSegment || !state.historyVehicle) {
+             return { ...state, selectedSegmentIndex: null };
+        }
+        
+        // Reset vehicle to the properties of the first segment of the route
+        const updatedHistoryVehicle = {
+          ...state.historyVehicle,
+          lat: startSegment.startPoint.lat,
+          lng: startSegment.startPoint.lng,
+          status: startSegment.id_estado as VehicleStatus,
+          velocidad: 0, // Reset to 0 for the start
+          rumbo: startSegment.records[0]?.rumbo || 0,
+        };
 
         return {
           ...state,
@@ -220,27 +233,31 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         };
       }
 
+      // Handle SELECTION of a new segment
       const segment = state.routeSegments[segmentIndex];
-      if (!segment) return state;
+      if (!segment || !state.historyVehicle) return state;
 
       let newMapViewport: MapViewport = state.mapViewport;
-      let updatedHistoryVehicle = state.historyVehicle;
+      
+      // Update history vehicle with the selected segment's properties
+      const updatedHistoryVehicle = {
+        ...state.historyVehicle,
+        lat: segment.startPoint.lat, // Position at start of segment
+        lng: segment.startPoint.lng,
+        status: segment.id_estado as VehicleStatus,
+        velocidad: Math.round(segment.avgSpeed), // Use average speed for the segment
+        rumbo: segment.records[0]?.rumbo || state.historyVehicle.rumbo,
+      };
 
-      if (segment.id_estado === '6') { // Moving segment
+      // Adjust viewport based on segment type
+      if (segment.id_estado === '6') { // Moving
         const segmentPoints = segment.records.map(r => {
-            const [lat, lng] = r.coordenadas.split(',').map(Number);
-            return { lat, lng };
+          const [lat, lng] = r.coordenadas.split(',').map(Number);
+          return { lat, lng };
         });
         newMapViewport = segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport;
-        const startRecord = segment.records[0];
-        if (updatedHistoryVehicle) {
-            updatedHistoryVehicle = { ...updatedHistoryVehicle, lat: segment.startPoint.lat, lng: segment.startPoint.lng, rumbo: startRecord.rumbo };
-        }
-      } else { // Parked or Idle segment
-        newMapViewport = { type: 'pan_to_vehicle', payload: { ...state.historyVehicle!, lat: segment.startPoint.lat, lng: segment.startPoint.lng }};
-        if (updatedHistoryVehicle) {
-            updatedHistoryVehicle = { ...updatedHistoryVehicle, lat: segment.startPoint.lat, lng: segment.startPoint.lng };
-        }
+      } else { // Parked or Idle
+        newMapViewport = { type: 'pan_to_vehicle', payload: { ...updatedHistoryVehicle }};
       }
 
       return {
@@ -307,6 +324,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         return {
             ...state,
             isRoutePlaying: true,
+            historyVehicle: state.historyVehicle ? { ...state.historyVehicle, status: '6' as VehicleStatus } : state.historyVehicle,
         };
 
     case 'PAUSE_ROUTE_PLAYBACK':
@@ -317,7 +335,8 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'UPDATE_HISTORY_VEHICLE_POSITION': {
         if (!state.historyVehicle) return state;
-        const { lat, lng, rumbo, animationDuration } = action.payload;
+        const { lat, lng, rumbo, velocidad, animationDuration } = action.payload;
+        const movingStatus = '6' as VehicleStatus;
         return {
             ...state,
             historyVehicle: {
@@ -325,6 +344,8 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
                 lat,
                 lng,
                 rumbo,
+                velocidad,
+                status: movingStatus,
             },
             playbackAnimationDuration: animationDuration,
         };

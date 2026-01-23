@@ -24,7 +24,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         .filter(seg => seg.id_estado === '6')
         .flatMap(seg => seg.records.map(r => {
             const [lat, lng] = r.coordenadas.split(',').map(Number);
-            return { lat, lng, rumbo: r.rumbo, fecha: r.fecha };
+            return { lat, lng, rumbo: r.rumbo, fecha: r.fecha, velocidad: parseInt(r.velocidad, 10) || 0 };
         }));
   }, [isRouteSheetOpen, routeSegments]);
 
@@ -75,7 +75,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
             delay = 500; // Final animation
         }
 
-        dispatch({ type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: currentPoint.lat, lng: currentPoint.lng, rumbo: currentPoint.rumbo, animationDuration: delay } });
+        dispatch({ type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: currentPoint.lat, lng: currentPoint.lng, rumbo: currentPoint.rumbo, velocidad: currentPoint.velocidad, animationDuration: delay } });
         
         playbackIndexRef.current = nextIndex;
 
