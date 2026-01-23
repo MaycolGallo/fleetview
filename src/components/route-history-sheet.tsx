@@ -1,7 +1,6 @@
-
 'use client';
 
-import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHandle } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
@@ -120,7 +119,8 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   if (isMobile) {
     return (
         <Drawer open={isRouteSheetOpen} onOpenChange={handleOpenChange}>
-            <DrawerContent className="h-[50%]">
+            <DrawerContent className="h-[60%] flex flex-col">
+                <DrawerHandle />
                 <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
             </DrawerContent>
       </Drawer>

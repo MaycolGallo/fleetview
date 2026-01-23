@@ -18,6 +18,7 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useFleetState, useFleetDispatch, selectRouteSummary, routeStatusDetailsMap } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 
 interface RouteHistoryContentProps {
     onSegmentSelect: (index: number) => void;
@@ -75,6 +76,121 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
         }
     };
 
+    if (isMobile) {
+        return (
+            <div className="flex flex-col h-full">
+                <DrawerHeader className="text-left p-4 pt-2 pb-2">
+                     <div className="flex justify-between items-start gap-4">
+                        <div>
+                            <DrawerTitle>Route History: {vehicle?.placa}</DrawerTitle>
+                            <DrawerDescription asChild>
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-2">
+                                    <div className="flex items-center gap-1.5">
+                                    <Milestone className="w-3 h-3 text-primary" />
+                                    <span>
+                                        Total Distance:{' '}
+                                        <strong className="text-foreground">
+                                        {totalDistance.toFixed(1)} km
+                                        </strong>
+                                    </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                    <Clock className="w-3 h-3 text-primary" />
+                                    <span>
+                                        Total Time:{' '}
+                                        <strong className="text-foreground">
+                                        {formatDuration(totalDuration)}
+                                        </strong>
+                                    </span>
+                                    </div>
+                                    {totalStops > 0 && (
+                                        <div className="flex items-center gap-1.5">
+                                            <ParkingSquare className="w-3 h-3 text-primary" />
+                                            <span>
+                                                {totalStops} stops{' '}
+                                                <strong className="text-foreground">
+                                                    ({formatDuration(totalStopTime)})
+                                                </strong>
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </DrawerDescription>
+                        </div>
+                        <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0">
+                            {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                            <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
+                        </Button>
+                    </div>
+                </DrawerHeader>
+                <div className="flex-1 min-h-0">
+                    <ScrollArea className="h-full" viewportRef={scrollContainerRef}>
+                        <div className="relative flex flex-col p-4">
+                        {segments.map((segment, index) => {
+                            const statusInfo = routeStatusDetailsMap[segment.id_estado] || { icon: Milestone, name: 'Event', color: '#888' };
+                            const Icon = statusInfo.icon;
+                            const isSelected = selectedSegmentIndex === index;
+
+                            return (
+                                <div
+                                    key={index}
+                                    ref={el => itemRefs.current[index] = el}
+                                    className="flex group"
+                                    onClick={() => onSegmentSelect(index)}
+                                >
+                                    <div className="flex flex-col items-center mr-4">
+                                        <div className={cn(
+                                            "z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background ring-4 transition-all",
+                                            isSelected ? 'ring-primary' : 'ring-border', 'group-hover:ring-primary'
+                                        )}>
+                                            <Icon className="h-5 w-5" style={{color: statusInfo.color}} />
+                                        </div>
+                                        {index < segments.length - 1 && (
+                                            <div className={cn("w-0.5 flex-1 transition-colors", isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary')} />
+                                        )}
+                                    </div>
+                                    <div className={cn(
+                                        "flex-1 pb-6 transition-transform duration-300 cursor-pointer",
+                                        isSelected ? 'transform scale-105' : 'scale-100'
+                                    )}>
+                                        <div className={cn(
+                                            "p-3 rounded-lg border -translate-y-1",
+                                            isSelected ? "bg-accent border-primary" : "bg-card hover:bg-accent"
+                                        )}>
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <p className={cn(
+                                                        "font-semibold capitalize text-sm transition-colors",
+                                                        isSelected ? 'text-primary' : 'text-foreground'
+                                                    )}>
+                                                        {segment.description}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground pt-1">
+                                                        {format(fromUnixTime(segment.startTime), 'p')} - {format(fromUnixTime(segment.endTime), 'p')}
+                                                    </p>
+                                                </div>
+                                                <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground text-right ml-2">
+                                                    {segment.durationMinutes > 0 && (
+                                                        <span className='whitespace-nowrap'>{formatDuration(segment.durationMinutes)}</span>
+                                                    )}
+                                                    {segment.distanceKm > 0 && (
+                                                        <span className='whitespace-nowrap'>{segment.distanceKm.toFixed(1)} km</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        </div>
+                    </ScrollArea>
+                </div>
+            </div>
+        );
+    }
+    
+    // Desktop layout
     const headerContent = (
       <div className="flex justify-between items-start gap-4">
         <div>
@@ -118,78 +234,6 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
       </div>
     );
 
-    if (isMobile) {
-        return (
-            <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
-                <CardHeader>{headerContent}</CardHeader>
-                <CardContent className="pb-4 flex-1 min-h-0">
-                    <ScrollArea className="h-full" viewportRef={scrollContainerRef}>
-                        <div className="relative flex flex-col p-4">
-                        {segments.map((segment, index) => {
-                            const statusInfo = routeStatusDetailsMap[segment.id_estado] || { icon: Milestone, name: 'Event', color: '#888' };
-                            const Icon = statusInfo.icon;
-                            const isSelected = selectedSegmentIndex === index;
-
-                            return (
-                                <div
-                                    key={index}
-                                    ref={el => itemRefs.current[index] = el}
-                                    className="flex group"
-                                    onClick={() => onSegmentSelect(index)}
-                                >
-                                    <div className="flex flex-col items-center mr-4">
-                                        <div className={cn(
-                                            "z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-card ring-4 transition-all",
-                                            isSelected ? 'ring-primary' : 'ring-card', 'group-hover:ring-primary'
-                                        )}>
-                                            <Icon className="h-5 w-5" style={{color: statusInfo.color}} />
-                                        </div>
-                                        {index < segments.length - 1 && (
-                                            <div className={cn("w-0.5 flex-1 transition-colors", isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary')} />
-                                        )}
-                                    </div>
-                                    <div className={cn(
-                                        "flex-1 pb-8 transition-transform duration-300 cursor-pointer",
-                                        isSelected ? 'transform scale-105' : 'scale-100'
-                                    )}>
-                                        <div className={cn(
-                                            "p-3 rounded-lg border -translate-y-1",
-                                            isSelected ? "bg-accent border-primary" : "bg-card hover:bg-accent"
-                                        )}>
-                                            <div className="flex justify-between items-start">
-                                                <div>
-                                                    <p className={cn(
-                                                        "font-semibold capitalize text-sm transition-colors",
-                                                        isSelected ? 'text-primary' : 'text-foreground'
-                                                    )}>
-                                                        {segment.description}
-                                                    </p>
-                                                    <p className="text-xs text-muted-foreground pt-1">
-                                                        {format(fromUnixTime(segment.startTime), 'p')} - {format(fromUnixTime(segment.endTime), 'p')}
-                                                    </p>
-                                                </div>
-                                                <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground text-right ml-2">
-                                                    {segment.durationMinutes > 0 && (
-                                                        <span className='whitespace-nowrap'>{formatDuration(segment.durationMinutes)}</span>
-                                                    )}
-                                                    {segment.distanceKm > 0 && (
-                                                        <span className='whitespace-nowrap'>{segment.distanceKm.toFixed(1)} km</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                        </div>
-                    </ScrollArea>
-                </CardContent>
-            </Card>
-        );
-    }
-    
-    // Desktop layout
     return (
         <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
             <CardHeader>{headerContent}</CardHeader>
