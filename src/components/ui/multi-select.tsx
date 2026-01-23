@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -195,7 +196,7 @@ export const MultiSelect = React.forwardRef<
               placeholder="Filter..."
               onKeyDown={handleInputKeyDown}
             />
-            <CommandList>
+            <CommandList data-vaul-no-drag>
               <CommandEmpty>No results found.</CommandEmpty>
               <CommandGroup>
                 {options.map((option) => {
