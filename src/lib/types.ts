@@ -14,6 +14,7 @@ export interface Vehicle {
   fecha: number;
   bateria: string;
   bateria_vehiculo: string;
+  senal_gsm: number;
 }
 
 export interface VehicleHistoryPoint {

@@ -57,6 +57,7 @@ function generateVehicle(index: number): Vehicle {
     fecha: Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 3600), // Within the last hour
     bateria: (Math.random() * (4.2 - 3.5) + 3.5).toFixed(2), // GPS battery
     bateria_vehiculo: (Math.random() * (13.8 - 12.0) + 12.0).toFixed(2), // Vehicle battery
+    senal_gsm: Math.floor(Math.random() * 32), // Random signal strength 0-31
   };
 }
 
