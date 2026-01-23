@@ -2,10 +2,10 @@
 
 "use client";
 
-import React, { useCallback } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import React, { useCallback, useMemo } from 'react';
 import { useFleetState, useFleetDispatch, statusDetailsMap, ALL_STATUSES } from "@/context/fleet-context";
 import type { VehicleStatus } from "@/lib/types";
+import { MultiSelect } from './ui/multi-select';
 
 interface VehicleFiltersProps {}
 
@@ -14,33 +14,33 @@ function VehicleFiltersInternal(props: VehicleFiltersProps) {
   const dispatch = useFleetDispatch();
   const { statusFilter, vehicles } = state;
   
-  const onFilterChange = useCallback((filter: 'all' | VehicleStatus) => {
-    dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
+  const onFilterChange = useCallback((filters: string[]) => {
+    dispatch({ type: 'SET_STATUS_FILTER', payload: filters as VehicleStatus[] });
   }, [dispatch]);
 
-  const count = vehicles.length;
+  const options = useMemo(() => {
+    const statusCounts = ALL_STATUSES.reduce((acc, status) => {
+        acc[status] = vehicles.filter(v => v.status === status).length;
+        return acc;
+    }, {} as Record<VehicleStatus, number>);
+
+    return ALL_STATUSES.map(status => ({
+        value: status,
+        label: `${statusDetailsMap[status].name} (${statusCounts[status]})`,
+        icon: statusDetailsMap[status].icon,
+    }));
+  }, [vehicles]);
+
 
   return (
     <div className="grid gap-2">
-      <Select value={statusFilter} onValueChange={(value) => onFilterChange(value as 'all' | VehicleStatus)}>
-        <SelectTrigger 
-          id="status-filter" 
-          className="w-full h-10"
-        >
-          <SelectValue placeholder="Filtrar por estado" />
-        </SelectTrigger>
-        <SelectContent onCloseAutoFocus={(e) => e.preventDefault()}>
-          <SelectItem value="all">All Vehicles ({count})</SelectItem>
-          {ALL_STATUSES.map(status => {
-            const statusCount = vehicles.filter(v => v.status === status).length;
-            return (
-                <SelectItem key={status} value={status}>
-                    {statusDetailsMap[status].name} ({statusCount})
-                </SelectItem>
-            )
-          })}
-        </SelectContent>
-      </Select>
+      <MultiSelect
+        options={options}
+        onValueChange={onFilterChange}
+        defaultValue={statusFilter}
+        placeholder="Filter by status..."
+        className="w-full"
+      />
     </div>
   );
 }

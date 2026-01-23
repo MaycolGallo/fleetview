@@ -29,7 +29,7 @@ const SIMULATION_ROUTE = [
 // 1. Define the state shape
 interface FleetState {
   vehicles: Vehicle[];
-  statusFilter: VehicleStatus | 'all';
+  statusFilter: VehicleStatus[];
   selectedVehicle: Vehicle | null;
   historyVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[][] | null;
@@ -49,7 +49,7 @@ interface FleetState {
 // 2. Define the actions
 type FleetAction =
   | { type: 'SET_VEHICLES'; payload: Vehicle[] }
-  | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus | 'all' }
+  | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus[] }
   | { type: 'PAN_TO_VEHICLE'; payload: Vehicle | null }
   | { type: 'START_ROUTE_LOADING'; payload: Vehicle }
   | { type: 'SET_ROUTE_HISTORY'; payload: { routePoints: { lat: number; lng: number }[][]; segments: RouteSegment[] } }
@@ -70,7 +70,7 @@ type FleetAction =
 // 3. Define the initial state
 const getInitialState = (): FleetState => ({
   vehicles: [],
-  statusFilter: 'all',
+  statusFilter: [],
   selectedVehicle: null,
   historyVehicle: null,
   routePath: null,
@@ -167,10 +167,10 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'SET_ROUTE_HISTORY': {
         const { routePoints, segments } = action.payload;
-        const startOfRoute = routePoints && routePoints.length > 0 && routePoints[0].length > 0 ? routePoints[0][0] : null;
+        const startOfRoute = segments.length > 0 ? segments[0].startPoint : null;
 
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute
-            ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng }
+            ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng, rumbo: segments[0].records[0]?.rumbo || 0, velocidad: 0 }
             : state.historyVehicle;
         
         return {
@@ -207,19 +207,18 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'SELECT_ROUTE_SEGMENT': {
       const segmentIndex = action.payload;
-      const { selectedSegmentIndex, routeSegments, historyVehicle, routePath } = state;
-
+      const { selectedSegmentIndex, routeSegments, historyVehicle } = state;
+      
+      // Guard clause: If no history vehicle, do nothing.
       if (!historyVehicle) {
         return state;
       }
-      
+
+      // Handle deselecting the current segment
       if (selectedSegmentIndex === segmentIndex) {
         const startSegment = routeSegments[0];
-        
-        if (!startSegment) {
-             return { ...state, selectedSegmentIndex: null };
-        }
-        
+        if (!startSegment) return state; // Should not happen if segments exist
+
         const resetVehicle = {
           ...historyVehicle,
           lat: startSegment.startPoint.lat,
@@ -233,16 +232,18 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
           ...state,
           selectedSegmentIndex: null,
           historyVehicle: resetVehicle,
-          mapViewport: { type: 'fit_route', payload: routePath?.flat() || [] },
+          mapViewport: { type: 'fit_route', payload: state.routePath?.flat() || [] },
         };
       }
 
       const segmentToSelect = routeSegments[segmentIndex];
-
+      
+      // Guard clause: If the segment to select doesn't exist, do nothing.
       if (!segmentToSelect) {
           return state;
       }
 
+      // Handle selecting a new segment
       const updatedVehicle = {
         ...historyVehicle,
         lat: segmentToSelect.startPoint.lat,
@@ -253,7 +254,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       };
 
       let newMapViewport: MapViewport;
-
       if (segmentToSelect.id_estado === '6') {
         const segmentPoints = segmentToSelect.records.map(r => {
           const [lat, lng] = r.coordenadas.split(',').map(Number);
@@ -367,10 +367,10 @@ export const selectVisibleVehicles = (state: FleetState): Vehicle[] => {
 
 export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
   const visibleVehicles = selectVisibleVehicles(state);
-  if (state.statusFilter === 'all') {
+  if (state.statusFilter.length === 0) {
     return visibleVehicles;
   }
-  return visibleVehicles.filter(v => v.status === state.statusFilter);
+  return visibleVehicles.filter(v => state.statusFilter.includes(v.status));
 };
 
 export const selectMapVehicles = (state: FleetState): Vehicle[] => {
