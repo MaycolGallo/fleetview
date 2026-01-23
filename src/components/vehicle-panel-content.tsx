@@ -5,6 +5,7 @@ import { ClientOnly } from './client-only';
 import { Skeleton } from './ui/skeleton';
 import { VehicleDetails } from './vehicle-details';
 import { VehicleList } from './vehicle-list';
+import { VehicleFilters } from './vehicle-filters';
 
 interface VehiclePanelContentProps {
     onVehicleSelect: () => void;
@@ -24,11 +25,14 @@ export function VehiclePanelContent({ onVehicleSelect }: VehiclePanelContentProp
 
     return (
         <div className="h-full flex flex-col">
-            <div className="p-4 border-b">
-                <h2 className="text-lg font-semibold">Vehicles</h2>
-                <p className="text-sm text-muted-foreground">
-                    {vehicles.length} vehicles available
-                </p>
+            <div className="p-4 border-b space-y-4">
+                <div>
+                    <h2 className="text-lg font-semibold">Vehicles</h2>
+                    <p className="text-sm text-muted-foreground">
+                        {vehicles.length} vehicles available
+                    </p>
+                </div>
+                <VehicleFilters />
             </div>
             <div className="flex-1 overflow-y-auto">
                 {isLoadingVehicles ? (

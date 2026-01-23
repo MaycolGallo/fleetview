@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { VehicleFilters } from './vehicle-filters';
 import { RouteHistorySheet } from './route-history-sheet';
 import { Button } from './ui/button';
 import { ArrowLeft, PanelLeft } from 'lucide-react';
@@ -104,9 +103,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                         >
                             <PanelLeft className={cn("transition-transform", isPanelOpen && "rotate-180")} />
                         </Button>
-                        <div className="bg-card/90 backdrop-blur-sm p-4 rounded-lg shadow-lg border border-border/20 max-w-sm">
-                            <VehicleFilters />
-                        </div>
                     </div>
                 ) : null}
 
