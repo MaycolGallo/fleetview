@@ -78,8 +78,8 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
 
     if (isMobile) {
         return (
-            <div className="flex flex-col h-full">
-                <DrawerHeader className="text-left p-4 pt-2 pb-2">
+            <>
+                <DrawerHeader className="text-left p-4 pt-2 pb-2 flex-shrink-0">
                      <div className="flex justify-between items-start gap-4">
                         <div>
                             <DrawerTitle>Route History: {vehicle?.placa}</DrawerTitle>
@@ -186,7 +186,7 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
                         </div>
                     </ScrollArea>
                 </div>
-            </div>
+            </>
         );
     }
     
