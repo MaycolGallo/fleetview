@@ -7,19 +7,19 @@ import {
 
 function haversineDistance(
   lat1: number,
-  lon1: number,
+  lng1: number,
   lat2: number,
-  lon2: number,
+  lng2: number,
 ): number {
   const R = 6371; // Earth's radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
       Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -137,9 +137,9 @@ function processGroup(
   // Calculate total distance
   let totalDistance = 0;
   for (let i = 1; i < records.length; i++) {
-    const [lat1, lon1] = records[i - 1].coordenadas.split(",").map(Number);
-    const [lat2, lon2] = records[i].coordenadas.split(",").map(Number);
-    totalDistance += haversineDistance(lat1, lon1, lat2, lon2);
+    const [lat1, lng1] = records[i - 1].coordenadas.split(",").map(Number);
+    const [lat2, lng2] = records[i].coordenadas.split(",").map(Number);
+    totalDistance += haversineDistance(lat1, lng1, lat2, lng2);
   }
 
   const [startLat, startLng] = records[0].coordenadas.split(',').map(Number);
