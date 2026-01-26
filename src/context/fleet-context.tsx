@@ -144,10 +144,10 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
           .filter(g => g.id_estado === 6) // Transitando
           .map(g => g.records.map(r => ({ lat: r.lat, lng: r.lng })));
 
-        const startOfRoute = historyData.groups.length > 0 ? historyData.groups[0].startPoint : null;
+        const startOfRoute = historyData.groups?.[0]?.records?.[0];
 
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute
-            ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng, rumbo: historyData.groups[0].records[0]?.rumbo || 0, velocidad: "0" }
+            ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng, rumbo: startOfRoute?.rumbo || 0, velocidad: "0" }
             : state.historyVehicle;
         
         return {
@@ -186,23 +186,21 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       const segmentIndex = action.payload;
       const { selectedSegmentIndex, routeGroups, historyVehicle } = state;
       
-      // Guard clause: If no history vehicle, do nothing.
-      if (!historyVehicle) {
-        return state;
-      }
+      if (!historyVehicle) return state;
 
       // Handle deselecting the current segment
       if (selectedSegmentIndex === segmentIndex) {
         const startSegment = routeGroups[0];
-        if (!startSegment) return state; // Should not happen if segments exist
+        if (!startSegment?.records?.[0]) return state;
 
+        const firstRecord = startSegment.records[0];
         const resetVehicle = {
           ...historyVehicle,
-          lat: startSegment.startPoint.lat,
-          lng: startSegment.startPoint.lng,
+          lat: firstRecord.lat,
+          lng: firstRecord.lng,
           id_estado: startSegment.id_estado,
           velocidad: '0',
-          rumbo: startSegment.records[0]?.rumbo || 0,
+          rumbo: firstRecord.rumbo || 0,
         };
 
         return {
@@ -214,20 +212,16 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       }
 
       const segmentToSelect = routeGroups[segmentIndex];
+      if (!segmentToSelect?.records?.[0]) return state;
       
-      // Guard clause: If the segment to select doesn't exist, do nothing.
-      if (!segmentToSelect) {
-          return state;
-      }
-
-      // Handle selecting a new segment
+      const firstRecord = segmentToSelect.records[0];
       const updatedVehicle = {
         ...historyVehicle,
-        lat: segmentToSelect.startPoint.lat,
-        lng: segmentToSelect.startPoint.lng,
+        lat: firstRecord.lat,
+        lng: firstRecord.lng,
         id_estado: segmentToSelect.id_estado,
         velocidad: String(Math.round(segmentToSelect.avg_velocidad)),
-        rumbo: segmentToSelect.records[0]?.rumbo || historyVehicle.rumbo,
+        rumbo: firstRecord.rumbo || historyVehicle.rumbo,
         statusName: segmentToSelect.description,
         statusColor: segmentToSelect.color || historyVehicle.statusColor,
       };
@@ -237,7 +231,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         const segmentPoints = segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng }));
         newMapViewport = segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport;
       } else {
-        newMapViewport = { type: 'pan_to_vehicle', payload: { ...segmentToSelect.startPoint }};
+        newMapViewport = { type: 'pan_to_vehicle', payload: { lat: firstRecord.lat, lng: firstRecord.lng }};
       }
 
       return {
