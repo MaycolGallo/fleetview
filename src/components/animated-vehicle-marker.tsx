@@ -17,15 +17,17 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
   const { selectedVehicle, isRoutePlaying, historyVehicle, playbackAnimationDuration } = state;
-  const isSelected = selectedVehicle?.id === vehicle.id;
+  const isSelected = selectedVehicle?.id_vehiculo === vehicle.id_vehiculo;
   const [contextMenuOpen, setContextMenuOpen] = useState(false);
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
 
-  const isPlaybackMarker = historyVehicle?.id === vehicle.id;
-  const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
+  const isPlaybackMarker = historyVehicle?.id_vehiculo === vehicle.id_vehiculo;
+
+  const [lat, lng] = vehicle.coordenadas.split(',').map(Number);
+  const targetPosition = { lat, lng };
   
   // Use the dynamic duration during playback, otherwise a default for regular clicks.
   const animationDuration = (isPlaybackMarker && isRoutePlaying) ? playbackAnimationDuration : 1000;
@@ -78,12 +80,13 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
     }
   };
 
-  const color = vehicle.color || '#9E9E9E';
+  const color = vehicle.estado.param3 || '#9E9E9E';
+  const speed = parseFloat(vehicle.velocidad) || 0;
 
   return (
     <>
       <AdvancedMarker
-        key={vehicle.id}
+        key={vehicle.id_vehiculo}
         position={position}
         onClick={handleLeftClick}
         zIndex={isSelected ? 10 : 1}
@@ -93,7 +96,7 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
-            data-vehicle-id={vehicle.id}
+            data-vehicle-id={vehicle.id_vehiculo}
             className={cn(
                 "relative cursor-pointer flex justify-center items-center transition-transform duration-300",
                 isSelected && 'scale-125'
@@ -107,7 +110,7 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
                     className="flex items-center gap-1 shadow-md rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-white"
                 >
                     <Gauge className="w-3 h-3" />
-                    <span>{vehicle.velocidad}</span>
+                    <span>{speed.toFixed(0)}</span>
                 </div>
             </div>
 

@@ -21,10 +21,11 @@ function VehicleFiltersInternal(props: VehicleFiltersProps) {
     const statusMap = new Map<string, { name: string, count: number }>();
     
     vehicles.forEach(v => {
-      if (!statusMap.has(v.status)) {
-        statusMap.set(v.status, { name: v.nombre_estado, count: 0 });
+      const statusId = String(v.id_estado);
+      if (!statusMap.has(statusId)) {
+        statusMap.set(statusId, { name: v.estado.param1, count: 0 });
       }
-      statusMap.get(v.status)!.count++;
+      statusMap.get(statusId)!.count++;
     });
 
     return Array.from(statusMap.entries()).map(([statusId, { name, count }]) => ({

@@ -1,7 +1,8 @@
+
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -157,7 +158,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
                 <DrawerHeader className="text-left p-4 pt-0 pb-2 flex-shrink-0">
                      <div className="flex justify-between items-start gap-4">
                         <div>
-                            <DrawerTitle>Route History: {historyVehicle?.placa}</DrawerTitle>
+                            <DrawerTitle>Route History: {historyVehicle?.vehiculo.vehiculo_placa}</DrawerTitle>
                             <DrawerDescription asChild>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-2">
                                     <div className="flex items-center gap-1.5">

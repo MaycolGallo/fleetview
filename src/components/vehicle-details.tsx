@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/drawer';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ArrowLeft, Move, Gauge, Tag, Rss, Clock, Wind, BarChart, Battery, BatteryFull } from 'lucide-react';
+import { ArrowLeft, Move, Gauge, Tag, Rss, Clock, Wind, Wifi, BatteryFull } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { format, fromUnixTime } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -44,7 +44,7 @@ function VehicleDetailsInternal() {
   const handleSimulateMove = useCallback(() => {
     if (!selectedVehicle) return;
     const updateAction = () => {
-        dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: selectedVehicle.id });
+        dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: selectedVehicle.id_vehiculo });
       };
 
       // @ts-ignore
@@ -69,13 +69,13 @@ function VehicleDetailsInternal() {
                 <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-                <h2 className="text-lg font-semibold">{selectedVehicle.placa}</h2>
+                <h2 className="text-lg font-semibold">{selectedVehicle.vehiculo.vehiculo_placa}</h2>
                 <div className="text-sm text-muted-foreground">
                     <Badge
                         className="capitalize text-white"
-                        style={{ backgroundColor: selectedVehicle.color }}
+                        style={{ backgroundColor: selectedVehicle.estado.param3 }}
                     >
-                        {selectedVehicle.nombre_estado}
+                        {selectedVehicle.estado.param1}
                     </Badge>
                 </div>
             </div>
@@ -86,8 +86,8 @@ function VehicleDetailsInternal() {
                     <CardTitle className='text-base'>Información Actual</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 pt-0 space-y-3">
-                    <DetailItem icon={Tag} label="ID Vehículo" value={selectedVehicle.id} />
-                    <DetailItem icon={Gauge} label="Velocidad" value={selectedVehicle.velocidad} unit="km/h" />
+                    <DetailItem icon={Tag} label="ID Vehículo" value={selectedVehicle.id_vehiculo} />
+                    <DetailItem icon={Gauge} label="Velocidad" value={parseFloat(selectedVehicle.velocidad).toFixed(0)} unit="km/h" />
                     <DetailItem icon={Rss} label="Odómetro" value={parseFloat(selectedVehicle.odometro).toLocaleString()} unit="km" />
                     <DetailItem icon={Wind} label="Rumbo" value={selectedVehicle.rumbo} unit="°" />
                      <DetailItem 
@@ -106,7 +106,7 @@ function VehicleDetailsInternal() {
                      <DetailItem 
                         icon={BatteryFull} 
                         label="Batería Vehículo" 
-                        value={selectedVehicle.bateria_vehiculo}
+                        value={selectedVehicle.nivel_bateria_vehicular}
                         unit="V"
                     />
                     <DetailItem

@@ -3,35 +3,15 @@
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, VehicleStatus, RouteSegment, MapViewport, RawVehicle } from '@/lib/types';
+import type { Vehicle, VehicleStatus, RouteSegment, MapViewport } from '@/lib/types';
 import { Key, Clock, Power, Siren, PowerOff, Ban, Truck, BatteryWarning, Wrench, PowerCircle, ParkingSquare } from 'lucide-react';
 
-const fetchAndProcessVehicles = async (): Promise<Vehicle[]> => {
+const fetchVehicles = async (): Promise<Vehicle[]> => {
   const res = await fetch('/api/vehicles');
   if (!res.ok) {
     throw new Error('Failed to fetch vehicles');
   }
-  const rawData: RawVehicle[] = await res.json();
-  
-  // Map raw data to the app's processed Vehicle structure
-  return rawData.map(raw => {
-    const [lat, lng] = raw.coordenadas.split(',').map(Number);
-    return {
-      id: raw.id_vehiculo,
-      lat,
-      lng,
-      placa: raw.vehiculo.vehiculo_placa,
-      velocidad: parseFloat(raw.velocidad) || 0,
-      odometro: raw.odometro,
-      rumbo: raw.rumbo,
-      status: String(raw.id_estado),
-      nombre_estado: raw.estado.param1,
-      color: raw.estado.param3,
-      fecha: raw.fecha,
-      bateria_vehiculo: raw.nivel_bateria_vehicular,
-      senal_gsm: raw.senal_gsm,
-    };
-  });
+  return res.json();
 };
 
 // A small, circular route in Lima for simulation purposes.
@@ -116,17 +96,20 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
       const newVisibleIds = state.vehicles.length === 0 
-        ? new Set(action.payload.map(v => v.id))
+        ? new Set(action.payload.map(v => v.id_vehiculo))
         : state.visibleVehicleIds;
     
-      const visibleVehicles = action.payload.filter(v => newVisibleIds.has(v.id));
+      const visibleVehicles = action.payload.filter(v => newVisibleIds.has(v.id_vehiculo));
 
       const newBounds = visibleVehicles.length > 0
-          ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
+          ? visibleVehicles.map(v => {
+              const [lat, lng] = v.coordenadas.split(',').map(Number);
+              return { lat, lng };
+            })
           : [];
 
       const updatedSelectedVehicle = state.selectedVehicle
-        ? action.payload.find(v => v.id === state.selectedVehicle!.id) || null
+        ? action.payload.find(v => v.id_vehiculo === state.selectedVehicle!.id_vehiculo) || null
         : null;
 
        return {
@@ -146,10 +129,11 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       if (action.payload === null) {
         return { ...state, selectedVehicle: null };
       }
+      const [lat, lng] = action.payload.coordenadas.split(',').map(Number);
       return {
         ...state,
         selectedVehicle: action.payload,
-        mapViewport: { type: 'pan_to_vehicle', payload: action.payload }
+        mapViewport: { type: 'pan_to_vehicle', payload: { lat, lng } }
       };
     }
 
@@ -169,7 +153,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         const startOfRoute = segments.length > 0 ? segments[0].startPoint : null;
 
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute
-            ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng, rumbo: segments[0].records[0]?.rumbo || 0, velocidad: 0 }
+            ? { ...state.historyVehicle, coordenadas: `${startOfRoute.lat},${startOfRoute.lng}`, rumbo: segments[0].records[0]?.rumbo || 0, velocidad: "0" }
             : state.historyVehicle;
         
         return {
@@ -185,9 +169,12 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     }
 
     case 'BACK_TO_FLEET': {
-        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
+        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
         const newBounds = visibleVehicles.length > 0
-            ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
+            ? visibleVehicles.map(v => {
+                const [lat, lng] = v.coordenadas.split(',').map(Number);
+                return { lat, lng };
+              })
             : [];
         
         return {
@@ -220,10 +207,9 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
         const resetVehicle = {
           ...historyVehicle,
-          lat: startSegment.startPoint.lat,
-          lng: startSegment.startPoint.lng,
-          status: startSegment.id_estado as VehicleStatus,
-          velocidad: 0,
+          coordenadas: `${startSegment.startPoint.lat},${startSegment.startPoint.lng}`,
+          id_estado: parseInt(startSegment.id_estado),
+          velocidad: '0',
           rumbo: startSegment.records[0]?.rumbo || 0,
         };
 
@@ -245,11 +231,15 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       // Handle selecting a new segment
       const updatedVehicle = {
         ...historyVehicle,
-        lat: segmentToSelect.startPoint.lat,
-        lng: segmentToSelect.startPoint.lng,
-        status: segmentToSelect.id_estado as VehicleStatus,
-        velocidad: Math.round(segmentToSelect.avgSpeed),
+        coordenadas: `${segmentToSelect.startPoint.lat},${segmentToSelect.startPoint.lng}`,
+        id_estado: parseInt(segmentToSelect.id_estado),
+        velocidad: String(Math.round(segmentToSelect.avgSpeed)),
         rumbo: segmentToSelect.records[0]?.rumbo || historyVehicle.rumbo,
+        estado: {
+            ...historyVehicle.estado,
+            param1: segmentToSelect.description,
+            param3: routeStatusDetailsMap[segmentToSelect.id_estado]?.color || historyVehicle.estado.param3,
+        }
       };
 
       let newMapViewport: MapViewport;
@@ -260,7 +250,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         });
         newMapViewport = segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport;
       } else {
-        newMapViewport = { type: 'pan_to_vehicle', payload: { ...updatedVehicle }};
+        newMapViewport = { type: 'pan_to_vehicle', payload: { ...segmentToSelect.startPoint }};
       }
 
       return {
@@ -308,8 +298,8 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       return {
         ...state,
         vehicles: state.vehicles.map(v => 
-          v.id === vehicleId
-            ? { ...v, lat: newCoords.lat, lng: newCoords.lng }
+          v.id_vehiculo === vehicleId
+            ? { ...v, coordenadas: `${newCoords.lat},${newCoords.lng}` }
             : v
         ),
         simulationStep: {
@@ -327,7 +317,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         return {
             ...state,
             isRoutePlaying: true,
-            historyVehicle: state.historyVehicle ? { ...state.historyVehicle, status: '6' as VehicleStatus } : state.historyVehicle,
+            historyVehicle: state.historyVehicle ? { ...state.historyVehicle, id_estado: 6 } : state.historyVehicle,
         };
 
     case 'PAUSE_ROUTE_PLAYBACK':
@@ -339,16 +329,20 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     case 'UPDATE_HISTORY_VEHICLE_POSITION': {
         if (!state.historyVehicle) return state;
         const { lat, lng, rumbo, velocidad, animationDuration } = action.payload;
-        const movingStatus = '6' as VehicleStatus;
+        
         return {
             ...state,
             historyVehicle: {
                 ...state.historyVehicle,
-                lat,
-                lng,
+                coordenadas: `${lat},${lng}`,
                 rumbo,
-                velocidad,
-                status: movingStatus,
+                velocidad: String(velocidad),
+                id_estado: 6,
+                 estado: {
+                    ...state.historyVehicle.estado,
+                    param1: 'Transitando',
+                    param3: routeStatusDetailsMap['6'].color,
+                }
             },
             playbackAnimationDuration: animationDuration,
         };
@@ -361,7 +355,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
 // Selectors
 export const selectVisibleVehicles = (state: FleetState): Vehicle[] => {
-  return state.vehicles.filter(v => state.visibleVehicleIds.has(v.id));
+  return state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
 };
 
 export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
@@ -369,7 +363,7 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
   if (state.statusFilter.length === 0) {
     return visibleVehicles;
   }
-  return visibleVehicles.filter(v => state.statusFilter.includes(v.status));
+  return visibleVehicles.filter(v => state.statusFilter.includes(String(v.id_estado)));
 };
 
 export const selectMapVehicles = (state: FleetState): Vehicle[] => {
@@ -421,7 +415,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       error,
     } = useQuery<Vehicle[], Error>({
       queryKey: ['vehicles'],
-      queryFn: fetchAndProcessVehicles,
+      queryFn: fetchVehicles,
       refetchInterval: 5000, // Refetch every 5 seconds
     });
     
@@ -442,7 +436,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        vehicleId: historyVehicle.id,
+                        vehicleId: historyVehicle.id_vehiculo,
                     }),
                 });
                 if (!response.ok) throw new Error('Failed to fetch route');
@@ -464,13 +458,13 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
 
         fetchRoute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [state.historyVehicle?.id, state.isLoadingRoute]);
+    }, [state.historyVehicle?.id_vehiculo, state.isLoadingRoute]);
 
     const stateContextValue = useMemo(() => ({
         state,
         isLoadingVehicles: isLoadingVehicles && state.vehicles.length === 0, // Only show initial loading
         error,
-    }), [state, isLoadingVehicles]);
+    }), [state, isLoadingVehicles, error]);
 
 
     return (

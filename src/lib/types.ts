@@ -1,6 +1,6 @@
 
-// The raw data structure returned from the /api/vehicles endpoint
-export interface RawVehicle {
+// The processed and flattened data structure used throughout the app's components and state
+export interface Vehicle {
   id_ubicacion: number;
   id_vehiculo: number;
   coordenadas: string;
@@ -19,23 +19,6 @@ export interface RawVehicle {
     param1: string; // Status name, e.g., "Transitando"
     param3: string; // Status color hex, e.g., "#00CC33"
   };
-}
-
-// The processed and flattened data structure used throughout the app's components and state
-export interface Vehicle {
-  id: number;
-  lat: number;
-  lng: number;
-  placa: string;
-  velocidad: number;
-  odometro: string;
-  rumbo: number;
-  status: string; // id_estado as a string
-  nombre_estado: string;
-  color: string;
-  fecha: number;
-  bateria_vehiculo: string;
-  senal_gsm: number;
 }
 
 export type VehicleStatus = string;

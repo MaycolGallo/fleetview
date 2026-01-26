@@ -63,7 +63,7 @@ export function VehicleMobileContextMenu({
                 <DrawerContent>
                     <DrawerHandle />
                     <DrawerHeader className="text-left">
-                        <DrawerTitle>{vehicle.placa}</DrawerTitle>
+                        <DrawerTitle>{vehicle.vehiculo.vehiculo_placa}</DrawerTitle>
                     </DrawerHeader>
                     <div className="p-4 pt-0">
                         <div className="flex flex-col gap-1">

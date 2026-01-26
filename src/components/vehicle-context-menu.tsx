@@ -71,7 +71,7 @@ export function VehicleContextMenu({
                 style={{ top: position.y, left: position.x }}
             >
                 <div className="px-2 py-1.5 text-sm font-semibold border-b border-border mb-1">
-                    {vehicle.placa}
+                    {vehicle.vehiculo.vehiculo_placa}
                 </div>
                 <div className="flex flex-col">
                     {contextMenuItems.map((item) => {
