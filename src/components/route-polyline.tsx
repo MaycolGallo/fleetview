@@ -28,10 +28,7 @@ export function RouteSegments() {
         routeGroups.forEach((group, index) => {
             if (group.id_estado === 6) { // MOVING / Transitando
                 const isSelected = selectedSegmentIndex === index;
-                const path = group.records.map(r => {
-                    const [lat, lng] = r.coordenadas.split(',').map(Number);
-                    return { lat, lng };
-                });
+                const path = group.records.map(r => ({ lat: r.lat, lng: r.lng }));
                 
                 const handleSegmentClick = () => {
                     dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index });
@@ -100,4 +97,3 @@ export function RouteSegments() {
         </>
     );
 }
-

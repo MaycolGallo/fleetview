@@ -3,6 +3,7 @@ import {
   VehiculoHistorialGrouped,
   VehiculoUbicacionHistorial,
   VHistorial,
+  ProcessedRouteRecord,
 } from "./types";
 
 function haversineDistance(
@@ -145,6 +146,12 @@ function processGroup(
   const [startLat, startLng] = records[0].coordenadas.split(',').map(Number);
   const [endLat, endLng] = records[records.length - 1].coordenadas.split(',').map(Number);
 
+  const processedRecords: ProcessedRouteRecord[] = records.map(r => {
+    const { coordenadas, ...rest } = r;
+    const [lat, lng] = coordenadas.split(',').map(Number);
+    return { ...rest, lat, lng };
+  });
+
   return {
     id_estado: records[0].id_estado,
     description: records[0].param1,
@@ -159,6 +166,6 @@ function processGroup(
     total_distance_km: Math.round(totalDistance * 1000) / 1000,
     startPoint: { lat: startLat, lng: startLng },
     endPoint: { lat: endLat, lng: endLng },
-    records: records,
+    records: processedRecords,
   };
 }

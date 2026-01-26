@@ -142,10 +142,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         const historyData = action.payload;
         const routePoints = historyData.groups
           .filter(g => g.id_estado === 6) // Transitando
-          .map(g => g.records.map(r => {
-            const [lat, lng] = r.coordenadas.split(',').map(Number);
-            return { lat, lng };
-          }));
+          .map(g => g.records.map(r => ({ lat: r.lat, lng: r.lng })));
 
         const startOfRoute = historyData.groups.length > 0 ? historyData.groups[0].startPoint : null;
 
@@ -237,10 +234,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
       let newMapViewport: MapViewport;
       if (segmentToSelect.id_estado === 6) { // Transitando
-        const segmentPoints = segmentToSelect.records.map(r => {
-          const [lat, lng] = r.coordenadas.split(',').map(Number);
-          return { lat, lng };
-        });
+        const segmentPoints = segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng }));
         newMapViewport = segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport;
       } else {
         newMapViewport = { type: 'pan_to_vehicle', payload: { ...segmentToSelect.startPoint }};

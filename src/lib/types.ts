@@ -69,6 +69,13 @@ export interface VehiculoUbicacionHistorial {
   updated_at: string | null;
 }
 
+// The processed record used in the UI, with parsed coordinates
+export interface ProcessedRouteRecord extends Omit<VehiculoUbicacionHistorial, 'coordenadas'>{
+    lat: number;
+    lng: number;
+}
+
+
 export interface VehiculoHistorialGrouped {
   id_estado: number;
   description: string;
@@ -83,7 +90,7 @@ export interface VehiculoHistorialGrouped {
   total_distance_km: number;
   startPoint: { lat: number; lng: number };
   endPoint: { lat: number; lng: number };
-  records: VehiculoUbicacionHistorial[];
+  records: ProcessedRouteRecord[];
 }
 
 export interface VHistorial {
