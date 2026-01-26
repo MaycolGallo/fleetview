@@ -5,11 +5,9 @@ import { useMap } from '@vis.gl/react-google-maps';
 import React, { useEffect, useMemo } from 'react';
 import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fleet-context';
 import { AnimatedVehicleMarker } from './animated-vehicle-marker';
-import { RoutePolyline } from './route-polyline';
-import { EventMarker } from './event-marker';
+import { RouteSegments } from './route-polyline';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { Flag, Play } from 'lucide-react';
-import { Clock, Milestone, ParkingSquare, Truck } from 'lucide-react';
 
 
 export function MapControl() {
@@ -79,45 +77,7 @@ export function MapControl() {
         />
       ))}
 
-      {routeGroups.map((group, index) => {
-        const isSelected = selectedSegmentIndex === index;
-        
-        if (group.id_estado === 6) { // MOVING / Transitando
-          const path = group.records.map(r => {
-            const [lat, lng] = r.coordenadas.split(',').map(Number);
-            return { lat, lng };
-          });
-          
-          const handleSegmentClick = () => {
-            dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index });
-          };
-
-          return (
-            <RoutePolyline
-              key={`segment-${index}`}
-              routePath={path}
-              color={isSelected ? '#f59e0b' : group.color}
-              weight={isSelected ? 8 : 6}
-              zIndex={isSelected ? 4 : 2}
-              onClick={handleSegmentClick}
-              showArrows={true}
-            />
-          );
-        } else if ((group.id_estado === 4 || group.id_estado === 5) && selectedSegmentIndex === null) {
-          // IDLE / Ralenti or PARKED / Estacionado, show event marker only when no segment is selected
-          return (
-            <EventMarker
-              key={`event-${index}`}
-              position={group.startPoint}
-              duration={group.total_time_seconds / 60}
-              status={group.id_estado}
-              color={group.color}
-            />
-          );
-        }
-        
-        return null;
-      })}
+      <RouteSegments />
       
       {routeGroups.length > 0 && selectedSegmentIndex === null && (
         <>
