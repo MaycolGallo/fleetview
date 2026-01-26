@@ -23,19 +23,19 @@ export interface Vehicle {
 
 export type VehicleStatus = string;
 
-export interface VehicleHistoryPoint {
+export interface VehiculoUbicacionHistorial {
   id: string;
   id_vehiculo: number;
   coordenadas: string;
   tramas_validas: number;
-  id_estado: string;
+  id_estado: number;
   velocidad: string;
   rumbo: number;
   odometro: string;
   horometro: string;
   numero_satelites: number;
   nivel_bateria: string;
-  temperatura: string;
+  temperatura: string | null;
   senal_gsm: number;
   nivel_bateria_vehicular: string;
   id_cliente: number;
@@ -51,22 +51,35 @@ export interface VehicleHistoryPoint {
   updated_at: string | null;
 }
 
-export interface RouteSegment {
-  id_estado: string;
+export interface VehiculoHistorialGrouped {
+  id_estado: number;
   description: string;
-  durationMinutes: number;
-  distanceKm: number;
-  avgSpeed: number;
-  startTime: number;
-  endTime: number;
+  color: string;
+  count: number;
+  start_id: string;
+  end_id: string;
+  total_time_seconds: number;
+  total_time_formatted: string;
+  avg_velocidad: number;
+  max_velocidad: number;
+  total_distance_km: number;
   startPoint: { lat: number; lng: number };
   endPoint: { lat: number; lng: number };
-  records: VehicleHistoryPoint[];
+  records: VehiculoUbicacionHistorial[];
 }
 
-export interface RouteHistory {
-  // Array of paths for each moving segment
-  routePoints: { lat: number; lng: number }[][];
-  // Detailed segments
-  segments: RouteSegment[];
+export interface VHistorial {
+  groups: VehiculoHistorialGrouped[];
+  total_distance_km: number;
+  total_time_seconds: number;
+  total_time_formatted: string;
+  by_estado: {
+    [key: number]: {
+      name: string;
+      total_time_seconds: number;
+      total_time_formatted: string;
+      total_distance_km: number;
+      count: number;
+    };
+  };
 }

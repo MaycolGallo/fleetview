@@ -4,7 +4,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import type { RouteSegment } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   ParkingSquare,
@@ -12,16 +11,24 @@ import {
   Milestone,
   Play,
   Pause,
+  Truck,
 } from 'lucide-react';
 import { format, fromUnixTime } from 'date-fns';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { useFleetState, useFleetDispatch, selectRouteSummary, routeStatusDetailsMap } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 
 interface RouteHistoryContentProps {
     onSegmentSelect: (index: number) => void;
 }
+
+const statusIconMap: { [key: number]: React.ElementType } = {
+    4: Clock, // Ralenti
+    5: ParkingSquare, // Estacionado
+    6: Truck, // Transitando
+};
+
 
 function formatDuration(minutes: number) {
   if (minutes < 1) {
@@ -48,14 +55,14 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
     const isMobile = useIsMobile();
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
-    const { routeSegments: segments, historyVehicle: vehicle, selectedSegmentIndex, isRoutePlaying } = state;
+    const { routeGroups: groups, historyVehicle: vehicle, selectedSegmentIndex, isRoutePlaying } = state;
     const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state]);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     useEffect(() => {
-        itemRefs.current = itemRefs.current.slice(0, segments.length);
-    }, [segments]);
+        itemRefs.current = itemRefs.current.slice(0, groups.length);
+    }, [groups]);
 
     useEffect(() => {
         if (selectedSegmentIndex !== null && itemRefs.current[selectedSegmentIndex]) {
@@ -79,9 +86,8 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
         return (
             <ScrollArea className="h-full" viewportRef={scrollContainerRef}>
                 <div className="relative flex flex-col p-4 pt-2">
-                {segments.map((segment, index) => {
-                    const statusInfo = routeStatusDetailsMap[segment.id_estado] || { icon: Milestone, name: 'Event', color: '#888' };
-                    const Icon = statusInfo.icon;
+                {groups.map((group, index) => {
+                    const Icon = statusIconMap[group.id_estado] || Milestone;
                     const isSelected = selectedSegmentIndex === index;
 
                     return (
@@ -96,9 +102,9 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
                                     "z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background ring-4 transition-all",
                                     isSelected ? 'ring-primary' : 'ring-border', 'group-hover:ring-primary'
                                 )}>
-                                    <Icon className="h-5 w-5" style={{color: statusInfo.color}} />
+                                    <Icon className="h-5 w-5" style={{color: group.color}} />
                                 </div>
-                                {index < segments.length - 1 && (
+                                {index < groups.length - 1 && (
                                     <div className={cn("w-0.5 flex-1 transition-colors", isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary')} />
                                 )}
                             </div>
@@ -116,18 +122,18 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
                                                 "font-semibold capitalize text-sm transition-colors",
                                                 isSelected ? 'text-primary' : 'text-foreground'
                                             )}>
-                                                {segment.description}
+                                                {group.description}
                                             </p>
                                             <p className="text-xs text-muted-foreground pt-1">
-                                                {format(fromUnixTime(segment.startTime), 'p')} - {format(fromUnixTime(segment.endTime), 'p')}
+                                                {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
                                             </p>
                                         </div>
                                         <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground text-right ml-2">
-                                            {segment.durationMinutes > 0 && (
-                                                <span className='whitespace-nowrap'>{formatDuration(segment.durationMinutes)}</span>
+                                            {group.total_time_seconds > 0 && (
+                                                <span className='whitespace-nowrap'>{group.total_time_formatted}</span>
                                             )}
-                                            {segment.distanceKm > 0 && (
-                                                <span className='whitespace-nowrap'>{segment.distanceKm.toFixed(1)} km</span>
+                                            {group.total_distance_km > 0 && (
+                                                <span className='whitespace-nowrap'>{group.total_distance_km.toFixed(1)} km</span>
                                             )}
                                         </div>
                                     </div>
@@ -191,9 +197,8 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
             <CardContent className="pb-4 flex-1 min-h-0">
               <ScrollArea className="w-full whitespace-nowrap h-full" viewportRef={scrollContainerRef}>
                 <div className="relative flex items-stretch gap-0 px-4 pb-4 h-full">
-                  {segments.map((segment, index) => {
-                    const statusInfo = routeStatusDetailsMap[segment.id_estado] || { icon: Milestone, name: 'Event', color: '#888' };
-                    const Icon = statusInfo.icon;
+                  {groups.map((group, index) => {
+                    const Icon = statusIconMap[group.id_estado] || Milestone;
                     const isSelected = selectedSegmentIndex === index;
 
                     return (
@@ -208,7 +213,7 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
                         onClick={() => onSegmentSelect(index)}
                       >
                         <div className="relative flex flex-col items-center text-center h-full">
-                          {index < segments.length - 1 && (
+                          {index < groups.length - 1 && (
                              <div className={cn(
                                 "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
                                 isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
@@ -220,7 +225,7 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
                                isSelected ? 'ring-primary' : 'ring-card',
                                'group-hover:ring-primary'
                           )}>
-                            <Icon className="h-5 w-5" style={{color: statusInfo.color}} />
+                            <Icon className="h-5 w-5" style={{color: group.color}} />
                           </div>
 
                           <div className="pt-2">
@@ -228,21 +233,21 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
                                  "font-semibold capitalize text-sm transition-colors",
                                  isSelected ? 'text-primary' : 'text-foreground'
                               )}>
-                              {segment.description}
+                              {group.description}
                             </p>
                             <p className="text-xs text-muted-foreground whitespace-normal pt-1 px-1 h-10">
-                                {format(fromUnixTime(segment.startTime), 'p')} - {format(fromUnixTime(segment.endTime), 'p')}
+                                {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
                             </p>
                             <div className="mt-1 flex flex-col items-center gap-1 text-xs text-muted-foreground">
-                              {(segment.durationMinutes > 0 || segment.distanceKm > 0) && <Separator orientation="horizontal" className="w-10 my-1" />}
+                              {(group.total_time_seconds > 0 || group.total_distance_km > 0) && <Separator orientation="horizontal" className="w-10 my-1" />}
                               <div className="flex gap-2">
-                              {segment.durationMinutes > 0 && (
-                                  <span>{formatDuration(segment.durationMinutes)}</span>
+                              {group.total_time_seconds > 0 && (
+                                  <span>{group.total_time_formatted}</span>
                               )}
-                              {segment.distanceKm > 0 && (
+                              {group.total_distance_km > 0 && (
                                 <>
-                                  {segment.durationMinutes > 0 && <Separator orientation="vertical" className="h-3" />}
-                                  <span>{segment.distanceKm.toFixed(1)} km</span>
+                                  {group.total_time_seconds > 0 && <Separator orientation="vertical" className="h-3" />}
+                                  <span>{group.total_distance_km.toFixed(1)} km</span>
                                 </>
                               )}
                               </div>

@@ -9,6 +9,8 @@ import { RoutePolyline } from './route-polyline';
 import { EventMarker } from './event-marker';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { Flag, Play } from 'lucide-react';
+import { Clock, Milestone, ParkingSquare, Truck } from 'lucide-react';
+
 
 export function MapControl() {
   const map = useMap();
@@ -17,7 +19,7 @@ export function MapControl() {
 
   const {
     mapViewport,
-    routeSegments,
+    routeGroups,
     selectedSegmentIndex,
   } = state;
 
@@ -72,16 +74,16 @@ export function MapControl() {
     <>
       {mapVehicles.map((vehicle) => (
         <AnimatedVehicleMarker
-          key={vehicle.id}
+          key={vehicle.id_vehiculo}
           vehicle={vehicle}
         />
       ))}
 
-      {routeSegments.map((segment, index) => {
+      {routeGroups.map((group, index) => {
         const isSelected = selectedSegmentIndex === index;
         
-        if (segment.id_estado === '6') { // MOVING
-          const path = segment.records.map(r => {
+        if (group.id_estado === 6) { // MOVING / Transitando
+          const path = group.records.map(r => {
             const [lat, lng] = r.coordenadas.split(',').map(Number);
             return { lat, lng };
           });
@@ -94,21 +96,22 @@ export function MapControl() {
             <RoutePolyline
               key={`segment-${index}`}
               routePath={path}
-              color={isSelected ? '#f59e0b' : '#16a34a'}
+              color={isSelected ? '#f59e0b' : group.color}
               weight={isSelected ? 8 : 6}
               zIndex={isSelected ? 4 : 2}
               onClick={handleSegmentClick}
               showArrows={true}
             />
           );
-        } else if ((segment.id_estado === '4' || segment.id_estado === '5') && selectedSegmentIndex === null) {
-          // IDLE or PARKED, show event marker only when no segment is selected
+        } else if ((group.id_estado === 4 || group.id_estado === 5) && selectedSegmentIndex === null) {
+          // IDLE / Ralenti or PARKED / Estacionado, show event marker only when no segment is selected
           return (
             <EventMarker
               key={`event-${index}`}
-              position={segment.startPoint}
-              duration={segment.durationMinutes}
-              status={segment.id_estado}
+              position={group.startPoint}
+              duration={group.total_time_seconds / 60}
+              status={group.id_estado}
+              color={group.color}
             />
           );
         }
@@ -116,10 +119,10 @@ export function MapControl() {
         return null;
       })}
       
-      {routeSegments.length > 0 && selectedSegmentIndex === null && (
+      {routeGroups.length > 0 && selectedSegmentIndex === null && (
         <>
           <AdvancedMarker
-            position={routeSegments[0].startPoint}
+            position={routeGroups[0].startPoint}
             zIndex={4}
           >
             <div className="flex flex-col items-center">
@@ -136,7 +139,7 @@ export function MapControl() {
           </AdvancedMarker>
 
           <AdvancedMarker
-            position={routeSegments[routeSegments.length - 1].endPoint}
+            position={routeGroups[routeGroups.length - 1].endPoint}
             zIndex={4}
           >
             <div className="flex flex-col items-center">

@@ -2,13 +2,22 @@
 'use client';
 
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
-import { routeStatusDetailsMap } from '@/context/fleet-context';
+import { Clock, Milestone, ParkingSquare, Truck } from 'lucide-react';
+import React from 'react';
 
 interface EventMarkerProps {
     position: { lat: number; lng: number };
     duration: number;
-    status: string;
+    status: number;
+    color: string;
 }
+
+const statusIconMap: { [key: number]: React.ElementType } = {
+    4: Clock, // Ralenti
+    5: ParkingSquare, // Estacionado
+    6: Truck, // Transitando
+};
+
 
 function formatDuration(minutes: number) {
   if (minutes < 1) {
@@ -31,11 +40,8 @@ function formatDuration(minutes: number) {
   return result;
 }
 
-export function EventMarker({ position, duration, status }: EventMarkerProps) {
-    const statusInfo = routeStatusDetailsMap[status] || null;
-    if (!statusInfo) return null;
-
-    const Icon = statusInfo.icon;
+export function EventMarker({ position, duration, status, color }: EventMarkerProps) {
+    const Icon = statusIconMap[status] || Milestone;
 
     return (
         <AdvancedMarker position={position} zIndex={2}>
@@ -47,7 +53,7 @@ export function EventMarker({ position, duration, status }: EventMarkerProps) {
                  {/* The icon marker */}
                 <div
                     className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-card"
-                    style={{ backgroundColor: statusInfo.color }}
+                    style={{ backgroundColor: color }}
                 >
                     <Icon className="w-4 h-4 text-white" />
                 </div>

@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, VehicleStatus, RouteSegment, MapViewport } from '@/lib/types';
+import type { Vehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport } from '@/lib/types';
 import { Key, Clock, Power, Siren, PowerOff, Ban, Truck, BatteryWarning, Wrench, PowerCircle, ParkingSquare } from 'lucide-react';
 
 const fetchVehicles = async (): Promise<Vehicle[]> => {
@@ -30,7 +30,7 @@ interface FleetState {
   selectedVehicle: Vehicle | null;
   historyVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[][] | null;
-  routeSegments: RouteSegment[];
+  routeGroups: VehiculoHistorialGrouped[];
   isRouteSheetOpen: boolean;
   isLoadingRoute: boolean;
   selectedSegmentIndex: number | null;
@@ -49,7 +49,7 @@ type FleetAction =
   | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus[] }
   | { type: 'PAN_TO_VEHICLE'; payload: Vehicle | null }
   | { type: 'START_ROUTE_LOADING'; payload: Vehicle }
-  | { type: 'SET_ROUTE_HISTORY'; payload: { routePoints: { lat: number; lng: number }[][]; segments: RouteSegment[] } }
+  | { type: 'SET_ROUTE_HISTORY'; payload: VHistorial }
   | { type: 'BACK_TO_FLEET' }
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
   | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean }
@@ -71,7 +71,7 @@ const getInitialState = (): FleetState => ({
   selectedVehicle: null,
   historyVehicle: null,
   routePath: null,
-  routeSegments: [],
+  routeGroups: [],
   isRouteSheetOpen: false,
   isLoadingRoute: false,
   selectedSegmentIndex: null,
@@ -83,12 +83,6 @@ const getInitialState = (): FleetState => ({
   isRoutePlaying: false,
   playbackAnimationDuration: 1000,
 });
-
-export const routeStatusDetailsMap: { [key: string]: { name: string; color: string; icon: React.ElementType; } } = {
-  '4': { name: 'Ralenti', color: '#9E9E9E', icon: Clock },
-  '5': { name: 'Estacionado', color: '#666666', icon: ParkingSquare },
-  '6': { name: 'Transitando', color: '#00CC33', icon: Truck },
-};
 
 
 // 4. Create the reducer function
@@ -149,18 +143,25 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       };
 
     case 'SET_ROUTE_HISTORY': {
-        const { routePoints, segments } = action.payload;
-        const startOfRoute = segments.length > 0 ? segments[0].startPoint : null;
+        const historyData = action.payload;
+        const routePoints = historyData.groups
+          .filter(g => g.id_estado === 6) // Transitando
+          .map(g => g.records.map(r => {
+            const [lat, lng] = r.coordenadas.split(',').map(Number);
+            return { lat, lng };
+          }));
+
+        const startOfRoute = historyData.groups.length > 0 ? historyData.groups[0].startPoint : null;
 
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute
-            ? { ...state.historyVehicle, coordenadas: `${startOfRoute.lat},${startOfRoute.lng}`, rumbo: segments[0].records[0]?.rumbo || 0, velocidad: "0" }
+            ? { ...state.historyVehicle, coordenadas: `${startOfRoute.lat},${startOfRoute.lng}`, rumbo: historyData.groups[0].records[0]?.rumbo || 0, velocidad: "0" }
             : state.historyVehicle;
         
         return {
             ...state,
             isLoadingRoute: false,
             routePath: routePoints,
-            routeSegments: segments,
+            routeGroups: historyData.groups,
             isRouteSheetOpen: true,
             historyVehicle: updatedHistoryVehicle,
             isRoutePlaying: false,
@@ -181,7 +182,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             ...state,
             historyVehicle: null,
             routePath: null,
-            routeSegments: [],
+            routeGroups: [],
             selectedVehicle: null,
             isRouteSheetOpen: false,
             selectedSegmentIndex: null,
@@ -193,7 +194,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'SELECT_ROUTE_SEGMENT': {
       const segmentIndex = action.payload;
-      const { selectedSegmentIndex, routeSegments, historyVehicle } = state;
+      const { selectedSegmentIndex, routeGroups, historyVehicle } = state;
       
       // Guard clause: If no history vehicle, do nothing.
       if (!historyVehicle) {
@@ -202,13 +203,13 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
       // Handle deselecting the current segment
       if (selectedSegmentIndex === segmentIndex) {
-        const startSegment = routeSegments[0];
+        const startSegment = routeGroups[0];
         if (!startSegment) return state; // Should not happen if segments exist
 
         const resetVehicle = {
           ...historyVehicle,
           coordenadas: `${startSegment.startPoint.lat},${startSegment.startPoint.lng}`,
-          id_estado: parseInt(startSegment.id_estado),
+          id_estado: startSegment.id_estado,
           velocidad: '0',
           rumbo: startSegment.records[0]?.rumbo || 0,
         };
@@ -221,7 +222,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         };
       }
 
-      const segmentToSelect = routeSegments[segmentIndex];
+      const segmentToSelect = routeGroups[segmentIndex];
       
       // Guard clause: If the segment to select doesn't exist, do nothing.
       if (!segmentToSelect) {
@@ -232,18 +233,18 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       const updatedVehicle = {
         ...historyVehicle,
         coordenadas: `${segmentToSelect.startPoint.lat},${segmentToSelect.startPoint.lng}`,
-        id_estado: parseInt(segmentToSelect.id_estado),
-        velocidad: String(Math.round(segmentToSelect.avgSpeed)),
+        id_estado: segmentToSelect.id_estado,
+        velocidad: String(Math.round(segmentToSelect.avg_velocidad)),
         rumbo: segmentToSelect.records[0]?.rumbo || historyVehicle.rumbo,
         estado: {
             ...historyVehicle.estado,
             param1: segmentToSelect.description,
-            param3: routeStatusDetailsMap[segmentToSelect.id_estado]?.color || historyVehicle.estado.param3,
+            param3: segmentToSelect.color || historyVehicle.estado.param3,
         }
       };
 
       let newMapViewport: MapViewport;
-      if (segmentToSelect.id_estado === '6') {
+      if (segmentToSelect.id_estado === 6) { // Transitando
         const segmentPoints = segmentToSelect.records.map(r => {
           const [lat, lng] = r.coordenadas.split(',').map(Number);
           return { lat, lng };
@@ -341,7 +342,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
                  estado: {
                     ...state.historyVehicle.estado,
                     param1: 'Transitando',
-                    param3: routeStatusDetailsMap['6'].color,
+                    param3: '#00CC33',
                 }
             },
             playbackAnimationDuration: animationDuration,
@@ -374,18 +375,18 @@ export const selectMapVehicles = (state: FleetState): Vehicle[] => {
 };
 
 export const selectRouteSummary = (state: FleetState) => {
-  const { routeSegments } = state;
-  if (!routeSegments || routeSegments.length === 0) {
+  const { routeGroups } = state;
+  if (!routeGroups || routeGroups.length === 0) {
     return { totalDistance: 0, totalDuration: 0, totalStops: 0, totalStopTime: 0 };
   }
 
-  return routeSegments.reduce(
-    (summary, segment) => {
-      summary.totalDistance += segment.distanceKm;
-      summary.totalDuration += segment.durationMinutes;
-      if (segment.id_estado === '5') {
+  return routeGroups.reduce(
+    (summary, group) => {
+      summary.totalDistance += group.total_distance_km;
+      summary.totalDuration += group.total_time_seconds / 60; // duration in minutes
+      if (group.id_estado === 5) { // Estacionado
         summary.totalStops += 1;
-        summary.totalStopTime += segment.durationMinutes;
+        summary.totalStopTime += group.total_time_seconds / 60;
       }
       return summary;
     },

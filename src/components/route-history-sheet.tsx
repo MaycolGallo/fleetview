@@ -37,7 +37,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const isMobile = useIsMobile();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isRouteSheetOpen, isRoutePlaying, routeSegments, historyVehicle } = state;
+  const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle } = state;
   const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state]);
 
   const playbackIndexRef = useRef(0);
@@ -45,13 +45,13 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
 
   const movingPoints = useMemo(() => {
     if (!isRouteSheetOpen) return [];
-    return routeSegments
-        .filter(seg => seg.id_estado === '6')
+    return routeGroups
+        .filter(seg => seg.id_estado === 6) // Transitando
         .flatMap(seg => seg.records.map(r => {
             const [lat, lng] = r.coordenadas.split(',').map(Number);
             return { lat, lng, rumbo: r.rumbo, fecha: r.fecha, velocidad: parseInt(r.velocidad, 10) || 0 };
         }));
-  }, [isRouteSheetOpen, routeSegments]);
+  }, [isRouteSheetOpen, routeGroups]);
 
   useEffect(() => {
     const cleanup = () => {
