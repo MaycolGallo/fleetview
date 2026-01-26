@@ -1,6 +1,6 @@
 
-// The processed and flattened data structure used throughout the app's components and state
-export interface Vehicle {
+// The raw, nested data structure from the API
+export interface RawVehicle {
   id_ubicacion: number;
   id_vehiculo: number;
   coordenadas: string;
@@ -16,9 +16,27 @@ export interface Vehicle {
   };
   estado: {
     id_estado: number;
-    param1: string; // Status name, e.g., "Transitando"
-    param3: string; // Status color hex, e.g., "#00CC33"
+    param1: string; // Status name
+    param3: string; // Status color
   };
+}
+
+// The processed and flattened data structure used throughout the app's components and state
+export interface Vehicle {
+  id_ubicacion: number;
+  id_vehiculo: number;
+  lat: number;
+  lng: number;
+  id_estado: number;
+  fecha: number;
+  velocidad: string;
+  rumbo: number;
+  odometro: string;
+  senal_gsm: number;
+  nivel_bateria_vehicular: string;
+  placa: string;
+  statusName: string;
+  statusColor: string;
 }
 
 export type VehicleStatus = string;
@@ -83,3 +101,10 @@ export interface VHistorial {
     };
   };
 }
+
+export type MapViewport =
+  | { type: 'initial' }
+  | { type: 'idle' }
+  | { type: 'pan_to_vehicle'; payload: { lat: number; lng: number } }
+  | { type: 'fit_bounds'; payload: { lat: number; lng: number }[] }
+  | { type: 'fit_route'; payload: { lat: number; lng: number }[] };

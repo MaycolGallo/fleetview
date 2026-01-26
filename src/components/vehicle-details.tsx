@@ -69,13 +69,13 @@ function VehicleDetailsInternal() {
                 <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-                <h2 className="text-lg font-semibold">{selectedVehicle.vehiculo.vehiculo_placa}</h2>
+                <h2 className="text-lg font-semibold">{selectedVehicle.placa}</h2>
                 <div className="text-sm text-muted-foreground">
                     <Badge
                         className="capitalize text-white"
-                        style={{ backgroundColor: selectedVehicle.estado.param3 }}
+                        style={{ backgroundColor: selectedVehicle.statusColor }}
                     >
-                        {selectedVehicle.estado.param1}
+                        {selectedVehicle.statusName}
                     </Badge>
                 </div>
             </div>

@@ -3,10 +3,10 @@
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport } from '@/lib/types';
+import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport } from '@/lib/types';
 import { Key, Clock, Power, Siren, PowerOff, Ban, Truck, BatteryWarning, Wrench, PowerCircle, ParkingSquare } from 'lucide-react';
 
-const fetchVehicles = async (): Promise<Vehicle[]> => {
+const fetchVehicles = async (): Promise<RawVehicle[]> => {
   const res = await fetch('/api/vehicles');
   if (!res.ok) {
     throw new Error('Failed to fetch vehicles');
@@ -96,10 +96,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       const visibleVehicles = action.payload.filter(v => newVisibleIds.has(v.id_vehiculo));
 
       const newBounds = visibleVehicles.length > 0
-          ? visibleVehicles.map(v => {
-              const [lat, lng] = v.coordenadas.split(',').map(Number);
-              return { lat, lng };
-            })
+          ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
           : [];
 
       const updatedSelectedVehicle = state.selectedVehicle
@@ -123,11 +120,10 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       if (action.payload === null) {
         return { ...state, selectedVehicle: null };
       }
-      const [lat, lng] = action.payload.coordenadas.split(',').map(Number);
       return {
         ...state,
         selectedVehicle: action.payload,
-        mapViewport: { type: 'pan_to_vehicle', payload: { lat, lng } }
+        mapViewport: { type: 'pan_to_vehicle', payload: { lat: action.payload.lat, lng: action.payload.lng } }
       };
     }
 
@@ -154,7 +150,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         const startOfRoute = historyData.groups.length > 0 ? historyData.groups[0].startPoint : null;
 
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute
-            ? { ...state.historyVehicle, coordenadas: `${startOfRoute.lat},${startOfRoute.lng}`, rumbo: historyData.groups[0].records[0]?.rumbo || 0, velocidad: "0" }
+            ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng, rumbo: historyData.groups[0].records[0]?.rumbo || 0, velocidad: "0" }
             : state.historyVehicle;
         
         return {
@@ -172,10 +168,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     case 'BACK_TO_FLEET': {
         const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
         const newBounds = visibleVehicles.length > 0
-            ? visibleVehicles.map(v => {
-                const [lat, lng] = v.coordenadas.split(',').map(Number);
-                return { lat, lng };
-              })
+            ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng }))
             : [];
         
         return {
@@ -208,7 +201,8 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
         const resetVehicle = {
           ...historyVehicle,
-          coordenadas: `${startSegment.startPoint.lat},${startSegment.startPoint.lng}`,
+          lat: startSegment.startPoint.lat,
+          lng: startSegment.startPoint.lng,
           id_estado: startSegment.id_estado,
           velocidad: '0',
           rumbo: startSegment.records[0]?.rumbo || 0,
@@ -232,15 +226,13 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       // Handle selecting a new segment
       const updatedVehicle = {
         ...historyVehicle,
-        coordenadas: `${segmentToSelect.startPoint.lat},${segmentToSelect.startPoint.lng}`,
+        lat: segmentToSelect.startPoint.lat,
+        lng: segmentToSelect.startPoint.lng,
         id_estado: segmentToSelect.id_estado,
         velocidad: String(Math.round(segmentToSelect.avg_velocidad)),
         rumbo: segmentToSelect.records[0]?.rumbo || historyVehicle.rumbo,
-        estado: {
-            ...historyVehicle.estado,
-            param1: segmentToSelect.description,
-            param3: segmentToSelect.color || historyVehicle.estado.param3,
-        }
+        statusName: segmentToSelect.description,
+        statusColor: segmentToSelect.color || historyVehicle.statusColor,
       };
 
       let newMapViewport: MapViewport;
@@ -300,7 +292,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         ...state,
         vehicles: state.vehicles.map(v => 
           v.id_vehiculo === vehicleId
-            ? { ...v, coordenadas: `${newCoords.lat},${newCoords.lng}` }
+            ? { ...v, lat: newCoords.lat, lng: newCoords.lng }
             : v
         ),
         simulationStep: {
@@ -335,15 +327,13 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             ...state,
             historyVehicle: {
                 ...state.historyVehicle,
-                coordenadas: `${lat},${lng}`,
+                lat,
+                lng,
                 rumbo,
                 velocidad: String(velocidad),
                 id_estado: 6,
-                 estado: {
-                    ...state.historyVehicle.estado,
-                    param1: 'Transitando',
-                    param3: '#00CC33',
-                }
+                statusName: 'Transitando',
+                statusColor: '#00CC33',
             },
             playbackAnimationDuration: animationDuration,
         };
@@ -411,20 +401,39 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useReducer(fleetReducer, getInitialState());
 
     const {
-      data: vehiclesData,
+      data: rawVehiclesData,
       isLoading: isLoadingVehicles,
       error,
-    } = useQuery<Vehicle[], Error>({
+    } = useQuery<RawVehicle[], Error>({
       queryKey: ['vehicles'],
       queryFn: fetchVehicles,
       refetchInterval: 5000, // Refetch every 5 seconds
     });
     
     useEffect(() => {
-        if (vehiclesData) {
-          dispatch({ type: 'SET_VEHICLES', payload: vehiclesData });
-        }
-    }, [vehiclesData]);
+      if (rawVehiclesData) {
+        const processedVehicles: Vehicle[] = rawVehiclesData.map(raw => {
+          const [lat, lng] = raw.coordenadas.split(',').map(Number);
+          return {
+            id_ubicacion: raw.id_ubicacion,
+            id_vehiculo: raw.id_vehiculo,
+            lat,
+            lng,
+            id_estado: raw.id_estado,
+            fecha: raw.fecha,
+            velocidad: raw.velocidad,
+            rumbo: raw.rumbo,
+            odometro: raw.odometro,
+            senal_gsm: raw.senal_gsm,
+            nivel_bateria_vehicular: raw.nivel_bateria_vehicular,
+            placa: raw.vehiculo.vehiculo_placa,
+            statusName: raw.estado.param1,
+            statusColor: raw.estado.param3,
+          };
+        });
+        dispatch({ type: 'SET_VEHICLES', payload: processedVehicles });
+      }
+    }, [rawVehiclesData]);
 
 
     useEffect(() => {

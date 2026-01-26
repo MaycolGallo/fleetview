@@ -23,7 +23,7 @@ function VehicleFiltersInternal(props: VehicleFiltersProps) {
     vehicles.forEach(v => {
       const statusId = String(v.id_estado);
       if (!statusMap.has(statusId)) {
-        statusMap.set(statusId, { name: v.estado.param1, count: 0 });
+        statusMap.set(statusId, { name: v.statusName, count: 0 });
       }
       statusMap.get(statusId)!.count++;
     });

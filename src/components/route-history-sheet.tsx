@@ -8,6 +8,7 @@ import { RouteHistoryContent } from './route-history-content';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Button } from './ui/button';
 import { Clock, Milestone, ParkingSquare, Pause, Play } from 'lucide-react';
+import { Card, CardHeader } from './ui/card';
 
 interface RouteHistorySheetProps {}
 
@@ -158,7 +159,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
                 <DrawerHeader className="text-left p-4 pt-0 pb-2 flex-shrink-0">
                      <div className="flex justify-between items-start gap-4">
                         <div>
-                            <DrawerTitle>Route History: {historyVehicle?.vehiculo.vehiculo_placa}</DrawerTitle>
+                            <DrawerTitle>Route History: {historyVehicle?.placa}</DrawerTitle>
                             <DrawerDescription asChild>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-2">
                                     <div className="flex items-center gap-1.5">
@@ -205,6 +206,50 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
     )
   }
 
+  // Desktop layout
+  const headerContent = (
+      <div className="flex justify-between items-start gap-4">
+        <div>
+          <h3 className="text-2xl font-semibold leading-none tracking-tight">Route History: {historyVehicle?.placa}</h3>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground mt-2">
+            <div className="flex items-center gap-2">
+              <Milestone className="w-4 h-4 text-primary" />
+              <span>
+                Total Distance:{' '}
+                <strong className="text-foreground">
+                  {totalDistance.toFixed(1)} km
+                </strong>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-primary" />
+              <span>
+                Total Time:{' '}
+                <strong className="text-foreground">
+                  {formatDuration(totalDuration)}
+                </strong>
+              </span>
+            </div>
+            {totalStops > 0 && (
+                <div className="flex items-center gap-2">
+                    <ParkingSquare className="w-4 h-4 text-primary" />
+                    <span>
+                        {totalStops} stops{' '}
+                        <strong className="text-foreground">
+                            ({formatDuration(totalStopTime)})
+                        </strong>
+                    </span>
+                </div>
+            )}
+          </div>
+        </div>
+        <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0">
+            {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
+        </Button>
+      </div>
+    );
+
   return (
     <>
       {isRouteSheetOpen && (
@@ -212,7 +257,10 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
           style={{ viewTransitionName: 'route-sheet-transition' }}
           className="absolute bottom-4 left-4 right-4 z-20 h-[250px]"
         >
-          <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
+          <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
+            <CardHeader>{headerContent}</CardHeader>
+            <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
+          </Card>
         </div>
       )}
     </>

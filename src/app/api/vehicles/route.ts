@@ -1,7 +1,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import type { Vehicle } from '@/lib/types';
+import type { RawVehicle } from '@/lib/types';
 
 // Lima, Peru bounding box
 const LIMA_BOUNDS = {
@@ -33,7 +33,7 @@ const samplePlacas = [
   'K4P-567', 'L6Q-890', 'M1R-109', 'N5S-876', 'P3T-543'
 ];
 
-function generateVehicle(index: number): Vehicle {
+function generateVehicle(index: number): RawVehicle {
   const statusDef = STATUS_DEFINITIONS[Math.floor(Math.random() * STATUS_DEFINITIONS.length)];
   
   let speed = 0;

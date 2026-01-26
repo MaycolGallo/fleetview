@@ -12,7 +12,7 @@ interface VehiclePinProps {
 }
 
 export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) => {
-  const color = vehicle.estado.param3 || '#9E9E9E';
+  const color = vehicle.statusColor || '#9E9E9E';
 
   const rotation = 0;
   

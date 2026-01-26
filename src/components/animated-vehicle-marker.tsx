@@ -26,8 +26,7 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
 
   const isPlaybackMarker = historyVehicle?.id_vehiculo === vehicle.id_vehiculo;
 
-  const [lat, lng] = vehicle.coordenadas.split(',').map(Number);
-  const targetPosition = { lat, lng };
+  const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
   
   // Use the dynamic duration during playback, otherwise a default for regular clicks.
   const animationDuration = (isPlaybackMarker && isRoutePlaying) ? playbackAnimationDuration : 1000;
@@ -80,7 +79,7 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
     }
   };
 
-  const color = vehicle.estado.param3 || '#9E9E9E';
+  const color = vehicle.statusColor || '#9E9E9E';
   const speed = parseFloat(vehicle.velocidad) || 0;
 
   return (

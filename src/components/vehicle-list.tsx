@@ -33,12 +33,12 @@ const VehicleListItem = React.memo(({
         >
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: vehicle.estado.param3}}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{backgroundColor: vehicle.statusColor}}>
                         <Car className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <p className="font-semibold">{vehicle.vehiculo.vehiculo_placa}</p>
-                        <p className="text-xs text-muted-foreground">{vehicle.estado.param1}</p>
+                        <p className="font-semibold">{vehicle.placa}</p>
+                        <p className="text-xs text-muted-foreground">{vehicle.statusName}</p>
                     </div>
                 </div>
                 <Badge variant="outline" className="capitalize">{parseFloat(vehicle.velocidad).toFixed(0)} km/h</Badge>

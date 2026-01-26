@@ -15,9 +15,11 @@ import {
 } from 'lucide-react';
 import { format, fromUnixTime } from 'date-fns';
 import React, { useEffect, useMemo, useRef } from 'react';
-import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-is-mobile';
+import { DrawerHeader, DrawerTitle, DrawerDescription } from './ui/drawer';
+import { selectRouteSummary } from '@/context/fleet-context';
 
 interface RouteHistoryContentProps {
     onSegmentSelect: (index: number) => void;
@@ -54,9 +56,7 @@ function formatDuration(minutes: number) {
 export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProps) {
     const isMobile = useIsMobile();
     const { state } = useFleetState();
-    const dispatch = useFleetDispatch();
-    const { routeGroups: groups, historyVehicle: vehicle, selectedSegmentIndex, isRoutePlaying } = state;
-    const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state]);
+    const { routeGroups: groups, selectedSegmentIndex } = state;
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -73,14 +73,6 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
             });
         }
     }, [selectedSegmentIndex, isMobile]);
-
-    const handlePlayPause = () => {
-        if (isRoutePlaying) {
-            dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
-        } else {
-            dispatch({ type: 'START_ROUTE_PLAYBACK' });
-        }
-    };
 
     if (isMobile) {
         return (
@@ -148,119 +140,73 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
     }
     
     // Desktop layout
-    const headerContent = (
-      <div className="flex justify-between items-start gap-4">
-        <div>
-          <CardTitle>Route History: {vehicle?.vehiculo.vehiculo_placa}</CardTitle>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground mt-2">
-            <div className="flex items-center gap-2">
-              <Milestone className="w-4 h-4 text-primary" />
-              <span>
-                Total Distance:{' '}
-                <strong className="text-foreground">
-                  {totalDistance.toFixed(1)} km
-                </strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary" />
-              <span>
-                Total Time:{' '}
-                <strong className="text-foreground">
-                  {formatDuration(totalDuration)}
-                </strong>
-              </span>
-            </div>
-            {totalStops > 0 && (
-                <div className="flex items-center gap-2">
-                    <ParkingSquare className="w-4 h-4 text-primary" />
-                    <span>
-                        {totalStops} stops{' '}
-                        <strong className="text-foreground">
-                            ({formatDuration(totalStopTime)})
-                        </strong>
-                    </span>
-                </div>
-            )}
-          </div>
-        </div>
-        <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0">
-            {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-            <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
-        </Button>
-      </div>
-    );
-
     return (
-        <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
-            <CardHeader>{headerContent}</CardHeader>
-            <CardContent className="pb-4 flex-1 min-h-0">
-              <ScrollArea className="w-full whitespace-nowrap h-full" viewportRef={scrollContainerRef}>
-                <div className="relative flex items-stretch gap-0 px-4 pb-4 h-full">
-                  {groups.map((group, index) => {
-                    const Icon = statusIconMap[group.id_estado] || Milestone;
-                    const isSelected = selectedSegmentIndex === index;
+        <CardContent className="pb-4 flex-1 min-h-0">
+            <ScrollArea className="w-full whitespace-nowrap h-full" viewportRef={scrollContainerRef}>
+            <div className="relative flex items-stretch gap-0 px-4 pb-4 h-full">
+                {groups.map((group, index) => {
+                const Icon = statusIconMap[group.id_estado] || Milestone;
+                const isSelected = selectedSegmentIndex === index;
 
-                    return (
-                      <div
-                        key={index}
-                        ref={el => itemRefs.current[index] = el}
-                        className={cn(
-                          "flex-shrink-0 group transition-all duration-300 cursor-pointer",
-                           isSelected ? 'scale-105' : 'scale-100'
+                return (
+                    <div
+                    key={index}
+                    ref={el => itemRefs.current[index] = el}
+                    className={cn(
+                        "flex-shrink-0 group transition-all duration-300 cursor-pointer",
+                        isSelected ? 'scale-105' : 'scale-100'
+                    )}
+                    style={{ width: '200px'}}
+                    onClick={() => onSegmentSelect(index)}
+                    >
+                    <div className="relative flex flex-col items-center text-center h-full">
+                        {index < groups.length - 1 && (
+                            <div className={cn(
+                            "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
+                            isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
+                        )} />
                         )}
-                        style={{ width: '200px'}}
-                        onClick={() => onSegmentSelect(index)}
-                      >
-                        <div className="relative flex flex-col items-center text-center h-full">
-                          {index < groups.length - 1 && (
-                             <div className={cn(
-                                "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
-                                isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
-                            )} />
-                          )}
 
-                          <div className={cn(
-                              "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
-                               isSelected ? 'ring-primary' : 'ring-card',
-                               'group-hover:ring-primary'
-                          )}>
-                            <Icon className="h-5 w-5" style={{color: group.color}} />
-                          </div>
-
-                          <div className="pt-2">
-                             <p className={cn(
-                                 "font-semibold capitalize text-sm transition-colors",
-                                 isSelected ? 'text-primary' : 'text-foreground'
-                              )}>
-                              {group.description}
-                            </p>
-                            <p className="text-xs text-muted-foreground whitespace-normal pt-1 px-1 h-10">
-                                {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
-                            </p>
-                            <div className="mt-1 flex flex-col items-center gap-1 text-xs text-muted-foreground">
-                              {(group.total_time_seconds > 0 || group.total_distance_km > 0) && <Separator orientation="horizontal" className="w-10 my-1" />}
-                              <div className="flex gap-2">
-                              {group.total_time_seconds > 0 && (
-                                  <span>{group.total_time_formatted}</span>
-                              )}
-                              {group.total_distance_km > 0 && (
-                                <>
-                                  {group.total_time_seconds > 0 && <Separator orientation="vertical" className="h-3" />}
-                                  <span>{group.total_distance_km.toFixed(1)} km</span>
-                                </>
-                              )}
-                              </div>
-                            </div>
-                          </div>
+                        <div className={cn(
+                            "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
+                            isSelected ? 'ring-primary' : 'ring-card',
+                            'group-hover:ring-primary'
+                        )}>
+                        <Icon className="h-5 w-5" style={{color: group.color}} />
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                <ScrollBar orientation="horizontal" />
-              </ScrollArea>
-            </CardContent>
-          </Card>
+
+                        <div className="pt-2">
+                            <p className={cn(
+                                "font-semibold capitalize text-sm transition-colors",
+                                isSelected ? 'text-primary' : 'text-foreground'
+                            )}>
+                            {group.description}
+                        </p>
+                        <p className="text-xs text-muted-foreground whitespace-normal pt-1 px-1 h-10">
+                            {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
+                        </p>
+                        <div className="mt-1 flex flex-col items-center gap-1 text-xs text-muted-foreground">
+                            {(group.total_time_seconds > 0 || group.total_distance_km > 0) && <Separator orientation="horizontal" className="w-10 my-1" />}
+                            <div className="flex gap-2">
+                            {group.total_time_seconds > 0 && (
+                                <span>{group.total_time_formatted}</span>
+                            )}
+                            {group.total_distance_km > 0 && (
+                            <>
+                                {group.total_time_seconds > 0 && <Separator orientation="vertical" className="h-3" />}
+                                <span>{group.total_distance_km.toFixed(1)} km</span>
+                            </>
+                            )}
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                );
+                })}
+            </div>
+            <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+        </CardContent>
     )
 }
