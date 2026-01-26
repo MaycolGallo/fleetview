@@ -88,8 +88,6 @@ export interface VehiculoHistorialGrouped {
   avg_velocidad: number;
   max_velocidad: number;
   total_distance_km: number;
-  startPoint: { lat: number; lng: number };
-  endPoint: { lat: number; lng: number };
   records: ProcessedRouteRecord[];
 }
 

@@ -68,6 +68,10 @@ export function MapControl() {
 
   const mapVehicles = useMemo(() => selectMapVehicles(state), [state]);
 
+  const firstRecord = routeGroups?.[0]?.records?.[0];
+  const lastGroup = routeGroups?.[routeGroups.length - 1];
+  const lastRecord = lastGroup?.records?.[lastGroup.records.length - 1];
+
   return (
     <>
       {mapVehicles.map((vehicle) => (
@@ -79,10 +83,10 @@ export function MapControl() {
 
       <RouteSegments />
       
-      {routeGroups.length > 0 && selectedSegmentIndex === null && (
+      {firstRecord && lastRecord && selectedSegmentIndex === null && (
         <>
           <AdvancedMarker
-            position={routeGroups[0].startPoint}
+            position={{ lat: firstRecord.lat, lng: firstRecord.lng }}
             zIndex={4}
           >
             <div className="flex flex-col items-center">
@@ -99,7 +103,7 @@ export function MapControl() {
           </AdvancedMarker>
 
           <AdvancedMarker
-            position={routeGroups[routeGroups.length - 1].endPoint}
+            position={{ lat: lastRecord.lat, lng: lastRecord.lng }}
             zIndex={4}
           >
             <div className="flex flex-col items-center">

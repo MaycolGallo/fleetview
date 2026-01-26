@@ -135,22 +135,19 @@ function processGroup(
     velocidades.length > 0 ? velocidades.reduce((a, b) => a + b, 0) / velocidades.length : 0;
   const maxVelocidad = Math.max(...velocidades);
 
-  // Calculate total distance
-  let totalDistance = 0;
-  for (let i = 1; i < records.length; i++) {
-    const [lat1, lng1] = records[i - 1].coordenadas.split(",").map(Number);
-    const [lat2, lng2] = records[i].coordenadas.split(",").map(Number);
-    totalDistance += haversineDistance(lat1, lng1, lat2, lng2);
-  }
-
-  const [startLat, startLng] = records[0].coordenadas.split(',').map(Number);
-  const [endLat, endLng] = records[records.length - 1].coordenadas.split(',').map(Number);
-
   const processedRecords: ProcessedRouteRecord[] = records.map(r => {
     const { coordenadas, ...rest } = r;
     const [lat, lng] = coordenadas.split(',').map(Number);
     return { ...rest, lat, lng };
   });
+
+  // Calculate total distance from processed records
+  let totalDistance = 0;
+  for (let i = 1; i < processedRecords.length; i++) {
+    const rec1 = processedRecords[i-1];
+    const rec2 = processedRecords[i];
+    totalDistance += haversineDistance(rec1.lat, rec1.lng, rec2.lat, rec2.lng);
+  }
 
   return {
     id_estado: records[0].id_estado,
@@ -164,8 +161,6 @@ function processGroup(
     avg_velocidad: Math.round(avgVelocidad * 100) / 100,
     max_velocidad: maxVelocidad,
     total_distance_km: Math.round(totalDistance * 1000) / 1000,
-    startPoint: { lat: startLat, lng: startLng },
-    endPoint: { lat: endLat, lng: endLng },
     records: processedRecords,
   };
 }

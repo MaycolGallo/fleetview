@@ -82,10 +82,13 @@ export function RouteSegments() {
         <>
             {routeGroups.map((group, index) => {
                 if ((group.id_estado === 4 || group.id_estado === 5) && selectedSegmentIndex === null) {
+                    const firstRecord = group.records[0];
+                    if (!firstRecord) return null;
+                    
                     return (
                         <EventMarker
                             key={`event-${index}`}
-                            position={group.startPoint}
+                            position={{ lat: firstRecord.lat, lng: firstRecord.lng }}
                             duration={group.total_time_seconds / 60}
                             status={group.id_estado}
                             color={group.color}
