@@ -1,3 +1,4 @@
+
 'use client';
 
 import { CardContent } from '@/components/ui/card';
@@ -40,7 +41,7 @@ export function RouteHistoryDesktopTimeline({
                     ref={scrollContainerRef}
                     className="h-full w-full rounded-[inherit]"
                 >
-                    <div className="relative flex items-stretch gap-0 px-4 h-full">
+                    <div className="relative flex items-stretch gap-0 px-4 h-full py-2">
                         {groups.map((group, index) => {
                             const Icon = statusIconMap[group.id_estado] || Milestone;
                             const isSelected = selectedSegmentIndex === index;
@@ -59,7 +60,7 @@ export function RouteHistoryDesktopTimeline({
                                     <div className="relative flex flex-col items-center justify-center text-center h-full">
                                         {index < groups.length - 1 && (
                                             <div className={cn(
-                                                "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
+                                                "absolute top-1/2 -translate-y-1/2 left-1/2 h-0.5 w-full transition-colors",
                                                 isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                                             )} />
                                         )}
