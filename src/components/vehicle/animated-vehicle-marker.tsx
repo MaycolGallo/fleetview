@@ -3,14 +3,14 @@
 
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
-import { VehiclePin } from './vehicle-pin';
+import { VehiclePin } from '@/components/vehicle/vehicle-pin';
 import React, { useState, useRef, MouseEvent } from 'react';
 import { Gauge } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useAnimatedPosition } from '@/hooks/use-animated-position';
-import { VehicleContextMenu } from './vehicle-context-menu';
-import { VehicleMobileContextMenu } from './vehicle-mobile-context-menu';
+import { VehicleContextMenu } from '@/components/vehicle/vehicle-context-menu';
+import { VehicleMobileContextMenu } from '@/components/vehicle/vehicle-mobile-context-menu';
 import { cn } from '@/lib/utils';
 
 function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {

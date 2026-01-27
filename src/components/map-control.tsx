@@ -4,8 +4,8 @@
 import { useMap } from '@vis.gl/react-google-maps';
 import React, { useEffect, useMemo } from 'react';
 import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fleet-context';
-import { AnimatedVehicleMarker } from './animated-vehicle-marker';
-import { RouteSegments } from './route-polyline';
+import { AnimatedVehicleMarker } from '@/components/vehicle/animated-vehicle-marker';
+import { RouteSegments } from '@/components/route/route-polyline';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { Flag, Play } from 'lucide-react';
 

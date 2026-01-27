@@ -4,7 +4,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { useFleetState, useFleetDispatch } from "@/context/fleet-context";
 import type { VehicleStatus } from "@/lib/types";
-import { MultiSelect } from './ui/multi-select';
+import { MultiSelect } from '@/components/ui/multi-select';
 
 interface VehicleFiltersProps {}
 

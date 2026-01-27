@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import React, { useMemo, useCallback } from "react";
 import { useFleetState, useFleetDispatch, selectFilteredVehicles } from "@/context/fleet-context";
 import { Car, Clock, Wifi, Battery } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { fromUnixTime, formatDistanceToNow } from 'date-fns';
 
 interface VehicleListProps {

@@ -13,10 +13,10 @@ import {
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ArrowLeft, Move, Gauge, Tag, Rss, Clock, Wind, Wifi, BatteryFull } from 'lucide-react';
-import { Badge } from './ui/badge';
+import { Badge } from '../ui/badge';
 import { format, fromUnixTime } from 'date-fns';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Separator } from './ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Separator } from '../ui/separator';
 
 function DetailItem({ icon: Icon, label, value, unit }: { icon: React.ElementType, label: string, value: React.ReactNode, unit?: string }) {
   return (

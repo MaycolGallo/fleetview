@@ -4,7 +4,7 @@
 import { useMap } from '@vis.gl/react-google-maps';
 import { useEffect, useRef } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
-import { EventMarker } from './event-marker';
+import { EventMarker } from '@/components/event-marker';
 
 export function RouteSegments() {
     const map = useMap();

@@ -1,11 +1,12 @@
+
 'use client';
 
 import { useFleetState } from '@/context/fleet-context';
-import { ClientOnly } from './client-only';
-import { Skeleton } from './ui/skeleton';
-import { VehicleDetails } from './vehicle-details';
-import { VehicleList } from './vehicle-list';
-import { VehicleFilters } from './vehicle-filters';
+import { ClientOnly } from '@/components/client-only';
+import { Skeleton } from '@/components/ui/skeleton';
+import { VehicleDetails } from '@/components/vehicle/vehicle-details';
+import { VehicleList } from '@/components/vehicle/vehicle-list';
+import { VehicleFilters } from '@/components/vehicle/vehicle-filters';
 
 interface VehiclePanelContentProps {
     onVehicleSelect: () => void;

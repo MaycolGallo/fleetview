@@ -11,7 +11,7 @@ import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { VehiclePanelContent } from './vehicle-panel-content';
+import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
