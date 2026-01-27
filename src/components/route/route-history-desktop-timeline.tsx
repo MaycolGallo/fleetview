@@ -56,15 +56,15 @@ export function RouteHistoryDesktopTimeline({
                                     style={{ width: '200px' }}
                                     onClick={() => handleSegmentSelect(index)}
                                 >
-                                    <div className="relative flex flex-col items-center text-center h-full justify-start py-2">
+                                    <div className="relative flex flex-col items-center text-center justify-start py-2">
                                         <div className={cn(
                                             "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
                                             isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                                         )} />
 
                                         {(group.total_time_seconds > 0 || group.total_distance_km > 0) && (
-                                            <div className="absolute top-[-8px] left-1/2 -translate-x-1/2 z-20">
-                                                <div className="bg-card/80 backdrop-blur-sm text-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1">
+                                            <div className="absolute top-4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                                                <div className="bg-card text-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1">
                                                     {group.total_time_seconds > 0 && (
                                                         <span>{group.total_time_formatted}</span>
                                                     )}
@@ -93,7 +93,7 @@ export function RouteHistoryDesktopTimeline({
                                             )}>
                                                 {group.description}
                                             </p>
-                                            <p className="text-xs text-muted-foreground whitespace-normal pt-1 min-h-[2.5rem]">
+                                            <p className="text-xs text-muted-foreground whitespace-normal min-h-[2.5rem]">
                                                 {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
                                             </p>
                                         </div>
