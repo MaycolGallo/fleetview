@@ -163,6 +163,65 @@ const newVehicleHistoryData = {
                     "lng": -75.704655
                 }
             ]
+        },
+        {
+            "id_estado": 6,
+            "count": 2,
+            "start_id": "15836",
+            "end_id": "15837",
+            "total_time_seconds": 40,
+            "total_time_formatted": "40s",
+            "avg_velocidad": 0,
+            "max_velocidad": 0,
+            "total_distance_km": 0,
+            "records": [
+                {
+                    "id": "15836",
+                    "id_vehiculo": 643,
+                    "tramas_validas": 1,
+                    "id_estado": 6,
+                    "velocidad": "0.00",
+                    "rumbo": 174,
+                    "odometro": "9431.00",
+                    "horometro": "0.00",
+                    "numero_satelites": 0,
+                    "nivel_bateria": "3.70",
+                    "temperatura": "0.00",
+                    "senal_gsm": 29,
+                    "nivel_bateria_vehicular": "27.79",
+                    "id_cliente": 132,
+                    "din": 10,
+                    "fecha": 1769504168,
+                    "altitud": 0,
+                    "codigo": 6,
+                    "param1": "Transitando",
+                    "lat": -14.1562766,
+                    "lng": -75.7046583
+                },
+                {
+                    "id": "15837",
+                    "id_vehiculo": 643,
+                    "tramas_validas": 1,
+                    "id_estado": 6,
+                    "velocidad": "0.00",
+                    "rumbo": 174,
+                    "odometro": "9431.00",
+                    "horometro": "0.00",
+                    "numero_satelites": 0,
+                    "nivel_bateria": "3.70",
+                    "temperatura": "0.00",
+                    "senal_gsm": 31,
+                    "nivel_bateria_vehicular": "27.72",
+                    "id_cliente": 132,
+                    "din": 10,
+                    "fecha": 1769504208,
+                    "altitud": 0,
+                    "codigo": 6,
+                    "param1": "Transitando",
+                    "lat": -14.1562766,
+                    "lng": -75.7046583
+                }
+            ]
         }
     ],
     "total_distance_km": 29.869,
