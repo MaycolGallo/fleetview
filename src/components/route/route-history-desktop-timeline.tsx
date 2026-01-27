@@ -1,4 +1,3 @@
-
 'use client';
 
 import { CardContent } from '@/components/ui/card';
@@ -34,11 +33,11 @@ export function RouteHistoryDesktopTimeline({
     };
 
     return (
-        <CardContent className="pb-4 flex-1 min-h-0">
+        <CardContent className="pb-0 flex-1 min-h-0">
             <ScrollAreaPrimitive.Root className="w-full h-full relative">
                 <ScrollAreaPrimitive.Viewport
                     ref={scrollContainerRef}
-                    className="h-full w-full rounded-[inherit] py-4"
+                    className="h-full w-full rounded-[inherit]"
                 >
                     <div className="relative flex items-start justify-start gap-0 px-4 h-full">
                         {groups.map((group, index) => {
@@ -50,20 +49,20 @@ export function RouteHistoryDesktopTimeline({
                                     key={index}
                                     ref={(el) => { if(el) { itemRefs.current[index] = el; } }}
                                     className={cn(
-                                        "flex-shrink-0 group transition-all duration-300 cursor-pointer h-full",
+                                        "flex-shrink-0 group transition-all duration-300 cursor-pointer",
                                         isSelected ? 'scale-105' : 'scale-100'
                                     )}
                                     style={{ width: '200px' }}
                                     onClick={() => handleSegmentSelect(index)}
                                 >
-                                    <div className="relative flex flex-col items-center text-center justify-start py-2">
+                                    <div className="relative flex flex-col items-center text-center justify-start pt-2">
                                         <div className={cn(
-                                            "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
+                                            "absolute top-6 left-1/2 h-0.5 w-full transition-colors",
                                             isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                                         )} />
 
                                         {(group.total_time_seconds > 0 || group.total_distance_km > 0) && (
-                                            <div className="absolute top-4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+                                            <div className="absolute top-6 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
                                                 <div className="bg-card text-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1">
                                                     {group.total_time_seconds > 0 && (
                                                         <span>{group.total_time_formatted}</span>
