@@ -39,7 +39,7 @@ export function RouteHistoryDesktopTimeline({
                     ref={scrollContainerRef}
                     className="h-full w-full rounded-[inherit] py-2"
                 >
-                    <div className="relative flex items-start justify-start gap-0 px-4 h-full">
+                    <div className="relative flex items-start justify-start gap-0 px-4 h-full py-4">
                         {groups.map((group, index) => {
                             const Icon = statusIconMap[group.id_estado] || Milestone;
                             const isSelected = selectedSegmentIndex === index;
@@ -56,32 +56,34 @@ export function RouteHistoryDesktopTimeline({
                                     style={{ width: '200px' }}
                                     onClick={() => handleSegmentSelect(index)}
                                 >
-                                    <div className="relative flex flex-col items-center text-center justify-start h-full">
+                                    <div className="relative flex flex-col items-center text-center justify-start">
                                         
-                                        {/* Line and Label connecting to the NEXT item */}
                                         {index < groups.length - 1 && (
                                             <>
                                                 <div className={cn(
-                                                    "absolute top-6 left-1/2 h-0.5 w-full transition-colors",
+                                                    "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
                                                     (isSelected || isNextSelected) ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                                                 )} />
 
-                                                <div className="absolute top-6 left-full -translate-x-1/2 -translate-y-1/2 z-20">
-                                                    <div className="bg-card text-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1">
+                                                <div className="absolute top-4 left-full -translate-x-1/2 -translate-y-1/2 z-20">
+                                                    <div className="bg-card text-foreground text-[10px] font-semibold px-2 py-1 rounded-md shadow-sm whitespace-nowrap flex items-center gap-3">
                                                         {group.total_time_seconds > 0 && (
-                                                            <span>{group.total_time_formatted}</span>
+                                                            <div className="flex items-center gap-1">
+                                                                <Clock className="w-2.5 h-2.5" />
+                                                                <span>{group.total_time_formatted}</span>
+                                                            </div>
                                                         )}
-                                                        {group.total_time_seconds > 0 && (
-                                                            <span className="font-bold">·</span>
-                                                        )}
-                                                        <span>{group.total_distance_km.toFixed(1)} km</span>
+                                                        <div className="flex items-center gap-1">
+                                                            <Milestone className="w-2.5 h-2.5" />
+                                                            <span>{group.total_distance_km.toFixed(1)} km</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </>
                                         )}
                                         
                                         <div className={cn(
-                                            "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all mt-2",
+                                            "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
                                             isSelected ? 'ring-primary' : 'ring-card',
                                             'group-hover:ring-primary'
                                         )}>

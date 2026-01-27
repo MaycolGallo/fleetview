@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -42,7 +41,7 @@ export function RouteHistoryMobileTimeline({
                 return (
                     <div
                         key={index}
-                        ref={(el) => { itemRefs.current[index] = el; }}
+                        ref={(el) => { if(el) { itemRefs.current[index] = el; } }}
                         className="flex group"
                         onClick={() => handleSegmentSelect(index)}
                     >
@@ -79,9 +78,15 @@ export function RouteHistoryMobileTimeline({
                                     </div>
                                     <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground text-right ml-2">
                                         {group.total_time_seconds > 0 && (
-                                            <span className='whitespace-nowrap'>{group.total_time_formatted}</span>
+                                             <div className="flex items-center gap-1.5">
+                                                <span className='whitespace-nowrap'>{group.total_time_formatted}</span>
+                                                <Clock className="w-3 h-3" />
+                                            </div>
                                         )}
-                                        <span className='whitespace-nowrap'>{group.total_distance_km.toFixed(1)} km</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className='whitespace-nowrap'>{group.total_distance_km.toFixed(1)} km</span>
+                                            <Milestone className="w-3 h-3" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
