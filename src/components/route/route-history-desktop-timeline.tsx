@@ -4,29 +4,36 @@
 import { CardContent } from '@/components/ui/card';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
-import { Milestone } from 'lucide-react';
+import { Milestone, Clock, ParkingSquare, Truck } from 'lucide-react';
 import { format, fromUnixTime } from 'date-fns';
 import React from 'react';
 import type { VehiculoHistorialGrouped } from '@/lib/types';
 
 interface RouteHistoryDesktopTimelineProps {
-    groups: VehiculoHistorialGrouped[];
-    statusIconMap: { [key: number]: React.ElementType };
-    selectedSegmentIndex: number | null;
-    onSegmentSelect: (index: number) => void;
     itemRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
 }
 
+const statusIconMap: { [key: number]: React.ElementType } = {
+    4: Clock, // Ralenti
+    5: ParkingSquare, // Estacionado
+    6: Truck, // Transitando
+};
+
 export function RouteHistoryDesktopTimeline({
-    groups,
-    statusIconMap,
-    selectedSegmentIndex,
-    onSegmentSelect,
     itemRefs,
     scrollContainerRef,
 }: RouteHistoryDesktopTimelineProps) {
+    const { state } = useFleetState();
+    const dispatch = useFleetDispatch();
+    const { routeGroups: groups, selectedSegmentIndex } = state;
+
+    const handleSegmentSelect = (index: number) => {
+        dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index });
+    };
+
     return (
         <CardContent className="pb-4 flex-1 min-h-0">
             <ScrollArea className="w-full whitespace-nowrap h-full" viewportRef={scrollContainerRef}>
@@ -44,7 +51,7 @@ export function RouteHistoryDesktopTimeline({
                         isSelected ? 'scale-105' : 'scale-100'
                     )}
                     style={{ width: '200px'}}
-                    onClick={() => onSegmentSelect(index)}
+                    onClick={() => handleSegmentSelect(index)}
                     >
                     <div className="relative flex flex-col items-center text-center h-full">
                         {index < groups.length - 1 && (

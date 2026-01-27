@@ -1,28 +1,13 @@
 
 'use client';
 
-import {
-  ParkingSquare,
-  Clock,
-  Truck,
-} from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { useFleetState } from '@/context/fleet-context';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { RouteHistoryMobileTimeline } from './route-history-mobile-timeline';
 import { RouteHistoryDesktopTimeline } from './route-history-desktop-timeline';
 
-interface RouteHistoryContentProps {
-    onSegmentSelect: (index: number) => void;
-}
-
-const statusIconMap: { [key: number]: React.ElementType } = {
-    4: Clock, // Ralenti
-    5: ParkingSquare, // Estacionado
-    6: Truck, // Transitando
-};
-
-export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProps) {
+export function RouteHistoryContent() {
     const isMobile = useIsMobile();
     const { state } = useFleetState();
     const { routeGroups: groups, selectedSegmentIndex } = state;
@@ -44,10 +29,6 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
     }, [selectedSegmentIndex, isMobile]);
 
     const timelineProps = {
-        groups,
-        statusIconMap,
-        selectedSegmentIndex,
-        onSegmentSelect,
         itemRefs,
         scrollContainerRef
     };

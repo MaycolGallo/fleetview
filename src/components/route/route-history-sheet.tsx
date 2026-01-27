@@ -49,8 +49,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
     return routeGroups
         .filter(seg => seg.id_estado === 6) // Transitando
         .flatMap(seg => seg.records.map(r => {
-            const [lat, lng] = r.coordenadas.split(',').map(Number);
-            return { lat, lng, rumbo: r.rumbo, fecha: r.fecha, velocidad: parseInt(r.velocidad, 10) || 0 };
+            return { lat: r.lat, lng: r.lng, rumbo: r.rumbo, fecha: r.fecha, velocidad: parseInt(r.velocidad, 10) || 0 };
         }));
   }, [isRouteSheetOpen, routeGroups]);
 
@@ -138,11 +137,6 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
     }
   }, [dispatch]);
 
-  const handleSegmentSelect = useCallback((segmentIndex: number) => {
-    dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
-    dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: segmentIndex });
-  }, [dispatch]);
-
    const handlePlayPause = useCallback(() => {
     if (isRoutePlaying) {
         dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
@@ -200,7 +194,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
                         </Button>
                     </div>
                 </DrawerHeader>
-                <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
+                <RouteHistoryContent />
             </DrawerContent>
       </Drawer>
     )
@@ -259,7 +253,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         >
           <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
             <CardHeader>{headerContent}</CardHeader>
-            <RouteHistoryContent onSegmentSelect={handleSegmentSelect} />
+            <RouteHistoryContent />
           </Card>
         </div>
       )}

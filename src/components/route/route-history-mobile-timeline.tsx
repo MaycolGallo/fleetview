@@ -2,29 +2,36 @@
 'use client';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
-import { Milestone } from 'lucide-react';
+import { Milestone, Clock, ParkingSquare, Truck } from 'lucide-react';
 import { format, fromUnixTime } from 'date-fns';
 import React from 'react';
 import type { VehiculoHistorialGrouped } from '@/lib/types';
 
 interface RouteHistoryMobileTimelineProps {
-    groups: VehiculoHistorialGrouped[];
-    statusIconMap: { [key: number]: React.ElementType };
-    selectedSegmentIndex: number | null;
-    onSegmentSelect: (index: number) => void;
     itemRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
     scrollContainerRef: React.RefObject<HTMLDivElement>;
 }
 
+const statusIconMap: { [key: number]: React.ElementType } = {
+    4: Clock, // Ralenti
+    5: ParkingSquare, // Estacionado
+    6: Truck, // Transitando
+};
+
 export function RouteHistoryMobileTimeline({
-    groups,
-    statusIconMap,
-    selectedSegmentIndex,
-    onSegmentSelect,
     itemRefs,
     scrollContainerRef,
 }: RouteHistoryMobileTimelineProps) {
+    const { state } = useFleetState();
+    const dispatch = useFleetDispatch();
+    const { routeGroups: groups, selectedSegmentIndex } = state;
+
+    const handleSegmentSelect = (index: number) => {
+        dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index });
+    };
+
     return (
         <ScrollArea className="h-full" viewportRef={scrollContainerRef}>
             <div className="relative flex flex-col p-4 pt-2">
@@ -37,7 +44,7 @@ export function RouteHistoryMobileTimeline({
                         key={index}
                         ref={(el) => { itemRefs.current[index] = el; }}
                         className="flex group"
-                        onClick={() => onSegmentSelect(index)}
+                        onClick={() => handleSegmentSelect(index)}
                     >
                         <div className="flex flex-col items-center mr-4">
                             <div className={cn(
