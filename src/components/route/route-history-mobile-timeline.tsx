@@ -81,9 +81,7 @@ export function RouteHistoryMobileTimeline({
                                         {group.total_time_seconds > 0 && (
                                             <span className='whitespace-nowrap'>{group.total_time_formatted}</span>
                                         )}
-                                        {group.total_distance_km > 0 && (
-                                            <span className='whitespace-nowrap'>{group.total_distance_km.toFixed(1)} km</span>
-                                        )}
+                                        <span className='whitespace-nowrap'>{group.total_distance_km.toFixed(1)} km</span>
                                     </div>
                                 </div>
                             </div>

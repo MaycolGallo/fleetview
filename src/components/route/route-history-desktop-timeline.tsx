@@ -62,30 +62,26 @@ export function RouteHistoryDesktopTimeline({
                                         {index < groups.length - 1 && (
                                             <>
                                                 <div className={cn(
-                                                    "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
+                                                    "absolute top-6 left-1/2 h-0.5 w-full transition-colors",
                                                     (isSelected || isNextSelected) ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                                                 )} />
 
-                                                {(group.total_time_seconds > 0 || group.total_distance_km > 0) && (
-                                                    <div className="absolute top-4 left-full -translate-x-1/2 -translate-y-1/2 z-20">
-                                                        <div className="bg-card text-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1">
-                                                            {group.total_time_seconds > 0 && (
-                                                                <span>{group.total_time_formatted}</span>
-                                                            )}
-                                                            {group.total_time_seconds > 0 && group.total_distance_km > 0 && (
-                                                                <span className="font-bold">·</span>
-                                                            )}
-                                                            {group.total_distance_km > 0 && (
-                                                                <span>{group.total_distance_km.toFixed(1)} km</span>
-                                                            )}
-                                                        </div>
+                                                <div className="absolute top-6 left-full -translate-x-1/2 -translate-y-1/2 z-20">
+                                                    <div className="bg-card text-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1">
+                                                        {group.total_time_seconds > 0 && (
+                                                            <span>{group.total_time_formatted}</span>
+                                                        )}
+                                                        {group.total_time_seconds > 0 && (
+                                                            <span className="font-bold">·</span>
+                                                        )}
+                                                        <span>{group.total_distance_km.toFixed(1)} km</span>
                                                     </div>
-                                                )}
+                                                </div>
                                             </>
                                         )}
                                         
                                         <div className={cn(
-                                            "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
+                                            "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all mt-2",
                                             isSelected ? 'ring-primary' : 'ring-card',
                                             'group-hover:ring-primary'
                                         )}>
