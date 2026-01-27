@@ -39,10 +39,9 @@ export function RouteHistoryDesktopTimeline({
             <ScrollAreaPrimitive.Root className="w-full h-full relative">
                 <ScrollAreaPrimitive.Viewport
                     ref={scrollContainerRef}
-                    className="h-full w-full rounded-[inherit]"
+                    className="h-full w-full rounded-[inherit] py-4"
                 >
-                    {/* Use padding to prevent clipping on scale, and align items to the start */}
-                    <div className="relative flex items-start gap-0 px-4 py-4">
+                    <div className="relative flex items-start gap-0 px-4">
                         {groups.map((group, index) => {
                             const Icon = statusIconMap[group.id_estado] || Milestone;
                             const isSelected = selectedSegmentIndex === index;
@@ -58,9 +57,7 @@ export function RouteHistoryDesktopTimeline({
                                     style={{ width: '200px' }}
                                     onClick={() => handleSegmentSelect(index)}
                                 >
-                                    {/* Remove h-full and justify-center to allow natural content height */}
                                     <div className="relative flex flex-col items-center text-center">
-                                        {/* Position timeline relative to icon's center */}
                                         {index < groups.length - 1 && (
                                             <div className={cn(
                                                 "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
@@ -83,24 +80,23 @@ export function RouteHistoryDesktopTimeline({
                                             )}>
                                                 {group.description}
                                             </p>
-                                            {/* Use min-height instead of fixed height to allow wrapping */}
                                             <p className="text-xs text-muted-foreground whitespace-normal pt-1 px-1 min-h-[2.5rem]">
                                                 {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
                                             </p>
-                                            <div className="mt-1 flex flex-col items-center gap-1 text-xs text-muted-foreground">
-                                                {(group.total_time_seconds > 0 || group.total_distance_km > 0) && <Separator orientation="horizontal" className="w-10 my-1" />}
-                                                <div className="flex items-center justify-center gap-x-2">
+                                            
+                                            {(group.total_time_seconds > 0 || group.total_distance_km > 0) && (
+                                                <div className="mt-2 flex items-center justify-center gap-x-1.5 text-xs text-muted-foreground">
                                                     {group.total_time_seconds > 0 && (
                                                         <span className="whitespace-nowrap">{group.total_time_formatted}</span>
                                                     )}
                                                     {group.total_time_seconds > 0 && group.total_distance_km > 0 && (
-                                                        <Separator orientation="vertical" className="h-3" />
+                                                        <span className="font-bold">·</span>
                                                     )}
                                                     {group.total_distance_km > 0 && (
                                                         <span className="whitespace-nowrap">{group.total_distance_km.toFixed(1)} km</span>
                                                     )}
                                                 </div>
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
