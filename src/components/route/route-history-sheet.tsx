@@ -6,9 +6,9 @@ import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Button } from './ui/button';
+import { Button } from '@/components/ui/button';
 import { Clock, Milestone, ParkingSquare, Pause, Play } from 'lucide-react';
-import { Card, CardHeader } from './ui/card';
+import { Card, CardHeader } from '@/components/ui/card';
 
 interface RouteHistorySheetProps {}
 
