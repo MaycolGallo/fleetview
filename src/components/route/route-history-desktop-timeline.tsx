@@ -62,16 +62,17 @@ export function RouteHistoryDesktopTimeline({
                                         {index < groups.length - 1 && (
                                             <>
                                                 <div className={cn(
-                                                    "absolute top-6 left-1/2 h-0.5 w-full transition-colors",
+                                                    "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
                                                     (isSelected || isNextSelected) ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                                                 )} />
 
-                                                <div className="absolute top-6 left-full -translate-x-1/2 -translate-y-1/2 z-20">
-                                                    <div className="bg-card text-foreground text-[10px] font-semibold px-2 py-1 rounded-md shadow-sm whitespace-nowrap flex items-center gap-3">
+                                                <div className="absolute top-4 left-full -translate-x-1/2 -translate-y-1/2 z-20">
+                                                    <div className="bg-card text-foreground text-[10px] font-semibold px-2 py-1 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1.5">
                                                         <div className="flex items-center gap-1">
                                                             <Clock className="w-2.5 h-2.5" />
                                                             <span>{group.total_time_formatted}</span>
                                                         </div>
+                                                        <div className="w-px h-3 bg-border" />
                                                         <div className="flex items-center gap-1">
                                                             <Milestone className="w-2.5 h-2.5" />
                                                             <span>{group.total_distance_km.toFixed(1)} km</span>
