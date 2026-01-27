@@ -48,7 +48,7 @@ export function RouteHistoryDesktopTimeline({
                             return (
                                 <div
                                     key={index}
-                                    ref={(el) => { itemRefs.current[index] = el; }}
+                                    ref={(el) => { if(el) { itemRefs.current[index] = el; } }}
                                     className={cn(
                                         "flex-shrink-0 group transition-all duration-300 cursor-pointer h-full",
                                         isSelected ? 'scale-105' : 'scale-100'
@@ -56,11 +56,27 @@ export function RouteHistoryDesktopTimeline({
                                     style={{ width: '200px' }}
                                     onClick={() => handleSegmentSelect(index)}
                                 >
-                                    <div className="relative flex flex-col items-center text-center h-full justify-start">
+                                    <div className="relative flex flex-col items-center text-center h-full justify-start py-2">
                                         <div className={cn(
                                             "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
                                             isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                                         )} />
+
+                                        {(group.total_time_seconds > 0 || group.total_distance_km > 0) && (
+                                            <div className="absolute top-[-8px] left-1/2 -translate-x-1/2 z-20">
+                                                <div className="bg-card/80 backdrop-blur-sm text-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1">
+                                                    {group.total_time_seconds > 0 && (
+                                                        <span>{group.total_time_formatted}</span>
+                                                    )}
+                                                    {group.total_time_seconds > 0 && group.total_distance_km > 0 && (
+                                                        <span className="font-bold">·</span>
+                                                    )}
+                                                    {group.total_distance_km > 0 && (
+                                                        <span>{group.total_distance_km.toFixed(1)} km</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         <div className={cn(
                                             "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
@@ -77,23 +93,9 @@ export function RouteHistoryDesktopTimeline({
                                             )}>
                                                 {group.description}
                                             </p>
-                                            <p className="text-xs text-muted-foreground whitespace-normal pt-1 px-1 min-h-[2.5rem]">
+                                            <p className="text-xs text-muted-foreground whitespace-normal pt-1 min-h-[2.5rem]">
                                                 {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
                                             </p>
-                                            
-                                            {(group.total_time_seconds > 0 || group.total_distance_km > 0) && (
-                                                <div className="mt-2 flex items-center justify-center gap-x-1.5 text-xs text-muted-foreground">
-                                                    {group.total_time_seconds > 0 && (
-                                                        <span className="whitespace-nowrap">{group.total_time_formatted}</span>
-                                                    )}
-                                                    {group.total_time_seconds > 0 && group.total_distance_km > 0 && (
-                                                        <span className="font-bold">·</span>
-                                                    )}
-                                                    {group.total_distance_km > 0 && (
-                                                        <span className="whitespace-nowrap">{group.total_distance_km.toFixed(1)} km</span>
-                                                    )}
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
