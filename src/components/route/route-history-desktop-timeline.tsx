@@ -1,3 +1,4 @@
+
 'use client';
 
 import { CardContent } from '@/components/ui/card';
@@ -88,15 +89,15 @@ export function RouteHistoryDesktopTimeline({
                                             </p>
                                             <div className="mt-1 flex flex-col items-center gap-1 text-xs text-muted-foreground">
                                                 {(group.total_time_seconds > 0 || group.total_distance_km > 0) && <Separator orientation="horizontal" className="w-10 my-1" />}
-                                                <div className="flex justify-center flex-wrap gap-x-2">
+                                                <div className="flex items-center justify-center gap-x-2">
                                                     {group.total_time_seconds > 0 && (
                                                         <span className="whitespace-nowrap">{group.total_time_formatted}</span>
                                                     )}
+                                                    {group.total_time_seconds > 0 && group.total_distance_km > 0 && (
+                                                        <Separator orientation="vertical" className="h-3" />
+                                                    )}
                                                     {group.total_distance_km > 0 && (
-                                                        <>
-                                                            {group.total_time_seconds > 0 && <Separator orientation="vertical" className="h-3" />}
-                                                            <span className="whitespace-nowrap">{group.total_distance_km.toFixed(1)} km</span>
-                                                        </>
+                                                        <span className="whitespace-nowrap">{group.total_distance_km.toFixed(1)} km</span>
                                                     )}
                                                 </div>
                                             </div>
