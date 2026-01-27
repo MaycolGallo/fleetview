@@ -1,4 +1,3 @@
-
 'use client';
 
 import { CardContent } from '@/components/ui/card';
@@ -36,12 +35,13 @@ export function RouteHistoryDesktopTimeline({
 
     return (
         <CardContent className="pb-4 flex-1 min-h-0">
-            <ScrollAreaPrimitive.Root className="w-full whitespace-nowrap h-full relative overflow-hidden">
+            <ScrollAreaPrimitive.Root className="w-full h-full relative">
                 <ScrollAreaPrimitive.Viewport
                     ref={scrollContainerRef}
                     className="h-full w-full rounded-[inherit]"
                 >
-                    <div className="relative flex items-stretch gap-0 px-4 h-full py-2">
+                    {/* Use padding to prevent clipping on scale, and align items to the start */}
+                    <div className="relative flex items-start gap-0 px-4 py-4">
                         {groups.map((group, index) => {
                             const Icon = statusIconMap[group.id_estado] || Milestone;
                             const isSelected = selectedSegmentIndex === index;
@@ -57,10 +57,12 @@ export function RouteHistoryDesktopTimeline({
                                     style={{ width: '200px' }}
                                     onClick={() => handleSegmentSelect(index)}
                                 >
-                                    <div className="relative flex flex-col items-center justify-center text-center h-full">
+                                    {/* Remove h-full and justify-center to allow natural content height */}
+                                    <div className="relative flex flex-col items-center text-center">
+                                        {/* Position timeline relative to icon's center */}
                                         {index < groups.length - 1 && (
                                             <div className={cn(
-                                                "absolute top-1/2 -translate-y-1/2 left-1/2 h-0.5 w-full transition-colors",
+                                                "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
                                                 isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                                             )} />
                                         )}
@@ -80,19 +82,20 @@ export function RouteHistoryDesktopTimeline({
                                             )}>
                                                 {group.description}
                                             </p>
-                                            <p className="text-xs text-muted-foreground whitespace-normal pt-1 px-1 h-10">
+                                            {/* Use min-height instead of fixed height to allow wrapping */}
+                                            <p className="text-xs text-muted-foreground whitespace-normal pt-1 px-1 min-h-[2.5rem]">
                                                 {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
                                             </p>
                                             <div className="mt-1 flex flex-col items-center gap-1 text-xs text-muted-foreground">
                                                 {(group.total_time_seconds > 0 || group.total_distance_km > 0) && <Separator orientation="horizontal" className="w-10 my-1" />}
-                                                <div className="flex gap-2">
+                                                <div className="flex justify-center flex-wrap gap-x-2">
                                                     {group.total_time_seconds > 0 && (
-                                                        <span>{group.total_time_formatted}</span>
+                                                        <span className="whitespace-nowrap">{group.total_time_formatted}</span>
                                                     )}
                                                     {group.total_distance_km > 0 && (
                                                         <>
                                                             {group.total_time_seconds > 0 && <Separator orientation="vertical" className="h-3" />}
-                                                            <span>{group.total_distance_km.toFixed(1)} km</span>
+                                                            <span className="whitespace-nowrap">{group.total_distance_km.toFixed(1)} km</span>
                                                         </>
                                                     )}
                                                 </div>
