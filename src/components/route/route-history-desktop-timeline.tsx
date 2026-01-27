@@ -37,12 +37,13 @@ export function RouteHistoryDesktopTimeline({
             <ScrollAreaPrimitive.Root className="w-full h-full relative">
                 <ScrollAreaPrimitive.Viewport
                     ref={scrollContainerRef}
-                    className="h-full w-full rounded-[inherit]"
+                    className="h-full w-full rounded-[inherit] py-2"
                 >
                     <div className="relative flex items-start justify-start gap-0 px-4 h-full">
                         {groups.map((group, index) => {
                             const Icon = statusIconMap[group.id_estado] || Milestone;
                             const isSelected = selectedSegmentIndex === index;
+                            const isNextSelected = selectedSegmentIndex === index + 1;
 
                             return (
                                 <div
@@ -55,28 +56,34 @@ export function RouteHistoryDesktopTimeline({
                                     style={{ width: '200px' }}
                                     onClick={() => handleSegmentSelect(index)}
                                 >
-                                    <div className="relative flex flex-col items-center text-center justify-start pt-2">
-                                        <div className={cn(
-                                            "absolute top-6 left-1/2 h-0.5 w-full transition-colors",
-                                            isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
-                                        )} />
+                                    <div className="relative flex flex-col items-center text-center justify-start h-full">
+                                        
+                                        {/* Line and Label connecting to the NEXT item */}
+                                        {index < groups.length - 1 && (
+                                            <>
+                                                <div className={cn(
+                                                    "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
+                                                    (isSelected || isNextSelected) ? 'bg-primary' : 'bg-border group-hover:bg-primary'
+                                                )} />
 
-                                        {(group.total_time_seconds > 0 || group.total_distance_km > 0) && (
-                                            <div className="absolute top-6 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                                                <div className="bg-card text-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1">
-                                                    {group.total_time_seconds > 0 && (
-                                                        <span>{group.total_time_formatted}</span>
-                                                    )}
-                                                    {group.total_time_seconds > 0 && group.total_distance_km > 0 && (
-                                                        <span className="font-bold">·</span>
-                                                    )}
-                                                    {group.total_distance_km > 0 && (
-                                                        <span>{group.total_distance_km.toFixed(1)} km</span>
-                                                    )}
-                                                </div>
-                                            </div>
+                                                {(group.total_time_seconds > 0 || group.total_distance_km > 0) && (
+                                                    <div className="absolute top-4 left-full -translate-x-1/2 -translate-y-1/2 z-20">
+                                                        <div className="bg-card text-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1">
+                                                            {group.total_time_seconds > 0 && (
+                                                                <span>{group.total_time_formatted}</span>
+                                                            )}
+                                                            {group.total_time_seconds > 0 && group.total_distance_km > 0 && (
+                                                                <span className="font-bold">·</span>
+                                                            )}
+                                                            {group.total_distance_km > 0 && (
+                                                                <span>{group.total_distance_km.toFixed(1)} km</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </>
                                         )}
-
+                                        
                                         <div className={cn(
                                             "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
                                             isSelected ? 'ring-primary' : 'ring-card',
