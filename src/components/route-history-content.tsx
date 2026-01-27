@@ -85,7 +85,7 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
                     return (
                         <div
                             key={index}
-                            ref={el => itemRefs.current[index] = el}
+                            ref={el => { itemRefs.current[index] = el; }}
                             className="flex group"
                             onClick={() => onSegmentSelect(index)}
                         >
@@ -151,7 +151,7 @@ export function RouteHistoryContent({ onSegmentSelect }: RouteHistoryContentProp
                 return (
                     <div
                     key={index}
-                    ref={el => itemRefs.current[index] = el}
+                    ref={el => { itemRefs.current[index] = el; }}
                     className={cn(
                         "flex-shrink-0 group transition-all duration-300 cursor-pointer",
                         isSelected ? 'scale-105' : 'scale-100'
