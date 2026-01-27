@@ -2,14 +2,13 @@
 'use client';
 
 import { CardContent } from '@/components/ui/card';
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { ScrollBar } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
 import { Milestone, Clock, ParkingSquare, Truck } from 'lucide-react';
 import { format, fromUnixTime } from 'date-fns';
 import React from 'react';
-import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 
 interface RouteHistoryDesktopTimelineProps {
     itemRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
@@ -41,7 +40,7 @@ export function RouteHistoryDesktopTimeline({
                     ref={scrollContainerRef}
                     className="h-full w-full rounded-[inherit] py-4"
                 >
-                    <div className="relative flex items-start gap-0 px-4">
+                    <div className="relative flex items-start justify-start gap-0 px-4 h-full">
                         {groups.map((group, index) => {
                             const Icon = statusIconMap[group.id_estado] || Milestone;
                             const isSelected = selectedSegmentIndex === index;
@@ -51,19 +50,17 @@ export function RouteHistoryDesktopTimeline({
                                     key={index}
                                     ref={(el) => { itemRefs.current[index] = el; }}
                                     className={cn(
-                                        "flex-shrink-0 group transition-all duration-300 cursor-pointer",
+                                        "flex-shrink-0 group transition-all duration-300 cursor-pointer h-full",
                                         isSelected ? 'scale-105' : 'scale-100'
                                     )}
                                     style={{ width: '200px' }}
                                     onClick={() => handleSegmentSelect(index)}
                                 >
-                                    <div className="relative flex flex-col items-center text-center">
-                                        {index < groups.length - 1 && (
-                                            <div className={cn(
-                                                "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
-                                                isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
-                                            )} />
-                                        )}
+                                    <div className="relative flex flex-col items-center text-center h-full justify-start">
+                                        <div className={cn(
+                                            "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
+                                            isSelected ? 'bg-primary' : 'bg-border group-hover:bg-primary'
+                                        )} />
 
                                         <div className={cn(
                                             "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
