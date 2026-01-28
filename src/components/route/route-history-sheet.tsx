@@ -8,7 +8,7 @@ import { RouteHistoryContent } from './route-history-content';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Clock, Milestone, ParkingSquare, Pause, Play, Download, Map as MapIcon, Truck } from 'lucide-react';
-import { Card, CardHeader, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader } from '@/components/ui/card';
 import { format } from 'date-fns';
 
 interface RouteHistorySheetProps {}
@@ -253,13 +253,6 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
           <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-auto flex flex-col">
             <CardHeader className="pb-2">{headerContent}</CardHeader>
             <RouteHistoryContent />
-            <CardFooter className="justify-between bg-card">
-                 <div className='flex items-center gap-2'>
-                    <Button variant="outline"><Download className='mr-2'/>PDF</Button>
-                    <Button variant="outline"><MapIcon className='mr-2'/>MAP</Button>
-                </div>
-                <p className='text-xs text-muted-foreground'>Auto-sync: Active • 12:50 PM</p>
-            </CardFooter>
           </Card>
         </div>
       )}
