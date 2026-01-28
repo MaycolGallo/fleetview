@@ -1,4 +1,3 @@
-
 'use client';
 
 import { CardContent } from '@/components/ui/card';
@@ -51,18 +50,22 @@ export function RouteHistoryDesktopTimeline({
                                     key={index}
                                     ref={(el) => { if(el) { itemRefs.current[index] = el; } }}
                                     className={cn(
-                                        "flex-shrink-0 group transition-all duration-300 cursor-pointer",
+                                        "flex-shrink-0 group transition-all duration-300 cursor-pointer h-full",
                                         isSelected ? 'scale-105' : 'scale-100'
                                     )}
                                     style={{ width: '200px' }}
                                     onClick={() => handleSegmentSelect(index)}
                                 >
-                                    <div className="relative flex flex-col items-center text-center justify-start">
+                                    <div className={cn(
+                                        "relative flex flex-col justify-start h-full",
+                                        index === 0 ? "items-start text-start" : "items-center text-center"
+                                    )}>
                                         
                                         {index < groups.length - 1 && (
                                             <>
                                                 <div className={cn(
-                                                    "absolute top-4 left-1/2 h-0.5 w-full transition-colors",
+                                                    "absolute top-4 h-0.5 transition-colors",
+                                                    index === 0 ? "left-4 w-[calc(100%+84px)]" : "left-1/2 w-full",
                                                     (isSelected || isNextSelected) ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                                                 )} />
 
