@@ -1,3 +1,4 @@
+
 'use client';
 
 import { CardContent } from '@/components/ui/card';
@@ -58,18 +59,18 @@ export function RouteHistoryDesktopTimeline({
                                 >
                                     <div className={cn(
                                         "relative flex flex-col justify-start h-full",
-                                        index === 0 ? "items-start text-start" : "items-center text-center"
+                                        index === 0 ? "items-start" : "items-center"
                                     )}>
                                         
                                         {index < groups.length - 1 && (
                                             <>
                                                 <div className={cn(
                                                     "absolute top-4 h-0.5 transition-colors",
-                                                    index === 0 ? "left-4 w-[calc(100%+84px)]" : "left-1/2 w-full",
+                                                    index === 0 ? "left-4 w-[calc(100%-4px)]" : "left-1/2 w-full",
                                                     (isSelected || isNextSelected) ? 'bg-primary' : 'bg-border group-hover:bg-primary'
                                                 )} />
 
-                                                <div className="absolute top-4 left-full -translate-x-1/2 -translate-y-1/2 z-20">
+                                                <div className="absolute top-4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
                                                     <div className="bg-card text-foreground text-[10px] font-semibold px-2 py-1 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1.5">
                                                         <div className="flex items-center gap-1">
                                                             <Clock className="w-2.5 h-2.5" />
@@ -93,7 +94,10 @@ export function RouteHistoryDesktopTimeline({
                                             <Icon className="h-5 w-5" style={{ color: group.color }} />
                                         </div>
 
-                                        <div className="pt-2">
+                                        <div className={cn(
+                                            "pt-2 text-center",
+                                            index === 0 && "self-center"
+                                        )}>
                                             <p className={cn(
                                                 "font-semibold capitalize text-sm transition-colors",
                                                 isSelected ? 'text-primary' : 'text-foreground'
