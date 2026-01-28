@@ -1,12 +1,9 @@
-
 'use client';
 
 import { CardContent } from '@/components/ui/card';
-import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
-import { ScrollBar } from '@/components/ui/scroll-area';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
-import { Milestone, Clock, ParkingSquare, Truck } from 'lucide-react';
+import { Milestone, Clock, Truck, ParkingSquare } from 'lucide-react';
 import { format, fromUnixTime } from 'date-fns';
 import React from 'react';
 
@@ -17,13 +14,12 @@ interface RouteHistoryDesktopTimelineProps {
 
 const statusIconMap: { [key: number]: React.ElementType } = {
     4: Clock, // Ralenti
-    5: ParkingSquare, // Estacionado
     6: Truck, // Transitando
+    5: ParkingSquare, // Parked icon, not really used for the 'P'
 };
 
 export function RouteHistoryDesktopTimeline({
     itemRefs,
-    scrollContainerRef,
 }: RouteHistoryDesktopTimelineProps) {
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
@@ -33,90 +29,78 @@ export function RouteHistoryDesktopTimeline({
         dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index });
     };
 
+    if (!groups || groups.length === 0) {
+        return <CardContent className="pb-6 pt-4 flex-1 min-h-[120px]" />;
+    }
+
     return (
-        <CardContent className="pb-0 flex-1 min-h-0">
-            <ScrollAreaPrimitive.Root className="w-full h-full relative">
-                <ScrollAreaPrimitive.Viewport
-                    ref={scrollContainerRef}
-                    className="h-full w-full rounded-[inherit]"
-                >
-                    <div className="relative flex items-start justify-start gap-0 px-4 h-full py-4">
-                        {groups.map((group, index) => {
-                            const Icon = statusIconMap[group.id_estado] || Milestone;
-                            const isSelected = selectedSegmentIndex === index;
-                            const isNextSelected = selectedSegmentIndex === index + 1;
+        <CardContent className="pb-6 pt-4 flex-1 min-h-0">
+            <div className="relative flex items-start justify-between w-full h-full">
+                {groups.map((group, index) => {
+                    const Icon = statusIconMap[group.id_estado] || Milestone;
+                    const isSelected = selectedSegmentIndex === index;
+                    const isLineHighlighted = isSelected || selectedSegmentIndex === index -1;
 
-                            return (
-                                <div
-                                    key={index}
-                                    ref={(el) => { if(el) { itemRefs.current[index] = el; } }}
-                                    className={cn(
-                                        "flex-shrink-0 group transition-all duration-300 cursor-pointer h-full",
-                                        isSelected ? 'scale-105' : 'scale-100'
-                                    )}
-                                    style={{ width: '200px' }}
-                                    onClick={() => handleSegmentSelect(index)}
-                                >
+                    return (
+                        <React.Fragment key={index}>
+                            <div
+                                ref={(el) => { if (el) { itemRefs.current[index] = el; } }}
+                                className="flex flex-col items-center gap-2 text-center cursor-pointer w-40"
+                                onClick={() => handleSegmentSelect(index)}
+                            >
+                               {group.id_estado === 5 ? (
                                     <div className={cn(
-                                        "relative flex flex-col justify-start h-full",
-                                        index === 0 ? "items-start" : "items-center"
+                                        "z-10 flex h-8 w-8 items-center justify-center rounded-full font-bold text-lg transition-all",
+                                        isSelected ? 'ring-4 ring-primary/50' : 'ring-0',
+                                        'bg-white text-gray-600 border-2 border-gray-400'
                                     )}>
-                                        
-                                        {index < groups.length - 1 && (
-                                            <>
-                                                <div className={cn(
-                                                    "absolute top-4 h-0.5 transition-colors",
-                                                    index === 0 ? "left-4 w-[calc(100%-4px)]" : "left-1/2 w-full",
-                                                    (isSelected || isNextSelected) ? 'bg-primary' : 'bg-border group-hover:bg-primary'
-                                                )} />
+                                        P
+                                    </div>
+                                ) : (
+                                    <div className={cn(
+                                        "z-10 flex h-8 w-8 items-center justify-center rounded-full text-white transition-all",
+                                        isSelected ? 'ring-4 ring-primary/50' : 'ring-0'
+                                    )}
+                                        style={{ backgroundColor: group.color }}
+                                    >
+                                        <Icon className="h-5 w-5" />
+                                    </div>
+                                )}
 
-                                                <div className="absolute top-4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-                                                    <div className="bg-card text-foreground text-[10px] font-semibold px-2 py-1 rounded-md shadow-sm whitespace-nowrap flex items-center gap-1.5">
-                                                        <div className="flex items-center gap-1">
-                                                            <Clock className="w-2.5 h-2.5" />
-                                                            <span>{group.total_time_formatted}</span>
-                                                        </div>
-                                                        <div className="w-px h-3 bg-border" />
-                                                        <div className="flex items-center gap-1">
-                                                            <Milestone className="w-2.5 h-2.5" />
-                                                            <span>{group.total_distance_km.toFixed(1)} km</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </>
+
+                                <div className="text-center">
+                                    <p className={cn(
+                                        "font-semibold capitalize text-sm",
+                                        isSelected ? 'text-primary' : 'text-foreground'
+                                    )}>
+                                        {group.description}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground whitespace-nowrap">
+                                        {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
+                                        {index === groups.length - 1 && <span className='font-semibold'> - Current</span>}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {index < groups.length - 1 && (
+                                <div className={cn("relative flex-1 mt-4", isLineHighlighted ? 'text-primary' : 'text-muted-foreground')}>
+                                     <div
+                                        className={cn(
+                                            "h-0.5 w-full",
+                                            isLineHighlighted ? 'bg-primary' : 'bg-border'
                                         )}
-                                        
-                                        <div className={cn(
-                                            "z-10 flex h-8 w-8 items-center justify-center rounded-full bg-card ring-4 transition-all",
-                                            isSelected ? 'ring-primary' : 'ring-card',
-                                            'group-hover:ring-primary'
-                                        )}>
-                                            <Icon className="h-5 w-5" style={{ color: group.color }} />
-                                        </div>
-
-                                        <div className={cn(
-                                            "pt-2 text-center",
-                                            index === 0 && "self-center"
-                                        )}>
-                                            <p className={cn(
-                                                "font-semibold capitalize text-sm transition-colors",
-                                                isSelected ? 'text-primary' : 'text-foreground'
-                                            )}>
-                                                {group.description}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground whitespace-normal min-h-[2.5rem]">
-                                                {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
-                                            </p>
-                                        </div>
+                                    />
+                                    <div className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full text-center text-xs whitespace-nowrap">
+                                        <span>{group.total_distance_km.toFixed(2)}km</span>
+                                        <span className='mx-1'>-</span>
+                                        <span>{group.total_time_formatted}</span>
                                     </div>
                                 </div>
-                            );
-                        })}
-                    </div>
-                </ScrollAreaPrimitive.Viewport>
-                <ScrollBar orientation="horizontal" />
-                <ScrollAreaPrimitive.Corner />
-            </ScrollAreaPrimitive.Root>
+                            )}
+                        </React.Fragment>
+                    );
+                })}
+            </div>
         </CardContent>
-    )
+    );
 }

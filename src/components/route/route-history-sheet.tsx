@@ -7,30 +7,21 @@ import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/f
 import { RouteHistoryContent } from './route-history-content';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Clock, Milestone, ParkingSquare, Pause, Play } from 'lucide-react';
-import { Card, CardHeader } from '@/components/ui/card';
+import { ChevronDown, Clock, Milestone, ParkingSquare, Pause, Play, Download, Map as MapIcon, Truck } from 'lucide-react';
+import { Card, CardHeader, CardFooter } from '@/components/ui/card';
+import { format } from 'date-fns';
 
 interface RouteHistorySheetProps {}
 
 function formatDuration(minutes: number) {
-  if (minutes < 1) {
-    const seconds = Math.round(minutes * 60);
-    return `${seconds}s`;
-  }
-  
-  const totalMinutes = Math.round(minutes);
-  if (totalMinutes < 60) {
-      return `${totalMinutes}m`;
-  }
+  const totalSeconds = Math.round(minutes * 60);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
 
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  
-  let result = `${h}h`;
-  if (m > 0) {
-    result += ` ${m}m`;
+  if (h > 0) {
+    return `${h}h ${m}m`;
   }
-  return result;
+  return `${m}m`;
 }
 
 
@@ -38,11 +29,21 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const isMobile = useIsMobile();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle } = state;
-  const { totalDistance, totalDuration, totalStops, totalStopTime } = useMemo(() => selectRouteSummary(state), [state]);
+  const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle, by_estado } = state;
+  const { totalDistance, totalDuration } = useMemo(() => selectRouteSummary(state), [state]);
 
   const playbackIndexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const statusColorMap = useMemo(() => {
+    const map = new Map<number, string>();
+    state.routeGroups.forEach(g => {
+        if (!map.has(g.id_estado)) {
+            map.set(g.id_estado, g.color);
+        }
+    });
+    return map;
+}, [state.routeGroups]);
 
   const movingPoints = useMemo(() => {
     if (!isRouteSheetOpen) return [];
@@ -66,7 +67,6 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         return;
     }
     
-    // If play is hit again, always restart from the beginning
     if (playbackIndexRef.current >= movingPoints.length -1 || playbackIndexRef.current === 0) {
         playbackIndexRef.current = 0;
     }
@@ -112,12 +112,9 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
         }
     };
 
-    // Kick off the first frame
     playNextPoint();
 
-    // The effect's cleanup function handles pausing/stopping
     return cleanup;
-  // This effect should only re-run when `isRoutePlaying` changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRoutePlaying, dispatch]);
 
@@ -146,6 +143,8 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   }, [dispatch, isRoutePlaying]);
   
   if (isMobile) {
+    // Mobile view remains largely unchanged for now
+    const { totalStops, totalStopTime } = selectRouteSummary(state);
     return (
         <Drawer open={isRouteSheetOpen} onOpenChange={handleOpenChange}>
             <DrawerContent className="h-[60%] flex flex-col">
@@ -202,47 +201,45 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
     )
   }
 
+  const statusIconMap: { [key: number]: React.ElementType } = {
+    4: Clock, // Ralenti
+    5: ParkingSquare, // Estacionado
+    6: Truck, // Transitando
+  };
+  
   // Desktop layout
   const headerContent = (
       <div className="flex justify-between items-start gap-4">
-        <div>
-          <h3 className="text-2xl font-semibold leading-none tracking-tight">Route History: {historyVehicle?.placa}</h3>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-muted-foreground mt-2">
-            <div className="flex items-center gap-2">
-              <Milestone className="w-4 h-4 text-primary" />
-              <span>
-                Total Distance:{' '}
-                <strong className="text-foreground">
-                  {totalDistance.toFixed(1)} km
-                </strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary" />
-              <span>
-                Total Time:{' '}
-                <strong className="text-foreground">
-                  {formatDuration(totalDuration)}
-                </strong>
-              </span>
-            </div>
-            {totalStops > 0 && (
-                <div className="flex items-center gap-2">
-                    <ParkingSquare className="w-4 h-4 text-primary" />
-                    <span>
-                        {totalStops} stops{' '}
-                        <strong className="text-foreground">
-                            ({formatDuration(totalStopTime)})
-                        </strong>
-                    </span>
-                </div>
-            )}
+          <div className='flex-1 space-y-3'>
+              <Button variant="ghost" className="text-2xl font-semibold p-0 h-auto focus-visible:ring-inset">
+                  {historyVehicle?.placa}
+                  <ChevronDown className="w-5 h-5 ml-2" />
+              </Button>
+              <div className="flex items-center gap-x-4 gap-y-1 text-sm text-muted-foreground flex-wrap">
+                  {Object.entries(by_estado).map(([statusId, statusData]) => {
+                      const Icon = statusIconMap[Number(statusId)] || Milestone;
+                      return (
+                          <div key={statusData.name} className="flex items-center gap-2">
+                              <Icon className="w-4 h-4" style={{ color: statusColorMap.get(Number(statusId)) || 'hsl(var(--primary))' }} />
+                              <span className='font-medium text-foreground uppercase text-xs'>{statusData.name}:</span>
+                              <span className="text-xs">{statusData.total_distance_km.toFixed(2)}km</span>
+                              <span className='text-border'>/</span>
+                              <span className="text-xs">{statusData.total_time_formatted}</span>
+                          </div>
+                      )
+                  })}
+              </div>
           </div>
-        </div>
-        <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0">
-            {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-            <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
-        </Button>
+          <div className='flex items-start gap-6'>
+              <div className='text-right'>
+                  <p className='text-xs text-muted-foreground'>TOTAL DISTANCE</p>
+                  <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
+              </div>
+              <div className='text-right'>
+                  <p className='text-xs text-muted-foreground'>TOTAL DURATION</p>
+                  <p className='text-xl font-semibold'>{formatDuration(totalDuration)}</p>
+              </div>
+          </div>
       </div>
     );
 
@@ -251,11 +248,18 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
       {isRouteSheetOpen && (
         <div
           style={{ viewTransitionName: 'route-sheet-transition' }}
-          className="absolute bottom-4 left-4 right-4 z-20 h-[250px]"
+          className="absolute bottom-4 left-4 right-4 z-20"
         >
-          <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-full flex flex-col">
-            <CardHeader>{headerContent}</CardHeader>
+          <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-auto flex flex-col">
+            <CardHeader className="pb-2">{headerContent}</CardHeader>
             <RouteHistoryContent />
+            <CardFooter className="justify-between bg-card">
+                 <div className='flex items-center gap-2'>
+                    <Button variant="outline"><Download className='mr-2'/>PDF</Button>
+                    <Button variant="outline"><MapIcon className='mr-2'/>MAP</Button>
+                </div>
+                <p className='text-xs text-muted-foreground'>Auto-sync: Active • 12:50 PM</p>
+            </CardFooter>
           </Card>
         </div>
       )}

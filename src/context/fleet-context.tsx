@@ -31,6 +31,7 @@ interface FleetState {
   historyVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[][] | null;
   routeGroups: VehiculoHistorialGrouped[];
+  by_estado: VHistorial['by_estado'];
   isRouteSheetOpen: boolean;
   isLoadingRoute: boolean;
   selectedSegmentIndex: number | null;
@@ -72,6 +73,7 @@ const getInitialState = (): FleetState => ({
   historyVehicle: null,
   routePath: null,
   routeGroups: [],
+  by_estado: {},
   isRouteSheetOpen: false,
   isLoadingRoute: false,
   selectedSegmentIndex: null,
@@ -155,6 +157,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             isLoadingRoute: false,
             routePath: routePoints,
             routeGroups: historyData.groups,
+            by_estado: historyData.by_estado,
             isRouteSheetOpen: true,
             historyVehicle: updatedHistoryVehicle,
             isRoutePlaying: false,
@@ -173,6 +176,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             historyVehicle: null,
             routePath: null,
             routeGroups: [],
+            by_estado: {},
             selectedVehicle: null,
             isRouteSheetOpen: false,
             selectedSegmentIndex: null,
