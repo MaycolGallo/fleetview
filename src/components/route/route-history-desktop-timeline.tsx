@@ -1,4 +1,3 @@
-
 'use client';
 
 import { CardContent } from '@/components/ui/card';
@@ -16,7 +15,7 @@ interface RouteHistoryDesktopTimelineProps {
 const statusIconMap: { [key: number]: React.ElementType } = {
     4: Clock, // Ralenti
     6: Truck, // Transitando
-    5: ParkingSquare, // Parked icon, not really used for the 'P'
+    5: ParkingSquare, // Parked icon
 };
 
 export function RouteHistoryDesktopTimeline({
@@ -36,64 +35,56 @@ export function RouteHistoryDesktopTimeline({
 
     return (
         <CardContent className="pb-6 pt-4 flex-1 min-h-0">
-            <div className="relative flex items-start justify-between w-full h-full">
+            <div className="relative flex w-full">
                 {groups.map((group, index) => {
                     const Icon = statusIconMap[group.id_estado] || Milestone;
                     const isSelected = selectedSegmentIndex === index;
-                    const isLineHighlighted = isSelected || selectedSegmentIndex === index -1;
+                    // A line is highlighted if it's connected to a selected segment.
+                    const isLineHighlighted = isSelected || selectedSegmentIndex === index - 1;
 
                     return (
-                        <React.Fragment key={index}>
+                        <div
+                            key={index}
+                            ref={(el) => { if (el) { itemRefs.current[index] = el; } }}
+                            className={cn(
+                                "relative flex flex-col items-center gap-2 pt-4 flex-1 cursor-pointer"
+                            )}
+                            onClick={() => handleSegmentSelect(index)}
+                        >
+                            {/* Icon */}
                             <div
-                                ref={(el) => { if (el) { itemRefs.current[index] = el; } }}
                                 className={cn(
-                                    "flex flex-col items-center gap-2 text-center cursor-pointer w-40",
-                                    index === 0 ? 'items-start text-left' : ''
+                                    "z-10 flex h-8 w-8 items-center justify-center rounded-full font-bold text-lg text-white transition-all",
+                                    isSelected ? 'ring-4 ring-primary/50' : 'ring-0'
                                 )}
-                                onClick={() => handleSegmentSelect(index)}
+                                style={{ backgroundColor: group.id_estado === 5 ? '#666666' : group.color }}
                             >
                                {group.id_estado === 5 ? (
-                                    <div className={cn(
-                                        "z-10 flex h-8 w-8 items-center justify-center rounded-full font-bold text-lg text-white transition-all",
-                                        isSelected ? 'ring-4 ring-primary/50' : 'ring-0'
-                                    )} style={{ backgroundColor: group.color }}>
-                                        P
-                                    </div>
+                                    'P'
                                 ) : (
-                                    <div className={cn(
-                                        "z-10 flex h-8 w-8 items-center justify-center rounded-full text-white transition-all",
-                                        isSelected ? 'ring-4 ring-primary/50' : 'ring-0'
-                                    )}
-                                        style={{ backgroundColor: group.color }}
-                                    >
-                                        <Icon className="h-5 w-5" />
-                                    </div>
+                                    <Icon className="h-5 w-5" />
                                 )}
-
-
-                                <div className={cn("text-center", index === 0 && 'w-full')}>
-                                    <p className={cn(
-                                        "font-semibold capitalize text-sm",
-                                        isSelected ? 'text-primary' : 'text-foreground'
-                                    )}>
-                                        {group.description}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground whitespace-nowrap">
-                                        {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
-                                    </p>
-                                </div>
                             </div>
 
+                            {/* Text */}
+                            <div className={cn("text-center")}>
+                                <p className={cn(
+                                    "font-semibold capitalize text-sm",
+                                    isSelected ? 'text-primary' : 'text-foreground'
+                                )}>
+                                    {group.description}
+                                </p>
+                                <p className="text-xs text-muted-foreground whitespace-nowrap">
+                                    {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
+                                </p>
+                            </div>
+
+                            {/* Line to next item */}
                             {index < groups.length - 1 && (
-                                <div className={cn("relative flex-1 mt-4", isLineHighlighted ? 'text-primary' : 'text-muted-foreground')}>
-                                     <div
-                                        className={cn(
-                                            "h-0.5 w-full",
-                                            isLineHighlighted ? 'bg-primary' : 'bg-border'
-                                        )}
-                                    />
+                                <div className="absolute top-8 left-1/2 w-full h-0.5 z-0">
+                                    <div className={cn("h-full", isLineHighlighted ? 'bg-primary' : 'bg-border')} />
                                     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2 bg-card text-center text-xs whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 text-muted-foreground">
                                             <div className="flex items-center gap-1">
                                                 <Milestone className="w-3 h-3" />
                                                 <span>{group.total_distance_km.toFixed(2)}km</span>
@@ -106,7 +97,7 @@ export function RouteHistoryDesktopTimeline({
                                     </div>
                                 </div>
                             )}
-                        </React.Fragment>
+                        </div>
                     );
                 })}
             </div>
