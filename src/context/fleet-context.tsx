@@ -142,11 +142,14 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'SET_ROUTE_HISTORY': {
         const historyData = action.payload;
-        const routePoints = historyData.groups
+
+        const filteredGroups = historyData.groups.filter(group => group.total_time_seconds > 60);
+
+        const routePoints = filteredGroups
           .filter(g => g.id_estado === 6) // Transitando
           .map(g => g.records.map(r => ({ lat: r.lat, lng: r.lng })));
 
-        const startOfRoute = historyData.groups?.[0]?.records?.[0];
+        const startOfRoute = filteredGroups?.[0]?.records?.[0];
 
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute
             ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng, rumbo: startOfRoute?.rumbo || 0, velocidad: "0" }
@@ -156,7 +159,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             ...state,
             isLoadingRoute: false,
             routePath: routePoints,
-            routeGroups: historyData.groups,
+            routeGroups: filteredGroups,
             by_estado: historyData.by_estado,
             isRouteSheetOpen: true,
             historyVehicle: updatedHistoryVehicle,
