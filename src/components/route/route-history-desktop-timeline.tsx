@@ -35,7 +35,7 @@ export function RouteHistoryDesktopTimeline({
 
     return (
         <CardContent className="pb-6 pt-4 flex-1 min-h-0">
-            <div className="relative flex w-full">
+            <div className="relative flex w-full items-start">
                 {groups.map((group, index) => {
                     const Icon = statusIconMap[group.id_estado] || Milestone;
                     const isSelected = selectedSegmentIndex === index;
