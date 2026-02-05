@@ -219,7 +219,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
                   {Object.entries(by_estado).map(([statusId, statusData]) => {
                       const Icon = statusIconMap[Number(statusId)] || Milestone;
                       return (
-                          <div key={statusData.name} className="flex items-center gap-2">
+                          <div key={statusId} className="flex items-center gap-2">
                               <Icon className="w-4 h-4" style={{ color: statusColorMap.get(Number(statusId)) || 'hsl(var(--primary))' }} />
                               <span className='font-medium text-foreground uppercase text-xs'>{statusData.name}:</span>
                               <span className="text-xs">{statusData.total_distance_km.toFixed(2)}km</span>

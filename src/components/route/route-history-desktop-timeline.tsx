@@ -1,3 +1,4 @@
+
 'use client';
 
 import { CardContent } from '@/components/ui/card';
@@ -39,8 +40,8 @@ export function RouteHistoryDesktopTimeline({
                 {groups.map((group, index) => {
                     const Icon = statusIconMap[group.id_estado] || Milestone;
                     const isSelected = selectedSegmentIndex === index;
-                    // A line is highlighted if it's connected to a selected segment.
-                    const isLineHighlighted = isSelected || selectedSegmentIndex === index - 1;
+                    // The line from item `i` to `i+1` should be highlighted if `i` or `i+1` is selected.
+                    const isLineHighlighted = isSelected || selectedSegmentIndex === index + 1;
 
                     return (
                         <div
