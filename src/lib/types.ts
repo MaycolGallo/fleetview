@@ -89,6 +89,8 @@ export interface VehiculoHistorialGrouped {
   max_velocidad: number;
   total_distance_km: number;
   records: ProcessedRouteRecord[];
+  address?: string;
+  address_short?: string;
 }
 
 export interface VHistorial {

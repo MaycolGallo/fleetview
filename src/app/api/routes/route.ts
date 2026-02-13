@@ -148,13 +148,44 @@ export async function POST(req: NextRequest) {
   try {
     const { vehicleId } = await req.json();
 
-    const processedHistory = {
-      ...newVehicleHistoryData,
-      groups: newVehicleHistoryData.groups.map(group => ({
+    const processedGroups = await Promise.all(newVehicleHistoryData.groups.map(async (group) => {
+      const firstRecord = group.records[0];
+      let address = 'Address lookup failed';
+      let address_short = 'Unknown Location';
+
+      if (firstRecord) {
+        try {
+          const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${firstRecord.lat}&lon=${firstRecord.lng}`, {
+            headers: {
+              'User-Agent': 'FirebaseStudio/1.0 (for a vehicle tracking app)'
+            }
+          });
+          if (geoRes.ok) {
+            const geoData = await geoRes.json();
+            address = geoData.display_name || 'Address not found';
+            if (geoData.address) {
+                address_short = geoData.address.road || geoData.address.suburb || geoData.address.city_district || 'Unknown Road';
+            } else {
+                address_short = 'Address unavailable';
+            }
+          }
+        } catch (e) {
+          console.error('Geocoding error:', e);
+        }
+      }
+
+      return {
         ...group,
         description: group.records[0]?.param1 || 'Unknown',
         color: statusColorMap[group.id_estado as keyof typeof statusColorMap] || '#B0BEC5',
-      })),
+        address,
+        address_short,
+      };
+    }));
+
+    const processedHistory = {
+      ...newVehicleHistoryData,
+      groups: processedGroups,
     };
 
     return NextResponse.json(processedHistory);
@@ -166,5 +197,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to generate route' }, { status: 500 });
   }
 }
-
-    

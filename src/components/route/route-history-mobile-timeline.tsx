@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -75,6 +76,11 @@ export function RouteHistoryMobileTimeline({
                                         <p className="text-xs text-muted-foreground pt-1">
                                             {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
                                         </p>
+                                        {group.address_short && (
+                                            <p className="text-xs text-muted-foreground pt-1 truncate" title={group.address}>
+                                                {group.address_short}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground text-right ml-2">
                                         {group.total_time_seconds > 0 && (

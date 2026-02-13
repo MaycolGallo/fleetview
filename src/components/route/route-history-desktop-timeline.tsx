@@ -78,6 +78,11 @@ export function RouteHistoryDesktopTimeline({
                                 <p className="text-xs text-muted-foreground whitespace-nowrap">
                                     {format(fromUnixTime(group.records[0].fecha), 'p')} - {format(fromUnixTime(group.records[group.records.length - 1].fecha), 'p')}
                                 </p>
+                                {group.address_short && (
+                                    <p className="text-xs text-muted-foreground mt-1 truncate max-w-48 mx-auto" title={group.address}>
+                                        {group.address_short}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Line to next item */}
