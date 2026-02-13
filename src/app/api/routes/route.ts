@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
             const geoData = await geoRes.json();
             address = geoData.display_name || 'Address not found';
             if (geoData.address) {
-                address_short = geoData.address.road || geoData.address.suburb || geoData.address.city_district || 'Unknown Road';
+                address_short = geoData.address.road || geoData.address.neighbourhood || geoData.address.suburb || geoData.address.village || geoData.address.city_district || geoData.address.city || 'Unknown Location';
             } else {
                 address_short = 'Address unavailable';
             }
