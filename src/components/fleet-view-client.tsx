@@ -24,6 +24,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangePicker } from '@/components/route/date-range-picker';
+import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
@@ -193,7 +195,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                                                     selected={date}
                                                     onSelect={setDate}
                                                     numberOfMonths={1}
-                                                    className='p-0'
                                                 />
                                             </div>
                                             <div className='pt-4 space-y-4'>
