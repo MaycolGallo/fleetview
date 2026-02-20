@@ -25,8 +25,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangePicker } from '@/components/route/date-range-picker';
-import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
 
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
@@ -149,7 +149,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       <div className="flex-1 relative h-full w-full">
           <FleetMap apiKey={apiKey} />
 
-          <div className="absolute top-0 left-0 p-4 z-[60] w-full pointer-events-none">
+          <div className="absolute top-0 left-0 p-4 w-full pointer-events-none">
             <div className='relative w-full h-12 flex justify-between'>
                 <div className='flex gap-2 items-start pointer-events-auto'>
                     {!historyVehicle ? (
