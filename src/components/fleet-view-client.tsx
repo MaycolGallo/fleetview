@@ -149,9 +149,9 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       <div className="flex-1 relative h-full w-full">
           <FleetMap apiKey={apiKey} />
 
-          <div className="absolute top-0 left-0 p-4 z-50 w-full">
+          <div className="absolute top-0 left-0 p-4 z-[60] w-full pointer-events-none">
             <div className='relative w-full h-12 flex justify-between'>
-                <div className='flex gap-2 items-start'>
+                <div className='flex gap-2 items-start pointer-events-auto'>
                     {!historyVehicle ? (
                         <div style={{ viewTransitionName: 'filters-transition' }}>
                             <Button 
