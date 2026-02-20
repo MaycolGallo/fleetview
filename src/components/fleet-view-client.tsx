@@ -12,7 +12,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
 import {
-  NestedDrawer,
+  Drawer,
   DrawerTrigger,
   DrawerContent,
   DrawerHandle,
@@ -173,7 +173,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                                 <RefreshCw className="h-4 w-4" />
                             </Button>
                             {isMobile ? (
-                                <NestedDrawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen}>
+                                <Drawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen}>
                                     <DrawerTrigger asChild>
                                         <Button variant="secondary" size="icon" className="shadow-lg">
                                             <CalendarIcon className="w-4 h-4" />
@@ -194,7 +194,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                                                 selected={date}
                                                 onSelect={setDate}
                                                 numberOfMonths={1}
-                                                className='p-0 [&_td]:w-full'
+                                                className='p-0'
                                             />
                                             <div className='pt-4 space-y-4'>
                                                 <div className="grid grid-cols-2 gap-4">
@@ -221,7 +221,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                                             </div>
                                         </div>
                                     </DrawerContent>
-                                </NestedDrawer>
+                                </Drawer>
                             ) : (
                                 <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
                             )}
