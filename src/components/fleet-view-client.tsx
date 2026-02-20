@@ -9,8 +9,6 @@ import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
 import {
   Drawer,
   DrawerTrigger,
@@ -187,15 +185,17 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                                                 <DrawerTitle>Filter Route History</DrawerTitle>
                                                 <DrawerDescription>Select a date and time range.</DrawerDescription>
                                             </DrawerHeader>
-                                            <Calendar
-                                                initialFocus
-                                                mode="range"
-                                                defaultMonth={date?.from}
-                                                selected={date}
-                                                onSelect={setDate}
-                                                numberOfMonths={1}
-                                                className='p-0'
-                                            />
+                                            <div className="flex justify-center">
+                                                <Calendar
+                                                    initialFocus
+                                                    mode="range"
+                                                    defaultMonth={date?.from}
+                                                    selected={date}
+                                                    onSelect={setDate}
+                                                    numberOfMonths={1}
+                                                    className='p-0'
+                                                />
+                                            </div>
                                             <div className='pt-4 space-y-4'>
                                                 <div className="grid grid-cols-2 gap-4">
                                                     <div className='space-y-2'>
