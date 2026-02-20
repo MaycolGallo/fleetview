@@ -1,19 +1,16 @@
 
 'use client';
 
-import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription, NestedDrawer, DrawerTrigger } from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Clock, Milestone, ParkingSquare, Pause, Play, Truck, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronDown, Clock, Milestone, ParkingSquare, Pause, Play, Truck } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import type { DateRange } from 'react-day-picker';
 import { DateRangePicker } from './date-range-picker';
-import { Calendar } from '@/components/ui/calendar';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 
 interface RouteHistorySheetProps {
@@ -40,7 +37,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   const dispatch = useFleetDispatch();
   const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle, by_estado } = state;
   const { totalDistance, totalDuration } = useMemo(() => selectRouteSummary(state), [state]);
-  const [nestedDrawerOpen, setNestedDrawerOpen] = useState(false);
   
   const playbackIndexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -63,11 +59,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
             return { lat: r.lat, lng: r.lng, rumbo: r.rumbo, fecha: r.fecha, velocidad: parseInt(r.velocidad, 10) || 0 };
         }));
   }, [isRouteSheetOpen, routeGroups]);
-
-    const handleFilterApply = () => {
-        onApply();
-        setNestedDrawerOpen(false);
-    };
 
   useEffect(() => {
     const cleanup = () => {
@@ -160,24 +151,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   if (isMobile) {
     const { totalStops, totalStopTime } = selectRouteSummary(state);
 
-    const handleTimeChange = (type: 'from' | 'to', value: string) => {
-        if (!value) return;
-        const [hours, minutes] = value.split(':').map(Number);
-        if (!date || (type === 'from' && !date.from) || (type === 'to' && !date.to)) return;
-
-        if (type === 'from' && date.from) {
-            const newFrom = new Date(date.from);
-            newFrom.setHours(hours, minutes, 0, 0);
-            setDate({ ...date, from: newFrom });
-        }
-        
-        if (type === 'to' && date.to) {
-            const newTo = new Date(date.to);
-            newTo.setHours(hours, minutes, 0, 0);
-            setDate({ ...date, to: newTo });
-        }
-    }
-
     return (
         <Drawer open={isRouteSheetOpen} onOpenChange={handleOpenChange}>
             <DrawerContent className="h-[60%] flex flex-col">
@@ -225,55 +198,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                                 {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
                                 <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
                             </Button>
-                             <NestedDrawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen}>
-                                <DrawerTrigger asChild>
-                                    <Button variant="outline" size="icon">
-                                        <CalendarIcon className="w-4 h-4" />
-                                        <span className="sr-only">Filter by date</span>
-                                    </Button>
-                                </DrawerTrigger>
-                                <DrawerContent>
-                                    <DrawerHandle />
-                                        <div className="p-4 overflow-y-auto">
-                                        <DrawerHeader className="p-0 text-left mb-4">
-                                            <DrawerTitle>Filter Route History</DrawerTitle>
-                                            <DrawerDescription>Select a date and time range.</DrawerDescription>
-                                        </DrawerHeader>
-                                        <Calendar
-                                            initialFocus
-                                            mode="range"
-                                            defaultMonth={date?.from}
-                                            selected={date}
-                                            onSelect={setDate}
-                                            numberOfMonths={1}
-                                            className='p-0 [&_td]:w-full'
-                                        />
-                                        <div className='pt-4 space-y-4'>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className='space-y-2'>
-                                                    <Label className='text-sm font-medium'>Start time</Label>
-                                                    <Input 
-                                                        type="time" 
-                                                        defaultValue={date?.from ? format(date.from, 'HH:mm') : '00:00'}
-                                                        onChange={(e) => handleTimeChange('from', e.target.value)}
-                                                        disabled={!date?.from}
-                                                    />
-                                                </div>
-                                                <div className='space-y-2'>
-                                                    <Label className='text-sm font-medium'>End time</Label>
-                                                    <Input 
-                                                        type="time" 
-                                                        defaultValue={date?.to ? format(date.to, 'HH:mm') : '23:59'}
-                                                        onChange={(e) => handleTimeChange('to', e.target.value)}
-                                                        disabled={!date?.to}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <Button onClick={handleFilterApply} className="w-full">Apply</Button>
-                                        </div>
-                                    </div>
-                                </DrawerContent>
-                            </NestedDrawer>
                         </div>
                     </div>
                 </DrawerHeader>
@@ -300,9 +224,9 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                     {historyVehicle?.placa}
                     <ChevronDown className="w-5 h-5 ml-2" />
                 </Button>
-                <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
+                <DateRangePicker date={date} setDate={setDate} onApply={onApply} />
             </div>
-            <div className='flex items-start gap-6'>
+            <div className='flex items-center gap-6'>
                 <div className='text-right'>
                     <p className='text-xs text-muted-foreground'>TOTAL DURATION</p>
                     <p className='text-xl font-semibold'>{formatDuration(totalDuration)}</p>
@@ -311,6 +235,10 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                     <p className='text-xs text-muted-foreground'>TOTAL DISTANCE</p>
                     <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
                 </div>
+                <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0 shadow-md">
+                    {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                    <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
+                </Button>
             </div>
         </div>
         <div className="flex items-center gap-x-6 gap-y-2 text-sm text-muted-foreground flex-wrap border-t pt-2">
