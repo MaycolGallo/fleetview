@@ -5,11 +5,13 @@ import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerD
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, Clock, Milestone, ParkingSquare, Pause, Play, Download, Map as MapIcon, Truck } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
-import { format } from 'date-fns';
+import { format, fromUnixTime } from 'date-fns';
+import type { DateRange } from 'react-day-picker';
+import { DateRangePicker } from './date-range-picker';
 
 interface RouteHistorySheetProps {}
 
@@ -31,6 +33,26 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const dispatch = useFleetDispatch();
   const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle, by_estado } = state;
   const { totalDistance, totalDuration } = useMemo(() => selectRouteSummary(state), [state]);
+  const [date, setDate] = useState<DateRange | undefined>();
+
+  useEffect(() => {
+    if (routeGroups.length > 0) {
+      const firstRecord = routeGroups[0].records[0];
+      const lastGroup = routeGroups[routeGroups.length - 1];
+      const lastRecord = lastGroup.records[lastGroup.records.length - 1];
+      
+      setDate({
+        from: fromUnixTime(firstRecord.fecha),
+        to: fromUnixTime(lastRecord.fecha),
+      });
+    }
+  }, [routeGroups]);
+
+  const handleFilterApply = useCallback(() => {
+    // TODO: Implement actual filtering logic, e.g., dispatch an action
+    console.log("Applying date range filter:", date);
+  }, [date]);
+
 
   const playbackIndexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -209,38 +231,41 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   
   // Desktop layout
   const headerContent = (
-      <div className="flex justify-between items-start gap-4">
-          <div className='flex-1 space-y-3'>
-              <Button variant="ghost" className="text-2xl font-semibold p-0 h-auto focus-visible:ring-inset">
-                  {historyVehicle?.placa}
-                  <ChevronDown className="w-5 h-5 ml-2" />
-              </Button>
-              <div className="flex items-center gap-x-4 gap-y-1 text-sm text-muted-foreground flex-wrap">
-                  {Object.entries(by_estado).map(([statusId, statusData]) => {
-                      const Icon = statusIconMap[Number(statusId)] || Milestone;
-                      return (
-                          <div key={statusId} className="flex items-center gap-2">
-                              <Icon className="w-4 h-4" style={{ color: statusColorMap.get(Number(statusId)) || 'hsl(var(--primary))' }} />
-                              <span className='font-medium text-foreground uppercase text-xs'>{statusData.name}:</span>
-                              <span className="text-xs">{statusData.total_distance_km.toFixed(2)}km</span>
-                              <span className='text-border'>/</span>
-                              <span className="text-xs">{statusData.total_time_formatted}</span>
-                          </div>
-                      )
-                  })}
-              </div>
-          </div>
-          <div className='flex items-start gap-6'>
-              <div className='text-right'>
-                  <p className='text-xs text-muted-foreground'>TOTAL DISTANCE</p>
-                  <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
-              </div>
-              <div className='text-right'>
-                  <p className='text-xs text-muted-foreground'>TOTAL DURATION</p>
-                  <p className='text-xl font-semibold'>{formatDuration(totalDuration)}</p>
-              </div>
-          </div>
-      </div>
+      <div>
+        <div className="flex justify-between items-center gap-4 mb-4">
+            <div className='flex items-center gap-4'>
+                <Button variant="ghost" className="text-2xl font-semibold p-0 h-auto focus-visible:ring-inset">
+                    {historyVehicle?.placa}
+                    <ChevronDown className="w-5 h-5 ml-2" />
+                </Button>
+                <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
+            </div>
+            <div className='flex items-start gap-6'>
+                <div className='text-right'>
+                    <p className='text-xs text-muted-foreground'>TOTAL DURATION</p>
+                    <p className='text-xl font-semibold'>{formatDuration(totalDuration)}</p>
+                </div>
+                <div className='text-right'>
+                    <p className='text-xs text-muted-foreground'>TOTAL DISTANCE</p>
+                    <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
+                </div>
+            </div>
+        </div>
+        <div className="flex items-center gap-x-6 gap-y-2 text-sm text-muted-foreground flex-wrap border-t pt-2">
+            {Object.entries(by_estado).map(([statusId, statusData]) => {
+                const Icon = statusIconMap[Number(statusId)] || Milestone;
+                return (
+                    <div key={statusId} className="flex items-center gap-2">
+                        <Icon className="w-4 h-4" style={{ color: statusColorMap.get(Number(statusId)) || 'hsl(var(--primary))' }} />
+                        <span className='font-medium text-foreground uppercase text-xs'>{statusData.name}:</span>
+                        <span className="text-xs">{statusData.total_distance_km.toFixed(2)}km</span>
+                        <span className='text-border'>/</span>
+                        <span className="text-xs">{statusData.total_time_formatted}</span>
+                    </div>
+                )
+            })}
+        </div>
+    </div>
     );
 
   return (
@@ -259,3 +284,4 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
     </>
   );
 }
+
