@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -150,7 +151,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
     const { totalStops, totalStopTime } = selectRouteSummary(state);
 
     return (
-        <Drawer open={isRouteSheetOpen} onOpenChange={handleOpenChange}>
+        <Drawer open={isRouteSheetOpen} onOpenChange={handleOpenChange} modal={false}>
             <DrawerContent className="h-[60%] flex flex-col">
                 <DrawerHandle />
                 <DrawerHeader className="text-left p-4 pt-0 pb-2 flex-shrink-0">
