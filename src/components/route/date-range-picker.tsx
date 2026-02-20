@@ -88,7 +88,7 @@ export function DateRangePicker({
             defaultMonth={date?.from}
             selected={date}
             onSelect={setDate}
-            numberOfMonths={2}
+            numberOfMonths={1}
           />
           <div className='p-4 border-t space-y-4'>
             <div className="grid grid-cols-2 gap-4">
