@@ -1,17 +1,20 @@
 
 'use client';
 
-import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription, NestedDrawer, DrawerTrigger } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Clock, Milestone, ParkingSquare, Pause, Play, Download, Map as MapIcon, Truck } from 'lucide-react';
+import { ChevronDown, Clock, Milestone, ParkingSquare, Pause, Play, Download, Map as MapIcon, Truck, Calendar as CalendarIcon } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import { format, fromUnixTime } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { DateRangePicker } from './date-range-picker';
+import { Calendar } from '../ui/calendar';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 interface RouteHistorySheetProps {}
 
@@ -34,6 +37,7 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle, by_estado } = state;
   const { totalDistance, totalDuration } = useMemo(() => selectRouteSummary(state), [state]);
   const [date, setDate] = useState<DateRange | undefined>();
+  const [nestedDrawerOpen, setNestedDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (routeGroups.length > 0) {
@@ -48,10 +52,31 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
     }
   }, [routeGroups]);
 
+  const handleTimeChange = (type: 'from' | 'to', value: string) => {
+    if (!value) return;
+    const [hours, minutes] = value.split(':').map(Number);
+    if (!date || (type === 'from' && !date.from) || (type === 'to' && !date.to)) return;
+
+    if (type === 'from' && date.from) {
+      const newFrom = new Date(date.from);
+      newFrom.setHours(hours, minutes, 0, 0);
+      setDate({ ...date, from: newFrom });
+    }
+    
+    if (type === 'to' && date.to) {
+      const newTo = new Date(date.to);
+      newTo.setHours(hours, minutes, 0, 0);
+      setDate({ ...date, to: newTo });
+    }
+  }
+
   const handleFilterApply = useCallback(() => {
     // TODO: Implement actual filtering logic, e.g., dispatch an action
     console.log("Applying date range filter:", date);
-  }, [date]);
+    if (isMobile) {
+      setNestedDrawerOpen(false);
+    }
+  }, [date, isMobile]);
 
 
   const playbackIndexRef = useRef(0);
@@ -165,7 +190,6 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
   }, [dispatch, isRoutePlaying]);
   
   if (isMobile) {
-    // Mobile view remains largely unchanged for now
     const { totalStops, totalStopTime } = selectRouteSummary(state);
     return (
         <Drawer open={isRouteSheetOpen} onOpenChange={handleOpenChange}>
@@ -209,10 +233,61 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
                                 </div>
                             </DrawerDescription>
                         </div>
-                        <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0">
-                            {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                            <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
-                        </Button>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0">
+                                {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                                <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
+                            </Button>
+                             <NestedDrawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen}>
+                                <DrawerTrigger asChild>
+                                    <Button size="icon" variant="outline">
+                                        <CalendarIcon className="w-5 h-5" />
+                                        <span className="sr-only">Filter by date</span>
+                                    </Button>
+                                </DrawerTrigger>
+                                <DrawerContent>
+                                    <DrawerHandle />
+                                     <div className="p-4 overflow-y-auto">
+                                        <DrawerHeader className="p-0 text-left mb-4">
+                                            <DrawerTitle>Filter Route History</DrawerTitle>
+                                            <DrawerDescription>Select a date and time range.</DrawerDescription>
+                                        </DrawerHeader>
+                                        <Calendar
+                                            initialFocus
+                                            mode="range"
+                                            defaultMonth={date?.from}
+                                            selected={date}
+                                            onSelect={setDate}
+                                            numberOfMonths={1}
+                                            className='p-0 [&_td]:w-full'
+                                        />
+                                        <div className='pt-4 space-y-4'>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className='space-y-2'>
+                                                    <Label className='text-sm font-medium'>Start time</Label>
+                                                    <Input 
+                                                        type="time" 
+                                                        defaultValue={date?.from ? format(date.from, 'HH:mm') : '00:00'}
+                                                        onChange={(e) => handleTimeChange('from', e.target.value)}
+                                                        disabled={!date?.from}
+                                                    />
+                                                </div>
+                                                <div className='space-y-2'>
+                                                    <Label className='text-sm font-medium'>End time</Label>
+                                                    <Input 
+                                                        type="time" 
+                                                        defaultValue={date?.to ? format(date.to, 'HH:mm') : '23:59'}
+                                                        onChange={(e) => handleTimeChange('to', e.target.value)}
+                                                        disabled={!date?.to}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <Button onClick={handleFilterApply} className="w-full">Apply</Button>
+                                        </div>
+                                    </div>
+                                </DrawerContent>
+                            </NestedDrawer>
+                        </div>
                     </div>
                 </DrawerHeader>
                 <div className="flex-1 min-h-0">
@@ -284,4 +359,3 @@ export function RouteHistorySheet(props: RouteHistorySheetProps) {
     </>
   );
 }
-

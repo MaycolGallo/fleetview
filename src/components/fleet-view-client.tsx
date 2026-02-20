@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft } from 'lucide-react';
+import { ArrowLeft, PanelLeft, RefreshCw } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
@@ -108,9 +108,12 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 ) : null}
 
                 {historyVehicle && !state.isLoadingRoute ? (
-                    <div style={{ viewTransitionName: 'back-button-transition' }} className="absolute top-0 left-0">
+                    <div style={{ viewTransitionName: 'back-button-transition' }} className="absolute top-0 left-0 flex items-center gap-2">
                         <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg">
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet View
+                        </Button>
+                        <Button variant="secondary" size="icon" className="shadow-lg">
+                            <RefreshCw className="h-4 w-4" />
                         </Button>
                     </div>
                 ) : null}
