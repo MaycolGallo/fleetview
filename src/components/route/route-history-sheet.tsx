@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -10,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, Clock, Milestone, ParkingSquare, Pause, Play, Truck } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import type { DateRange } from 'react-day-picker';
-import { DateRangePicker } from './date-range-picker';
 import { format } from 'date-fns';
 
 interface RouteHistorySheetProps {
@@ -224,7 +222,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                     {historyVehicle?.placa}
                     <ChevronDown className="w-5 h-5 ml-2" />
                 </Button>
-                <DateRangePicker date={date} setDate={setDate} onApply={onApply} />
             </div>
             <div className='flex items-center gap-6'>
                 <div className='text-right'>

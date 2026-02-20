@@ -25,6 +25,7 @@ import type { DateRange } from 'react-day-picker';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DateRangePicker } from '@/components/route/date-range-picker';
 
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
@@ -171,7 +172,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                             <Button variant="secondary" size="icon" className="shadow-lg">
                                 <RefreshCw className="h-4 w-4" />
                             </Button>
-                            {isMobile && (
+                            {isMobile ? (
                                 <NestedDrawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen}>
                                     <DrawerTrigger asChild>
                                         <Button variant="secondary" size="icon" className="shadow-lg">
@@ -221,6 +222,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                                         </div>
                                     </DrawerContent>
                                 </NestedDrawer>
+                            ) : (
+                                <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
                             )}
                         </div>
                     ) : null}
