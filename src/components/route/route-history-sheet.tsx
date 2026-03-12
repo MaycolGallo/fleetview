@@ -4,7 +4,7 @@ import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerD
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronLeft, ChevronRight, Clock, Milestone, ParkingSquare, Pause, Play, Truck } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -37,6 +37,32 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   const playbackIndexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      setCanScrollLeft(el.scrollLeft > 0);
+      setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
+    }
+  }, []);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    el.addEventListener('scroll', checkScroll);
+    // Initial check and check after a small delay to allow for rendering
+    checkScroll();
+    const timeout = setTimeout(checkScroll, 100);
+
+    return () => {
+      el.removeEventListener('scroll', checkScroll);
+      clearTimeout(timeout);
+    };
+  }, [checkScroll, routeGroups, isRouteSheetOpen]);
 
   const statusColorMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -293,31 +319,35 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
             </CardHeader>
             <div className="relative flex items-center h-[180px]">
                 {/* Horizontal Scroll Buttons */}
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
-                     <Button 
-                        variant="secondary" 
-                        size="icon" 
-                        className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform"
-                        onClick={handleScrollLeft}
-                    >
-                        <ChevronLeft className="w-8 h-8" />
-                    </Button>
-                </div>
+                {canScrollLeft && (
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
+                      <Button 
+                          variant="secondary" 
+                          size="icon" 
+                          className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform"
+                          onClick={handleScrollLeft}
+                      >
+                          <ChevronLeft className="w-8 h-8" />
+                      </Button>
+                  </div>
+                )}
 
                 <div className="flex-1 w-full overflow-hidden">
                     <RouteHistoryContent viewportRef={scrollContainerRef} />
                 </div>
 
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
-                    <Button 
-                        variant="secondary" 
-                        size="icon" 
-                        className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform"
-                        onClick={handleScrollRight}
-                    >
-                        <ChevronRight className="w-8 h-8" />
-                    </Button>
-                </div>
+                {canScrollRight && (
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
+                      <Button 
+                          variant="secondary" 
+                          size="icon" 
+                          className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform"
+                          onClick={handleScrollRight}
+                      >
+                          <ChevronRight className="w-8 h-8" />
+                      </Button>
+                  </div>
+                )}
             </div>
           </Card>
         </div>
