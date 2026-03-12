@@ -165,8 +165,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   }, [dispatch, routeGroups.length, selectedSegmentIndex]);
   
   if (isMobile) {
-    const { totalStops, totalStopTime } = selectRouteSummary(state);
-
     return (
         <Drawer open={isRouteSheetOpen} onOpenChange={handleOpenChange} modal={false}>
             <DrawerContent className="h-[60%] flex flex-col">
@@ -261,7 +259,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                         variant="outline" 
                         size="icon" 
                         onClick={handlePrevSegment}
-                        disabled={selectedSegmentIndex === 0}
+                        disabled={selectedSegmentIndex === 0 || selectedSegmentIndex === null}
                         className="shadow-sm"
                     >
                         <ChevronLeft className="w-5 h-5" />
@@ -305,32 +303,37 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
           style={{ viewTransitionName: 'route-sheet-transition' }}
           className="absolute bottom-4 left-4 right-4 z-20"
         >
-          <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-auto flex flex-col">
-            <CardHeader className="pb-2">{headerContent}</CardHeader>
-            <div className="relative flex items-center px-4">
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute left-1 z-10 h-12 w-8 bg-card/50 backdrop-blur-sm hover:bg-card/80 hidden lg:flex"
-                    onClick={handlePrevSegment}
-                    disabled={selectedSegmentIndex === 0}
-                >
-                    <ChevronLeft className="w-6 h-6" />
-                </Button>
-                
-                <div className="flex-1 min-h-0">
+          <Card className="max-w-full mx-auto bg-card/95 backdrop-blur-md border-primary/20 shadow-2xl h-auto flex flex-col overflow-hidden">
+            <CardHeader className="pb-2 border-b">{headerContent}</CardHeader>
+            <div className="relative flex items-center h-[180px]">
+                {/* Visual Navigation Overlay Buttons */}
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
+                     <Button 
+                        variant="secondary" 
+                        size="icon" 
+                        className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform"
+                        onClick={handlePrevSegment}
+                        disabled={selectedSegmentIndex === 0 || selectedSegmentIndex === null}
+                    >
+                        <ChevronLeft className="w-8 h-8" />
+                    </Button>
+                </div>
+
+                <div className="flex-1 w-full overflow-hidden">
                     <RouteHistoryContent />
                 </div>
 
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="absolute right-1 z-10 h-12 w-8 bg-card/50 backdrop-blur-sm hover:bg-card/80 hidden lg:flex"
-                    onClick={handleNextSegment}
-                    disabled={selectedSegmentIndex === routeGroups.length - 1}
-                >
-                    <ChevronRight className="w-6 h-6" />
-                </Button>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
+                    <Button 
+                        variant="secondary" 
+                        size="icon" 
+                        className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform"
+                        onClick={handleNextSegment}
+                        disabled={selectedSegmentIndex === routeGroups.length - 1}
+                    >
+                        <ChevronRight className="w-8 h-8" />
+                    </Button>
+                </div>
             </div>
           </Card>
         </div>
