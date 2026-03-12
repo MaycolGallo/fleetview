@@ -42,7 +42,7 @@ interface FleetViewClientProps {
 export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const { state, error } = useFleetState();
   const dispatch = useFleetDispatch();
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(true);
   const isMobile = useIsMobile();
   const [nestedDrawerOpen, setNestedDrawerOpen] = useState(false);
 
@@ -67,7 +67,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   }, [routeGroups]);
 
   const handleFilterApply = useCallback(() => {
-    // TODO: Implement actual filtering logic, e.g., dispatch an action
     console.log("Applying date range filter:", date);
     setNestedDrawerOpen(false);
   }, [date]);
@@ -112,7 +111,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     if (isMobile) {
       // The sheet is already open, do nothing.
     } else {
-      if (!isPanelOpen) setIsPanelOpen(true);
+      // Stay open on desktop to show details
     }
   };
   
@@ -124,129 +123,138 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     );
   }
 
-  const panelContent = <VehiclePanelContent onVehicleSelect={handleVehicleSelect} />;
+  const panelContent = <VehiclePanelContent onVehicleSelect={handleVehicleSelect} onClose={() => setIsPanelOpen(false)} />;
 
   return (
-    <div className="relative h-full w-full flex">
-        {isMobile ? (
-          <Sheet open={isPanelOpen} onOpenChange={setIsPanelOpen}>
-            <SheetContent side="left" className="w-[85%] max-w-sm p-0 border-r-0">
-              {panelContent}
-            </SheetContent>
-          </Sheet>
-        ) : (
-          isPanelOpen && (
-            <div
-              className="h-full bg-background border-r flex-shrink-0 transition-all duration-300 w-[350px]"
-            >
-              <div className="h-full w-[350px] flex flex-col">
-                {panelContent}
-              </div>
-            </div>
-          )
-        )}
-      
-      <div className="flex-1 relative h-full w-full">
-          <FleetMap apiKey={apiKey} />
-
-          <div className="absolute top-0 left-0 p-4 w-full pointer-events-none">
-            <div className='relative w-full h-12 flex justify-between'>
-                <div className='flex gap-2 items-start pointer-events-auto'>
-                    {!historyVehicle ? (
-                        <div style={{ viewTransitionName: 'filters-transition' }}>
-                            <Button 
-                                variant="secondary"
-                                size="icon"
-                                onClick={() => setIsPanelOpen(!isPanelOpen)} 
-                                className='shadow-lg'
-                            >
-                                <PanelLeft className={cn("transition-transform", isPanelOpen && "rotate-180")} />
-                            </Button>
-                        </div>
-                    ) : null}
-
-                    {historyVehicle && !state.isLoadingRoute ? (
-                        <div style={{ viewTransitionName: 'back-button-transition' }} className="flex items-center gap-2">
-                            <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg">
-                            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet View
-                            </Button>
-                            <Button variant="secondary" size="icon" className="shadow-lg">
-                                <RefreshCw className="h-4 w-4" />
-                            </Button>
-                            {isMobile ? (
-                                <Drawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen}>
-                                    <DrawerTrigger asChild>
-                                        <Button variant="secondary" size="icon" className="shadow-lg">
-                                            <CalendarIcon className="w-4 h-4" />
-                                            <span className="sr-only">Filter by date</span>
-                                        </Button>
-                                    </DrawerTrigger>
-                                    <DrawerContent>
-                                        <DrawerHandle />
-                                            <div className="p-4 overflow-y-auto">
-                                            <DrawerHeader className="p-0 text-left mb-4">
-                                                <DrawerTitle>Filter Route History</DrawerTitle>
-                                                <DrawerDescription>Select a date and time range.</DrawerDescription>
-                                            </DrawerHeader>
-                                            <div className="flex justify-center">
-                                                <Calendar
-                                                    initialFocus
-                                                    mode="range"
-                                                    defaultMonth={date?.from}
-                                                    selected={date}
-                                                    onSelect={setDate}
-                                                    numberOfMonths={1}
-                                                />
-                                            </div>
-                                            <div className='pt-4 space-y-4'>
-                                                <div className="grid grid-cols-2 gap-4">
-                                                    <div className='space-y-2'>
-                                                        <Label className='text-sm font-medium'>Start time</Label>
-                                                        <Input 
-                                                            type="time" 
-                                                            defaultValue={date?.from ? format(date.from, 'HH:mm') : '00:00'}
-                                                            onChange={(e) => handleTimeChange('from', e.target.value)}
-                                                            disabled={!date?.from}
-                                                        />
-                                                    </div>
-                                                    <div className='space-y-2'>
-                                                        <Label className='text-sm font-medium'>End time</Label>
-                                                        <Input 
-                                                            type="time" 
-                                                            defaultValue={date?.to ? format(date.to, 'HH:mm') : '23:59'}
-                                                            onChange={(e) => handleTimeChange('to', e.target.value)}
-                                                            disabled={!date?.to}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <Button onClick={handleFilterApply} className="w-full">Apply</Button>
-                                            </div>
-                                        </div>
-                                    </DrawerContent>
-                                </Drawer>
-                            ) : (
-                                <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
-                            )}
-                        </div>
-                    ) : null}
-                </div>
-            </div>
-          </div>
-
-            {state.isLoadingRoute && (
-                <div
-                    style={{ viewTransitionName: 'loading-transition' }}
-                    className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-30"
-                >
-                    <div className="flex items-center gap-2 text-foreground">
-                        <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
-                        <p>Generating route...</p>
-                    </div>
-                </div>
-            )}
-
-          <RouteHistorySheet date={date} setDate={setDate} onApply={handleFilterApply}/>
+    <div className="relative h-screen w-screen overflow-hidden bg-background">
+      {/* Base Map Layer */}
+      <div className="absolute inset-0 z-0">
+        <FleetMap apiKey={apiKey} />
       </div>
+
+      {/* Floating Panel Layer (Desktop) */}
+      {!isMobile && !historyVehicle && isPanelOpen && (
+        <div 
+          className="absolute top-4 left-4 bottom-4 w-[380px] z-20 transition-all duration-300 animate-in slide-in-from-left-4 fade-in-20"
+        >
+          <div className="h-full w-full bg-card/95 backdrop-blur-md rounded-xl border shadow-2xl overflow-hidden flex flex-col">
+            {panelContent}
+          </div>
+        </div>
+      )}
+
+      {/* Sheet Panel (Mobile) */}
+      {isMobile && (
+        <Sheet open={isPanelOpen} onOpenChange={setIsPanelOpen}>
+          <SheetContent side="left" className="w-[85%] max-w-sm p-0 border-r-0">
+            {panelContent}
+          </SheetContent>
+        </Sheet>
+      )}
+      
+      {/* Top Header Controls Overlay */}
+      <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-30">
+        <div className='relative w-full h-12 flex justify-between'>
+          <div className='flex gap-2 items-start pointer-events-auto'>
+            {/* Show toggle button only if panel is closed and we are in fleet view */}
+            {!historyVehicle && !isPanelOpen ? (
+              <div style={{ viewTransitionName: 'filters-transition' }}>
+                <Button 
+                  variant="secondary"
+                  size="icon"
+                  onClick={() => setIsPanelOpen(true)} 
+                  className='shadow-lg bg-card/90 backdrop-blur-sm'
+                >
+                  <PanelLeft className="h-5 w-5" />
+                </Button>
+              </div>
+            ) : null}
+
+            {historyVehicle && !state.isLoadingRoute ? (
+              <div style={{ viewTransitionName: 'back-button-transition' }} className="flex items-center gap-2">
+                <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm">
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet View
+                </Button>
+                <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+                {isMobile ? (
+                  <Drawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen}>
+                    <DrawerTrigger asChild>
+                      <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
+                        <CalendarIcon className="w-4 h-4" />
+                        <span className="sr-only">Filter by date</span>
+                      </Button>
+                    </DrawerTrigger>
+                    <DrawerContent>
+                      <DrawerHandle />
+                      <div className="p-4 overflow-y-auto">
+                        <DrawerHeader className="p-0 text-left mb-4">
+                          <DrawerTitle>Filter Route History</DrawerTitle>
+                          <DrawerDescription>Select a date and time range.</DrawerDescription>
+                        </DrawerHeader>
+                        <div className="flex justify-center">
+                          <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={date?.from}
+                            selected={date}
+                            onSelect={setDate}
+                            numberOfMonths={1}
+                          />
+                        </div>
+                        <div className='pt-4 space-y-4'>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className='space-y-2'>
+                              <Label className='text-sm font-medium'>Start time</Label>
+                              <Input 
+                                type="time" 
+                                defaultValue={date?.from ? format(date.from, 'HH:mm') : '00:00'}
+                                onChange={(e) => handleTimeChange('from', e.target.value)}
+                                disabled={!date?.from}
+                              />
+                            </div>
+                            <div className='space-y-2'>
+                              <Label className='text-sm font-medium'>End time</Label>
+                              <Input 
+                                type="time" 
+                                defaultValue={date?.to ? format(date.to, 'HH:mm') : '23:59'}
+                                onChange={(e) => handleTimeChange('to', e.target.value)}
+                                disabled={!date?.to}
+                              />
+                            </div>
+                          </div>
+                          <Button onClick={handleFilterApply} className="w-full">Apply</Button>
+                        </div>
+                      </div>
+                    </DrawerContent>
+                  </Drawer>
+                ) : (
+                  <div className="bg-card/90 backdrop-blur-sm rounded-md shadow-lg">
+                    <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      {/* Loading Overlay */}
+      {state.isLoadingRoute && (
+        <div
+          style={{ viewTransitionName: 'loading-transition' }}
+          className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-[100]"
+        >
+          <div className="flex items-center gap-2 text-foreground bg-card p-4 rounded-lg shadow-xl border">
+            <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
+            <p className="font-medium">Generating route...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Route History Summary Sheet (Bottom) */}
+      <RouteHistorySheet date={date} setDate={setDate} onApply={handleFilterApply}/>
     </div>
   );
 }
