@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useRef } from 'react';
@@ -7,11 +6,14 @@ import { useIsMobile } from '@/hooks/use-is-mobile';
 import { RouteHistoryMobileTimeline } from './route-history-mobile-timeline';
 import { RouteHistoryDesktopTimeline } from './route-history-desktop-timeline';
 
-export function RouteHistoryContent() {
+interface RouteHistoryContentProps {
+    viewportRef?: React.RefObject<HTMLDivElement>;
+}
+
+export function RouteHistoryContent({ viewportRef }: RouteHistoryContentProps) {
     const isMobile = useIsMobile();
     const { state } = useFleetState();
     const { routeGroups: groups, selectedSegmentIndex } = state;
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     useEffect(() => {
@@ -30,7 +32,7 @@ export function RouteHistoryContent() {
 
     const timelineProps = {
         itemRefs,
-        scrollContainerRef
+        scrollContainerRef: viewportRef
     };
 
     if (isMobile) {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -10,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronLeft, ChevronRight, Clock, Milestone, ParkingSquare, Pause, Play, Truck } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import type { DateRange } from 'react-day-picker';
-import { format } from 'date-fns';
 
 interface RouteHistorySheetProps {
   date: DateRange | undefined;
@@ -29,7 +27,6 @@ function formatDuration(minutes: number) {
   return `${m}m`;
 }
 
-
 export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetProps) {
   const isMobile = useIsMobile();
   const { state } = useFleetState();
@@ -39,6 +36,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   
   const playbackIndexRef = useRef(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const statusColorMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -48,7 +46,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
         }
     });
     return map;
-}, [state.routeGroups]);
+  }, [state.routeGroups]);
 
   const movingPoints = useMemo(() => {
     if (!isRouteSheetOpen) return [];
@@ -120,16 +118,13 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
     playNextPoint();
 
     return cleanup;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRoutePlaying, dispatch]);
+  }, [isRoutePlaying, dispatch, movingPoints]);
 
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
-        dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' }); // Stop playback when closing
-        // @ts-ignore
+        dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' }); 
         if (document.startViewTransition) {
-            // @ts-ignore
             document.startViewTransition(() => {
                 dispatch({ type: 'BACK_TO_FLEET' });
             });
@@ -146,6 +141,18 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
         dispatch({ type: 'START_ROUTE_PLAYBACK' });
     }
   }, [dispatch, isRoutePlaying]);
+
+  const handleScrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -400, behavior: 'smooth' });
+    }
+  };
+
+  const handleScrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 400, behavior: 'smooth' });
+    }
+  };
 
   const handleNextSegment = useCallback(() => {
     const maxIndex = routeGroups.length - 1;
@@ -235,67 +242,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
     6: Truck, // Transitando
   };
   
-  // Desktop layout
-  const headerContent = (
-      <div>
-        <div className="flex justify-between items-center gap-4 mb-4">
-            <div className='flex items-center gap-4'>
-                <Button variant="ghost" className="text-2xl font-semibold p-0 h-auto focus-visible:ring-inset">
-                    {historyVehicle?.placa}
-                    <ChevronDown className="w-5 h-5 ml-2" />
-                </Button>
-            </div>
-            <div className='flex items-center gap-6'>
-                <div className='text-right'>
-                    <p className='text-xs text-muted-foreground uppercase tracking-wider'>Duration</p>
-                    <p className='text-xl font-semibold'>{formatDuration(totalDuration)}</p>
-                </div>
-                <div className='text-right'>
-                    <p className='text-xs text-muted-foreground uppercase tracking-wider'>Distance</p>
-                    <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button 
-                        variant="outline" 
-                        size="icon" 
-                        onClick={handlePrevSegment}
-                        disabled={selectedSegmentIndex === 0 || selectedSegmentIndex === null}
-                        className="shadow-sm"
-                    >
-                        <ChevronLeft className="w-5 h-5" />
-                    </Button>
-                    <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0 shadow-md h-12 w-12 rounded-full">
-                        {isRoutePlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-                    </Button>
-                    <Button 
-                        variant="outline" 
-                        size="icon" 
-                        onClick={handleNextSegment}
-                        disabled={selectedSegmentIndex === routeGroups.length - 1}
-                        className="shadow-sm"
-                    >
-                        <ChevronRight className="w-5 h-5" />
-                    </Button>
-                </div>
-            </div>
-        </div>
-        <div className="flex items-center gap-x-6 gap-y-2 text-sm text-muted-foreground flex-wrap border-t pt-2">
-            {Object.entries(by_estado).map(([statusId, statusData]) => {
-                const Icon = statusIconMap[Number(statusId)] || Milestone;
-                return (
-                    <div key={statusId} className="flex items-center gap-2">
-                        <Icon className="w-4 h-4" style={{ color: statusColorMap.get(Number(statusId)) || 'hsl(var(--primary))' }} />
-                        <span className='font-medium text-foreground uppercase text-xs'>{statusData.name}:</span>
-                        <span className="text-xs">{statusData.total_distance_km.toFixed(2)}km</span>
-                        <span className='text-border'>/</span>
-                        <span className="text-xs">{statusData.total_time_formatted}</span>
-                    </div>
-                )
-            })}
-        </div>
-    </div>
-    );
-
   return (
     <>
       {isRouteSheetOpen && (
@@ -304,23 +250,62 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
           className="absolute bottom-4 left-4 right-4 z-20"
         >
           <Card className="max-w-full mx-auto bg-card/95 backdrop-blur-md border-primary/20 shadow-2xl h-auto flex flex-col overflow-hidden">
-            <CardHeader className="pb-2 border-b">{headerContent}</CardHeader>
+            <CardHeader className="pb-2 border-b">
+                <div>
+                    <div className="flex justify-between items-center gap-4 mb-4">
+                        <div className='flex items-center gap-4'>
+                            <Button variant="ghost" className="text-2xl font-semibold p-0 h-auto focus-visible:ring-inset">
+                                {historyVehicle?.placa}
+                                <ChevronDown className="w-5 h-5 ml-2" />
+                            </Button>
+                        </div>
+                        <div className='flex items-center gap-6'>
+                            <div className='text-right'>
+                                <p className='text-xs text-muted-foreground uppercase tracking-wider'>Duration</p>
+                                <p className='text-xl font-semibold'>{formatDuration(totalDuration)}</p>
+                            </div>
+                            <div className='text-right'>
+                                <p className='text-xs text-muted-foreground uppercase tracking-wider'>Distance</p>
+                                <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0 shadow-md h-12 w-12 rounded-full">
+                                    {isRoutePlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-x-6 gap-y-2 text-sm text-muted-foreground flex-wrap border-t pt-2">
+                        {Object.entries(by_estado).map(([statusId, statusData]) => {
+                            const Icon = statusIconMap[Number(statusId)] || Milestone;
+                            return (
+                                <div key={statusId} className="flex items-center gap-2">
+                                    <Icon className="w-4 h-4" style={{ color: statusColorMap.get(Number(statusId)) || 'hsl(var(--primary))' }} />
+                                    <span className='font-medium text-foreground uppercase text-xs'>{statusData.name}:</span>
+                                    <span className="text-xs">{statusData.total_distance_km.toFixed(2)}km</span>
+                                    <span className='text-border'>/</span>
+                                    <span className="text-xs">{statusData.total_time_formatted}</span>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            </CardHeader>
             <div className="relative flex items-center h-[180px]">
-                {/* Visual Navigation Overlay Buttons */}
+                {/* Horizontal Scroll Buttons */}
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
                      <Button 
                         variant="secondary" 
                         size="icon" 
                         className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform"
-                        onClick={handlePrevSegment}
-                        disabled={selectedSegmentIndex === 0 || selectedSegmentIndex === null}
+                        onClick={handleScrollLeft}
                     >
                         <ChevronLeft className="w-8 h-8" />
                     </Button>
                 </div>
 
                 <div className="flex-1 w-full overflow-hidden">
-                    <RouteHistoryContent />
+                    <RouteHistoryContent viewportRef={scrollContainerRef} />
                 </div>
 
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
@@ -328,8 +313,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                         variant="secondary" 
                         size="icon" 
                         className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform"
-                        onClick={handleNextSegment}
-                        disabled={selectedSegmentIndex === routeGroups.length - 1}
+                        onClick={handleScrollRight}
                     >
                         <ChevronRight className="w-8 h-8" />
                     </Button>
