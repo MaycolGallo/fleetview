@@ -1,10 +1,8 @@
-
 'use client';
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport } from '@/lib/types';
-import { Key, Clock, Power, Siren, PowerOff, Ban, Truck, BatteryWarning, Wrench, PowerCircle, ParkingSquare } from 'lucide-react';
 
 const fetchVehicles = async (): Promise<RawVehicle[]> => {
   const res = await fetch('/api/vehicles');
@@ -219,16 +217,18 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       }
 
       const segmentToSelect = routeGroups[segmentIndex];
-      if (!segmentToSelect?.records?.[0]) return state;
+      if (!segmentToSelect?.records?.length) return state;
       
-      const firstRecord = segmentToSelect.records[0];
+      // Target the LAST record of the segment instead of the first
+      const lastRecord = segmentToSelect.records[segmentToSelect.records.length - 1];
+      
       const updatedVehicle = {
         ...historyVehicle,
-        lat: firstRecord.lat,
-        lng: firstRecord.lng,
+        lat: lastRecord.lat,
+        lng: lastRecord.lng,
         id_estado: segmentToSelect.id_estado,
         velocidad: String(Math.round(segmentToSelect.avg_velocidad)),
-        rumbo: firstRecord.rumbo || historyVehicle.rumbo,
+        rumbo: lastRecord.rumbo || historyVehicle.rumbo,
         statusName: segmentToSelect.description,
         statusColor: segmentToSelect.color || historyVehicle.statusColor,
       };
@@ -238,7 +238,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         const segmentPoints = segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng }));
         newMapViewport = segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport;
       } else {
-        newMapViewport = { type: 'pan_to_vehicle', payload: { lat: firstRecord.lat, lng: firstRecord.lng }};
+        newMapViewport = { type: 'pan_to_vehicle', payload: { lat: lastRecord.lat, lng: lastRecord.lng }};
       }
 
       return {
