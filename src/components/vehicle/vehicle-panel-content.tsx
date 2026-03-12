@@ -10,7 +10,7 @@ import { VehicleFilters } from '@/components/vehicle/vehicle-filters';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { PanelLeft } from 'lucide-react';
+import { PanelLeft, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -69,14 +69,26 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
                             </p>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-2 bg-background/50 border px-2 py-1 rounded-md shadow-sm">
-                        <Checkbox 
-                            id="toggle-all" 
-                            checked={allVisible} 
-                            onCheckedChange={handleToggleAll}
-                            className={cn(someVisible && "opacity-70")}
-                        />
-                        <Label htmlFor="toggle-all" className="text-xs font-medium cursor-pointer">All</Label>
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center space-x-2 bg-background/50 border px-2 py-1 rounded-md shadow-sm">
+                            <Checkbox 
+                                id="toggle-all" 
+                                checked={allVisible} 
+                                onCheckedChange={handleToggleAll}
+                                className={cn(someVisible && "opacity-70")}
+                            />
+                            <Label htmlFor="toggle-all" className="text-xs font-medium cursor-pointer">All</Label>
+                        </div>
+                        {isMobile && onClose && (
+                             <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 hover:bg-muted"
+                                onClick={onClose}
+                            >
+                                <ChevronDown className="h-4 w-4" />
+                            </Button>
+                        )}
                     </div>
                 </div>
                 <VehicleFilters />

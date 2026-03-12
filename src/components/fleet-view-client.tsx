@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
@@ -109,9 +109,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const handleVehicleSelect = () => {
     if (isMobile) {
-      // The sheet is already open, do nothing.
-    } else {
-      // Stay open on desktop to show details
+      // Stay open or close? Usually stay open for details
     }
   };
   
@@ -143,13 +141,16 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         </div>
       )}
 
-      {/* Sheet Panel (Mobile) */}
-      {isMobile && (
-        <Sheet open={isPanelOpen} onOpenChange={setIsPanelOpen}>
-          <SheetContent side="left" className="w-[85%] max-w-sm p-0 border-r-0">
-            {panelContent}
-          </SheetContent>
-        </Sheet>
+      {/* Bottom Drawer (Mobile) */}
+      {isMobile && !historyVehicle && (
+        <Drawer open={isPanelOpen} onOpenChange={setIsPanelOpen} modal={false}>
+          <DrawerContent className="h-[75vh] flex flex-col focus:outline-none">
+            <DrawerHandle />
+            <div className="flex-1 overflow-hidden">
+               {panelContent}
+            </div>
+          </DrawerContent>
+        </Drawer>
       )}
       
       {/* Top Header Controls Overlay */}
@@ -165,7 +166,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                   onClick={() => setIsPanelOpen(true)} 
                   className='shadow-lg bg-card/90 backdrop-blur-sm'
                 >
-                  <PanelLeft className="h-5 w-5" />
+                  {isMobile ? <List className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
                 </Button>
               </div>
             ) : null}
@@ -258,3 +259,4 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     </div>
   );
 }
+
