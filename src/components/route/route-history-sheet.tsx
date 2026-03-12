@@ -7,7 +7,7 @@ import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/f
 import { RouteHistoryContent } from './route-history-content';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, Clock, Milestone, ParkingSquare, Pause, Play, Truck } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Clock, Milestone, ParkingSquare, Pause, Play, Truck } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
@@ -34,7 +34,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   const isMobile = useIsMobile();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle, by_estado } = state;
+  const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle, by_estado, selectedSegmentIndex } = state;
   const { totalDistance, totalDuration } = useMemo(() => selectRouteSummary(state), [state]);
   
   const playbackIndexRef = useRef(0);
@@ -146,6 +146,23 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
         dispatch({ type: 'START_ROUTE_PLAYBACK' });
     }
   }, [dispatch, isRoutePlaying]);
+
+  const handleNextSegment = useCallback(() => {
+    const maxIndex = routeGroups.length - 1;
+    if (selectedSegmentIndex === null) {
+      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: 0 });
+    } else if (selectedSegmentIndex < maxIndex) {
+      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: selectedSegmentIndex + 1 });
+    }
+  }, [dispatch, routeGroups.length, selectedSegmentIndex]);
+
+  const handlePrevSegment = useCallback(() => {
+    if (selectedSegmentIndex === null) {
+      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: routeGroups.length - 1 });
+    } else if (selectedSegmentIndex > 0) {
+      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: selectedSegmentIndex - 1 });
+    }
+  }, [dispatch, routeGroups.length, selectedSegmentIndex]);
   
   if (isMobile) {
     const { totalStops, totalStopTime } = selectRouteSummary(state);
@@ -156,14 +173,14 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                 <DrawerHandle />
                 <DrawerHeader className="text-left p-4 pt-0 pb-2 flex-shrink-0">
                      <div className="flex justify-between items-start gap-4">
-                        <div>
-                            <DrawerTitle>Route History: {historyVehicle?.placa}</DrawerTitle>
+                        <div className="flex-1 overflow-hidden">
+                            <DrawerTitle className="truncate">Route: {historyVehicle?.placa}</DrawerTitle>
                             <DrawerDescription asChild>
                                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-2">
                                     <div className="flex items-center gap-1.5">
                                     <Milestone className="w-3 h-3 text-primary" />
                                     <span>
-                                        Total Distance:{' '}
+                                        Dist:{' '}
                                         <strong className="text-foreground">
                                         {totalDistance.toFixed(1)} km
                                         </strong>
@@ -172,30 +189,36 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                                     <div className="flex items-center gap-1.5">
                                     <Clock className="w-3 h-3 text-primary" />
                                     <span>
-                                        Total Time:{' '}
+                                        Time:{' '}
                                         <strong className="text-foreground">
                                         {formatDuration(totalDuration)}
                                         </strong>
                                     </span>
                                     </div>
-                                    {totalStops > 0 && (
-                                        <div className="flex items-center gap-1.5">
-                                            <ParkingSquare className="w-3 h-3 text-primary" />
-                                            <span>
-                                                {totalStops} stops{' '}
-                                                <strong className="text-foreground">
-                                                    ({formatDuration(totalStopTime)})
-                                                </strong>
-                                            </span>
-                                        </div>
-                                    )}
                                 </div>
                             </DrawerDescription>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                            <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0">
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                            <Button 
+                                variant="outline"
+                                size="icon" 
+                                className="h-9 w-9"
+                                onClick={handlePrevSegment}
+                                disabled={selectedSegmentIndex === 0}
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </Button>
+                            <Button size="icon" onClick={handlePlayPause} className="h-10 w-10 flex-shrink-0">
                                 {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                                <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
+                            </Button>
+                            <Button 
+                                variant="outline"
+                                size="icon" 
+                                className="h-9 w-9"
+                                onClick={handleNextSegment}
+                                disabled={selectedSegmentIndex === routeGroups.length - 1}
+                            >
+                                <ChevronRight className="w-5 h-5" />
                             </Button>
                         </div>
                     </div>
@@ -226,17 +249,36 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
             </div>
             <div className='flex items-center gap-6'>
                 <div className='text-right'>
-                    <p className='text-xs text-muted-foreground'>TOTAL DURATION</p>
+                    <p className='text-xs text-muted-foreground uppercase tracking-wider'>Duration</p>
                     <p className='text-xl font-semibold'>{formatDuration(totalDuration)}</p>
                 </div>
                 <div className='text-right'>
-                    <p className='text-xs text-muted-foreground'>TOTAL DISTANCE</p>
+                    <p className='text-xs text-muted-foreground uppercase tracking-wider'>Distance</p>
                     <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
                 </div>
-                <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0 shadow-md">
-                    {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                    <span className="sr-only">{isRoutePlaying ? 'Pause' : 'Play'}</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={handlePrevSegment}
+                        disabled={selectedSegmentIndex === 0}
+                        className="shadow-sm"
+                    >
+                        <ChevronLeft className="w-5 h-5" />
+                    </Button>
+                    <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0 shadow-md h-12 w-12 rounded-full">
+                        {isRoutePlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                    </Button>
+                    <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={handleNextSegment}
+                        disabled={selectedSegmentIndex === routeGroups.length - 1}
+                        className="shadow-sm"
+                    >
+                        <ChevronRight className="w-5 h-5" />
+                    </Button>
+                </div>
             </div>
         </div>
         <div className="flex items-center gap-x-6 gap-y-2 text-sm text-muted-foreground flex-wrap border-t pt-2">
@@ -265,7 +307,31 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
         >
           <Card className="max-w-full mx-auto bg-card/90 backdrop-blur-sm border-primary/20 shadow-2xl h-auto flex flex-col">
             <CardHeader className="pb-2">{headerContent}</CardHeader>
-            <RouteHistoryContent />
+            <div className="relative flex items-center px-4">
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute left-1 z-10 h-12 w-8 bg-card/50 backdrop-blur-sm hover:bg-card/80 hidden lg:flex"
+                    onClick={handlePrevSegment}
+                    disabled={selectedSegmentIndex === 0}
+                >
+                    <ChevronLeft className="w-6 h-6" />
+                </Button>
+                
+                <div className="flex-1 min-h-0">
+                    <RouteHistoryContent />
+                </div>
+
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="absolute right-1 z-10 h-12 w-8 bg-card/50 backdrop-blur-sm hover:bg-card/80 hidden lg:flex"
+                    onClick={handleNextSegment}
+                    disabled={selectedSegmentIndex === routeGroups.length - 1}
+                >
+                    <ChevronRight className="w-6 h-6" />
+                </Button>
+            </div>
           </Card>
         </div>
       )}
