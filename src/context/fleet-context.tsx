@@ -12,7 +12,6 @@ const fetchVehicles = async (): Promise<RawVehicle[]> => {
   return res.json();
 };
 
-// A small, circular route in Lima for simulation purposes.
 const SIMULATION_ROUTE = [
   { lat: -12.045, lng: -77.040 },
   { lat: -12.048, lng: -77.042 },
@@ -20,8 +19,6 @@ const SIMULATION_ROUTE = [
   { lat: -12.047, lng: -77.036 },
 ];
 
-
-// 1. Define the state shape
 interface FleetState {
   vehicles: Vehicle[];
   statusFilter: VehicleStatus[];
@@ -40,9 +37,9 @@ interface FleetState {
   pinRotationMode: 'arrow' | 'pin';
   isRoutePlaying: boolean;
   playbackAnimationDuration: number;
+  isSplitView: boolean;
 }
 
-// 2. Define the actions
 type FleetAction =
   | { type: 'SET_VEHICLES'; payload: Vehicle[] }
   | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus[] }
@@ -60,10 +57,9 @@ type FleetAction =
   | { type: 'VIEWPORT_ACTION_COMPLETE' }
   | { type: 'START_ROUTE_PLAYBACK' }
   | { type: 'PAUSE_ROUTE_PLAYBACK' }
+  | { type: 'TOGGLE_SPLIT_VIEW' }
   | { type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: number, lng: number, rumbo: number, velocidad: number, animationDuration: number } };
 
-
-// 3. Define the initial state
 const getInitialState = (): FleetState => ({
   vehicles: [],
   statusFilter: [],
@@ -82,10 +78,9 @@ const getInitialState = (): FleetState => ({
   pinRotationMode: 'arrow',
   isRoutePlaying: false,
   playbackAnimationDuration: 1000,
+  isSplitView: false,
 });
 
-
-// 4. Create the reducer function
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
@@ -140,15 +135,12 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'SET_ROUTE_HISTORY': {
         const historyData = action.payload;
-
         const filteredGroups = historyData.groups.filter(group => group.total_time_seconds > 60);
-
         const routePoints = filteredGroups
-          .filter(g => g.id_estado === 6) // Transitando
+          .filter(g => g.id_estado === 6)
           .map(g => g.records.map(r => ({ lat: r.lat, lng: r.lng })));
 
         const startOfRoute = filteredGroups?.[0]?.records?.[0];
-
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute
             ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng, rumbo: startOfRoute?.rumbo || 0, velocidad: "0" }
             : state.historyVehicle;
@@ -183,6 +175,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             selectedSegmentIndex: null,
             isLoadingRoute: false,
             isRoutePlaying: false,
+            isSplitView: false,
             mapViewport: { type: 'fit_bounds', payload: newBounds },
         };
     }
@@ -193,7 +186,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       
       if (!historyVehicle) return state;
 
-      // Handle deselecting the current segment
       if (selectedSegmentIndex === segmentIndex) {
         const startSegment = routeGroups[0];
         if (!startSegment?.records?.[0]) return state;
@@ -219,7 +211,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       const segmentToSelect = routeGroups[segmentIndex];
       if (!segmentToSelect?.records?.length) return state;
       
-      // Target the LAST record of the segment instead of the first
       const lastRecord = segmentToSelect.records[segmentToSelect.records.length - 1];
       
       const updatedVehicle = {
@@ -234,7 +225,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       };
 
       let newMapViewport: MapViewport;
-      if (segmentToSelect.id_estado === 6) { // Transitando
+      if (segmentToSelect.id_estado === 6) {
         const segmentPoints = segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng }));
         newMapViewport = segmentPoints.length > 0 ? { type: 'fit_bounds', payload: segmentPoints } : state.mapViewport;
       } else {
@@ -314,6 +305,12 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             isRoutePlaying: false,
         };
 
+    case 'TOGGLE_SPLIT_VIEW':
+        return {
+            ...state,
+            isSplitView: !state.isSplitView,
+        };
+
     case 'UPDATE_HISTORY_VEHICLE_POSITION': {
         if (!state.historyVehicle) return state;
         const { lat, lng, rumbo, velocidad, animationDuration } = action.payload;
@@ -339,7 +336,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   }
 };
 
-// Selectors
 export const selectVisibleVehicles = (state: FleetState): Vehicle[] => {
   return state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
 };
@@ -368,8 +364,8 @@ export const selectRouteSummary = (state: FleetState) => {
   return routeGroups.reduce(
     (summary, group) => {
       summary.totalDistance += group.total_distance_km;
-      summary.totalDuration += group.total_time_seconds / 60; // duration in minutes
-      if (group.id_estado === 5) { // Estacionado
+      summary.totalDuration += group.total_time_seconds / 60;
+      if (group.id_estado === 5) {
         summary.totalStops += 1;
         summary.totalStopTime += group.total_time_seconds / 60;
       }
@@ -379,8 +375,6 @@ export const selectRouteSummary = (state: FleetState) => {
   );
 };
 
-
-// 5. Create the context
 interface FleetStateContextValue {
     state: FleetState;
     isLoadingVehicles: boolean;
@@ -390,8 +384,6 @@ interface FleetStateContextValue {
 const FleetStateContext = createContext<FleetStateContextValue | undefined>(undefined);
 const FleetDispatchContext = createContext<Dispatch<FleetAction> | undefined>(undefined);
 
-
-// 6. Create the Provider component
 export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useReducer(fleetReducer, getInitialState());
 
@@ -402,7 +394,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     } = useQuery<RawVehicle[], Error>({
       queryKey: ['vehicles'],
       queryFn: fetchVehicles,
-      refetchInterval: 5000, // Refetch every 5 seconds
+      refetchInterval: 5000,
     });
     
     useEffect(() => {
@@ -462,12 +454,11 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
         };
 
         fetchRoute();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state.historyVehicle?.id_vehiculo, state.isLoadingRoute]);
 
     const stateContextValue = useMemo(() => ({
         state,
-        isLoadingVehicles: isLoadingVehicles && state.vehicles.length === 0, // Only show initial loading
+        isLoadingVehicles: isLoadingVehicles && state.vehicles.length === 0,
         error,
     }), [state, isLoadingVehicles, error]);
 
@@ -481,7 +472,6 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     );
 };
 
-// 7. Create custom hooks to use the contexts
 export const useFleetState = () => {
     const context = useContext(FleetStateContext);
     if (context === undefined) {

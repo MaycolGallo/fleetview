@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List } from 'lucide-react';
+import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
@@ -25,6 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangePicker } from '@/components/route/date-range-picker';
 import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
@@ -46,7 +47,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const {
     historyVehicle,
-    routeGroups
+    routeGroups,
+    isSplitView
   } = state;
   
   const [date, setDate] = useState<DateRange | undefined>();
@@ -104,8 +106,11 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     }
   };
 
+  const handleToggleSplitView = () => {
+    dispatch({ type: 'TOGGLE_SPLIT_VIEW' });
+  };
+
   const handleVehicleSelect = () => {
-    // Optional mobile behavior
   };
   
   if (error) {
@@ -122,7 +127,19 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     <div className="relative h-screen w-screen overflow-hidden bg-background">
       {/* Base Map Layer */}
       <div className="absolute inset-0 z-0">
-        <FleetMap apiKey={apiKey} />
+        {!isSplitView ? (
+          <FleetMap apiKey={apiKey} />
+        ) : (
+          <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+            <ResizablePanel defaultSize={50}>
+              <FleetMap apiKey={apiKey} side="ida" />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={50}>
+              <FleetMap apiKey={apiKey} side="vuelta" />
+            </ResizablePanel>
+          </ResizablePanelGroup>
+        )}
       </div>
 
       {/* Floating Panel Layer (Desktop) */}
@@ -149,7 +166,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       )}
       
       {/* Top Header Controls Overlay */}
-      {/* Increased z-index to 40 to ensure it is above drawers/overlays when modal={false} */}
       <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
         <div className='relative w-full h-12 flex justify-between'>
           <div className='flex gap-2 items-start pointer-events-auto'>
@@ -170,6 +186,15 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
               <div style={{ viewTransitionName: 'back-button-transition' }} className="flex items-center gap-2">
                 <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm">
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet
+                </Button>
+                <Button 
+                  variant={isSplitView ? "default" : "secondary"}
+                  size="icon" 
+                  onClick={handleToggleSplitView}
+                  className={cn("shadow-lg backdrop-blur-sm", !isSplitView && "bg-card/90")}
+                  title="Toggle Split View (Ida / Vuelta)"
+                >
+                  <Columns2 className="h-4 w-4" />
                 </Button>
                 <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
                   <RefreshCw className="h-4 w-4" />

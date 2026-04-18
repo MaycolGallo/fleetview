@@ -39,7 +39,7 @@ function catmullRomSpline(
                 (2 * p1.lng) +
                 (-p0.lng + p2.lng) * t +
                 (2 * p0.lng - 5 * p1.lng + 4 * p2.lng - p3.lng) * t2 +
-                (-p0.lng + 3 * p1.lng - 3 * p2.lng + p3.lng) * t3
+                (-p0.lat + 3 * p1.lat - 3 * p2.lat + p3.lat) * t3
             );
             
             result.push({ lat, lng });
@@ -49,27 +49,37 @@ function catmullRomSpline(
     return result;
 }
 
-export function RouteSegments() {
+interface RouteSegmentsProps {
+    side?: 'ida' | 'vuelta';
+}
+
+export function RouteSegments({ side }: RouteSegmentsProps) {
     const map = useMap();
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
     const { routeGroups, selectedSegmentIndex } = state;
     const polylinesRef = useRef<google.maps.Polyline[]>([]);
   
+    const halfIndex = Math.ceil(routeGroups.length / 2);
+    const displayGroups = side === 'ida' 
+      ? routeGroups.slice(0, halfIndex) 
+      : side === 'vuelta' 
+        ? routeGroups.slice(halfIndex) 
+        : routeGroups;
+
     useEffect(() => {
-        // Clean up previous polylines
         polylinesRef.current.forEach(p => {
             google.maps.event.clearInstanceListeners(p);
             p.setMap(null);
         });
         polylinesRef.current = [];
 
-        if (!map || routeGroups.length === 0) return;
+        if (!map || displayGroups.length === 0) return;
 
         const newPolylines: google.maps.Polyline[] = [];
 
-        routeGroups.forEach((group, index) => {
-            if (group.id_estado === 6) { // MOVING / Transitando
+        displayGroups.forEach((group, index) => {
+            if (group.id_estado === 6) {
                 const isSelected = selectedSegmentIndex === index;
                 
                 const rawPath = group.records.map(r => ({ lat: r.lat, lng: r.lng }));
@@ -113,19 +123,17 @@ export function RouteSegments() {
 
         polylinesRef.current = newPolylines;
   
-        // Cleanup function for this effect
         return () => {
             newPolylines.forEach(p => {
                 google.maps.event.clearInstanceListeners(p);
                 p.setMap(null);
             });
         };
-    }, [map, routeGroups, selectedSegmentIndex, dispatch]);
+    }, [map, displayGroups, selectedSegmentIndex, dispatch]);
   
-    // Render non-polyline markers declaratively
     return (
         <>
-            {routeGroups.map((group, index) => {
+            {displayGroups.map((group, index) => {
                 if ((group.id_estado === 4 || group.id_estado === 5) && selectedSegmentIndex === null) {
                     const firstRecord = group.records[0];
                     if (!firstRecord) return null;

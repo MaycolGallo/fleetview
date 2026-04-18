@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -9,8 +8,11 @@ import { RouteSegments } from '@/components/route/route-polyline';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { Flag, Play } from 'lucide-react';
 
+interface MapControlProps {
+  side?: 'ida' | 'vuelta';
+}
 
-export function MapControl() {
+export function MapControl({ side }: MapControlProps) {
   const map = useMap();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -68,8 +70,15 @@ export function MapControl() {
 
   const mapVehicles = useMemo(() => selectMapVehicles(state), [state]);
 
-  const firstRecord = routeGroups?.[0]?.records?.[0];
-  const lastGroup = routeGroups?.[routeGroups.length - 1];
+  const halfIndex = Math.ceil(routeGroups.length / 2);
+  const displayGroups = side === 'ida' 
+    ? routeGroups.slice(0, halfIndex) 
+    : side === 'vuelta' 
+      ? routeGroups.slice(halfIndex) 
+      : routeGroups;
+
+  const firstRecord = displayGroups?.[0]?.records?.[0];
+  const lastGroup = displayGroups?.[displayGroups.length - 1];
   const lastRecord = lastGroup?.records?.[lastGroup.records.length - 1];
 
   return (
@@ -81,7 +90,7 @@ export function MapControl() {
         />
       ))}
 
-      <RouteSegments />
+      <RouteSegments side={side} />
       
       {firstRecord && lastRecord && selectedSegmentIndex === null && (
         <>
@@ -91,7 +100,7 @@ export function MapControl() {
           >
             <div className="flex flex-col items-center">
               <div className="bg-card/90 backdrop-blur-sm text-foreground text-xs font-semibold px-2 py-1 rounded-md shadow-md mb-1 whitespace-nowrap">
-                Start
+                {side === 'vuelta' ? 'Inicia Vuelta' : 'Start'}
               </div>
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-card"
@@ -108,7 +117,7 @@ export function MapControl() {
           >
             <div className="flex flex-col items-center">
               <div className="bg-card/90 backdrop-blur-sm text-foreground text-xs font-semibold px-2 py-1 rounded-md shadow-md mb-1 whitespace-nowrap">
-                Finish
+                {side === 'ida' ? 'Fin Ida' : 'Finish'}
               </div>
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg border-2 border-card bg-destructive"
