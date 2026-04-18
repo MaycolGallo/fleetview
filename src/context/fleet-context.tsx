@@ -1,8 +1,9 @@
+
 'use client';
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport } from '@/lib/types';
+import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport, FleetState } from '@/lib/types';
 
 const fetchVehicles = async (): Promise<RawVehicle[]> => {
   const res = await fetch('/api/vehicles');
@@ -18,27 +19,6 @@ const SIMULATION_ROUTE = [
   { lat: -12.050, lng: -77.038 },
   { lat: -12.047, lng: -77.036 },
 ];
-
-interface FleetState {
-  vehicles: Vehicle[];
-  statusFilter: VehicleStatus[];
-  selectedVehicle: Vehicle | null;
-  historyVehicle: Vehicle | null;
-  routePath: { lat: number; lng: number }[][] | null;
-  routeGroups: VehiculoHistorialGrouped[];
-  by_estado: VHistorial['by_estado'];
-  isRouteSheetOpen: boolean;
-  isLoadingRoute: boolean;
-  selectedSegmentIndex: number | null;
-  visibleVehicleIds: Set<number>;
-  isMapDark: boolean;
-  mapViewport: MapViewport;
-  simulationStep: Record<string, number>;
-  pinRotationMode: 'arrow' | 'pin';
-  isRoutePlaying: boolean;
-  playbackAnimationDuration: number;
-  isSplitView: boolean;
-}
 
 type FleetAction =
   | { type: 'SET_VEHICLES'; payload: Vehicle[] }
@@ -79,6 +59,7 @@ const getInitialState = (): FleetState => ({
   isRoutePlaying: false,
   playbackAnimationDuration: 1000,
   isSplitView: false,
+  wasSplitViewBeforeRoute: false,
 });
 
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
@@ -131,6 +112,8 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         selectedVehicle: null,
         isLoadingRoute: true,
         historyVehicle: action.payload,
+        wasSplitViewBeforeRoute: state.isSplitView, // Remember split view state
+        isSplitView: false, // Force normal view for history entry
       };
 
     case 'SET_ROUTE_HISTORY': {
@@ -175,7 +158,8 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             selectedSegmentIndex: null,
             isLoadingRoute: false,
             isRoutePlaying: false,
-            isSplitView: false,
+            isSplitView: state.isSplitView || state.wasSplitViewBeforeRoute, // Restore split view if it was on or manually set
+            wasSplitViewBeforeRoute: false,
             mapViewport: { type: 'fit_bounds', payload: newBounds },
         };
     }
@@ -394,7 +378,8 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     } = useQuery<RawVehicle[], Error>({
       queryKey: ['vehicles'],
       queryFn: fetchVehicles,
-      // Automatic refetch disabled to stop vehicles from jumping around
+      refetchOnWindowFocus: false, // Prevent jumps on window focus
+      staleTime: 1000 * 60 * 5, // Keep data fresh for 5 mins but don't jump
     });
     
     useEffect(() => {

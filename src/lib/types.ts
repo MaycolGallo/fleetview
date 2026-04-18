@@ -115,3 +115,25 @@ export type MapViewport =
   | { type: 'pan_to_vehicle'; payload: { lat: number; lng: number } }
   | { type: 'fit_bounds'; payload: { lat: number; lng: number }[] }
   | { type: 'fit_route'; payload: { lat: number; lng: number }[] };
+
+export interface FleetState {
+  vehicles: Vehicle[];
+  statusFilter: VehicleStatus[];
+  selectedVehicle: Vehicle | null;
+  historyVehicle: Vehicle | null;
+  routePath: { lat: number; lng: number }[][] | null;
+  routeGroups: VehiculoHistorialGrouped[];
+  by_estado: VHistorial['by_estado'];
+  isRouteSheetOpen: boolean;
+  isLoadingRoute: boolean;
+  selectedSegmentIndex: number | null;
+  visibleVehicleIds: Set<number>;
+  isMapDark: boolean;
+  mapViewport: MapViewport;
+  simulationStep: Record<string, number>;
+  pinRotationMode: 'arrow' | 'pin';
+  isRoutePlaying: boolean;
+  playbackAnimationDuration: number;
+  isSplitView: boolean;
+  wasSplitViewBeforeRoute: boolean;
+}
