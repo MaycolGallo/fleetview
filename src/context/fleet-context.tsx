@@ -253,14 +253,19 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         mapViewport: { type: 'fit_bounds', payload: action.payload.map(i => ({ lat: i.lat, lng: i.lng })) },
       };
 
-    case 'SELECT_INCIDENCIA':
+    case 'SELECT_INCIDENCIA': {
       if (action.payload === null) return { ...state, selectedIncidenciaId: null };
+      
+      // If the same incidence is selected, we can optionally deselect it or just re-pan
+      const isCurrentlySelected = state.selectedIncidenciaId === action.payload;
       const inc = state.incidencias.find(i => i.id === action.payload);
+      
       return {
         ...state,
         selectedIncidenciaId: action.payload,
         mapViewport: inc ? { type: 'pan_to_vehicle', payload: { lat: inc.lat, lng: inc.lng } } : state.mapViewport,
       };
+    }
 
     case 'CLOSE_INCIDENCIAS':
       return {
@@ -555,4 +560,3 @@ export const useFleetDispatch = () => {
     }
     return context;
 };
-
