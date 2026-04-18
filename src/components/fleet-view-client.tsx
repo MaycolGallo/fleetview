@@ -169,8 +169,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
         <div className='relative w-full h-12 flex justify-between'>
           <div className='flex gap-2 items-start pointer-events-auto'>
-            {/* Split View Toggle - Always show if not loading a route */}
-            {!state.isLoadingRoute && (
+            {/* Split View Toggle - Only show if NOT in route history and NOT loading a route */}
+            {!historyVehicle && !state.isLoadingRoute && (
                <Button 
                   variant={isSplitView ? "default" : "secondary"}
                   onClick={handleToggleSplitView}
