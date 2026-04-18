@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -57,23 +56,26 @@ export function NotificationsDropdown({ apiKey }: NotificationsDropdownProps) {
           <Button
             variant="secondary"
             size="icon"
-            className="relative shadow-lg bg-card/90 backdrop-blur-sm pointer-events-auto"
+            className="relative shadow-lg bg-card/90 backdrop-blur-sm pointer-events-auto hover:scale-110 transition-transform active:scale-95"
           >
-            <Bell className="h-5 w-5" />
+            <Bell className={cn("h-5 w-5", unreadCount > 0 && "animate-pulse")} />
             {unreadCount > 0 && (
-              <Badge
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 rounded-full bg-destructive text-[10px]"
-              >
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </Badge>
+              <span className="absolute -top-1 -right-1 flex h-5 w-5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75"></span>
+                <Badge
+                  className="relative h-5 w-5 flex items-center justify-center p-0 rounded-full bg-destructive text-[10px] shadow-sm"
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Badge>
+              </span>
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 p-0 overflow-hidden bg-card/95 backdrop-blur-md" align="end">
-          <div className="flex items-center justify-between p-4 border-b">
+        <PopoverContent className="w-80 p-0 overflow-hidden bg-card/95 backdrop-blur-md animate-in fade-in zoom-in-95 duration-200" align="end">
+          <div className="flex items-center justify-between p-4 border-b bg-muted/30">
             <h3 className="font-semibold">Incidencias</h3>
             {notifications.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={handleClear} className="h-8 px-2 text-muted-foreground hover:text-destructive">
+              <Button variant="ghost" size="sm" onClick={handleClear} className="h-8 px-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors">
                 <Trash2 className="h-4 w-4 mr-1" />
                 Limpiar
               </Button>
@@ -81,23 +83,24 @@ export function NotificationsDropdown({ apiKey }: NotificationsDropdownProps) {
           </div>
           <ScrollArea className="h-80">
             {notifications.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
+              <div className="p-8 text-center text-muted-foreground animate-in fade-in duration-500">
                 <p className="text-sm">No hay incidencias nuevas</p>
               </div>
             ) : (
               <div className="divide-y">
-                {notifications.map((noti) => {
+                {notifications.map((noti, index) => {
                   const Icon = typeIconMap[noti.type];
                   return (
                     <div
                       key={noti.id}
                       onClick={() => handleNotiClick(noti)}
                       className={cn(
-                        "flex gap-3 p-4 cursor-pointer transition-colors hover:bg-accent",
+                        "flex gap-3 p-4 cursor-pointer transition-all hover:bg-accent group animate-in slide-in-from-right-2 fade-in",
                         !noti.isRead && "bg-primary/5"
                       )}
+                      style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      <div className={cn("shrink-0", typeColorMap[noti.type])}>
+                      <div className={cn("shrink-0 transition-transform group-hover:scale-125 duration-300", typeColorMap[noti.type])}>
                         <Icon className="h-5 w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -105,7 +108,7 @@ export function NotificationsDropdown({ apiKey }: NotificationsDropdownProps) {
                           <p className="font-semibold text-xs truncate">
                             {noti.description}: {noti.placa}
                           </p>
-                          {!noti.isRead && <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1" />}
+                          {!noti.isRead && <div className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1 animate-pulse" />}
                         </div>
                         <p className="text-[10px] text-muted-foreground mt-1">
                           {format(fromUnixTime(noti.timestamp), 'Pp')}

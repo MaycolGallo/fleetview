@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -56,7 +55,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     isIncidenciasSheetOpen,
     isLoadingIncidencias,
     isLoadingRoute,
-    notifications
   } = state;
   
   const [date, setDate] = useState<DateRange | undefined>();
@@ -97,42 +95,74 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   }
 
   useEffect(() => {
-    if (historyVehicle) {
-      setIsPanelOpen(false);
+    if (historyVehicle && isPanelOpen) {
+      // @ts-ignore
+      if (document.startViewTransition) {
+        // @ts-ignore
+        document.startViewTransition(() => {
+          setIsPanelOpen(false);
+        });
+      } else {
+        setIsPanelOpen(false);
+      }
     }
-  }, [historyVehicle]);
+  }, [historyVehicle, isPanelOpen]);
 
   const handleBackToFleet = () => {
+    const action = () => {
+      if (isIncidenciasSheetOpen) {
+        dispatch({ type: 'CLOSE_INCIDENCIAS' });
+      } else {
+        dispatch({ type: 'BACK_TO_FLEET' });
+      }
+      setIsPanelOpen(true);
+    };
+
     // @ts-ignore
     if (document.startViewTransition) {
         // @ts-ignore
-        document.startViewTransition(() => {
-            if (isIncidenciasSheetOpen) {
-              dispatch({ type: 'CLOSE_INCIDENCIAS' });
-            } else {
-              dispatch({ type: 'BACK_TO_FLEET' });
-            }
-        });
+        document.startViewTransition(action);
     } else {
-        if (isIncidenciasSheetOpen) {
-          dispatch({ type: 'CLOSE_INCIDENCIAS' });
-        } else {
-          dispatch({ type: 'BACK_TO_FLEET' });
-        }
+        action();
     }
   };
 
   const handleToggleSplitView = () => {
-    dispatch({ type: 'TOGGLE_SPLIT_VIEW' });
+    // @ts-ignore
+    if (document.startViewTransition) {
+      // @ts-ignore
+      document.startViewTransition(() => {
+        dispatch({ type: 'TOGGLE_SPLIT_VIEW' });
+      });
+    } else {
+      dispatch({ type: 'TOGGLE_SPLIT_VIEW' });
+    }
   };
 
   const handleToggleSplitDirection = () => {
-    dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' });
+    // @ts-ignore
+    if (document.startViewTransition) {
+      // @ts-ignore
+      document.startViewTransition(() => {
+        dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' });
+      });
+    } else {
+      dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' });
+    }
   };
 
-  const handleVehicleSelect = () => {
-  };
-  
+  const handleOpenPanel = () => {
+    // @ts-ignore
+    if (document.startViewTransition) {
+      // @ts-ignore
+      document.startViewTransition(() => {
+        setIsPanelOpen(true);
+      });
+    } else {
+      setIsPanelOpen(true);
+    }
+  }
+
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -141,7 +171,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     );
   }
 
-  const panelContent = <VehiclePanelContent onVehicleSelect={handleVehicleSelect} onClose={() => setIsPanelOpen(false)} />;
+  const panelContent = <VehiclePanelContent onVehicleSelect={() => {}} onClose={() => setIsPanelOpen(false)} />;
 
   const loadingMessage = isLoadingIncidencias && isLoadingRoute 
     ? 'Cargando incidencias y ruta...' 
@@ -159,11 +189,11 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           <FleetMap apiKey={apiKey} />
         ) : (
           <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
-            <ResizablePanel defaultSize={50}>
+            <ResizablePanel defaultSize={50} className="transition-all duration-500 ease-in-out">
               <FleetMap apiKey={apiKey} side="ida" />
             </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={50}>
+            <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
+            <ResizablePanel defaultSize={50} className="transition-all duration-500 ease-in-out">
               <FleetMap apiKey={apiKey} side="vuelta" />
             </ResizablePanel>
           </ResizablePanelGroup>
@@ -199,11 +229,11 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           <div className='flex gap-2 items-start pointer-events-auto'>
             {/* Split View Toggle - Only show if NOT in route history or incidencias */}
             {!isDetailView && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 animate-in fade-in slide-in-from-top-4 duration-500">
                 <Button 
                   variant={isSplitView ? "default" : "secondary"}
                   onClick={handleToggleSplitView}
-                  className={cn("shadow-lg backdrop-blur-sm px-4", !isSplitView && "bg-card/90")}
+                  className={cn("shadow-lg backdrop-blur-sm px-4 transition-all duration-300", !isSplitView && "bg-card/90")}
                   title="Toggle Split View (Ida / Vuelta)"
                 >
                   <Columns2 className="mr-2 h-4 w-4" />
@@ -214,7 +244,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                   <Button 
                     variant="secondary"
                     onClick={handleToggleSplitDirection}
-                    className="shadow-lg backdrop-blur-sm px-4 bg-card/90"
+                    className="shadow-lg backdrop-blur-sm px-4 bg-card/90 animate-in fade-in zoom-in duration-300"
                     title="Toggle Layout Orientation"
                   >
                     {splitDirection === 'horizontal' ? <Rows2 className="mr-2 h-4 w-4" /> : <Columns2 className="mr-2 h-4 w-4" />}
@@ -229,8 +259,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 <Button 
                   variant="secondary"
                   size="icon"
-                  onClick={() => setIsPanelOpen(true)} 
-                  className='shadow-lg bg-card/90 backdrop-blur-sm'
+                  onClick={handleOpenPanel} 
+                  className='shadow-lg bg-card/90 backdrop-blur-sm hover:scale-110 transition-transform'
                 >
                   {isMobile ? <List className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
                 </Button>
@@ -239,14 +269,14 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
             {isDetailView && !state.isLoadingRoute && !state.isLoadingIncidencias ? (
               <div style={{ viewTransitionName: 'back-button-transition' }} className="flex items-center gap-2">
-                <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm">
+                <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm hover:bg-accent transition-colors">
                   {isIncidenciasSheetOpen ? <X className="mr-2 h-4 w-4" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
                   {isIncidenciasSheetOpen ? 'Cerrar Incidencias' : 'Back to Fleet'}
                 </Button>
                 
                 {!isIncidenciasSheetOpen && (
                   <>
-                    <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
+                    <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm hover:rotate-180 transition-transform duration-500">
                       <RefreshCw className="h-4 w-4" />
                     </Button>
                     {isMobile ? (
@@ -301,7 +331,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                         </DrawerContent>
                       </Drawer>
                     ) : (
-                      <div className="bg-card/90 backdrop-blur-sm rounded-md shadow-lg pointer-events-auto">
+                      <div className="bg-card/90 backdrop-blur-sm rounded-md shadow-lg pointer-events-auto animate-in fade-in slide-in-from-left-2 duration-300">
                         <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
                       </div>
                     )}
@@ -323,7 +353,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           style={{ viewTransitionName: 'loading-transition' }}
           className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-[100]"
         >
-          <div className="flex items-center gap-2 text-foreground bg-card p-4 rounded-lg shadow-xl border">
+          <div className="flex items-center gap-2 text-foreground bg-card p-4 rounded-lg shadow-xl border animate-in zoom-in-95 duration-200">
             <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
             <p className="font-medium">{loadingMessage}</p>
           </div>

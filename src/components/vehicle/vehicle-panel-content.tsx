@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
@@ -41,14 +40,16 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
 
     if (selectedVehicle) {
         return (
-            <ClientOnly>
-                <VehicleDetails />
-            </ClientOnly>
+            <div className="h-full animate-in fade-in slide-in-from-right-4 duration-300">
+                <ClientOnly>
+                    <VehicleDetails />
+                </ClientOnly>
+            </div>
         );
     }
 
     return (
-        <div className="h-full flex flex-col">
+        <div className="h-full flex flex-col animate-in fade-in duration-500">
             <div className="p-4 border-b space-y-4 bg-muted/20">
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
@@ -56,7 +57,7 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-8 w-8 -ml-1 hover:bg-muted"
+                                className="h-8 w-8 -ml-1 hover:bg-muted hover:scale-110 transition-all"
                                 onClick={onClose}
                             >
                                 <PanelLeft className="h-4 w-4" />
@@ -70,7 +71,7 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="flex items-center space-x-2 bg-background/50 border px-2 py-1 rounded-md shadow-sm">
+                        <div className="flex items-center space-x-2 bg-background/50 border px-2 py-1 rounded-md shadow-sm hover:bg-background transition-colors">
                             <Checkbox 
                                 id="toggle-all" 
                                 checked={allVisible} 
@@ -83,7 +84,7 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
                              <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-8 w-8 hover:bg-muted"
+                                className="h-8 w-8 hover:bg-muted animate-bounce"
                                 onClick={onClose}
                             >
                                 <ChevronDown className="h-4 w-4" />
@@ -91,13 +92,15 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
                         )}
                     </div>
                 </div>
-                <VehicleFilters />
+                <div className="animate-in slide-in-from-top-2 duration-300">
+                    <VehicleFilters />
+                </div>
             </div>
             <div className="flex-1 overflow-y-auto">
                 {isLoadingVehicles ? (
                     <div className="p-4 flex flex-col gap-3">
-                        {Array.from({ length: 10 }).map((_, i) => (
-                            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <Skeleton key={i} className="h-24 w-full rounded-lg" />
                         ))}
                     </div>
                 ) : (

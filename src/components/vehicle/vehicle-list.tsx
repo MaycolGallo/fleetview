@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Vehicle } from "@/lib/types";
@@ -31,8 +30,8 @@ const VehicleListItem = React.memo(({
     return (
         <div
             className={cn(
-                "p-3 rounded-lg border text-left transition-colors cursor-pointer flex gap-3",
-                isSelected ? "bg-accent border-primary" : "bg-card hover:bg-accent"
+                "p-3 rounded-lg border text-left transition-all duration-300 cursor-pointer flex gap-3 animate-in fade-in slide-in-from-bottom-2",
+                isSelected ? "bg-accent border-primary ring-2 ring-primary/20 scale-[1.01] z-10" : "bg-card hover:bg-accent border-border hover:border-primary/50"
             )}
             onClick={() => onSelect(vehicle)}
         >
@@ -46,7 +45,7 @@ const VehicleListItem = React.memo(({
             <div className="flex-1">
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{backgroundColor: vehicle.statusColor}}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm" style={{backgroundColor: vehicle.statusColor}}>
                             <Car className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -54,7 +53,7 @@ const VehicleListItem = React.memo(({
                             <p className="text-xs text-muted-foreground">{vehicle.statusName}</p>
                         </div>
                     </div>
-                    <Badge variant="outline" className="capitalize shrink-0">{parseFloat(vehicle.velocidad).toFixed(0)} km/h</Badge>
+                    <Badge variant="outline" className="capitalize shrink-0 bg-background/50">{parseFloat(vehicle.velocidad).toFixed(0)} km/h</Badge>
                 </div>
                
                 <div className="flex justify-between items-center mt-3 pt-3 border-t text-xs text-muted-foreground">
@@ -94,8 +93,6 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
         dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: id });
     }, [dispatch]);
 
-    // Note: listVehicles shows all vehicles that pass the status filter,
-    // regardless of their individual visibility toggle.
     const listVehicles = useMemo(() => {
         if (state.statusFilter.length === 0) {
             return state.vehicles;
@@ -106,15 +103,16 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
     return (
         <ScrollArea className="h-full">
             <div className="flex flex-col gap-2 p-2">
-                {listVehicles.map((vehicle) => (
-                    <VehicleListItem
-                        key={vehicle.id_vehiculo}
-                        vehicle={vehicle}
-                        isSelected={selectedVehicle?.id_vehiculo === vehicle.id_vehiculo}
-                        isVisible={visibleVehicleIds.has(vehicle.id_vehiculo)}
-                        onSelect={handleSelect}
-                        onToggleVisibility={handleToggleVisibility}
-                    />
+                {listVehicles.map((vehicle, index) => (
+                    <div key={vehicle.id_vehiculo} style={{ animationDelay: `${index * 30}ms` }}>
+                        <VehicleListItem
+                            vehicle={vehicle}
+                            isSelected={selectedVehicle?.id_vehiculo === vehicle.id_vehiculo}
+                            isVisible={visibleVehicleIds.has(vehicle.id_vehiculo)}
+                            onSelect={handleSelect}
+                            onToggleVisibility={handleToggleVisibility}
+                        />
+                    </div>
                 ))}
             </div>
         </ScrollArea>
