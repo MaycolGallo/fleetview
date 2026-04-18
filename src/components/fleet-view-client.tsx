@@ -187,15 +187,18 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm">
                   <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet
                 </Button>
+                
+                {/* SPLIT VIEW TOGGLE BUTTON */}
                 <Button 
                   variant={isSplitView ? "default" : "secondary"}
-                  size="icon" 
                   onClick={handleToggleSplitView}
-                  className={cn("shadow-lg backdrop-blur-sm", !isSplitView && "bg-card/90")}
+                  className={cn("shadow-lg backdrop-blur-sm px-4", !isSplitView && "bg-card/90")}
                   title="Toggle Split View (Ida / Vuelta)"
                 >
-                  <Columns2 className="h-4 w-4" />
+                  <Columns2 className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">{isSplitView ? 'Close Split' : 'Split View'}</span>
                 </Button>
+
                 <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
                   <RefreshCw className="h-4 w-4" />
                 </Button>
