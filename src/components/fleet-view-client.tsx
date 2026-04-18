@@ -52,7 +52,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     routeGroups,
     isSplitView,
     isIncidenciasSheetOpen,
-    isLoadingIncidencias
+    isLoadingIncidencias,
+    isLoadingRoute
   } = state;
   
   const [date, setDate] = useState<DateRange | undefined>();
@@ -134,6 +135,12 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   }
 
   const panelContent = <VehiclePanelContent onVehicleSelect={handleVehicleSelect} onClose={() => setIsPanelOpen(false)} />;
+
+  const loadingMessage = isLoadingIncidencias && isLoadingRoute 
+    ? 'Cargando incidencias y ruta...' 
+    : isLoadingIncidencias 
+      ? 'Cargando incidencias...' 
+      : 'Generando ruta...';
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
@@ -291,7 +298,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         >
           <div className="flex items-center gap-2 text-foreground bg-card p-4 rounded-lg shadow-xl border">
             <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
-            <p className="font-medium">{state.isLoadingIncidencias ? 'Cargando incidencias...' : 'Generating route...'}</p>
+            <p className="font-medium">{loadingMessage}</p>
           </div>
         </div>
       )}

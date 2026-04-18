@@ -143,10 +143,13 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             routePath: routePoints,
             routeGroups: filteredGroups,
             by_estado: historyData.by_estado,
-            isRouteSheetOpen: true,
+            // Only open route sheet if we aren't loading incidencias
+            isRouteSheetOpen: !state.isLoadingIncidencias && !state.isIncidenciasSheetOpen,
             historyVehicle: updatedHistoryVehicle,
             isRoutePlaying: false,
-            mapViewport: { type: 'fit_route', payload: routePoints.flat() },
+            mapViewport: state.isIncidenciasSheetOpen 
+              ? state.mapViewport 
+              : { type: 'fit_route', payload: routePoints.flat() },
         };
     }
 
@@ -238,8 +241,10 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         ...state,
         selectedVehicle: null,
         isLoadingIncidencias: true,
+        isLoadingRoute: true, // Also load the route
         historyVehicle: action.payload,
         isRouteSheetOpen: false,
+        isIncidenciasSheetOpen: false,
         wasSplitViewBeforeRoute: state.isSplitView,
         isSplitView: false,
       };
@@ -256,8 +261,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     case 'SELECT_INCIDENCIA': {
       if (action.payload === null) return { ...state, selectedIncidenciaId: null };
       
-      // If the same incidence is selected, we can optionally deselect it or just re-pan
-      const isCurrentlySelected = state.selectedIncidenciaId === action.payload;
       const inc = state.incidencias.find(i => i.id === action.payload);
       
       return {
@@ -271,9 +274,12 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       return {
         ...state,
         historyVehicle: null,
+        routePath: null,
+        routeGroups: [],
         incidencias: [],
         isIncidenciasSheetOpen: false,
         isLoadingIncidencias: false,
+        isLoadingRoute: false,
         selectedIncidenciaId: null,
         isSplitView: state.wasSplitViewBeforeRoute,
         mapViewport: { type: 'fit_bounds', payload: state.vehicles.map(v => ({ lat: v.lat, lng: v.lng })) },
@@ -433,8 +439,8 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     } = useQuery<RawVehicle[], Error>({
       queryKey: ['vehicles'],
       queryFn: fetchVehicles,
-      refetchOnWindowFocus: false, // Prevent jumps on window focus
-      staleTime: 1000 * 60 * 5, // Keep data fresh for 5 mins but don't jump
+      refetchOnWindowFocus: false, 
+      staleTime: 1000 * 60 * 5, 
     });
     
     useEffect(() => {
