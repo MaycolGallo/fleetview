@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { EventMarker } from '@/components/event-marker';
 
@@ -57,7 +58,7 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
     const map = useMap();
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
-    const { routeGroups, selectedSegmentIndex } = state;
+    const { routeGroups, selectedSegmentIndex, incidencias, isIncidenciasSheetOpen } = state;
     const polylinesRef = useRef<google.maps.Polyline[]>([]);
   
     const halfIndex = Math.ceil(routeGroups.length / 2);
@@ -67,6 +68,14 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
         ? routeGroups.slice(halfIndex) 
         : routeGroups;
 
+    // Generate path from incidencias if that view is active
+    const incidenciasPath = useMemo(() => {
+        if (!isIncidenciasSheetOpen || incidencias.length < 2) return null;
+        // Incidencias are sorted newest to oldest in API, sort ascending for path
+        const sortedIncidencias = [...incidencias].sort((a, b) => a.timestamp - b.timestamp);
+        return sortedIncidencias.map(inc => ({ lat: inc.lat, lng: inc.lng }));
+    }, [incidencias, isIncidenciasSheetOpen]);
+
     useEffect(() => {
         polylinesRef.current.forEach(p => {
             google.maps.event.clearInstanceListeners(p);
@@ -74,52 +83,77 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
         });
         polylinesRef.current = [];
 
-        if (!map || displayGroups.length === 0) return;
+        if (!map) return;
 
         const newPolylines: google.maps.Polyline[] = [];
 
-        displayGroups.forEach((group, index) => {
-            if (group.id_estado === 6) {
-                const isSelected = selectedSegmentIndex === index;
-                
-                const rawPath = group.records.map(r => ({ lat: r.lat, lng: r.lng }));
-                const path = catmullRomSpline(rawPath);
-                
-                const handleSegmentClick = () => {
-                    dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index });
-                };
+        // Scenario 1: Draw route groups from Route History
+        if (!isIncidenciasSheetOpen) {
+            displayGroups.forEach((group, index) => {
+                if (group.id_estado === 6) {
+                    const isSelected = selectedSegmentIndex === index;
+                    const rawPath = group.records.map(r => ({ lat: r.lat, lng: r.lng }));
+                    const path = catmullRomSpline(rawPath);
+                    
+                    const handleSegmentClick = () => {
+                        dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index });
+                    };
 
-                const polylineColor = isSelected ? '#f59e0b' : group.color;
+                    const polylineColor = isSelected ? '#f59e0b' : group.color;
 
-                const arrowIcon = {
-                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                    strokeOpacity: 1,
-                    scale: 3,
-                    strokeColor: polylineColor,
-                    strokeWeight: 1,
-                    fillColor: polylineColor,
-                    fillOpacity: 1,
-                };
-  
-                const polyline = new google.maps.Polyline({
-                    path: path,
-                    strokeColor: polylineColor,
-                    strokeOpacity: 0.8,
-                    strokeWeight: isSelected ? 8 : 6,
-                    map: map,
-                    zIndex: isSelected ? 4 : 2,
-                    clickable: true,
-                    icons: [{
-                        icon: arrowIcon,
-                        offset: '0',
-                        repeat: '75px'
-                    }],
-                });
-                
-                polyline.addListener('click', handleSegmentClick);
-                newPolylines.push(polyline);
-            }
-        });
+                    const arrowIcon = {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        strokeOpacity: 1,
+                        scale: 3,
+                        strokeColor: polylineColor,
+                        strokeWeight: 1,
+                        fillColor: polylineColor,
+                        fillOpacity: 1,
+                    };
+    
+                    const polyline = new google.maps.Polyline({
+                        path: path,
+                        strokeColor: polylineColor,
+                        strokeOpacity: 0.8,
+                        strokeWeight: isSelected ? 8 : 6,
+                        map: map,
+                        zIndex: isSelected ? 4 : 2,
+                        clickable: true,
+                        icons: [{
+                            icon: arrowIcon,
+                            offset: '0',
+                            repeat: '75px'
+                        }],
+                    });
+                    
+                    polyline.addListener('click', handleSegmentClick);
+                    newPolylines.push(polyline);
+                }
+            });
+        } 
+        // Scenario 2: Draw simple path through Incidencias
+        else if (incidenciasPath) {
+            const polyline = new google.maps.Polyline({
+                path: incidenciasPath,
+                strokeColor: '#EF4444', // Red for incidents path
+                strokeOpacity: 0.6,
+                strokeWeight: 4,
+                map: map,
+                zIndex: 2,
+                icons: [{
+                    icon: {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 2,
+                        strokeColor: '#EF4444',
+                        fillColor: '#EF4444',
+                        fillOpacity: 1,
+                    },
+                    offset: '0',
+                    repeat: '50px'
+                }],
+            });
+            newPolylines.push(polyline);
+        }
 
         polylinesRef.current = newPolylines;
   
@@ -129,11 +163,11 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
                 p.setMap(null);
             });
         };
-    }, [map, displayGroups, selectedSegmentIndex, dispatch]);
+    }, [map, displayGroups, selectedSegmentIndex, dispatch, isIncidenciasSheetOpen, incidenciasPath]);
   
     return (
         <>
-            {displayGroups.map((group, index) => {
+            {!isIncidenciasSheetOpen && displayGroups.map((group, index) => {
                 if ((group.id_estado === 4 || group.id_estado === 5) && selectedSegmentIndex === null) {
                     const firstRecord = group.records[0];
                     if (!firstRecord) return null;

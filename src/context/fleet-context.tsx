@@ -143,7 +143,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             routePath: routePoints,
             routeGroups: filteredGroups,
             by_estado: historyData.by_estado,
-            // Only open route sheet if we aren't loading incidencias
             isRouteSheetOpen: !state.isLoadingIncidencias && !state.isIncidenciasSheetOpen,
             historyVehicle: updatedHistoryVehicle,
             isRoutePlaying: false,
@@ -241,7 +240,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         ...state,
         selectedVehicle: null,
         isLoadingIncidencias: true,
-        isLoadingRoute: true, // Also load the route
+        isLoadingRoute: false, // Don't fetch the separate route, we'll use incidencias points
         historyVehicle: action.payload,
         isRouteSheetOpen: false,
         isIncidenciasSheetOpen: false,
