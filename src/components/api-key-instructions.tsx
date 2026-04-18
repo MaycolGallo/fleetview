@@ -3,16 +3,14 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Code2Icon, AlertTriangle, ExternalLink, PlayCircle } from "lucide-react";
+import { Code2Icon, AlertTriangle, ExternalLink, PlayCircle, Info } from "lucide-react";
 import { useRouter } from 'next/navigation';
 
 export function ApiKeyInstructions() {
   const router = useRouter();
 
   const handleDemoMode = () => {
-    // In a real app, we might set a cookie or state. 
-    // For this prototype, we'll just allow navigating if the key is missing 
-    // but the user wants to see the UI shells.
+    // Navigate to demo mode which uses mock data and placeholder maps
     window.location.href = '/?demo=true';
   };
 
@@ -33,36 +31,28 @@ export function ApiKeyInstructions() {
             <div className="text-sm">
               <p className="font-semibold text-amber-900 dark:text-amber-100 mb-1">Error Detectado: BillingNotEnabledMapError</p>
               <p className="text-amber-800/80 dark:text-amber-200/80">
-                Este error ocurre cuando tu API Key es válida pero el proyecto de Google Cloud no tiene una cuenta de facturación activa. Google requiere facturación habilitada para usar los mapas (aunque ofrecen una cuota gratuita mensual).
+                Tu API Key es válida, pero el proyecto de Google Cloud no tiene una cuenta de facturación activa. Google requiere esto para habilitar los servicios de mapas, incluso si te mantienes dentro de su cuota gratuita.
               </p>
             </div>
           </div>
 
           <div className="space-y-4">
-            <section>
-              <h3 className="font-bold flex items-center gap-2 mb-2">
-                1. Habilitar Facturación
+            <section className="bg-muted/50 p-4 rounded-md border">
+              <h3 className="font-bold flex items-center gap-2 mb-2 text-sm">
+                <Info className="w-4 h-4 text-primary" /> ¿Por qué veo esto ahora?
               </h3>
-              <p className="text-sm text-muted-foreground mb-3">
-                Ve a la consola de Google Cloud y asegúrate de que tu proyecto esté vinculado a una cuenta de facturación.
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Acabamos de activar el <strong>APIProvider</strong> de Google Maps. Ahora que la app intenta renderizar mapas reales, los servidores de Google verifican los permisos de tu llave. Sin facturación habilitada, Google bloquea la carga del mapa.
               </p>
-              <Button variant="outline" size="sm" asChild>
-                <a href="https://console.cloud.google.com/billing" target="_blank" rel="noreferrer" className="flex items-center gap-2">
-                  Consola de Facturación <ExternalLink className="w-3 h-3" />
-                </a>
-              </Button>
             </section>
 
             <section>
-              <h3 className="font-bold flex items-center gap-2 mb-2">
-                2. Configurar Variables de Entorno
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                Crea un archivo <code>.env.local</code> en la raíz del proyecto con tu llave:
-              </p>
-              <pre className="mt-2 p-3 bg-muted rounded-md text-xs overflow-x-auto border">
-                <code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=TU_API_KEY_AQUI</code>
-              </pre>
+              <h3 className="font-bold text-sm mb-2">Pasos para solucionar:</h3>
+              <ol className="list-decimal list-inside text-xs space-y-2 text-muted-foreground">
+                <li>Ve a la <a href="https://console.cloud.google.com/billing" target="_blank" rel="noreferrer" className="text-primary underline">Consola de Facturación</a> de Google Cloud.</li>
+                <li>Asegúrate de que tu proyecto tenga una tarjeta o cuenta vinculada.</li>
+                <li>Verifica que la <strong>Maps JavaScript API</strong> esté habilitada en el "API Library".</li>
+              </ol>
             </section>
           </div>
 
@@ -71,12 +61,12 @@ export function ApiKeyInstructions() {
               Reintentar Conexión
             </Button>
             <Button className="flex-1 gap-2" variant="secondary" onClick={handleDemoMode}>
-              <PlayCircle className="w-4 h-4" /> Ver Interfaz (Modo Demo)
+              <PlayCircle className="w-4 h-4" /> Entrar en Modo Demo (Sin Mapas)
             </Button>
           </div>
           
           <p className="text-[10px] text-center text-muted-foreground">
-            Nota: En Modo Demo las funciones de mapa podrían no cargar correctamente si la llave sigue fallando.
+            Nota: En Modo Demo verás la interfaz completa pero el mapa será reemplazado por un visor estático.
           </p>
         </CardContent>
       </Card>
