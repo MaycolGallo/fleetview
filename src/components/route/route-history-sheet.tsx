@@ -44,8 +44,11 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   const checkScroll = useCallback(() => {
     const el = scrollContainerRef.current;
     if (el) {
-      setCanScrollLeft(el.scrollLeft > 0);
-      setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
+      // Check if scrollable
+      const hasLeft = el.scrollLeft > 0;
+      const hasRight = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
+      setCanScrollLeft(hasLeft);
+      setCanScrollRight(hasRight);
     }
   }, []);
 
@@ -54,9 +57,9 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
     if (!el) return;
 
     el.addEventListener('scroll', checkScroll);
-    // Initial check and check after a small delay to allow for rendering
+    // Initial check and check after a small delay to allow for rendering/layout
     checkScroll();
-    const timeout = setTimeout(checkScroll, 100);
+    const timeout = setTimeout(checkScroll, 150);
 
     return () => {
       el.removeEventListener('scroll', checkScroll);
@@ -280,10 +283,9 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                 <div>
                     <div className="flex justify-between items-center gap-4 mb-4">
                         <div className='flex items-center gap-4'>
-                            <Button variant="ghost" className="text-2xl font-semibold p-0 h-auto focus-visible:ring-inset">
+                            <div className="text-2xl font-semibold flex items-center">
                                 {historyVehicle?.placa}
-                                <ChevronDown className="w-5 h-5 ml-2" />
-                            </Button>
+                            </div>
                         </div>
                         <div className='flex items-center gap-6'>
                             <div className='text-right'>
@@ -318,13 +320,13 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                 </div>
             </CardHeader>
             <div className="relative flex items-center h-[180px]">
-                {/* Horizontal Scroll Buttons */}
+                {/* Horizontal Scroll Buttons - Only show if can scroll */}
                 {canScrollLeft && (
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 animate-in fade-in zoom-in duration-200">
                       <Button 
                           variant="secondary" 
                           size="icon" 
-                          className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform"
+                          className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90"
                           onClick={handleScrollLeft}
                       >
                           <ChevronLeft className="w-8 h-8" />
@@ -337,11 +339,11 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                 </div>
 
                 {canScrollRight && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 animate-in fade-in zoom-in duration-200">
                       <Button 
                           variant="secondary" 
                           size="icon" 
-                          className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform"
+                          className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90"
                           onClick={handleScrollRight}
                       >
                           <ChevronRight className="w-8 h-8" />

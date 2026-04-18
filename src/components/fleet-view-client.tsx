@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -25,7 +24,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DateRangePicker } from '@/components/route/date-range-picker';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
 
 
@@ -67,9 +65,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   }, [routeGroups]);
 
   const handleFilterApply = useCallback(() => {
-    console.log("Applying date range filter:", date);
     setNestedDrawerOpen(false);
-  }, [date]);
+  }, []);
 
   const handleTimeChange = (type: 'from' | 'to', value: string) => {
     if (!value) return;
@@ -108,9 +105,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   };
 
   const handleVehicleSelect = () => {
-    if (isMobile) {
-      // Stay open or close? Usually stay open for details
-    }
+    // Optional mobile behavior
   };
   
   if (error) {
@@ -154,10 +149,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       )}
       
       {/* Top Header Controls Overlay */}
-      <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-30">
+      {/* Increased z-index to 40 to ensure it is above drawers/overlays when modal={false} */}
+      <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
         <div className='relative w-full h-12 flex justify-between'>
           <div className='flex gap-2 items-start pointer-events-auto'>
-            {/* Show toggle button only if panel is closed and we are in fleet view */}
             {!historyVehicle && !isPanelOpen ? (
               <div style={{ viewTransitionName: 'filters-transition' }}>
                 <Button 
@@ -174,13 +169,13 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             {historyVehicle && !state.isLoadingRoute ? (
               <div style={{ viewTransitionName: 'back-button-transition' }} className="flex items-center gap-2">
                 <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm">
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet View
+                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet
                 </Button>
                 <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
                   <RefreshCw className="h-4 w-4" />
                 </Button>
                 {isMobile ? (
-                  <Drawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen}>
+                  <Drawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen} modal={false}>
                     <DrawerTrigger asChild>
                       <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
                         <CalendarIcon className="w-4 h-4" />
@@ -231,7 +226,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                     </DrawerContent>
                   </Drawer>
                 ) : (
-                  <div className="bg-card/90 backdrop-blur-sm rounded-md shadow-lg">
+                  <div className="bg-card/90 backdrop-blur-sm rounded-md shadow-lg pointer-events-auto">
                     <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
                   </div>
                 )}
@@ -259,4 +254,3 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     </div>
   );
 }
-
