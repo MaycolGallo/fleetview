@@ -58,9 +58,10 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
     const map = useMap();
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
-    const { routeGroups, selectedSegmentIndex, incidencias, isIncidenciasSheetOpen } = state;
+    const { routeGroups, selectedSegmentIndex, incidencias, isIncidenciasSheetOpen, masterRoute, historyVehicle } = state;
     const polylinesRef = useRef<google.maps.Polyline[]>([]);
   
+    // Determine the segments to display based on whether we are in history or fleet mode
     const halfIndex = Math.ceil(routeGroups.length / 2);
     const displayGroups = side === 'ida' 
       ? routeGroups.slice(0, halfIndex) 
@@ -68,10 +69,19 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
         ? routeGroups.slice(halfIndex) 
         : routeGroups;
 
-    // Generate path from incidencias if that view is active
+    // Fleet Master Route logic
+    const fleetRoutePoints = useMemo(() => {
+        if (historyVehicle || isIncidenciasSheetOpen) return null;
+        if (!masterRoute || masterRoute.length === 0) return null;
+        
+        const halfMaster = Math.ceil(masterRoute.length / 2);
+        if (side === 'ida') return masterRoute.slice(0, halfMaster);
+        if (side === 'vuelta') return masterRoute.slice(halfMaster - 1);
+        return masterRoute;
+    }, [masterRoute, historyVehicle, isIncidenciasSheetOpen, side]);
+
     const incidenciasPath = useMemo(() => {
         if (!isIncidenciasSheetOpen || incidencias.length < 2) return null;
-        // Incidencias are sorted newest to oldest in API, sort ascending for path
         const sortedIncidencias = [...incidencias].sort((a, b) => a.timestamp - b.timestamp);
         return sortedIncidencias.map(inc => ({ lat: inc.lat, lng: inc.lng }));
     }, [incidencias, isIncidenciasSheetOpen]);
@@ -88,7 +98,7 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
         const newPolylines: google.maps.Polyline[] = [];
 
         // Scenario 1: Draw route groups from Route History
-        if (!isIncidenciasSheetOpen) {
+        if (historyVehicle && !isIncidenciasSheetOpen) {
             displayGroups.forEach((group, index) => {
                 if (group.id_estado === 6) {
                     const isSelected = selectedSegmentIndex === index;
@@ -101,16 +111,6 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
 
                     const polylineColor = isSelected ? '#f59e0b' : group.color;
 
-                    const arrowIcon = {
-                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                        strokeOpacity: 1,
-                        scale: 3,
-                        strokeColor: polylineColor,
-                        strokeWeight: 1,
-                        fillColor: polylineColor,
-                        fillOpacity: 1,
-                    };
-    
                     const polyline = new google.maps.Polyline({
                         path: path,
                         strokeColor: polylineColor,
@@ -120,7 +120,13 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
                         zIndex: isSelected ? 4 : 2,
                         clickable: true,
                         icons: [{
-                            icon: arrowIcon,
+                            icon: {
+                                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                                scale: 3,
+                                strokeColor: polylineColor,
+                                fillColor: polylineColor,
+                                fillOpacity: 1,
+                            },
                             offset: '0',
                             repeat: '75px'
                         }],
@@ -131,11 +137,37 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
                 }
             });
         } 
-        // Scenario 2: Draw simple path through Incidencias
+        // Scenario 2: Draw Fleet Master Route (Outbound/Inbound legs)
+        else if (fleetRoutePoints) {
+            const path = catmullRomSpline(fleetRoutePoints, 15);
+            const color = side === 'vuelta' ? '#3B82F6' : '#22C55E'; // Blue for return, Green for outbound
+            
+            const polyline = new google.maps.Polyline({
+                path: path,
+                strokeColor: color,
+                strokeOpacity: 0.4,
+                strokeWeight: 5,
+                map: map,
+                zIndex: 1,
+                icons: [{
+                    icon: {
+                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                        scale: 2,
+                        strokeColor: color,
+                        fillColor: color,
+                        fillOpacity: 1,
+                    },
+                    offset: '0',
+                    repeat: '100px'
+                }],
+            });
+            newPolylines.push(polyline);
+        }
+        // Scenario 3: Draw simple path through Incidencias
         else if (incidenciasPath) {
             const polyline = new google.maps.Polyline({
                 path: incidenciasPath,
-                strokeColor: '#EF4444', // Red for incidents path
+                strokeColor: '#EF4444',
                 strokeOpacity: 0.6,
                 strokeWeight: 4,
                 map: map,
@@ -163,11 +195,11 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
                 p.setMap(null);
             });
         };
-    }, [map, displayGroups, selectedSegmentIndex, dispatch, isIncidenciasSheetOpen, incidenciasPath]);
+    }, [map, displayGroups, selectedSegmentIndex, dispatch, isIncidenciasSheetOpen, incidenciasPath, fleetRoutePoints, side, historyVehicle]);
   
     return (
         <>
-            {!isIncidenciasSheetOpen && displayGroups.map((group, index) => {
+            {historyVehicle && !isIncidenciasSheetOpen && displayGroups.map((group, index) => {
                 if ((group.id_estado === 4 || group.id_estado === 5) && selectedSegmentIndex === null) {
                     const firstRecord = group.records[0];
                     if (!firstRecord) return null;

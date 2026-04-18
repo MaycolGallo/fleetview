@@ -21,6 +21,17 @@ const SIMULATION_ROUTE = [
   { lat: -12.047, lng: -77.036 },
 ];
 
+// A static master route for the fleet management view in Lima
+const MASTER_FLEET_ROUTE = [
+    { lat: -12.030, lng: -77.020 },
+    { lat: -12.040, lng: -77.035 },
+    { lat: -12.046, lng: -77.042 },
+    { lat: -12.055, lng: -77.050 },
+    { lat: -12.065, lng: -77.065 },
+    { lat: -12.080, lng: -77.075 },
+    { lat: -12.100, lng: -77.085 },
+];
+
 type FleetAction =
   | { type: 'SET_VEHICLES'; payload: Vehicle[] }
   | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus[] }
@@ -73,6 +84,7 @@ const getInitialState = (): FleetState => ({
   isIncidenciasSheetOpen: false,
   selectedIncidenciaId: null,
   notifications: [],
+  masterRoute: MASTER_FLEET_ROUTE,
 });
 
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
@@ -127,7 +139,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         historyVehicle: action.payload,
         isIncidenciasSheetOpen: false,
         wasSplitViewBeforeRoute: state.isSplitView,
-        isSplitView: false,
+        isSplitView: false, // Always normal view during history analysis
       };
 
     case 'SET_ROUTE_HISTORY': {
@@ -174,7 +186,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             selectedSegmentIndex: null,
             isLoadingRoute: false,
             isRoutePlaying: false,
-            isSplitView: state.isSplitView || state.wasSplitViewBeforeRoute,
+            isSplitView: state.wasSplitViewBeforeRoute, // Restore split view preference
             wasSplitViewBeforeRoute: false,
             mapViewport: { type: 'fit_bounds', payload: newBounds },
         };
@@ -187,23 +199,11 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       if (!historyVehicle) return state;
 
       if (selectedSegmentIndex === segmentIndex) {
-        const startSegment = routeGroups[0];
-        if (!startSegment?.records?.[0]) return state;
-
-        const firstRecord = startSegment.records[0];
-        const resetVehicle = {
-          ...historyVehicle,
-          lat: firstRecord.lat,
-          lng: firstRecord.lng,
-          id_estado: startSegment.id_estado,
-          velocidad: '0',
-          rumbo: firstRecord.rumbo || 0,
-        };
-
+        const startOfRoute = routeGroups?.[0]?.records?.[0];
         return {
           ...state,
           selectedSegmentIndex: null,
-          historyVehicle: resetVehicle,
+          historyVehicle: startOfRoute ? { ...historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng } : historyVehicle,
           mapViewport: { type: 'fit_route', payload: state.routePath?.flat() || [] },
         };
       }
@@ -516,7 +516,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
             variant: 'destructive',
           });
         }
-      }, 15000); // Check every 15s
+      }, 30000); // Check every 30s
 
       return () => clearInterval(timer);
     }, [state.vehicles]);

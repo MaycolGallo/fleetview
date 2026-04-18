@@ -25,7 +25,10 @@ export function MapControl({ side }: MapControlProps) {
     selectedSegmentIndex,
     incidencias,
     selectedIncidenciaId,
-    isIncidenciasSheetOpen
+    isIncidenciasSheetOpen,
+    historyVehicle,
+    masterRoute,
+    isSplitView
   } = state;
 
   useEffect(() => {
@@ -37,6 +40,14 @@ export function MapControl({ side }: MapControlProps) {
 
   useEffect(() => {
     if (!map || mapViewport.type === 'idle' || mapViewport.type === 'initial') {
+      // Special case for Split View in Fleet Management
+      if (map && isSplitView && !historyVehicle && !isIncidenciasSheetOpen && masterRoute.length > 0) {
+        const halfIndex = Math.ceil(masterRoute.length / 2);
+        const points = side === 'ida' ? masterRoute.slice(0, halfIndex) : masterRoute.slice(halfIndex - 1);
+        const bounds = new google.maps.LatLngBounds();
+        points.forEach(p => bounds.extend(p));
+        map.fitBounds(bounds, 50);
+      }
       return;
     }
 
@@ -71,7 +82,7 @@ export function MapControl({ side }: MapControlProps) {
     }
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
 
-  }, [map, mapViewport, dispatch]);
+  }, [map, mapViewport, dispatch, isSplitView, historyVehicle, isIncidenciasSheetOpen, masterRoute, side]);
 
   const mapVehicles = useMemo(() => selectMapVehicles(state), [state]);
 
@@ -97,7 +108,7 @@ export function MapControl({ side }: MapControlProps) {
 
       <RouteSegments side={side} />
       
-      {firstRecord && lastRecord && selectedSegmentIndex === null && (
+      {historyVehicle && firstRecord && lastRecord && selectedSegmentIndex === null && !isIncidenciasSheetOpen && (
         <>
           <AdvancedMarker
             position={{ lat: firstRecord.lat, lng: firstRecord.lng }}
