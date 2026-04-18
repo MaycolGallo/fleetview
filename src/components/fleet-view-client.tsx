@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X, Bell } from 'lucide-react';
+import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X, Bell, LayoutVertical, LayoutHorizontal } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
@@ -52,6 +52,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     historyVehicle,
     routeGroups,
     isSplitView,
+    splitDirection,
     isIncidenciasSheetOpen,
     isLoadingIncidencias,
     isLoadingRoute,
@@ -125,6 +126,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     dispatch({ type: 'TOGGLE_SPLIT_VIEW' });
   };
 
+  const handleToggleSplitDirection = () => {
+    dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' });
+  };
+
   const handleVehicleSelect = () => {
   };
   
@@ -153,7 +158,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         {!isSplitView ? (
           <FleetMap apiKey={apiKey} />
         ) : (
-          <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+          <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
             <ResizablePanel defaultSize={50}>
               <FleetMap apiKey={apiKey} side="ida" />
             </ResizablePanel>
@@ -194,7 +199,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           <div className='flex gap-2 items-start pointer-events-auto'>
             {/* Split View Toggle - Only show if NOT in route history or incidencias */}
             {!historyVehicle && !state.isLoadingRoute && !state.isLoadingIncidencias && (
-               <Button 
+              <div className="flex gap-2">
+                <Button 
                   variant={isSplitView ? "default" : "secondary"}
                   onClick={handleToggleSplitView}
                   className={cn("shadow-lg backdrop-blur-sm px-4", !isSplitView && "bg-card/90")}
@@ -203,6 +209,19 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                   <Columns2 className="mr-2 h-4 w-4" />
                   <span className="hidden sm:inline">{isSplitView ? 'Close Split' : 'Split View'}</span>
                 </Button>
+
+                {isSplitView && (
+                  <Button 
+                    variant="secondary"
+                    onClick={handleToggleSplitDirection}
+                    className="shadow-lg backdrop-blur-sm px-4 bg-card/90"
+                    title="Toggle Layout Orientation"
+                  >
+                    {splitDirection === 'horizontal' ? <LayoutVertical className="mr-2 h-4 w-4" /> : <LayoutHorizontal className="mr-2 h-4 w-4" />}
+                    <span className="hidden sm:inline">{splitDirection === 'horizontal' ? 'Vertical' : 'Horizontal'}</span>
+                  </Button>
+                )}
+              </div>
             )}
 
             {!historyVehicle && !isPanelOpen ? (

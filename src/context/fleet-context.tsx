@@ -50,6 +50,7 @@ type FleetAction =
   | { type: 'START_ROUTE_PLAYBACK' }
   | { type: 'PAUSE_ROUTE_PLAYBACK' }
   | { type: 'TOGGLE_SPLIT_VIEW' }
+  | { type: 'TOGGLE_SPLIT_DIRECTION' }
   | { type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: number, lng: number, rumbo: number, velocidad: number, animationDuration: number } }
   | { type: 'START_INCIDENCIAS_LOADING'; payload: Vehicle }
   | { type: 'SET_INCIDENCIAS'; payload: Incidencia[] }
@@ -78,6 +79,7 @@ const getInitialState = (): FleetState => ({
   isRoutePlaying: false,
   playbackAnimationDuration: 1000,
   isSplitView: false,
+  splitDirection: 'horizontal',
   wasSplitViewBeforeRoute: false,
   incidencias: [],
   isLoadingIncidencias: false,
@@ -358,6 +360,12 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         return {
             ...state,
             isSplitView: !state.isSplitView,
+        };
+
+    case 'TOGGLE_SPLIT_DIRECTION':
+        return {
+            ...state,
+            splitDirection: state.splitDirection === 'horizontal' ? 'vertical' : 'horizontal',
         };
 
     case 'UPDATE_HISTORY_VEHICLE_POSITION': {

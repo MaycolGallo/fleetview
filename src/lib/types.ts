@@ -150,6 +150,7 @@ export interface FleetState {
   isRoutePlaying: boolean;
   playbackAnimationDuration: number;
   isSplitView: boolean;
+  splitDirection: 'horizontal' | 'vertical';
   wasSplitViewBeforeRoute: boolean;
   // Incidencias
   incidencias: Incidencia[];
