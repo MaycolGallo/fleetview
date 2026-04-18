@@ -49,6 +49,11 @@ export interface Incidencia {
   timestamp: number;
   description: string;
   value?: string;
+  placa?: string;
+}
+
+export interface Notification extends Incidencia {
+  isRead: boolean;
 }
 
 export interface VehiculoUbicacionHistorial {
@@ -151,4 +156,6 @@ export interface FleetState {
   isLoadingIncidencias: boolean;
   isIncidenciasSheetOpen: boolean;
   selectedIncidenciaId: string | null;
+  // Notifications
+  notifications: Notification[];
 }

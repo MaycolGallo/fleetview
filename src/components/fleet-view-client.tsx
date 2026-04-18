@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X } from 'lucide-react';
+import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X, Bell } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
@@ -28,6 +28,7 @@ import { Label } from '@/components/ui/label';
 import { DateRangePicker } from '@/components/route/date-range-picker';
 import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
 
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
@@ -53,7 +54,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     isSplitView,
     isIncidenciasSheetOpen,
     isLoadingIncidencias,
-    isLoadingRoute
+    isLoadingRoute,
+    notifications
   } = state;
   
   const [date, setDate] = useState<DateRange | undefined>();
@@ -141,6 +143,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     : isLoadingIncidencias 
       ? 'Cargando incidencias...' 
       : 'Generando ruta...';
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
@@ -286,6 +290,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 )}
               </div>
             ) : null}
+          </div>
+
+          <div className='flex gap-2 items-start pointer-events-auto'>
+            <NotificationsDropdown apiKey={apiKey} />
           </div>
         </div>
       </div>

@@ -3,7 +3,8 @@
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport, FleetState, Incidencia } from '@/lib/types';
+import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport, FleetState, Incidencia, Notification } from '@/lib/types';
+import { toast } from '@/hooks/use-toast';
 
 const fetchVehicles = async (): Promise<RawVehicle[]> => {
   const res = await fetch('/api/vehicles');
@@ -42,7 +43,10 @@ type FleetAction =
   | { type: 'START_INCIDENCIAS_LOADING'; payload: Vehicle }
   | { type: 'SET_INCIDENCIAS'; payload: Incidencia[] }
   | { type: 'SELECT_INCIDENCIA'; payload: string | null }
-  | { type: 'CLOSE_INCIDENCIAS' };
+  | { type: 'CLOSE_INCIDENCIAS' }
+  | { type: 'ADD_NOTIFICATION'; payload: Notification }
+  | { type: 'MARK_NOTIFICATION_READ'; payload: string }
+  | { type: 'CLEAR_NOTIFICATIONS' };
 
 const getInitialState = (): FleetState => ({
   vehicles: [],
@@ -68,6 +72,7 @@ const getInitialState = (): FleetState => ({
   isLoadingIncidencias: false,
   isIncidenciasSheetOpen: false,
   selectedIncidenciaId: null,
+  notifications: [],
 });
 
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
@@ -240,7 +245,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         ...state,
         selectedVehicle: null,
         isLoadingIncidencias: true,
-        isLoadingRoute: false, // Don't fetch the separate route, we'll use incidencias points
+        isLoadingRoute: false,
         historyVehicle: action.payload,
         isRouteSheetOpen: false,
         isIncidenciasSheetOpen: false,
@@ -375,6 +380,24 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         };
     }
 
+    case 'ADD_NOTIFICATION':
+      return {
+        ...state,
+        notifications: [action.payload, ...state.notifications].slice(0, 50),
+      };
+
+    case 'MARK_NOTIFICATION_READ':
+      return {
+        ...state,
+        notifications: state.notifications.map(n => n.id === action.payload ? { ...n, isRead: true } : n),
+      };
+
+    case 'CLEAR_NOTIFICATIONS':
+      return {
+        ...state,
+        notifications: [],
+      };
+
     default:
       return state;
   }
@@ -466,6 +489,37 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
         dispatch({ type: 'SET_VEHICLES', payload: processedVehicles });
       }
     }, [rawVehiclesData]);
+
+    // Simulate occasional random incidents
+    useEffect(() => {
+      if (state.vehicles.length === 0) return;
+
+      const timer = setInterval(() => {
+        // 10% chance to trigger an incident
+        if (Math.random() > 0.9) {
+          const randomVehicle = state.vehicles[Math.floor(Math.random() * state.vehicles.length)];
+          const incident: Notification = {
+            id: `noti-${Date.now()}`,
+            type: 'panic',
+            lat: randomVehicle.lat + (Math.random() - 0.5) * 0.01,
+            lng: randomVehicle.lng + (Math.random() - 0.5) * 0.01,
+            timestamp: Math.floor(Date.now() / 1000),
+            description: 'Botón de Pánico Activado',
+            placa: randomVehicle.placa,
+            isRead: false,
+          };
+
+          dispatch({ type: 'ADD_NOTIFICATION', payload: incident });
+          toast({
+            title: "Nueva Incidencia",
+            description: `Boton de Panico: ${incident.placa}`,
+            variant: 'destructive',
+          });
+        }
+      }, 15000); // Check every 15s
+
+      return () => clearInterval(timer);
+    }, [state.vehicles]);
 
 
     useEffect(() => {
