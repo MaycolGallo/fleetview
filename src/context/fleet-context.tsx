@@ -394,7 +394,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     } = useQuery<RawVehicle[], Error>({
       queryKey: ['vehicles'],
       queryFn: fetchVehicles,
-      refetchInterval: 5000,
+      // Automatic refetch disabled to stop vehicles from jumping around
     });
     
     useEffect(() => {
