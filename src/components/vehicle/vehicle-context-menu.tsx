@@ -4,14 +4,15 @@
 import { createPortal } from 'react-dom';
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { History, MapPin, Info, Navigation, AlertCircle, Settings } from 'lucide-react';
+import { History, MapPin, Info, Navigation, AlertCircle, Settings, Bell } from 'lucide-react';
 import type { Vehicle } from '@/lib/types';
 import { useFleetDispatch } from '@/context/fleet-context';
 
-type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'view-alerts' | 'maintenance';
+type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'view-alerts' | 'maintenance' | 'list-incidencias';
 
 const contextMenuItems = [
   { action: 'show-route-history' as VehicleAction, label: 'Show Route History', icon: History },
+  { action: 'list-incidencias' as VehicleAction, label: 'List Incidencias', icon: Bell },
   { action: 'center-map' as VehicleAction, label: 'Center on Map', icon: MapPin },
   { action: 'show-details' as VehicleAction, label: 'Vehicle Details', icon: Info },
   { action: 'track-vehicle' as VehicleAction, label: 'Track Vehicle', icon: Navigation },
@@ -45,6 +46,16 @@ export function VehicleContextMenu({
             });
           } else {
             dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
+          }
+        } else if (action === 'list-incidencias') {
+          // @ts-ignore
+          if (document.startViewTransition) {
+            // @ts-ignore
+            document.startViewTransition(() => {
+              dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: vehicle });
+            });
+          } else {
+            dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: vehicle });
           }
         } else if (action === 'show-details') {
           dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });

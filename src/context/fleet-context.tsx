@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport, FleetState } from '@/lib/types';
+import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport, FleetState, Incidencia } from '@/lib/types';
 
 const fetchVehicles = async (): Promise<RawVehicle[]> => {
   const res = await fetch('/api/vehicles');
@@ -38,7 +38,11 @@ type FleetAction =
   | { type: 'START_ROUTE_PLAYBACK' }
   | { type: 'PAUSE_ROUTE_PLAYBACK' }
   | { type: 'TOGGLE_SPLIT_VIEW' }
-  | { type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: number, lng: number, rumbo: number, velocidad: number, animationDuration: number } };
+  | { type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: number, lng: number, rumbo: number, velocidad: number, animationDuration: number } }
+  | { type: 'START_INCIDENCIAS_LOADING'; payload: Vehicle }
+  | { type: 'SET_INCIDENCIAS'; payload: Incidencia[] }
+  | { type: 'SELECT_INCIDENCIA'; payload: string | null }
+  | { type: 'CLOSE_INCIDENCIAS' };
 
 const getInitialState = (): FleetState => ({
   vehicles: [],
@@ -60,6 +64,10 @@ const getInitialState = (): FleetState => ({
   playbackAnimationDuration: 1000,
   isSplitView: false,
   wasSplitViewBeforeRoute: false,
+  incidencias: [],
+  isLoadingIncidencias: false,
+  isIncidenciasSheetOpen: false,
+  selectedIncidenciaId: null,
 });
 
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
@@ -112,8 +120,9 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         selectedVehicle: null,
         isLoadingRoute: true,
         historyVehicle: action.payload,
-        wasSplitViewBeforeRoute: state.isSplitView, // Remember split view state
-        isSplitView: false, // Force normal view for history entry
+        isIncidenciasSheetOpen: false,
+        wasSplitViewBeforeRoute: state.isSplitView,
+        isSplitView: false,
       };
 
     case 'SET_ROUTE_HISTORY': {
@@ -158,7 +167,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             selectedSegmentIndex: null,
             isLoadingRoute: false,
             isRoutePlaying: false,
-            isSplitView: state.isSplitView || state.wasSplitViewBeforeRoute, // Restore split view if it was on or manually set
+            isSplitView: state.isSplitView || state.wasSplitViewBeforeRoute,
             wasSplitViewBeforeRoute: false,
             mapViewport: { type: 'fit_bounds', payload: newBounds },
         };
@@ -223,6 +232,47 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         mapViewport: newMapViewport,
       };
     }
+
+    case 'START_INCIDENCIAS_LOADING':
+      return {
+        ...state,
+        selectedVehicle: null,
+        isLoadingIncidencias: true,
+        historyVehicle: action.payload,
+        isRouteSheetOpen: false,
+        wasSplitViewBeforeRoute: state.isSplitView,
+        isSplitView: false,
+      };
+
+    case 'SET_INCIDENCIAS':
+      return {
+        ...state,
+        isLoadingIncidencias: false,
+        incidencias: action.payload,
+        isIncidenciasSheetOpen: true,
+        mapViewport: { type: 'fit_bounds', payload: action.payload.map(i => ({ lat: i.lat, lng: i.lng })) },
+      };
+
+    case 'SELECT_INCIDENCIA':
+      if (action.payload === null) return { ...state, selectedIncidenciaId: null };
+      const inc = state.incidencias.find(i => i.id === action.payload);
+      return {
+        ...state,
+        selectedIncidenciaId: action.payload,
+        mapViewport: inc ? { type: 'pan_to_vehicle', payload: { lat: inc.lat, lng: inc.lng } } : state.mapViewport,
+      };
+
+    case 'CLOSE_INCIDENCIAS':
+      return {
+        ...state,
+        historyVehicle: null,
+        incidencias: [],
+        isIncidenciasSheetOpen: false,
+        isLoadingIncidencias: false,
+        selectedIncidenciaId: null,
+        isSplitView: state.wasSplitViewBeforeRoute,
+        mapViewport: { type: 'fit_bounds', payload: state.vehicles.map(v => ({ lat: v.lat, lng: v.lng })) },
+      };
 
     case 'TOGGLE_VEHICLE_VISIBILITY': {
         const newVisibleIds = new Set(state.visibleVehicleIds);
@@ -441,6 +491,39 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
         fetchRoute();
     }, [state.historyVehicle?.id_vehiculo, state.isLoadingRoute]);
 
+    useEffect(() => {
+      const { historyVehicle } = state;
+      if (!historyVehicle || !state.isLoadingIncidencias) return;
+
+      const fetchIncidencias = async () => {
+          try {
+              const response = await fetch('/api/incidencias', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      vehicleId: historyVehicle.id_vehiculo,
+                  }),
+              });
+              if (!response.ok) throw new Error('Failed to fetch incidencias');
+              const data = await response.json();
+              
+              if (document.startViewTransition) {
+                  // @ts-ignore
+                  document.startViewTransition(() => {
+                      dispatch({ type: 'SET_INCIDENCIAS', payload: data });
+                  });
+              } else {
+                  dispatch({ type: 'SET_INCIDENCIAS', payload: data });
+              }
+          } catch (error) {
+              console.error("Error fetching incidencias", error);
+              dispatch({ type: 'BACK_TO_FLEET' });
+          }
+      };
+
+      fetchIncidencias();
+  }, [state.historyVehicle?.id_vehiculo, state.isLoadingIncidencias]);
+
     const stateContextValue = useMemo(() => ({
         state,
         isLoadingVehicles: isLoadingVehicles && state.vehicles.length === 0,
@@ -472,3 +555,4 @@ export const useFleetDispatch = () => {
     }
     return context;
 };
+

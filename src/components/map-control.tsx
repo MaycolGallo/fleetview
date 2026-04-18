@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -7,6 +8,7 @@ import { AnimatedVehicleMarker } from '@/components/vehicle/animated-vehicle-mar
 import { RouteSegments } from '@/components/route/route-polyline';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { Flag, Play } from 'lucide-react';
+import { IncidenciaMarker } from '@/components/incidencias/incidencia-marker';
 
 interface MapControlProps {
   side?: 'ida' | 'vuelta';
@@ -21,6 +23,9 @@ export function MapControl({ side }: MapControlProps) {
     mapViewport,
     routeGroups,
     selectedSegmentIndex,
+    incidencias,
+    selectedIncidenciaId,
+    isIncidenciasSheetOpen
   } = state;
 
   useEffect(() => {
@@ -128,6 +133,16 @@ export function MapControl({ side }: MapControlProps) {
           </AdvancedMarker>
         </>
       )}
+
+      {/* Incidencia Markers */}
+      {isIncidenciasSheetOpen && incidencias.map((inc) => (
+        <IncidenciaMarker
+          key={inc.id}
+          incidencia={inc}
+          isSelected={selectedIncidenciaId === inc.id}
+          onClick={() => dispatch({ type: 'SELECT_INCIDENCIA', payload: inc.id })}
+        />
+      ))}
     </>
   );
 }

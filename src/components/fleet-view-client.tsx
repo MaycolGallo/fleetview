@@ -1,10 +1,12 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
+import { IncidenciasSheet } from './incidencias/incidencias-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2 } from 'lucide-react';
+import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
@@ -48,7 +50,9 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   const {
     historyVehicle,
     routeGroups,
-    isSplitView
+    isSplitView,
+    isIncidenciasSheetOpen,
+    isLoadingIncidencias
   } = state;
   
   const [date, setDate] = useState<DateRange | undefined>();
@@ -99,10 +103,18 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     if (document.startViewTransition) {
         // @ts-ignore
         document.startViewTransition(() => {
-            dispatch({ type: 'BACK_TO_FLEET' });
+            if (isIncidenciasSheetOpen) {
+              dispatch({ type: 'CLOSE_INCIDENCIAS' });
+            } else {
+              dispatch({ type: 'BACK_TO_FLEET' });
+            }
         });
     } else {
-        dispatch({ type: 'BACK_TO_FLEET' });
+        if (isIncidenciasSheetOpen) {
+          dispatch({ type: 'CLOSE_INCIDENCIAS' });
+        } else {
+          dispatch({ type: 'BACK_TO_FLEET' });
+        }
     }
   };
 
@@ -169,8 +181,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
         <div className='relative w-full h-12 flex justify-between'>
           <div className='flex gap-2 items-start pointer-events-auto'>
-            {/* Split View Toggle - Only show if NOT in route history and NOT loading a route */}
-            {!historyVehicle && !state.isLoadingRoute && (
+            {/* Split View Toggle - Only show if NOT in route history or incidencias */}
+            {!historyVehicle && !state.isLoadingRoute && !state.isLoadingIncidencias && (
                <Button 
                   variant={isSplitView ? "default" : "secondary"}
                   onClick={handleToggleSplitView}
@@ -195,70 +207,75 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
               </div>
             ) : null}
 
-            {historyVehicle && !state.isLoadingRoute ? (
+            {(historyVehicle || isIncidenciasSheetOpen) && !state.isLoadingRoute && !state.isLoadingIncidencias ? (
               <div style={{ viewTransitionName: 'back-button-transition' }} className="flex items-center gap-2">
                 <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm">
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Fleet
+                  {isIncidenciasSheetOpen ? <X className="mr-2 h-4 w-4" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
+                  {isIncidenciasSheetOpen ? 'Cerrar Incidencias' : 'Back to Fleet'}
                 </Button>
                 
-                <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-                {isMobile ? (
-                  <Drawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen} modal={false}>
-                    <DrawerTrigger asChild>
-                      <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
-                        <CalendarIcon className="w-4 h-4" />
-                        <span className="sr-only">Filter by date</span>
-                      </Button>
-                    </DrawerTrigger>
-                    <DrawerContent>
-                      <DrawerHandle />
-                      <div className="p-4 overflow-y-auto">
-                        <DrawerHeader className="p-0 text-left mb-4">
-                          <DrawerTitle>Filter Route History</DrawerTitle>
-                          <DrawerDescription>Select a date and time range.</DrawerDescription>
-                        </DrawerHeader>
-                        <div className="flex justify-center">
-                          <Calendar
-                            initialFocus
-                            mode="range"
-                            defaultMonth={date?.from}
-                            selected={date}
-                            onSelect={setDate}
-                            numberOfMonths={1}
-                          />
-                        </div>
-                        <div className='pt-4 space-y-4'>
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className='space-y-2'>
-                              <Label className='text-sm font-medium'>Start time</Label>
-                              <Input 
-                                type="time" 
-                                defaultValue={date?.from ? format(date.from, 'HH:mm') : '00:00'}
-                                onChange={(e) => handleTimeChange('from', e.target.value)}
-                                disabled={!date?.from}
+                {!isIncidenciasSheetOpen && (
+                  <>
+                    <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    {isMobile ? (
+                      <Drawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen} modal={false}>
+                        <DrawerTrigger asChild>
+                          <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
+                            <CalendarIcon className="w-4 h-4" />
+                            <span className="sr-only">Filter by date</span>
+                          </Button>
+                        </DrawerTrigger>
+                        <DrawerContent>
+                          <DrawerHandle />
+                          <div className="p-4 overflow-y-auto">
+                            <DrawerHeader className="p-0 text-left mb-4">
+                              <DrawerTitle>Filter Route History</DrawerTitle>
+                              <DrawerDescription>Select a date and time range.</DrawerDescription>
+                            </DrawerHeader>
+                            <div className="flex justify-center">
+                              <Calendar
+                                initialFocus
+                                mode="range"
+                                defaultMonth={date?.from}
+                                selected={date}
+                                onSelect={setDate}
+                                numberOfMonths={1}
                               />
                             </div>
-                            <div className='space-y-2'>
-                              <Label className='text-sm font-medium'>End time</Label>
-                              <Input 
-                                type="time" 
-                                defaultValue={date?.to ? format(date.to, 'HH:mm') : '23:59'}
-                                onChange={(e) => handleTimeChange('to', e.target.value)}
-                                disabled={!date?.to}
-                              />
+                            <div className='pt-4 space-y-4'>
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className='space-y-2'>
+                                  <Label className='text-sm font-medium'>Start time</Label>
+                                  <Input 
+                                    type="time" 
+                                    defaultValue={date?.from ? format(date.from, 'HH:mm') : '00:00'}
+                                    onChange={(e) => handleTimeChange('from', e.target.value)}
+                                    disabled={!date?.from}
+                                  />
+                                </div>
+                                <div className='space-y-2'>
+                                  <Label className='text-sm font-medium'>End time</Label>
+                                  <Input 
+                                    type="time" 
+                                    defaultValue={date?.to ? format(date.to, 'HH:mm') : '23:59'}
+                                    onChange={(e) => handleTimeChange('to', e.target.value)}
+                                    disabled={!date?.to}
+                                  />
+                                </div>
+                              </div>
+                              <Button onClick={handleFilterApply} className="w-full">Apply</Button>
                             </div>
                           </div>
-                          <Button onClick={handleFilterApply} className="w-full">Apply</Button>
-                        </div>
+                        </DrawerContent>
+                      </Drawer>
+                    ) : (
+                      <div className="bg-card/90 backdrop-blur-sm rounded-md shadow-lg pointer-events-auto">
+                        <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
                       </div>
-                    </DrawerContent>
-                  </Drawer>
-                ) : (
-                  <div className="bg-card/90 backdrop-blur-sm rounded-md shadow-lg pointer-events-auto">
-                    <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
-                  </div>
+                    )}
+                  </>
                 )}
               </div>
             ) : null}
@@ -267,20 +284,21 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       </div>
 
       {/* Loading Overlay */}
-      {state.isLoadingRoute && (
+      {(state.isLoadingRoute || state.isLoadingIncidencias) && (
         <div
           style={{ viewTransitionName: 'loading-transition' }}
           className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-[100]"
         >
           <div className="flex items-center gap-2 text-foreground bg-card p-4 rounded-lg shadow-xl border">
             <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
-            <p className="font-medium">Generating route...</p>
+            <p className="font-medium">{state.isLoadingIncidencias ? 'Cargando incidencias...' : 'Generating route...'}</p>
           </div>
         </div>
       )}
 
-      {/* Route History Summary Sheet (Bottom) */}
+      {/* Sheets Layer */}
       <RouteHistorySheet date={date} setDate={setDate} onApply={handleFilterApply}/>
+      <IncidenciasSheet />
     </div>
   );
 }

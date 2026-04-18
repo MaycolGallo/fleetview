@@ -41,6 +41,16 @@ export interface Vehicle {
 
 export type VehicleStatus = string;
 
+export interface Incidencia {
+  id: string;
+  type: 'panic' | 'harsh_accel' | 'harsh_brake' | 'speeding' | 'excessive_idle';
+  lat: number;
+  lng: number;
+  timestamp: number;
+  description: string;
+  value?: string;
+}
+
 export interface VehiculoUbicacionHistorial {
   id: string;
   id_vehiculo: number;
@@ -136,4 +146,9 @@ export interface FleetState {
   playbackAnimationDuration: number;
   isSplitView: boolean;
   wasSplitViewBeforeRoute: boolean;
+  // Incidencias
+  incidencias: Incidencia[];
+  isLoadingIncidencias: boolean;
+  isIncidenciasSheetOpen: boolean;
+  selectedIncidenciaId: string | null;
 }
