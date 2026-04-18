@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X, Bell, LayoutVertical, LayoutHorizontal } from 'lucide-react';
+import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X, Bell, Rows2 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
@@ -149,7 +149,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       ? 'Cargando incidencias...' 
       : 'Generando ruta...';
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const isDetailView = historyVehicle || isIncidenciasSheetOpen || isLoadingRoute || isLoadingIncidencias;
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
@@ -171,7 +171,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       </div>
 
       {/* Floating Panel Layer (Desktop) */}
-      {!isMobile && !historyVehicle && isPanelOpen && (
+      {!isMobile && !isDetailView && isPanelOpen && (
         <div 
           className="absolute top-4 left-4 bottom-4 w-[380px] z-20 transition-all duration-300 animate-in slide-in-from-left-4 fade-in-20"
         >
@@ -182,7 +182,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       )}
 
       {/* Bottom Drawer (Mobile) */}
-      {isMobile && !historyVehicle && (
+      {isMobile && !isDetailView && (
         <Drawer open={isPanelOpen} onOpenChange={setIsPanelOpen} modal={false}>
           <DrawerContent className="h-[75vh] flex flex-col focus:outline-none">
             <DrawerHandle />
@@ -198,7 +198,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         <div className='relative w-full h-12 flex justify-between'>
           <div className='flex gap-2 items-start pointer-events-auto'>
             {/* Split View Toggle - Only show if NOT in route history or incidencias */}
-            {!historyVehicle && !state.isLoadingRoute && !state.isLoadingIncidencias && (
+            {!isDetailView && (
               <div className="flex gap-2">
                 <Button 
                   variant={isSplitView ? "default" : "secondary"}
@@ -217,14 +217,14 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                     className="shadow-lg backdrop-blur-sm px-4 bg-card/90"
                     title="Toggle Layout Orientation"
                   >
-                    {splitDirection === 'horizontal' ? <LayoutVertical className="mr-2 h-4 w-4" /> : <LayoutHorizontal className="mr-2 h-4 w-4" />}
+                    {splitDirection === 'horizontal' ? <Rows2 className="mr-2 h-4 w-4" /> : <Columns2 className="mr-2 h-4 w-4" />}
                     <span className="hidden sm:inline">{splitDirection === 'horizontal' ? 'Vertical' : 'Horizontal'}</span>
                   </Button>
                 )}
               </div>
             )}
 
-            {!historyVehicle && !isPanelOpen ? (
+            {!isDetailView && !isPanelOpen ? (
               <div style={{ viewTransitionName: 'filters-transition' }}>
                 <Button 
                   variant="secondary"
@@ -237,7 +237,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
               </div>
             ) : null}
 
-            {(historyVehicle || isIncidenciasSheetOpen) && !state.isLoadingRoute && !state.isLoadingIncidencias ? (
+            {isDetailView && !state.isLoadingRoute && !state.isLoadingIncidencias ? (
               <div style={{ viewTransitionName: 'back-button-transition' }} className="flex items-center gap-2">
                 <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm">
                   {isIncidenciasSheetOpen ? <X className="mr-2 h-4 w-4" /> : <ArrowLeft className="mr-2 h-4 w-4" />}

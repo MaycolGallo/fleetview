@@ -2,7 +2,7 @@
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
-import { useIsMobile } from '@/hooks/use-is-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
