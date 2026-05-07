@@ -20,7 +20,8 @@ import {
   Settings2,
   Trash2,
   Moon,
-  Sun
+  Sun,
+  LayoutGrid
 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
@@ -161,18 +162,23 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             )}
           </ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-          <ResizablePanel defaultSize={30} minSize={20} className="bg-muted/10">
+          <ResizablePanel defaultSize={30} minSize={20} className="bg-muted/10 relative">
             <div className="h-full w-full p-2">
-              <div className="h-full w-full rounded-xl overflow-hidden border-2 border-primary/20 bg-background shadow-lg relative group">
+              <div className="h-full w-full rounded-xl overflow-hidden border-2 border-primary/20 bg-background shadow-lg relative">
                 <FleetMap apiKey={apiKey} trackedVehicleIds={trackedVehicleIds} />
-                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <Button 
+                
+                {/* Floating Header for Mini-map */}
+                <div className="absolute top-3 left-3 right-3 z-10 flex justify-between items-center pointer-events-none">
+                  <div className="bg-primary/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-widest shadow-lg">
+                    Focus: {trackedVehicleIds.length} unidades
+                  </div>
+                  <Button 
                     variant="destructive" 
                     size="icon" 
-                    className="h-8 w-8"
+                    className="h-8 w-8 pointer-events-auto shadow-lg hover:scale-110 transition-transform"
                     onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: trackedVehicleIds, visible: false } })}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -231,7 +237,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       
       {/* Top Header Controls Overlay */}
       <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
-        <div className='relative w-full h-12 flex justify-between items-center'>
+        <div className='relative w-full h-12 flex justify-between items-center max-w-[100vw]'>
           {/* Left: Sidebar Toggle and Detail Back button */}
           <div className='flex gap-3 items-center pointer-events-auto'>
              {!isDetailView && !isPanelOpen && (
@@ -246,9 +252,9 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             )}
 
             {isDetailView && !state.isLoadingRoute && !state.isLoadingIncidencias && (
-              <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm hover:bg-accent transition-colors font-bold border border-primary/20">
+              <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm hover:bg-accent transition-colors font-bold border border-primary/20 h-10">
                 {isIncidenciasSheetOpen ? <X className="mr-2 h-4 w-4" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
-                {isIncidenciasSheetOpen ? 'Cerrar Incidencias' : 'Regresar a Flota'}
+                {isIncidenciasSheetOpen ? 'Cerrar Incidencias' : 'Flota'}
               </Button>
             )}
           </div>
@@ -258,13 +264,13 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             <div className="pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-500">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 font-bold gap-2 h-10">
+                  <Button variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 font-bold gap-2 h-10 px-4">
                     <Settings2 className="w-4 h-4 text-primary" />
-                    <span className="hidden sm:inline">Configuración de Mapa</span>
+                    <span className="hidden sm:inline">Vista de Flota</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64 bg-card/95 backdrop-blur-md" align="center">
-                  <DropdownMenuLabel>Vista de Flota</DropdownMenuLabel>
+                  <DropdownMenuLabel>Configuración Visual</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => dispatch({ type: 'TOGGLE_SPLIT_VIEW' })} className="cursor-pointer">
                     <Columns2 className="mr-2 h-4 w-4" />
@@ -302,13 +308,13 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           <div className='flex gap-2 items-center pointer-events-auto'>
             {isDetailView && !isIncidenciasSheetOpen && !state.isLoadingRoute && (
                <div className="flex gap-2 animate-in fade-in zoom-in-95 duration-300">
-                  <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20">
+                  <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 h-10 w-10">
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                   {isMobile ? (
                     <Drawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen} modal={false}>
                       <DrawerTrigger asChild>
-                        <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20">
+                        <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 h-10 w-10">
                           <CalendarIcon className="w-4 h-4" />
                         </Button>
                       </DrawerTrigger>
@@ -357,3 +363,4 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     </div>
   );
 }
+

@@ -10,7 +10,7 @@ import { VehicleFilters } from '@/components/vehicle/vehicle-filters';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronDown, LayoutPanelLeft } from 'lucide-react';
+import { ChevronLeft, ChevronDown, LayoutPanelLeft, Radar, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -22,7 +22,7 @@ interface VehiclePanelContentProps {
 export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelContentProps) {
     const { state, isLoadingVehicles } = useFleetState();
     const dispatch = useFleetDispatch();
-    const { selectedVehicle, vehicles, visibleVehicleIds } = state;
+    const { selectedVehicle, vehicles, visibleVehicleIds, trackedVehicleIds } = state;
     const isMobile = useIsMobile();
 
     const allVisible = vehicles.length > 0 && vehicles.every(v => visibleVehicleIds.has(v.id_vehiculo));
@@ -38,6 +38,10 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
             } 
         });
     };
+
+    const handleClearTracking = () => {
+      dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: trackedVehicleIds, visible: false } });
+    }
 
     if (selectedVehicle) {
         return (
@@ -76,6 +80,17 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {trackedVehicleIds.length > 0 && (
+                          <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            className="h-7 text-[10px] px-2 font-bold"
+                            onClick={handleClearTracking}
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Limpiar Mini-Maps
+                          </Button>
+                        )}
                         <div className="flex items-center space-x-2 bg-background/50 border px-2 py-1 rounded-lg shadow-sm hover:bg-background transition-colors">
                             <Checkbox 
                                 id="toggle-all" 
@@ -115,3 +130,4 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
         </div>
     );
 }
+
