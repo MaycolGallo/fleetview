@@ -351,17 +351,14 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       return { ...state, miniMaps: [], trackedVehicleIds: [] };
 
     case 'TOGGLE_TRACK_VEHICLE': {
-      // Helper for backward compatibility or simple tracking
-      const isAlreadyTracked = state.trackedVehicleIds.includes(action.payload);
+      const isAlreadyTracked = state.trackedVehicleIds?.includes(action.payload) || false;
       if (isAlreadyTracked) {
-        // Remove from all minimaps
         const newMaps = state.miniMaps.map(m => ({
           ...m,
           vehicleIds: m.vehicleIds.filter(id => id !== action.payload)
         })).filter(m => m.vehicleIds.length > 0);
         return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
       } else {
-        // Create new minimap for this vehicle
         const newMap: MiniMapGroup = {
           id: `map-${Date.now()}`,
           name: `Radar Lock ${state.miniMaps.length + 1}`,
@@ -502,9 +499,11 @@ export const selectMapVehicles = (state: FleetState, trackedIds?: number[]): Veh
   }
   
   if (trackedIds && trackedIds.length > 0) {
+    // Mini-map view: Show specifically assigned vehicles regardless of main visibility toggle
     return state.vehicles.filter(v => trackedIds.includes(v.id_vehiculo));
   }
 
+  // Main map view: Show vehicles based on visibility toggle and filters
   const filtered = selectFilteredVehicles(state);
   return filtered;
 };
