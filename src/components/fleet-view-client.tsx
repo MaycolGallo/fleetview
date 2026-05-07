@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
@@ -57,7 +56,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     isLoadingIncidencias,
     isLoadingRoute,
     trackedVehicleIds,
-    masterRoute,
   } = state;
   
   const [date, setDate] = useState<DateRange | undefined>();
