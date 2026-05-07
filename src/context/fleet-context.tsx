@@ -503,9 +503,12 @@ export const selectMapVehicles = (state: FleetState, trackedIds?: number[]): Veh
     return state.vehicles.filter(v => trackedIds.includes(v.id_vehiculo));
   }
 
-  // Main map view: Show vehicles based on visibility toggle and filters
+  // Main map view: Show vehicles based on visibility toggle and filters,
+  // BUT exclude any vehicle that is currently assigned to a mini-map
   const filtered = selectFilteredVehicles(state);
-  return filtered;
+  const allTrackedIds = state.trackedVehicleIds || [];
+  
+  return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
 };
 
 export const selectRouteSummary = (state: FleetState) => {
