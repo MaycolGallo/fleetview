@@ -36,7 +36,7 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
         />
         <div className="text-center z-10 px-6">
           <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-1">
-            {isTrackingView ? `Tracking: ${trackingLabel}` : side ? `Visor de Flota: ${side}` : 'Visor de Flota Principal'}
+            {isTrackingView ? `Focus Tracking: ${trackingLabel}` : side ? `Visor de Flota: ${side}` : 'Visor de Flota Principal'}
           </p>
           <p className="text-xs text-muted-foreground/60 italic">
             [Modo Demo: Mapa Real Desactivado]
