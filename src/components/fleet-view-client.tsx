@@ -19,7 +19,8 @@ import {
   Trash2,
   Moon,
   Sun,
-  LayoutGrid
+  LayoutGrid,
+  Radar
 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
@@ -142,43 +143,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       return <FleetMap apiKey={apiKey} />;
     }
 
-    // Grid Tracking View - Individual Mini-maps Grid
-    if (trackedVehicleIds.length > 0 && !isMobile) {
-      return (
-        <ResizablePanelGroup direction="horizontal" className="h-full w-full">
-          <ResizablePanel defaultSize={65} minSize={30}>
-             <FleetMap apiKey={apiKey} />
-          </ResizablePanel>
-          <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-          <ResizablePanel defaultSize={35} minSize={20}>
-            <div className={cn(
-                "h-full w-full grid p-3 gap-3 bg-muted/30 overflow-auto content-start",
-                trackedVehicleIds.length === 1 ? "grid-cols-1" : "grid-cols-1"
-            )}>
-              {trackedVehicleIds.map((id) => (
-                <div key={id} className="relative aspect-square border-2 rounded-2xl overflow-hidden shadow-xl bg-card group ring-1 ring-primary/5">
-                   <FleetMap apiKey={apiKey} trackedVehicleId={id} />
-                   <div className="absolute top-3 left-3 z-10">
-                      <div className="bg-card/90 backdrop-blur-sm px-2 py-1 rounded-md border shadow-sm text-[10px] font-bold text-primary uppercase">
-                        Unit Focus
-                      </div>
-                   </div>
-                   <Button 
-                      variant="destructive" 
-                      size="icon" 
-                      className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-lg"
-                      onClick={() => dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: id })}
-                    >
-                      <X className="h-4 w-4" />
-                   </Button>
-                </div>
-              ))}
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
-      );
-    }
-
     if (isSplitView) {
       return (
         <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
@@ -198,7 +162,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
-      {/* Map Layers */}
+      {/* Main Map Layer */}
       <div className="absolute inset-0 z-0">
         {renderMaps()}
       </div>
@@ -211,6 +175,37 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           <div className="h-full w-full bg-card/95 backdrop-blur-md rounded-xl border shadow-2xl overflow-hidden flex flex-col">
             {panelContent}
           </div>
+        </div>
+      )}
+
+      {/* Floating Minimaps Overlay (The focused squares) */}
+      {!isDetailView && trackedVehicleIds.length > 0 && (
+        <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-4 pointer-events-none max-h-[75vh] overflow-y-auto pr-2 no-scrollbar">
+          {trackedVehicleIds.map((id) => (
+            <div 
+              key={id} 
+              className="pointer-events-auto relative w-48 sm:w-64 aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10 animate-in slide-in-from-right-8"
+            >
+              <FleetMap apiKey={apiKey} trackedVehicleId={id} />
+               <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                  <div className="bg-primary px-1.5 py-0.5 rounded shadow-sm text-[8px] font-bold text-white uppercase flex items-center gap-1">
+                    <Radar className="w-2 h-2" />
+                    Radar Lock
+                  </div>
+                  <div className="bg-card/90 backdrop-blur-sm px-1.5 py-0.5 rounded border shadow-sm text-[8px] font-bold text-foreground uppercase">
+                    {vehicles.find(v => v.id_vehiculo === id)?.placa}
+                  </div>
+               </div>
+               <Button 
+                  variant="destructive" 
+                  size="icon" 
+                  className="absolute top-2 right-2 h-6 w-6 z-20 shadow-lg hover:scale-110 transition-transform"
+                  onClick={() => dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: id })}
+                >
+                  <X className="h-3 w-3" />
+               </Button>
+            </div>
+          ))}
         </div>
       )}
 
@@ -229,7 +224,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       {/* Top Header Controls Overlay */}
       <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
         <div className='relative w-full h-12 flex justify-between items-center max-w-[100vw]'>
-          {/* Left: Sidebar Toggle and Detail Back button */}
           <div className='flex gap-3 items-center pointer-events-auto'>
              {!isDetailView && !isPanelOpen && (
               <Button 
@@ -245,32 +239,31 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             {isDetailView && !state.isLoadingRoute && !state.isLoadingIncidencias && (
               <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm hover:bg-accent transition-colors font-bold border border-primary/20 h-10">
                 {isIncidenciasSheetOpen ? <X className="mr-2 h-4 w-4" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
-                {isIncidenciasSheetOpen ? 'Cerrar Incidencias' : 'Flota'}
+                {isIncidenciasSheetOpen ? 'Cerrar' : 'Volver'}
               </Button>
             )}
           </div>
 
-          {/* Center: View Mode Dropdown */}
           {!isDetailView && (
             <div className="pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-500">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 font-bold gap-2 h-10 px-4">
                     <Settings2 className="w-4 h-4 text-primary" />
-                    <span className="hidden sm:inline">Vista de Flota</span>
+                    <span className="hidden sm:inline">Opciones de Mapa</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64 bg-card/95 backdrop-blur-md" align="center">
-                  <DropdownMenuLabel>Configuración Visual</DropdownMenuLabel>
+                  <DropdownMenuLabel>Vista de Flota</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => dispatch({ type: 'TOGGLE_SPLIT_VIEW' })} className="cursor-pointer">
                     <Columns2 className="mr-2 h-4 w-4" />
-                    <span>{isSplitView ? 'Cerrar Vista Dividida' : 'Activar Vista Dividida'}</span>
+                    <span>{isSplitView ? 'Cerrar Vista Dividida' : 'Vista Ida/Vuelta'}</span>
                   </DropdownMenuItem>
                   {isSplitView && (
                     <DropdownMenuItem onClick={() => dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' })} className="cursor-pointer">
                       {splitDirection === 'horizontal' ? <Rows2 className="mr-2 h-4 w-4" /> : <Columns2 className="mr-2 h-4 w-4" />}
-                      <span>Orientación: {splitDirection === 'horizontal' ? 'Vertical' : 'Horizontal'}</span>
+                      <span>Girar Orientación</span>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
@@ -286,7 +279,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                         className="cursor-pointer text-destructive focus:text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        <span>Cerrar Tracking</span>
+                        <span>Cerrar Todos los Mini-maps</span>
                       </DropdownMenuItem>
                     </>
                   )}
@@ -295,7 +288,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             </div>
           )}
 
-          {/* Right: Refresh, Calendar and Notifications */}
           <div className='flex gap-2 items-center pointer-events-auto'>
             {isDetailView && !isIncidenciasSheetOpen && !state.isLoadingRoute && (
                <div className="flex gap-2 animate-in fade-in zoom-in-95 duration-300">
@@ -314,7 +306,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                         <div className="p-4">
                           <DrawerHeader className="p-0 text-left mb-4">
                             <DrawerTitle>Filtrar Historial</DrawerTitle>
-                            <DrawerDescription>Selecciona un rango de fecha y hora.</DrawerDescription>
                           </DrawerHeader>
                           <div className="flex justify-center">
                             <Calendar mode="range" selected={date} onSelect={setDate} />
@@ -335,7 +326,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         </div>
       </div>
 
-      {/* Loading Overlay */}
       {(state.isLoadingRoute || state.isLoadingIncidencias) && (
         <div
           style={{ viewTransitionName: 'loading-transition' }}
@@ -348,7 +338,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         </div>
       )}
 
-      {/* Sheets Layer */}
       <RouteHistorySheet date={date} setDate={setDate} onApply={handleFilterApply}/>
       <IncidenciasSheet />
     </div>
