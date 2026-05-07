@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Fragment } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
@@ -98,7 +99,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   useEffect(() => {
     if (historyVehicle && isPanelOpen) {
       // @ts-ignore
-      if (document.startViewTransition) {
+      if (typeof document !== 'undefined' && document.startViewTransition) {
         // @ts-ignore
         document.startViewTransition(() => {
           setIsPanelOpen(false);
@@ -120,7 +121,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     };
 
     // @ts-ignore
-    if (document.startViewTransition) {
+    if (typeof document !== 'undefined' && document.startViewTransition) {
         // @ts-ignore
         document.startViewTransition(action);
     } else {
@@ -130,7 +131,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const handleToggleSplitView = () => {
     // @ts-ignore
-    if (document.startViewTransition) {
+    if (typeof document !== 'undefined' && document.startViewTransition) {
       // @ts-ignore
       document.startViewTransition(() => {
         dispatch({ type: 'TOGGLE_SPLIT_VIEW' });
@@ -142,7 +143,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const handleToggleSplitDirection = () => {
     // @ts-ignore
-    if (document.startViewTransition) {
+    if (typeof document !== 'undefined' && document.startViewTransition) {
       // @ts-ignore
       document.startViewTransition(() => {
         dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' });
@@ -154,7 +155,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const handleOpenPanel = () => {
     // @ts-ignore
-    if (document.startViewTransition) {
+    if (typeof document !== 'undefined' && document.startViewTransition) {
       // @ts-ignore
       document.startViewTransition(() => {
         setIsPanelOpen(true);
@@ -184,7 +185,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     if (trackedVehicleIds.length > 0) {
       return (
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
-          <ResizablePanel defaultSize={60} className="relative">
+          <ResizablePanel defaultSize={75} minSize={40} className="relative">
              {!isSplitView ? (
               <FleetMap apiKey={apiKey} />
             ) : (
@@ -200,15 +201,19 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             )}
           </ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-          <ResizablePanel defaultSize={40}>
-            <ResizablePanelGroup direction="vertical">
+          <ResizablePanel defaultSize={25} minSize={15} className="bg-muted/10">
+            <ResizablePanelGroup direction="vertical" className="h-full w-full p-1 gap-1">
               {trackedVehicleIds.map((id, index) => (
-                <React.Fragment key={id}>
-                  <ResizablePanel defaultSize={100 / trackedVehicleIds.length}>
-                    <FleetMap apiKey={apiKey} trackedVehicleId={id} />
+                <Fragment key={id}>
+                  <ResizablePanel defaultSize={100 / trackedVehicleIds.length} minSize={10}>
+                    <div className="h-full w-full rounded-lg overflow-hidden border-2 border-primary/20 bg-background shadow-inner">
+                      <FleetMap apiKey={apiKey} trackedVehicleId={id} />
+                    </div>
                   </ResizablePanel>
-                  {index < trackedVehicleIds.length - 1 && <ResizableHandle withHandle />}
-                </React.Fragment>
+                  {index < trackedVehicleIds.length - 1 && (
+                    <ResizableHandle withHandle className="bg-transparent h-1" />
+                  )}
+                </Fragment>
               ))}
             </ResizablePanelGroup>
           </ResizablePanel>
