@@ -6,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X, Rows2, Radar } from 'lucide-react';
+import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X, Rows2, ChevronLeft, Map as MapIcon } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
@@ -151,7 +151,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const panelContent = <VehiclePanelContent onVehicleSelect={() => {}} onClose={() => setIsPanelOpen(false)} />;
 
-  const isDetailView = historyVehicle || isIncidenciasSheetOpen || isLoadingRoute || isLoadingIncidencias;
+  const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || isLoadingRoute || isLoadingIncidencias);
 
   const renderMaps = () => {
     if (isDetailView) {
@@ -247,136 +247,101 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       {/* Top Header Controls Overlay */}
       <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
         <div className='relative w-full h-12 flex justify-between items-center'>
+          {/* Left: Sidebar Toggle and Detail Back button */}
           <div className='flex gap-3 items-center pointer-events-auto'>
-            {/* Global View Controls */}
-            {!isDetailView && (
-              <div className="flex gap-2 p-1 bg-card/80 backdrop-blur-md border rounded-lg shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
-                <Button 
-                  variant={isSplitView ? "default" : "ghost"}
-                  size="sm"
-                  onClick={handleToggleSplitView}
-                  className="px-3"
-                >
-                  <Columns2 className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">{isSplitView ? 'Close Split' : 'Split View'}</span>
-                </Button>
-
-                {isSplitView && (
-                  <Button 
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleToggleSplitDirection}
-                    className="px-3"
-                  >
-                    {splitDirection === 'horizontal' ? <Rows2 className="mr-2 h-4 w-4" /> : <Columns2 className="mr-2 h-4 w-4" />}
-                    <span className="hidden sm:inline">{splitDirection === 'horizontal' ? 'Vertical' : 'Horizontal'}</span>
-                  </Button>
-                )}
-                
-                {trackedVehicleIds.length > 0 && (
-                   <Button 
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: [], visible: false } })}
-                    className="px-3"
-                  >
-                    <X className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Stop All Tracking</span>
-                  </Button>
-                )}
-              </div>
+             {!isDetailView && !isPanelOpen && (
+              <Button 
+                variant="secondary" 
+                size="icon" 
+                onClick={handleOpenPanel} 
+                className='shadow-lg bg-card/90 backdrop-blur-sm hover:scale-110 transition-transform border border-primary/20'
+              >
+                {isMobile ? <List className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
+              </Button>
             )}
 
-            {/* Panel Restore Button */}
-            {!isDetailView && !isPanelOpen ? (
-              <div style={{ viewTransitionName: 'filters-transition' }}>
-                <Button 
-                  variant="secondary"
-                  size="icon"
-                  onClick={handleOpenPanel} 
-                  className='shadow-lg bg-card/90 backdrop-blur-sm hover:scale-110 transition-transform'
-                >
-                  {isMobile ? <List className="h-5 w-5" /> : <PanelLeft className="h-5 w-5" />}
-                </Button>
-              </div>
-            ) : null}
-
-            {/* Detail View Controls */}
-            {isDetailView && !state.isLoadingRoute && !state.isLoadingIncidencias ? (
-              <div style={{ viewTransitionName: 'back-button-transition' }} className="flex items-center gap-2">
-                <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm hover:bg-accent transition-colors font-semibold">
-                  {isIncidenciasSheetOpen ? <X className="mr-2 h-4 w-4" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
-                  {isIncidenciasSheetOpen ? 'Cerrar Incidencias' : 'Back to Fleet'}
-                </Button>
-                
-                {!isIncidenciasSheetOpen && (
-                  <>
-                    <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm hover:rotate-180 transition-transform duration-500">
-                      <RefreshCw className="h-4 w-4" />
-                    </Button>
-                    {isMobile ? (
-                      <Drawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen} modal={false}>
-                        <DrawerTrigger asChild>
-                          <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm">
-                            <CalendarIcon className="w-4 h-4" />
-                            <span className="sr-only">Filter by date</span>
-                          </Button>
-                        </DrawerTrigger>
-                        <DrawerContent>
-                          <DrawerHandle />
-                          <div className="p-4 overflow-y-auto">
-                            <DrawerHeader className="p-0 text-left mb-4">
-                              <DrawerTitle>Filter Route History</DrawerTitle>
-                              <DrawerDescription>Select a date and time range.</DrawerDescription>
-                            </DrawerHeader>
-                            <div className="flex justify-center">
-                              <Calendar
-                                initialFocus
-                                mode="range"
-                                defaultMonth={date?.from}
-                                selected={date}
-                                onSelect={setDate}
-                                numberOfMonths={1}
-                              />
-                            </div>
-                            <div className='pt-4 space-y-4'>
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className='space-y-2'>
-                                  <Label className='text-sm font-medium'>Start time</Label>
-                                  <Input 
-                                    type="time" 
-                                    defaultValue={date?.from ? format(date.from, 'HH:mm') : '00:00'}
-                                    onChange={(e) => handleTimeChange('from', e.target.value)}
-                                    disabled={!date?.from}
-                                  />
-                                </div>
-                                <div className='space-y-2'>
-                                  <Label className='text-sm font-medium'>End time</Label>
-                                  <Input 
-                                    type="time" 
-                                    defaultValue={date?.to ? format(date.to, 'HH:mm') : '23:59'}
-                                    onChange={(e) => handleTimeChange('to', e.target.value)}
-                                    disabled={!date?.to}
-                                  />
-                                </div>
-                              </div>
-                              <Button onClick={handleFilterApply} className="w-full">Apply</Button>
-                            </div>
-                          </div>
-                        </DrawerContent>
-                      </Drawer>
-                    ) : (
-                      <div className="bg-card/90 backdrop-blur-sm rounded-md shadow-lg pointer-events-auto animate-in fade-in slide-in-from-left-2 duration-300">
-                        <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            ) : null}
+            {isDetailView && !state.isLoadingRoute && !state.isLoadingIncidencias && (
+              <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm hover:bg-accent transition-colors font-bold border border-primary/20">
+                {isIncidenciasSheetOpen ? <X className="mr-2 h-4 w-4" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
+                {isIncidenciasSheetOpen ? 'Cerrar Incidencias' : 'Regresar a Flota'}
+              </Button>
+            )}
           </div>
 
+          {/* Center: Global View Controls */}
+          {!isDetailView && (
+            <div className="flex gap-2 p-1 bg-card/80 backdrop-blur-md border rounded-xl shadow-lg pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-500">
+              <Button 
+                variant={isSplitView ? "default" : "ghost"}
+                size="sm"
+                onClick={handleToggleSplitView}
+                className="h-9 px-3 font-semibold"
+              >
+                <Columns2 className="mr-2 h-4 w-4" />
+                <span className="hidden sm:inline">{isSplitView ? 'Cerrar Split' : 'Split View'}</span>
+              </Button>
+
+              {isSplitView && (
+                <Button 
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleToggleSplitDirection}
+                  className="h-9 px-3 font-semibold"
+                >
+                  {splitDirection === 'horizontal' ? <Rows2 className="mr-2 h-4 w-4" /> : <Columns2 className="mr-2 h-4 w-4" />}
+                  <span className="hidden sm:inline">{splitDirection === 'horizontal' ? 'Vertical' : 'Horizontal'}</span>
+                </Button>
+              )}
+              
+              {trackedVehicleIds.length > 0 && (
+                 <Button 
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: [], visible: false } })}
+                  className="h-9 px-3 font-semibold"
+                >
+                  <MapIcon className="mr-2 h-4 w-4" />
+                  <span className="hidden sm:inline">Limpiar Tracking</span>
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Right: Refresh, Calendar and Notifications */}
           <div className='flex gap-2 items-center pointer-events-auto'>
+            {isDetailView && !isIncidenciasSheetOpen && !state.isLoadingRoute && (
+               <div className="flex gap-2 animate-in fade-in zoom-in-95 duration-300">
+                  <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20">
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                  {isMobile ? (
+                    <Drawer open={nestedDrawerOpen} onOpenChange={setNestedDrawerOpen} modal={false}>
+                      <DrawerTrigger asChild>
+                        <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20">
+                          <CalendarIcon className="w-4 h-4" />
+                        </Button>
+                      </DrawerTrigger>
+                      <DrawerContent>
+                        <DrawerHandle />
+                        <div className="p-4">
+                          <DrawerHeader className="p-0 text-left mb-4">
+                            <DrawerTitle>Filtrar Historial</DrawerTitle>
+                            <DrawerDescription>Selecciona un rango de fecha y hora.</DrawerDescription>
+                          </DrawerHeader>
+                          <div className="flex justify-center">
+                            <Calendar mode="range" selected={date} onSelect={setDate} />
+                          </div>
+                          <Button onClick={handleFilterApply} className="w-full mt-4">Aplicar</Button>
+                        </div>
+                      </DrawerContent>
+                    </Drawer>
+                  ) : (
+                    <div className="bg-card/90 backdrop-blur-sm rounded-lg shadow-lg border border-primary/20">
+                      <DateRangePicker date={date} setDate={setDate} onApply={handleFilterApply} />
+                    </div>
+                  )}
+               </div>
+            )}
             <NotificationsDropdown apiKey={apiKey} />
           </div>
         </div>

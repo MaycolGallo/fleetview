@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
@@ -9,7 +10,7 @@ import { VehicleFilters } from '@/components/vehicle/vehicle-filters';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { PanelLeft, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronDown, LayoutPanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -51,40 +52,44 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
     return (
         <div className="h-full flex flex-col animate-in fade-in duration-500">
             <div className="p-4 border-b space-y-4 bg-muted/20">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-center">
                     <div className="flex items-center gap-3">
                         {!isMobile && onClose && (
                             <Button 
-                                variant="ghost" 
+                                variant="outline" 
                                 size="icon" 
-                                className="h-8 w-8 -ml-1 hover:bg-muted hover:scale-110 transition-all"
+                                className="h-8 w-8 hover:bg-muted border-primary/20 shadow-sm transition-all active:scale-95"
                                 onClick={onClose}
+                                title="Cerrar panel"
                             >
-                                <PanelLeft className="h-4 w-4" />
+                                <ChevronLeft className="h-4 w-4" />
                             </Button>
                         )}
-                        <div>
-                            <h2 className="text-lg font-semibold leading-tight">Fleet</h2>
-                            <p className="text-xs text-muted-foreground">
-                                {vehicles.length} vehicles available
-                            </p>
+                        <div className="flex items-center gap-2">
+                            <LayoutPanelLeft className="w-5 h-5 text-primary" />
+                            <div>
+                                <h2 className="text-lg font-bold leading-tight">Flota</h2>
+                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
+                                    {vehicles.length} Vehículos
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center space-x-2 bg-background/50 border px-2 py-1 rounded-md shadow-sm hover:bg-background transition-colors">
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center space-x-2 bg-background/50 border px-2 py-1 rounded-lg shadow-sm hover:bg-background transition-colors">
                             <Checkbox 
                                 id="toggle-all" 
                                 checked={allVisible} 
                                 onCheckedChange={handleToggleAll}
                                 className={cn(someVisible && "opacity-70")}
                             />
-                            <Label htmlFor="toggle-all" className="text-xs font-medium cursor-pointer">All</Label>
+                            <Label htmlFor="toggle-all" className="text-xs font-bold cursor-pointer select-none">Todos</Label>
                         </div>
                         {isMobile && onClose && (
                              <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                className="h-8 w-8 hover:bg-muted animate-bounce"
+                                className="h-8 w-8 hover:bg-muted"
                                 onClick={onClose}
                             >
                                 <ChevronDown className="h-4 w-4" />
@@ -100,7 +105,7 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
                 {isLoadingVehicles ? (
                     <div className="p-4 flex flex-col gap-3">
                         {Array.from({ length: 6 }).map((_, i) => (
-                            <Skeleton key={i} className="h-24 w-full rounded-lg" />
+                            <Skeleton key={i} className="h-24 w-full rounded-xl" />
                         ))}
                     </div>
                 ) : (
