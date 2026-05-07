@@ -306,7 +306,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       const isTracked = state.trackedVehicleIds.includes(action.payload);
       const newTrackedIds = isTracked 
         ? state.trackedVehicleIds.filter(id => id !== action.payload)
-        : [...state.trackedVehicleIds, action.payload].slice(0, 4); // Limit to 4 mini-maps
+        : [...state.trackedVehicleIds, action.payload].slice(0, 8); // Allow up to 8 tracked units
       
       return { ...state, trackedVehicleIds: newTrackedIds };
     }
@@ -433,14 +433,13 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
   return visibleVehicles.filter(v => state.statusFilter.includes(String(v.id_estado)));
 };
 
-export const selectMapVehicles = (state: FleetState, trackedId?: number): Vehicle[] => {
+export const selectMapVehicles = (state: FleetState, trackedIds?: number[]): Vehicle[] => {
   if (state.historyVehicle) {
     return [state.historyVehicle];
   }
   
-  if (trackedId) {
-    const v = state.vehicles.find(v => v.id_vehiculo === trackedId);
-    return v ? [v] : [];
+  if (trackedIds && trackedIds.length > 0) {
+    return state.vehicles.filter(v => trackedIds.includes(v.id_vehiculo));
   }
 
   const filtered = selectFilteredVehicles(state);
@@ -562,9 +561,8 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
                 if (!response.ok) throw new Error('Failed to fetch route');
                 const data = await response.json();
                 
-                if (document.startViewTransition) {
-                    // @ts-ignore
-                    document.startViewTransition(() => {
+                if (typeof document !== 'undefined' && (document as any).startViewTransition) {
+                    (document as any).startViewTransition(() => {
                         dispatch({ type: 'SET_ROUTE_HISTORY', payload: data });
                     });
                 } else {
@@ -595,9 +593,8 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
               if (!response.ok) throw new Error('Failed to fetch incidencias');
               const data = await response.json();
               
-              if (document.startViewTransition) {
-                  // @ts-ignore
-                  document.startViewTransition(() => {
+              if (typeof document !== 'undefined' && (document as any).startViewTransition) {
+                  (document as any).startViewTransition(() => {
                       dispatch({ type: 'SET_INCIDENCIAS', payload: data });
                   });
               } else {

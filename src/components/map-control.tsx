@@ -12,10 +12,10 @@ import { IncidenciaMarker } from '@/components/incidencias/incidencia-marker';
 
 interface MapControlProps {
   side?: 'ida' | 'vuelta';
-  trackedVehicleId?: number;
+  trackedVehicleIds?: number[];
 }
 
-export function MapControl({ side, trackedVehicleId }: MapControlProps) {
+export function MapControl({ side, trackedVehicleIds }: MapControlProps) {
   const map = useMap();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -54,11 +54,16 @@ export function MapControl({ side, trackedVehicleId }: MapControlProps) {
     if (!map) return;
 
     // Special behavior for tracking panels
-    if (trackedVehicleId) {
-      const v = state.vehicles.find(v => v.id_vehiculo === trackedVehicleId);
-      if (v) {
+    if (trackedVehicleIds && trackedVehicleIds.length > 0) {
+      const trackedVehicles = state.vehicles.filter(v => trackedVehicleIds.includes(v.id_vehiculo));
+      if (trackedVehicles.length === 1) {
+        const v = trackedVehicles[0];
         map.panTo({ lat: v.lat, lng: v.lng });
         if (map.getZoom()! < 16) map.setZoom(16);
+      } else if (trackedVehicles.length > 1) {
+        const bounds = new google.maps.LatLngBounds();
+        trackedVehicles.forEach(v => bounds.extend({ lat: v.lat, lng: v.lng }));
+        map.fitBounds(bounds, 50);
       }
       return;
     }
@@ -115,9 +120,9 @@ export function MapControl({ side, trackedVehicleId }: MapControlProps) {
     
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
 
-  }, [map, mapViewport, dispatch, isSplitView, historyVehicle, isIncidenciasSheetOpen, masterRoute, side, trackedVehicleId, state.vehicles]);
+  }, [map, mapViewport, dispatch, isSplitView, historyVehicle, isIncidenciasSheetOpen, masterRoute, side, trackedVehicleIds, state.vehicles]);
 
-  const mapVehicles = useMemo(() => selectMapVehicles(state, trackedVehicleId), [state, trackedVehicleId]);
+  const mapVehicles = useMemo(() => selectMapVehicles(state, trackedVehicleIds), [state, trackedVehicleIds]);
 
   const halfIndex = Math.ceil(routeGroups.length / 2);
   const displayGroups = side === 'ida' 

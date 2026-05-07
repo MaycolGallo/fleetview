@@ -6,7 +6,22 @@ import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X, Rows2, ChevronLeft, Map as MapIcon } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  PanelLeft, 
+  RefreshCw, 
+  Calendar as CalendarIcon, 
+  List, 
+  Columns2, 
+  X, 
+  Rows2, 
+  ChevronLeft, 
+  Map as MapIcon, 
+  Settings2,
+  Trash2,
+  Moon,
+  Sun
+} from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
@@ -20,11 +35,17 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from '@/components/ui/drawer';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { format, fromUnixTime } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Calendar } from '@/components/ui/calendar';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { DateRangePicker } from '@/components/route/date-range-picker';
 import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -55,6 +76,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     isLoadingIncidencias,
     isLoadingRoute,
     trackedVehicleIds,
+    isMapDark
   } = state;
   
   const [date, setDate] = useState<DateRange | undefined>();
@@ -76,24 +98,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     setNestedDrawerOpen(false);
   }, []);
 
-  const handleTimeChange = (type: 'from' | 'to', value: string) => {
-    if (!value) return;
-    const [hours, minutes] = value.split(':').map(Number);
-    if (!date || (type === 'from' && !date.from) || (type === 'to' && !date.to)) return;
-
-    if (type === 'from' && date.from) {
-      const newFrom = new Date(date.from);
-      newFrom.setHours(hours, minutes, 0, 0);
-      setDate({ ...date, from: newFrom });
-    }
-    
-    if (type === 'to' && date.to) {
-      const newTo = new Date(date.to);
-      newTo.setHours(hours, minutes, 0, 0);
-      setDate({ ...date, to: newTo });
-    }
-  }
-
   const handleBackToFleet = () => {
     const action = () => {
       if (isIncidenciasSheetOpen) {
@@ -108,26 +112,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         (document as any).startViewTransition(action);
     } else {
         action();
-    }
-  };
-
-  const handleToggleSplitView = () => {
-    if (typeof document !== 'undefined' && (document as any).startViewTransition) {
-      (document as any).startViewTransition(() => {
-        dispatch({ type: 'TOGGLE_SPLIT_VIEW' });
-      });
-    } else {
-      dispatch({ type: 'TOGGLE_SPLIT_VIEW' });
-    }
-  };
-
-  const handleToggleSplitDirection = () => {
-    if (typeof document !== 'undefined' && (document as any).startViewTransition) {
-      (document as any).startViewTransition(() => {
-        dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' });
-      });
-    } else {
-      dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' });
     }
   };
 
@@ -179,18 +163,11 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
           <ResizablePanel defaultSize={30} minSize={20} className="bg-muted/10">
             <ResizablePanelGroup direction="vertical" className="h-full w-full p-2 gap-2">
-              {trackedVehicleIds.map((id, index) => (
-                <Fragment key={id}>
-                  <ResizablePanel defaultSize={100 / trackedVehicleIds.length} minSize={10}>
-                    <div className="h-full w-full rounded-xl overflow-hidden border-2 border-primary/20 bg-background shadow-lg">
-                      <FleetMap apiKey={apiKey} trackedVehicleId={id} />
-                    </div>
-                  </ResizablePanel>
-                  {index < trackedVehicleIds.length - 1 && (
-                    <ResizableHandle className="bg-transparent h-1" />
-                  )}
-                </Fragment>
-              ))}
+              <ResizablePanel defaultSize={100} minSize={10}>
+                <div className="h-full w-full rounded-xl overflow-hidden border-2 border-primary/20 bg-background shadow-lg">
+                  <FleetMap apiKey={apiKey} trackedVehicleIds={trackedVehicleIds} />
+                </div>
+              </ResizablePanel>
             </ResizablePanelGroup>
           </ResizablePanel>
         </ResizablePanelGroup>
@@ -268,42 +245,48 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             )}
           </div>
 
-          {/* Center: Global View Controls */}
+          {/* Center: View Mode Dropdown */}
           {!isDetailView && (
-            <div className="flex gap-2 p-1 bg-card/80 backdrop-blur-md border rounded-xl shadow-lg pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-500">
-              <Button 
-                variant={isSplitView ? "default" : "ghost"}
-                size="sm"
-                onClick={handleToggleSplitView}
-                className="h-9 px-3 font-semibold"
-              >
-                <Columns2 className="mr-2 h-4 w-4" />
-                <span className="hidden sm:inline">{isSplitView ? 'Cerrar Split' : 'Split View'}</span>
-              </Button>
-
-              {isSplitView && (
-                <Button 
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleToggleSplitDirection}
-                  className="h-9 px-3 font-semibold"
-                >
-                  {splitDirection === 'horizontal' ? <Rows2 className="mr-2 h-4 w-4" /> : <Columns2 className="mr-2 h-4 w-4" />}
-                  <span className="hidden sm:inline">{splitDirection === 'horizontal' ? 'Vertical' : 'Horizontal'}</span>
-                </Button>
-              )}
-              
-              {trackedVehicleIds.length > 0 && (
-                 <Button 
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: [], visible: false } })}
-                  className="h-9 px-3 font-semibold"
-                >
-                  <MapIcon className="mr-2 h-4 w-4" />
-                  <span className="hidden sm:inline">Limpiar Tracking</span>
-                </Button>
-              )}
+            <div className="pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-500">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 font-bold gap-2 h-10">
+                    <Settings2 className="w-4 h-4 text-primary" />
+                    <span className="hidden sm:inline">Vista de Flota</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-card/95 backdrop-blur-md" align="center">
+                  <DropdownMenuLabel>Configuración de Mapa</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => dispatch({ type: 'TOGGLE_SPLIT_VIEW' })} className="cursor-pointer">
+                    <Columns2 className="mr-2 h-4 w-4" />
+                    <span>{isSplitView ? 'Cerrar Vista Dividida' : 'Vista Dividida (Ida/Vuelta)'}</span>
+                  </DropdownMenuItem>
+                  {isSplitView && (
+                    <DropdownMenuItem onClick={() => dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' })} className="cursor-pointer">
+                      {splitDirection === 'horizontal' ? <Rows2 className="mr-2 h-4 w-4" /> : <Columns2 className="mr-2 h-4 w-4" />}
+                      <span>Orientación: {splitDirection === 'horizontal' ? 'Vertical' : 'Horizontal'}</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => dispatch({ type: 'SET_MAP_DARK_MODE', payload: !isMapDark })} className="cursor-pointer">
+                    {isMapDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+                    <span>Modo {isMapDark ? 'Claro' : 'Oscuro'}</span>
+                  </DropdownMenuItem>
+                  {trackedVehicleIds.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: trackedVehicleIds, visible: false } })}
+                        className="cursor-pointer text-destructive focus:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        <span>Limpiar Mini-Maps</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           )}
 
