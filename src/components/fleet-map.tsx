@@ -10,21 +10,18 @@ import { useSearchParams } from 'next/navigation';
 interface FleetMapProps {
   apiKey: string;
   side?: 'ida' | 'vuelta';
-  trackedVehicleIds?: number[];
+  trackedVehicleId?: number;
 }
 
-export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
+export function FleetMap({ apiKey, side, trackedVehicleId }: FleetMapProps) {
   const { state } = useFleetState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
   const { isMapDark, vehicles } = state;
 
-  const isTrackingView = trackedVehicleIds && trackedVehicleIds.length > 0;
-  const trackingLabel = isTrackingView 
-    ? vehicles.filter(v => trackedVehicleIds.includes(v.id_vehiculo)).map(v => v.placa).join(', ')
-    : null;
+  const trackedVehicle = trackedVehicleId ? vehicles.find(v => v.id_vehiculo === trackedVehicleId) : null;
+  const isTrackingView = !!trackedVehicle;
 
-  // If we are in demo mode or the key is a mock, we show a styled placeholder
   if (isDemoMode || apiKey === 'MOCK_KEY') {
     return (
       <div className="w-full h-full relative bg-muted/20 flex items-center justify-center overflow-hidden border-2 border-dashed border-primary/10">
@@ -36,7 +33,7 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
         />
         <div className="text-center z-10 px-6">
           <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-1">
-            {isTrackingView ? `Focus Tracking: ${trackingLabel}` : side ? `Visor de Flota: ${side}` : 'Visor de Flota Principal'}
+            {isTrackingView ? `Minimap: ${trackedVehicle?.placa}` : side ? `Visor de Flota: ${side}` : 'Visor de Flota Principal'}
           </p>
           <p className="text-xs text-muted-foreground/60 italic">
             [Modo Demo: Mapa Real Desactivado]
@@ -51,7 +48,7 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
             )}
             {isTrackingView && (
               <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
-                FOCUS
+                FOCUS: {trackedVehicle?.placa}
               </div>
             )}
           </div>
@@ -71,7 +68,7 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
             mapId={isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID}
             colorScheme={isMapDark ? ColorScheme.dark : ColorScheme.light}
         >
-          <MapControl side={side} trackedVehicleIds={trackedVehicleIds} />
+          <MapControl side={side} trackedVehicleIds={trackedVehicleId ? [trackedVehicleId] : undefined} />
         </Map>
         {(side || isTrackingView) && (
           <div className="absolute top-4 right-4 z-10 flex gap-2">
@@ -82,7 +79,7 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
             )}
             {isTrackingView && (
               <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
-                FOCUS
+                {trackedVehicle?.placa}
               </div>
             )}
           </div>
@@ -91,4 +88,3 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
     </APIProvider>
   );
 }
-

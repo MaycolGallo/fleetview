@@ -141,7 +141,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       return <FleetMap apiKey={apiKey} />;
     }
 
-    // Fixed Multi-Track Split View (Single secondary map for all tracked)
+    // Grid Tracking View
     if (trackedVehicleIds.length > 0 && !isMobile) {
       return (
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
@@ -150,7 +150,24 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           </ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
           <ResizablePanel defaultSize={40} minSize={20}>
-            <FleetMap apiKey={apiKey} trackedVehicleIds={trackedVehicleIds} />
+            <div className={cn(
+                "h-full w-full grid p-2 gap-2 bg-muted/30 overflow-auto",
+                trackedVehicleIds.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
+            )}>
+              {trackedVehicleIds.map((id) => (
+                <div key={id} className="relative aspect-video md:aspect-auto border rounded-xl overflow-hidden shadow-lg bg-card group">
+                   <FleetMap apiKey={apiKey} trackedVehicleId={id} />
+                   <Button 
+                      variant="destructive" 
+                      size="icon" 
+                      className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: id })}
+                    >
+                      <X className="h-4 w-4" />
+                   </Button>
+                </div>
+              ))}
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       );
@@ -331,4 +348,3 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     </div>
   );
 }
-
