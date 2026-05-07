@@ -19,7 +19,7 @@ export function FleetMap({ apiKey, side, trackedVehicleId }: FleetMapProps) {
   const isDemoMode = searchParams.get('demo') === 'true';
   const { isMapDark, vehicles } = state;
 
-  const trackedVehicle = trackedId ? vehicles.find(v => v.id_vehiculo === trackedId) : null;
+  const trackedVehicle = trackedVehicleId ? vehicles.find(v => v.id_vehiculo === trackedVehicleId) : null;
 
   // If we are in demo mode or the key is a mock, we show a styled placeholder
   if (isDemoMode || apiKey === 'MOCK_KEY') {
