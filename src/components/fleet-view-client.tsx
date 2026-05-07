@@ -48,6 +48,7 @@ import { DateRangePicker } from '@/components/route/date-range-picker';
 import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
+import { cn } from '@/lib/utils';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -141,7 +142,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       return <FleetMap apiKey={apiKey} />;
     }
 
-    // Grid Tracking View
+    // Grid Tracking View - Individual Mini-maps Grid
     if (trackedVehicleIds.length > 0 && !isMobile) {
       return (
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
@@ -160,7 +161,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                    <Button 
                       variant="destructive" 
                       size="icon" 
-                      className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                       onClick={() => dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: id })}
                     >
                       <X className="h-4 w-4" />
