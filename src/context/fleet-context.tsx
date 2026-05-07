@@ -3,8 +3,10 @@
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport, FleetState, Incidencia, Notification, MiniMapGroup } from '@/lib/types';
+import type { Vehicle, RawVehicle, VehicleStatus, VHistorial, MapViewport, FleetState, Incidencia, Notification, MiniMapGroup } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
+
+const STORAGE_KEY = 'fleet_minimaps_state';
 
 const fetchVehicles = async (): Promise<RawVehicle[]> => {
   const res = await fetch('/api/vehicles');
@@ -63,7 +65,8 @@ type FleetAction =
   | { type: 'ADD_NOTIFICATION'; payload: Notification }
   | { type: 'MARK_NOTIFICATION_READ'; payload: string }
   | { type: 'CLEAR_NOTIFICATIONS' }
-  | { type: 'TOGGLE_TRACK_VEHICLE'; payload: number };
+  | { type: 'TOGGLE_TRACK_VEHICLE'; payload: number }
+  | { type: 'INIT_PERSISTED_STATE'; payload: MiniMapGroup[] };
 
 const getInitialState = (): FleetState => ({
   vehicles: [],
@@ -104,6 +107,13 @@ const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
 
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
+    case 'INIT_PERSISTED_STATE': {
+      return {
+        ...state,
+        miniMaps: action.payload,
+        trackedVehicleIds: getTrackedIds(action.payload),
+      };
+    }
     case 'SET_VEHICLES': {
       const newVisibleIds = state.vehicles.length === 0 
         ? new Set(action.payload.map(v => v.id_vehiculo))
@@ -499,12 +509,9 @@ export const selectMapVehicles = (state: FleetState, trackedIds?: number[]): Veh
   }
   
   if (trackedIds && trackedIds.length > 0) {
-    // Mini-map view: Show specifically assigned vehicles regardless of main visibility toggle
     return state.vehicles.filter(v => trackedIds.includes(v.id_vehiculo));
   }
 
-  // Main map view: Show vehicles based on visibility toggle and filters,
-  // BUT exclude any vehicle that is currently assigned to a mini-map
   const filtered = selectFilteredVehicles(state);
   const allTrackedIds = state.trackedVehicleIds || [];
   
@@ -553,6 +560,30 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       refetchOnWindowFocus: false, 
       staleTime: 1000 * 60 * 5, 
     });
+
+    // Handle initial state hydration from localStorage
+    useEffect(() => {
+      const savedState = localStorage.getItem(STORAGE_KEY);
+      if (savedState) {
+        try {
+          const parsed = JSON.parse(savedState);
+          if (Array.isArray(parsed)) {
+            dispatch({ type: 'INIT_PERSISTED_STATE', payload: parsed });
+          }
+        } catch (e) {
+          console.error("Failed to load persisted fleet state", e);
+        }
+      }
+    }, []);
+
+    // Handle state persistence to localStorage
+    useEffect(() => {
+      if (state.miniMaps.length > 0 || state.trackedVehicleIds.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.miniMaps));
+      } else {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    }, [state.miniMaps, state.trackedVehicleIds]);
     
     useEffect(() => {
       if (rawVehiclesData) {
