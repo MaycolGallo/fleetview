@@ -146,22 +146,27 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     if (trackedVehicleIds.length > 0 && !isMobile) {
       return (
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
-          <ResizablePanel defaultSize={60} minSize={30}>
+          <ResizablePanel defaultSize={65} minSize={30}>
              <FleetMap apiKey={apiKey} />
           </ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-          <ResizablePanel defaultSize={40} minSize={20}>
+          <ResizablePanel defaultSize={35} minSize={20}>
             <div className={cn(
-                "h-full w-full grid p-2 gap-2 bg-muted/30 overflow-auto",
-                trackedVehicleIds.length === 1 ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"
+                "h-full w-full grid p-3 gap-3 bg-muted/30 overflow-auto content-start",
+                trackedVehicleIds.length === 1 ? "grid-cols-1" : "grid-cols-1"
             )}>
               {trackedVehicleIds.map((id) => (
-                <div key={id} className="relative aspect-video md:aspect-auto border rounded-xl overflow-hidden shadow-lg bg-card group">
+                <div key={id} className="relative aspect-square border-2 rounded-2xl overflow-hidden shadow-xl bg-card group ring-1 ring-primary/5">
                    <FleetMap apiKey={apiKey} trackedVehicleId={id} />
+                   <div className="absolute top-3 left-3 z-10">
+                      <div className="bg-card/90 backdrop-blur-sm px-2 py-1 rounded-md border shadow-sm text-[10px] font-bold text-primary uppercase">
+                        Unit Focus
+                      </div>
+                   </div>
                    <Button 
                       variant="destructive" 
                       size="icon" 
-                      className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                      className="absolute top-2 right-2 h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity z-20 shadow-lg"
                       onClick={() => dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: id })}
                     >
                       <X className="h-4 w-4" />
