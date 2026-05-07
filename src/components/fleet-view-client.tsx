@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback, Fragment } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
@@ -15,17 +15,15 @@ import {
   Columns2, 
   X, 
   Rows2, 
-  ChevronLeft, 
-  Map as MapIcon, 
   Settings2,
   Trash2,
   Moon,
   Sun,
+  Map as MapIcon,
   LayoutGrid
 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
-import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Drawer,
@@ -44,13 +42,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { format, fromUnixTime } from 'date-fns';
+import { fromUnixTime } from 'date-fns';
 import type { DateRange } from 'react-day-picker';
 import { Calendar } from '@/components/ui/calendar';
 import { DateRangePicker } from '@/components/route/date-range-picker';
 import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -77,7 +76,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     isLoadingIncidencias,
     isLoadingRoute,
     trackedVehicleIds,
-    isMapDark
+    isMapDark,
+    vehicles
   } = state;
   
   const [date, setDate] = useState<DateRange | undefined>();
@@ -163,26 +163,58 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           </ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
           <ResizablePanel defaultSize={30} minSize={20} className="bg-muted/10 relative">
-            <div className="h-full w-full p-2">
-              <div className="h-full w-full rounded-xl overflow-hidden border-2 border-primary/20 bg-background shadow-lg relative">
-                <FleetMap apiKey={apiKey} trackedVehicleIds={trackedVehicleIds} />
-                
-                {/* Floating Header for Mini-map */}
-                <div className="absolute top-3 left-3 right-3 z-10 flex justify-between items-center pointer-events-none">
-                  <div className="bg-primary/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-widest shadow-lg">
-                    Focus: {trackedVehicleIds.length} unidades
-                  </div>
+            <ScrollArea className="h-full w-full">
+              <div className="p-4 flex flex-col gap-6">
+                <div className="flex justify-between items-center px-1">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <LayoutGrid className="w-4 h-4 text-primary" />
+                    Dashboards de Seguimiento
+                  </h3>
                   <Button 
-                    variant="destructive" 
+                    variant="ghost" 
                     size="icon" 
-                    className="h-8 w-8 pointer-events-auto shadow-lg hover:scale-110 transition-transform"
+                    className="h-8 w-8 text-destructive hover:bg-destructive/10"
                     onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: trackedVehicleIds, visible: false } })}
                   >
-                    <X className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+
+                {trackedVehicleIds.map((id) => {
+                  const vehicle = vehicles.find(v => v.id_vehiculo === id);
+                  return (
+                    <div 
+                      key={id} 
+                      className="group/minimap aspect-video w-full rounded-xl overflow-hidden border-2 border-primary/20 bg-background shadow-lg relative animate-in fade-in zoom-in-95 duration-300"
+                    >
+                      <FleetMap apiKey={apiKey} trackedVehicleIds={[id]} />
+                      
+                      {/* Mini-map Overlay */}
+                      <div className="absolute top-3 left-3 right-3 z-10 flex justify-between items-center pointer-events-none">
+                        <div className="bg-primary/90 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-widest shadow-lg">
+                          {vehicle?.placa || 'Desconocido'}
+                        </div>
+                        <Button 
+                          variant="destructive" 
+                          size="icon" 
+                          className="h-7 w-7 pointer-events-auto shadow-lg scale-90 opacity-0 group-hover/minimap:opacity-100 group-hover/minimap:scale-100 transition-all"
+                          onClick={() => dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: id })}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+
+                      {/* Speed Indicator */}
+                      <div className="absolute bottom-3 left-3 z-10">
+                        <div className="bg-card/90 backdrop-blur-sm px-2 py-0.5 rounded border shadow-sm text-[10px] font-bold">
+                          {parseFloat(vehicle?.velocidad || '0').toFixed(0)} km/h
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </div>
+            </ScrollArea>
           </ResizablePanel>
         </ResizablePanelGroup>
       );
@@ -363,4 +395,3 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     </div>
   );
 }
-

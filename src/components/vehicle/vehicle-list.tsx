@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import React, { useMemo, useCallback } from "react";
 import { useFleetState, useFleetDispatch } from "@/context/fleet-context";
-import { Car, Clock, Wifi, Battery, Radar } from "lucide-react";
+import { Car, Clock, Wifi, Battery, Radar, Map as MapIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { fromUnixTime, formatDistanceToNow } from 'date-fns';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -61,7 +61,7 @@ const VehicleListItem = React.memo(({
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent side="right">
-                        {isTracked ? "Stop tracking in mini-map" : "Track in mini-map"}
+                        {isTracked ? "Quitar del Dashboard" : "Crear Mini-mapa"}
                     </TooltipContent>
                 </Tooltip>
             </div>
