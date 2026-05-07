@@ -4,11 +4,11 @@
 import { createPortal } from 'react-dom';
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { History, MapPin, Info, Navigation, AlertCircle, Settings, Bell, Radar } from 'lucide-react';
+import { History, MapPin, Info, Bell, Radar } from 'lucide-react';
 import type { Vehicle } from '@/lib/types';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 
-type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'view-alerts' | 'maintenance' | 'list-incidencias';
+type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'list-incidencias';
 
 export function VehicleContextMenu({
   vehicle,
@@ -22,7 +22,7 @@ export function VehicleContextMenu({
     const [portalNode, setPortalNode] = React.useState<HTMLElement | null>(null);
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
-    const isTracked = state.trackedVehicleIds.includes(vehicle.id_vehiculo);
+    const isTracked = state.trackedVehicleIds?.includes(vehicle.id_vehiculo) || false;
 
     React.useEffect(() => {
         setPortalNode(document.body);
@@ -30,7 +30,7 @@ export function VehicleContextMenu({
 
     const handleAction = (action: VehicleAction) => {
         if (action === 'show-route-history') {
-          if ((document as any).startViewTransition) {
+          if (typeof document !== 'undefined' && (document as any).startViewTransition) {
             (document as any).startViewTransition(() => {
               dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
             });
@@ -38,7 +38,7 @@ export function VehicleContextMenu({
             dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
           }
         } else if (action === 'list-incidencias') {
-          if ((document as any).startViewTransition) {
+          if (typeof document !== 'undefined' && (document as any).startViewTransition) {
             (document as any).startViewTransition(() => {
               dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: vehicle });
             });

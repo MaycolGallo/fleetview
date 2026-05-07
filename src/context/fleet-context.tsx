@@ -62,7 +62,8 @@ type FleetAction =
   | { type: 'CLOSE_INCIDENCIAS' }
   | { type: 'ADD_NOTIFICATION'; payload: Notification }
   | { type: 'MARK_NOTIFICATION_READ'; payload: string }
-  | { type: 'CLEAR_NOTIFICATIONS' };
+  | { type: 'CLEAR_NOTIFICATIONS' }
+  | { type: 'TOGGLE_TRACK_VEHICLE'; payload: number };
 
 const getInitialState = (): FleetState => ({
   vehicles: [],
@@ -77,6 +78,7 @@ const getInitialState = (): FleetState => ({
   selectedSegmentIndex: null,
   visibleVehicleIds: new Set(),
   miniMaps: [],
+  trackedVehicleIds: [],
   isMapDark: false,
   mapViewport: { type: 'initial' },
   simulationStep: {},
@@ -93,6 +95,12 @@ const getInitialState = (): FleetState => ({
   notifications: [],
   masterRoute: MASTER_FLEET_ROUTE,
 });
+
+const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
+  const ids = new Set<number>();
+  miniMaps.forEach(m => m.vehicleIds.forEach(id => ids.add(id)));
+  return Array.from(ids);
+};
 
 const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
@@ -312,34 +320,57 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         name: `Radar Lock ${state.miniMaps.length + 1}`,
         vehicleIds: [action.payload.vehicleId]
       };
-      return { ...state, miniMaps: [...state.miniMaps, newMap] };
+      const newMaps = [...state.miniMaps, newMap];
+      return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
     }
 
-    case 'REMOVE_MINIMAP':
-      return { ...state, miniMaps: state.miniMaps.filter(m => m.id !== action.payload) };
+    case 'REMOVE_MINIMAP': {
+      const newMaps = state.miniMaps.filter(m => m.id !== action.payload);
+      return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+    }
 
-    case 'ADD_VEHICLE_TO_MINIMAP':
-      return {
-        ...state,
-        miniMaps: state.miniMaps.map(m => 
-          m.id === action.payload.miniMapId 
-            ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleId])) }
-            : m
-        )
-      };
+    case 'ADD_VEHICLE_TO_MINIMAP': {
+      const newMaps = state.miniMaps.map(m => 
+        m.id === action.payload.miniMapId 
+          ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleId])) }
+          : m
+      );
+      return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+    }
 
-    case 'REMOVE_VEHICLE_FROM_MINIMAP':
-      return {
-        ...state,
-        miniMaps: state.miniMaps.map(m => 
-          m.id === action.payload.miniMapId 
-            ? { ...m, vehicleIds: m.vehicleIds.filter(id => id !== action.payload.vehicleId) }
-            : m
-        )
-      };
+    case 'REMOVE_VEHICLE_FROM_MINIMAP': {
+      const newMaps = state.miniMaps.map(m => 
+        m.id === action.payload.miniMapId 
+          ? { ...m, vehicleIds: m.vehicleIds.filter(id => id !== action.payload.vehicleId) }
+          : m
+      );
+      return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+    }
 
     case 'CLEAR_ALL_MINIMAPS':
-      return { ...state, miniMaps: [] };
+      return { ...state, miniMaps: [], trackedVehicleIds: [] };
+
+    case 'TOGGLE_TRACK_VEHICLE': {
+      // Helper for backward compatibility or simple tracking
+      const isAlreadyTracked = state.trackedVehicleIds.includes(action.payload);
+      if (isAlreadyTracked) {
+        // Remove from all minimaps
+        const newMaps = state.miniMaps.map(m => ({
+          ...m,
+          vehicleIds: m.vehicleIds.filter(id => id !== action.payload)
+        })).filter(m => m.vehicleIds.length > 0);
+        return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+      } else {
+        // Create new minimap for this vehicle
+        const newMap: MiniMapGroup = {
+          id: `map-${Date.now()}`,
+          name: `Radar Lock ${state.miniMaps.length + 1}`,
+          vehicleIds: [action.payload]
+        };
+        const newMaps = [...state.miniMaps, newMap];
+        return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+      }
+    }
 
     case 'SET_ALL_VEHICLES_VISIBILITY': {
         const newVisibleIds = new Set(state.visibleVehicleIds);
@@ -475,7 +506,6 @@ export const selectMapVehicles = (state: FleetState, trackedIds?: number[]): Veh
   }
 
   const filtered = selectFilteredVehicles(state);
-  // Vehicles are shown on main map even if they are in minimaps, for complete context
   return filtered;
 };
 

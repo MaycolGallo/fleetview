@@ -150,6 +150,7 @@ export interface FleetState {
   selectedSegmentIndex: number | null;
   visibleVehicleIds: Set<number>;
   miniMaps: MiniMapGroup[];
+  trackedVehicleIds: number[]; // Explicitly track which ones are in any minimap
   isMapDark: boolean;
   mapViewport: MapViewport;
   simulationStep: Record<string, number>;
