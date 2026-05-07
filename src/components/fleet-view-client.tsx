@@ -19,7 +19,6 @@ import {
   Trash2,
   Moon,
   Sun,
-  LayoutGrid,
   Radar
 } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
@@ -32,7 +31,6 @@ import {
   DrawerHandle,
   DrawerHeader,
   DrawerTitle,
-  DrawerDescription,
 } from '@/components/ui/drawer';
 import {
   DropdownMenu,
@@ -75,9 +73,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     isIncidenciasSheetOpen,
     isLoadingIncidencias,
     isLoadingRoute,
-    trackedVehicleIds,
+    miniMaps,
     isMapDark,
-    vehicles
   } = state;
   
   const [date, setDate] = useState<DateRange | undefined>();
@@ -128,8 +125,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-full">
-        An error occurred: {error.message}.
+      <div className="flex items-center justify-center h-full text-destructive">
+        Error: {error.message}
       </div>
     );
   }
@@ -179,28 +176,28 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       )}
 
       {/* Floating Minimaps Overlay (The focused squares) */}
-      {!isDetailView && trackedVehicleIds.length > 0 && (
+      {!isDetailView && miniMaps.length > 0 && (
         <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-4 pointer-events-none max-h-[75vh] overflow-y-auto pr-2 no-scrollbar">
-          {trackedVehicleIds.map((id) => (
+          {miniMaps.map((map) => (
             <div 
-              key={id} 
+              key={map.id} 
               className="pointer-events-auto relative w-48 sm:w-64 aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10 animate-in slide-in-from-right-8"
             >
-              <FleetMap apiKey={apiKey} trackedVehicleId={id} />
+              <FleetMap apiKey={apiKey} trackedVehicleIds={map.vehicleIds} />
                <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
                   <div className="bg-primary px-1.5 py-0.5 rounded shadow-sm text-[8px] font-bold text-white uppercase flex items-center gap-1">
                     <Radar className="w-2 h-2" />
-                    Radar Lock
+                    {map.name}
                   </div>
                   <div className="bg-card/90 backdrop-blur-sm px-1.5 py-0.5 rounded border shadow-sm text-[8px] font-bold text-foreground uppercase">
-                    {vehicles.find(v => v.id_vehiculo === id)?.placa}
+                    {map.vehicleIds.length} units
                   </div>
                </div>
                <Button 
                   variant="destructive" 
                   size="icon" 
                   className="absolute top-2 right-2 h-6 w-6 z-20 shadow-lg hover:scale-110 transition-transform"
-                  onClick={() => dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: id })}
+                  onClick={() => dispatch({ type: 'REMOVE_MINIMAP', payload: map.id })}
                 >
                   <X className="h-3 w-3" />
                </Button>
@@ -271,11 +268,11 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                     {isMapDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
                     <span>Tema {isMapDark ? 'Claro' : 'Oscuro'}</span>
                   </DropdownMenuItem>
-                  {trackedVehicleIds.length > 0 && (
+                  {miniMaps.length > 0 && (
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
-                        onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: trackedVehicleIds, visible: false } })}
+                        onClick={() => dispatch({ type: 'CLEAR_ALL_MINIMAPS' })}
                         className="cursor-pointer text-destructive focus:text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />

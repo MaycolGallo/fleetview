@@ -6,21 +6,22 @@ import { useFleetState } from '@/context/fleet-context';
 import { LIGHT_MAP_ID, DARK_MAP_ID } from '@/lib/map-styles';
 import { MapControl } from './map-control';
 import { useSearchParams } from 'next/navigation';
+import type { Vehicle } from '@/lib/types';
 
 interface FleetMapProps {
   apiKey: string;
   side?: 'ida' | 'vuelta';
-  trackedVehicleId?: number;
+  trackedVehicleIds?: number[];
 }
 
-export function FleetMap({ apiKey, side, trackedVehicleId }: FleetMapProps) {
+export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
   const { state } = useFleetState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
   const { isMapDark, vehicles } = state;
 
-  const trackedVehicle = trackedVehicleId ? vehicles.find(v => v.id_vehiculo === trackedVehicleId) : null;
-  const isTrackingView = !!trackedVehicle;
+  const trackedVehicles = trackedVehicleIds?.map(id => vehicles.find(v => v.id_vehiculo === id)).filter(Boolean) as Vehicle[] || [];
+  const isTrackingView = trackedVehicles.length > 0;
 
   if (isDemoMode || apiKey === 'MOCK_KEY') {
     return (
@@ -33,7 +34,7 @@ export function FleetMap({ apiKey, side, trackedVehicleId }: FleetMapProps) {
         />
         <div className="text-center z-10 px-6">
           <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-1">
-            {isTrackingView ? `Minimap: ${trackedVehicle?.placa}` : side ? `Visor de Flota: ${side}` : 'Visor de Flota Principal'}
+            {isTrackingView ? `${trackedVehicles.length} Units Radar Lock` : side ? `Visor de Flota: ${side}` : 'Visor de Flota Principal'}
           </p>
           <p className="text-xs text-muted-foreground/60 italic">
             [Modo Demo: Mapa Real Desactivado]
@@ -48,7 +49,7 @@ export function FleetMap({ apiKey, side, trackedVehicleId }: FleetMapProps) {
             )}
             {isTrackingView && (
               <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
-                FOCUS: {trackedVehicle?.placa}
+                FOCUS: {trackedVehicles.length} units
               </div>
             )}
           </div>
@@ -68,7 +69,7 @@ export function FleetMap({ apiKey, side, trackedVehicleId }: FleetMapProps) {
             mapId={isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID}
             colorScheme={isMapDark ? ColorScheme.dark : ColorScheme.light}
         >
-          <MapControl side={side} trackedVehicleIds={trackedVehicleId ? [trackedVehicleId] : undefined} />
+          <MapControl side={side} trackedVehicleIds={trackedVehicleIds} />
         </Map>
         {(side || isTrackingView) && (
           <div className="absolute top-4 right-4 z-10 flex gap-2">
@@ -79,7 +80,7 @@ export function FleetMap({ apiKey, side, trackedVehicleId }: FleetMapProps) {
             )}
             {isTrackingView && (
               <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
-                {trackedVehicle?.placa}
+                RADAR: {trackedVehicles.length}
               </div>
             )}
           </div>

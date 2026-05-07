@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport, FleetState, Incidencia, Notification } from '@/lib/types';
+import type { Vehicle, RawVehicle, VehicleStatus, VehiculoHistorialGrouped, VHistorial, MapViewport, FleetState, Incidencia, Notification, MiniMapGroup } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
 
 const fetchVehicles = async (): Promise<RawVehicle[]> => {
@@ -41,7 +41,11 @@ type FleetAction =
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
   | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: number }
-  | { type: 'TOGGLE_TRACK_VEHICLE', payload: number }
+  | { type: 'CREATE_MINIMAP', payload: { vehicleId: number } }
+  | { type: 'REMOVE_MINIMAP', payload: string }
+  | { type: 'ADD_VEHICLE_TO_MINIMAP', payload: { miniMapId: string, vehicleId: number } }
+  | { type: 'REMOVE_VEHICLE_FROM_MINIMAP', payload: { miniMapId: string, vehicleId: number } }
+  | { type: 'CLEAR_ALL_MINIMAPS' }
   | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: number[], visible: boolean } }
   | { type: 'SET_MAP_DARK_MODE', payload: boolean }
   | { type: 'SET_PIN_ROTATION_MODE', payload: 'arrow' | 'pin' }
@@ -72,7 +76,7 @@ const getInitialState = (): FleetState => ({
   isLoadingRoute: false,
   selectedSegmentIndex: null,
   visibleVehicleIds: new Set(),
-  trackedVehicleIds: [],
+  miniMaps: [],
   isMapDark: false,
   mapViewport: { type: 'initial' },
   simulationStep: {},
@@ -302,14 +306,40 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         return { ...state, visibleVehicleIds: newVisibleIds };
     }
 
-    case 'TOGGLE_TRACK_VEHICLE': {
-      const isTracked = state.trackedVehicleIds.includes(action.payload);
-      const newTrackedIds = isTracked 
-        ? state.trackedVehicleIds.filter(id => id !== action.payload)
-        : [...state.trackedVehicleIds, action.payload].slice(0, 8); // Allow up to 8 tracked units
-      
-      return { ...state, trackedVehicleIds: newTrackedIds };
+    case 'CREATE_MINIMAP': {
+      const newMap: MiniMapGroup = {
+        id: `map-${Date.now()}`,
+        name: `Radar Lock ${state.miniMaps.length + 1}`,
+        vehicleIds: [action.payload.vehicleId]
+      };
+      return { ...state, miniMaps: [...state.miniMaps, newMap] };
     }
+
+    case 'REMOVE_MINIMAP':
+      return { ...state, miniMaps: state.miniMaps.filter(m => m.id !== action.payload) };
+
+    case 'ADD_VEHICLE_TO_MINIMAP':
+      return {
+        ...state,
+        miniMaps: state.miniMaps.map(m => 
+          m.id === action.payload.miniMapId 
+            ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleId])) }
+            : m
+        )
+      };
+
+    case 'REMOVE_VEHICLE_FROM_MINIMAP':
+      return {
+        ...state,
+        miniMaps: state.miniMaps.map(m => 
+          m.id === action.payload.miniMapId 
+            ? { ...m, vehicleIds: m.vehicleIds.filter(id => id !== action.payload.vehicleId) }
+            : m
+        )
+      };
+
+    case 'CLEAR_ALL_MINIMAPS':
+      return { ...state, miniMaps: [] };
 
     case 'SET_ALL_VEHICLES_VISIBILITY': {
         const newVisibleIds = new Set(state.visibleVehicleIds);
@@ -318,20 +348,9 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         } else {
             action.payload.ids.forEach(id => {
               newVisibleIds.delete(id);
-              // Also untrack if we are clearing visibility/mini-maps
-              if (state.trackedVehicleIds.includes(id)) {
-                state.trackedVehicleIds = state.trackedVehicleIds.filter(tid => tid !== id);
-              }
             });
         }
-        // Force untrack if clearing tracked ids specifically
-        const updatedTrackedIds = state.trackedVehicleIds.filter(tid => action.payload.visible || !action.payload.ids.includes(tid));
-        
-        return { 
-          ...state, 
-          visibleVehicleIds: newVisibleIds,
-          trackedVehicleIds: updatedTrackedIds
-        };
+        return { ...state, visibleVehicleIds: newVisibleIds };
     }
     
     case 'SET_MAP_DARK_MODE': {
@@ -456,8 +475,8 @@ export const selectMapVehicles = (state: FleetState, trackedIds?: number[]): Veh
   }
 
   const filtered = selectFilteredVehicles(state);
-  // Exclude tracked vehicles from main map
-  return filtered.filter(v => !state.trackedVehicleIds.includes(v.id_vehiculo));
+  // Vehicles are shown on main map even if they are in minimaps, for complete context
+  return filtered;
 };
 
 export const selectRouteSummary = (state: FleetState) => {

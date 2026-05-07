@@ -22,7 +22,7 @@ interface VehiclePanelContentProps {
 export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelContentProps) {
     const { state, isLoadingVehicles } = useFleetState();
     const dispatch = useFleetDispatch();
-    const { selectedVehicle, vehicles, visibleVehicleIds, trackedVehicleIds } = state;
+    const { selectedVehicle, vehicles, visibleVehicleIds, miniMaps } = state;
     const isMobile = useIsMobile();
 
     const allVisible = vehicles.length > 0 && vehicles.every(v => visibleVehicleIds.has(v.id_vehiculo));
@@ -40,7 +40,7 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
     };
 
     const handleClearTracking = () => {
-      dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: trackedVehicleIds, visible: false } });
+      dispatch({ type: 'CLEAR_ALL_MINIMAPS' });
     }
 
     if (selectedVehicle) {
@@ -80,7 +80,7 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        {trackedVehicleIds.length > 0 && (
+                        {miniMaps.length > 0 && (
                           <Button 
                             variant="destructive" 
                             size="sm" 

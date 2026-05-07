@@ -6,12 +6,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import React, { useMemo, useCallback } from "react";
 import { useFleetState, useFleetDispatch } from "@/context/fleet-context";
-import { Car, Clock, Wifi, Battery, Radar, Map as MapIcon } from "lucide-react";
+import { Car, Clock, Wifi, Battery, Radar, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { fromUnixTime, formatDistanceToNow } from 'date-fns';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface VehicleListProps {
     onVehicleSelect: () => void;
@@ -21,19 +26,22 @@ const VehicleListItem = React.memo(({
     vehicle,
     isSelected,
     isVisible,
-    isTracked,
     onSelect,
     onToggleVisibility,
-    onToggleTrack,
 }: {
     vehicle: Vehicle;
     isSelected: boolean;
     isVisible: boolean;
-    isTracked: boolean;
     onSelect: (vehicle: Vehicle) => void;
     onToggleVisibility: (id: number) => void;
-    onToggleTrack: (id: number) => void;
 }) => {
+    const { state } = useFleetState();
+    const dispatch = useFleetDispatch();
+    const { miniMaps } = state;
+
+    const vehicleInMaps = miniMaps.filter(m => m.vehicleIds.includes(vehicle.id_vehiculo));
+    const isTracked = vehicleInMaps.length > 0;
+
     return (
         <div
             className={cn(
@@ -49,21 +57,60 @@ const VehicleListItem = React.memo(({
                     aria-label={`Toggle visibility for ${vehicle.placa}`}
                 />
                 
-                <Tooltip>
-                    <TooltipTrigger asChild>
+                <Popover>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                          <PopoverTrigger asChild>
+                            <Button 
+                                variant={isTracked ? "default" : "ghost"} 
+                                size="icon" 
+                                className="h-8 w-8 rounded-full"
+                            >
+                                <Radar className={cn("h-4 w-4", isTracked && "animate-pulse")} />
+                            </Button>
+                          </PopoverTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                          Radar Lock / Mini-maps
+                      </TooltipContent>
+                  </Tooltip>
+                  <PopoverContent className="w-56 p-2" side="right">
+                     <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground px-2 pb-1">Asignar a Mini-map</p>
                         <Button 
-                            variant={isTracked ? "default" : "ghost"} 
-                            size="icon" 
-                            className="h-8 w-8 rounded-full"
-                            onClick={() => onToggleTrack(vehicle.id_vehiculo)}
+                          variant="ghost" 
+                          size="sm" 
+                          className="w-full justify-start text-xs h-8"
+                          onClick={() => dispatch({ type: 'CREATE_MINIMAP', payload: { vehicleId: vehicle.id_vehiculo } })}
                         >
-                            <Radar className={cn("h-4 w-4", isTracked && "animate-pulse")} />
+                          <Plus className="w-3 h-3 mr-2" />
+                          Nuevo Mini-map
                         </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">
-                        {isTracked ? "Quitar del Dashboard" : "Crear Mini-mapa"}
-                    </TooltipContent>
-                </Tooltip>
+                        {miniMaps.map(map => {
+                           const isInThisMap = map.vehicleIds.includes(vehicle.id_vehiculo);
+                           return (
+                             <Button 
+                                key={map.id}
+                                variant={isInThisMap ? "secondary" : "ghost"}
+                                size="sm" 
+                                className="w-full justify-start text-xs h-8"
+                                onClick={() => {
+                                  if (isInThisMap) {
+                                    dispatch({ type: 'REMOVE_VEHICLE_FROM_MINIMAP', payload: { miniMapId: map.id, vehicleId: vehicle.id_vehiculo } });
+                                  } else {
+                                    dispatch({ type: 'ADD_VEHICLE_TO_MINIMAP', payload: { miniMapId: map.id, vehicleId: vehicle.id_vehiculo } });
+                                  }
+                                }}
+                              >
+                                <Radar className={cn("w-3 h-3 mr-2", isInThisMap && "text-primary")} />
+                                {map.name}
+                                {isInThisMap && <X className="w-2 h-2 ml-auto" />}
+                             </Button>
+                           )
+                        })}
+                     </div>
+                  </PopoverContent>
+                </Popover>
             </div>
 
             <div className="flex-1">
@@ -106,7 +153,7 @@ VehicleListItem.displayName = 'VehicleListItem';
 export function VehicleList({ onVehicleSelect }: VehicleListProps) {
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
-    const { selectedVehicle, visibleVehicleIds, trackedVehicleIds } = state;
+    const { selectedVehicle, visibleVehicleIds } = state;
 
     const handleSelect = useCallback((vehicle: Vehicle) => {
         dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
@@ -115,10 +162,6 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
 
     const handleToggleVisibility = useCallback((id: number) => {
         dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: id });
-    }, [dispatch]);
-
-    const handleToggleTrack = useCallback((id: number) => {
-        dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: id });
     }, [dispatch]);
 
     const listVehicles = useMemo(() => {
@@ -137,14 +180,31 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
                             vehicle={vehicle}
                             isSelected={selectedVehicle?.id_vehiculo === vehicle.id_vehiculo}
                             isVisible={visibleVehicleIds.has(vehicle.id_vehiculo)}
-                            isTracked={trackedVehicleIds.includes(vehicle.id_vehiculo)}
                             onSelect={handleSelect}
                             onToggleVisibility={handleToggleVisibility}
-                            onToggleTrack={handleToggleTrack}
                         />
                     </div>
                 ))}
             </div>
         </ScrollArea>
     )
+}
+
+function X({ className }: { className?: string }) {
+  return (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="24" 
+      height="24" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      className={className}
+    >
+      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+    </svg>
+  )
 }

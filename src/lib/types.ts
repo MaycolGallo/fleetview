@@ -131,6 +131,12 @@ export type MapViewport =
   | { type: 'fit_bounds'; payload: { lat: number; lng: number }[] }
   | { type: 'fit_route'; payload: { lat: number; lng: number }[] };
 
+export interface MiniMapGroup {
+  id: string;
+  name: string;
+  vehicleIds: number[];
+}
+
 export interface FleetState {
   vehicles: Vehicle[];
   statusFilter: VehicleStatus[];
@@ -143,7 +149,7 @@ export interface FleetState {
   isLoadingRoute: boolean;
   selectedSegmentIndex: number | null;
   visibleVehicleIds: Set<number>;
-  trackedVehicleIds: number[];
+  miniMaps: MiniMapGroup[];
   isMapDark: boolean;
   mapViewport: MapViewport;
   simulationStep: Record<string, number>;
