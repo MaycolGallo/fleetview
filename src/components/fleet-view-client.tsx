@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -175,7 +174,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         </div>
       )}
 
-      {/* Floating Minimaps Overlay (The focused squares) */}
+      {/* Floating Minimaps Overlay */}
       {!isDetailView && miniMaps.length > 0 && (
         <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-4 pointer-events-none max-h-[75vh] overflow-y-auto pr-2 no-scrollbar">
           {miniMaps.map((map) => (
@@ -247,11 +246,11 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 font-bold gap-2 h-10 px-4">
                     <Settings2 className="w-4 h-4 text-primary" />
-                    <span className="hidden sm:inline">Opciones de Mapa</span>
+                    <span className="hidden sm:inline">Vista de Flota</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-64 bg-card/95 backdrop-blur-md" align="center">
-                  <DropdownMenuLabel>Vista de Flota</DropdownMenuLabel>
+                  <DropdownMenuLabel>Configuración de Mapa</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => dispatch({ type: 'TOGGLE_SPLIT_VIEW' })} className="cursor-pointer">
                     <Columns2 className="mr-2 h-4 w-4" />
@@ -276,7 +275,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                         className="cursor-pointer text-destructive focus:text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        <span>Cerrar Todos los Mini-maps</span>
+                        <span>Limpiar Mini-Maps</span>
                       </DropdownMenuItem>
                     </>
                   )}

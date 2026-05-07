@@ -1,4 +1,3 @@
-
 "use client";
 
 import type { Vehicle } from "@/lib/types";
@@ -6,7 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import React, { useMemo, useCallback } from "react";
 import { useFleetState, useFleetDispatch } from "@/context/fleet-context";
-import { Car, Clock, Wifi, Battery, Radar, Plus } from "lucide-react";
+import { Car, Clock, Wifi, Battery, Radar, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { fromUnixTime, formatDistanceToNow } from 'date-fns';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -71,12 +70,12 @@ const VehicleListItem = React.memo(({
                           </PopoverTrigger>
                       </TooltipTrigger>
                       <TooltipContent side="right">
-                          Radar Lock / Mini-maps
+                          Asignar a Mini-map
                       </TooltipContent>
                   </Tooltip>
                   <PopoverContent className="w-56 p-2" side="right">
                      <div className="space-y-1">
-                        <p className="text-[10px] font-bold uppercase text-muted-foreground px-2 pb-1">Asignar a Mini-map</p>
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground px-2 pb-1">Radar Lock / Groups</p>
                         <Button 
                           variant="ghost" 
                           size="sm" 
@@ -103,8 +102,8 @@ const VehicleListItem = React.memo(({
                                 }}
                               >
                                 <Radar className={cn("w-3 h-3 mr-2", isInThisMap && "text-primary")} />
-                                {map.name}
-                                {isInThisMap && <X className="w-2 h-2 ml-auto" />}
+                                <span className="truncate flex-1 text-left">{map.name}</span>
+                                {isInThisMap && <X className="w-3 h-3 ml-2 opacity-50" />}
                              </Button>
                            )
                         })}
@@ -124,10 +123,10 @@ const VehicleListItem = React.memo(({
                             <p className="text-xs text-muted-foreground">{vehicle.statusName}</p>
                         </div>
                     </div>
-                    <Badge variant="outline" className="capitalize shrink-0 bg-background/50">{parseFloat(vehicle.velocidad).toFixed(0)} km/h</Badge>
+                    <Badge variant="outline" className="capitalize shrink-0 bg-background/50 font-mono">{parseFloat(vehicle.velocidad).toFixed(0)} km/h</Badge>
                 </div>
                
-                <div className="flex justify-between items-center mt-3 pt-3 border-t text-xs text-muted-foreground">
+                <div className="flex justify-between items-center mt-3 pt-3 border-t text-[10px] text-muted-foreground">
                     <div className="flex items-center gap-1.5" title="Last update">
                         <Clock className="w-3 h-3" />
                         <span className="capitalize">{formatDistanceToNow(fromUnixTime(vehicle.fecha), { addSuffix: true })}</span>
@@ -173,7 +172,7 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
     
     return (
         <ScrollArea className="h-full">
-            <div className="flex flex-col gap-2 p-2">
+            <div className="flex flex-col gap-2 p-3">
                 {listVehicles.map((vehicle, index) => (
                     <div key={vehicle.id_vehiculo} style={{ animationDelay: `${index * 30}ms` }}>
                         <VehicleListItem
@@ -188,23 +187,4 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
             </div>
         </ScrollArea>
     )
-}
-
-function X({ className }: { className?: string }) {
-  return (
-    <svg 
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
-      strokeLinejoin="round" 
-      className={className}
-    >
-      <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-    </svg>
-  )
 }

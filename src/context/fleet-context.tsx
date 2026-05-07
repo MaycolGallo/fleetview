@@ -1,7 +1,6 @@
-
 'use client';
 
-import { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Vehicle, RawVehicle, VehicleStatus, VHistorial, MapViewport, FleetState, Incidencia, Notification, MiniMapGroup } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
@@ -515,6 +514,7 @@ export const selectMapVehicles = (state: FleetState, trackedIds?: number[]): Veh
   const filtered = selectFilteredVehicles(state);
   const allTrackedIds = state.trackedVehicleIds || [];
   
+  // Return vehicles that are filtered AND not currently assigned to any mini-map
   return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
 };
 
