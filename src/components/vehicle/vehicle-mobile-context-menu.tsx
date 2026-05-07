@@ -11,21 +11,11 @@ import {
   DrawerOverlay,
   DrawerHandle
 } from "@/components/ui/drawer";
-import { useFleetDispatch } from '@/context/fleet-context';
-import { History, MapPin, Info, Navigation, AlertCircle, Settings, Bell } from 'lucide-react';
+import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
+import { History, MapPin, Info, Navigation, AlertCircle, Settings, Bell, Radar } from 'lucide-react';
 import type { Vehicle } from "@/lib/types";
 
 type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'view-alerts' | 'maintenance' | 'list-incidencias';
-
-const contextMenuItems = [
-  { action: 'show-route-history' as VehicleAction, label: 'Show Route History', icon: History },
-  { action: 'list-incidencias' as VehicleAction, label: 'List Incidencias', icon: Bell },
-  { action: 'center-map' as VehicleAction, label: 'Center on Map', icon: MapPin },
-  { action: 'show-details' as VehicleAction, label: 'Vehicle Details', icon: Info },
-  { action: 'track-vehicle' as VehicleAction, label: 'Track Vehicle', icon: Navigation },
-  { action: 'view-alerts' as VehicleAction, label: 'View Alerts', icon: AlertCircle },
-  { action: 'maintenance' as VehicleAction, label: 'Maintenance Log', icon: Settings },
-];
 
 export function VehicleMobileContextMenu({
     isOpen,
@@ -36,29 +26,29 @@ export function VehicleMobileContextMenu({
     onOpenChange: (isOpen: boolean) => void;
     vehicle: Vehicle;
 }) {
+    const { state } = useFleetState();
     const dispatch = useFleetDispatch();
+    const isTracked = state.trackedVehicleIds.includes(vehicle.id_vehiculo);
 
     const handleAction = (action: VehicleAction) => {
         if (action === 'show-route-history') {
-             // @ts-ignore
-            if (document.startViewTransition) {
-                // @ts-ignore
-                document.startViewTransition(() => {
+            if ((document as any).startViewTransition) {
+                (document as any).startViewTransition(() => {
                     dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
                 });
             } else {
                 dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
             }
         } else if (action === 'list-incidencias') {
-             // @ts-ignore
-             if (document.startViewTransition) {
-                // @ts-ignore
-                document.startViewTransition(() => {
+             if ((document as any).startViewTransition) {
+                (document as any).startViewTransition(() => {
                     dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: vehicle });
                 });
             } else {
                 dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: vehicle });
             }
+        } else if (action === 'track-vehicle') {
+            dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: vehicle.id_vehiculo });
         } else if (action === 'show-details') {
             dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
         } else if (action === 'center-map') {
@@ -66,6 +56,14 @@ export function VehicleMobileContextMenu({
         }
         onOpenChange(false);
     };
+
+    const contextMenuItems = [
+      { action: 'show-route-history' as VehicleAction, label: 'Historial de Ruta', icon: History },
+      { action: 'list-incidencias' as VehicleAction, label: 'Lista de Incidencias', icon: Bell },
+      { action: 'track-vehicle' as VehicleAction, label: isTracked ? 'Quitar del Dashboard' : 'Seguir en Dashboard', icon: Radar, destructive: isTracked },
+      { action: 'center-map' as VehicleAction, label: 'Centrar en Mapa', icon: MapPin },
+      { action: 'show-details' as VehicleAction, label: 'Detalles del Vehículo', icon: Info },
+    ];
 
     return (
         <Drawer open={isOpen} onOpenChange={onOpenChange}>
@@ -85,10 +83,10 @@ export function VehicleMobileContextMenu({
                                         key={item.action}
                                         variant="ghost"
                                         size="lg"
-                                        className="w-full justify-start text-base py-6"
+                                        className={`w-full justify-start text-base py-6 ${item.destructive ? 'text-destructive' : ''}`}
                                         onClick={() => handleAction(item.action)}
                                     >
-                                        <Icon className="mr-3 h-5 w-5" />
+                                        <Icon className="mr-4 h-5 w-5" />
                                         {item.label}
                                     </Button>
                                 );

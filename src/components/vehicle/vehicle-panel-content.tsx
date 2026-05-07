@@ -130,4 +130,3 @@ export function VehiclePanelContent({ onVehicleSelect, onClose }: VehiclePanelCo
         </div>
     );
 }
-
