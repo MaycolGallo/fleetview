@@ -91,3 +91,4 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
     </APIProvider>
   );
 }
+

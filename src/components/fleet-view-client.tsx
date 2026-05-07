@@ -141,7 +141,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       return <FleetMap apiKey={apiKey} />;
     }
 
-    // New Multi-Track Split View
+    // Fixed Multi-Track Split View (Single secondary map for all tracked)
     if (trackedVehicleIds.length > 0 && !isMobile) {
       return (
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
@@ -331,3 +331,4 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     </div>
   );
 }
+
