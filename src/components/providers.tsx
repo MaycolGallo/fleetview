@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import React from 'react';
 import { FleetProvider } from '@/context/fleet-context';
-import { Skeleton } from './ui/skeleton';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -13,9 +13,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <TooltipProvider delayDuration={0}>
         <FleetProvider>
           {children}
         </FleetProvider>
+      </TooltipProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
