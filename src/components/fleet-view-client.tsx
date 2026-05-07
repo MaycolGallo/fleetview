@@ -30,12 +30,10 @@ import { VehiclePanelContent } from '@/components/vehicle/vehicle-panel-content'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
 
-
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
 });
-
 
 interface FleetViewClientProps {
   apiKey: string;
@@ -96,20 +94,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     }
   }
 
-  useEffect(() => {
-    if (historyVehicle && isPanelOpen) {
-      // @ts-ignore
-      if (typeof document !== 'undefined' && document.startViewTransition) {
-        // @ts-ignore
-        document.startViewTransition(() => {
-          setIsPanelOpen(false);
-        });
-      } else {
-        setIsPanelOpen(false);
-      }
-    }
-  }, [historyVehicle, isPanelOpen]);
-
   const handleBackToFleet = () => {
     const action = () => {
       if (isIncidenciasSheetOpen) {
@@ -120,20 +104,16 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       setIsPanelOpen(true);
     };
 
-    // @ts-ignore
-    if (typeof document !== 'undefined' && document.startViewTransition) {
-        // @ts-ignore
-        document.startViewTransition(action);
+    if (typeof document !== 'undefined' && (document as any).startViewTransition) {
+        (document as any).startViewTransition(action);
     } else {
         action();
     }
   };
 
   const handleToggleSplitView = () => {
-    // @ts-ignore
-    if (typeof document !== 'undefined' && document.startViewTransition) {
-      // @ts-ignore
-      document.startViewTransition(() => {
+    if (typeof document !== 'undefined' && (document as any).startViewTransition) {
+      (document as any).startViewTransition(() => {
         dispatch({ type: 'TOGGLE_SPLIT_VIEW' });
       });
     } else {
@@ -142,10 +122,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   };
 
   const handleToggleSplitDirection = () => {
-    // @ts-ignore
-    if (typeof document !== 'undefined' && document.startViewTransition) {
-      // @ts-ignore
-      document.startViewTransition(() => {
+    if (typeof document !== 'undefined' && (document as any).startViewTransition) {
+      (document as any).startViewTransition(() => {
         dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' });
       });
     } else {
@@ -154,10 +132,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
   };
 
   const handleOpenPanel = () => {
-    // @ts-ignore
-    if (typeof document !== 'undefined' && document.startViewTransition) {
-      // @ts-ignore
-      document.startViewTransition(() => {
+    if (typeof document !== 'undefined' && (document as any).startViewTransition) {
+      (document as any).startViewTransition(() => {
         setIsPanelOpen(true);
       });
     } else {
@@ -185,7 +161,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     if (trackedVehicleIds.length > 0) {
       return (
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
-          <ResizablePanel defaultSize={75} minSize={40} className="relative">
+          <ResizablePanel defaultSize={70} minSize={40} className="relative">
              {!isSplitView ? (
               <FleetMap apiKey={apiKey} />
             ) : (
@@ -201,17 +177,17 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             )}
           </ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-          <ResizablePanel defaultSize={25} minSize={15} className="bg-muted/10">
-            <ResizablePanelGroup direction="vertical" className="h-full w-full p-1 gap-1">
+          <ResizablePanel defaultSize={30} minSize={20} className="bg-muted/10">
+            <ResizablePanelGroup direction="vertical" className="h-full w-full p-2 gap-2">
               {trackedVehicleIds.map((id, index) => (
                 <Fragment key={id}>
                   <ResizablePanel defaultSize={100 / trackedVehicleIds.length} minSize={10}>
-                    <div className="h-full w-full rounded-lg overflow-hidden border-2 border-primary/20 bg-background shadow-inner">
+                    <div className="h-full w-full rounded-xl overflow-hidden border-2 border-primary/20 bg-background shadow-lg">
                       <FleetMap apiKey={apiKey} trackedVehicleId={id} />
                     </div>
                   </ResizablePanel>
                   {index < trackedVehicleIds.length - 1 && (
-                    <ResizableHandle withHandle className="bg-transparent h-1" />
+                    <ResizableHandle className="bg-transparent h-1" />
                   )}
                 </Fragment>
               ))}
@@ -270,15 +246,16 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       
       {/* Top Header Controls Overlay */}
       <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
-        <div className='relative w-full h-12 flex justify-between'>
-          <div className='flex gap-2 items-start pointer-events-auto'>
+        <div className='relative w-full h-12 flex justify-between items-center'>
+          <div className='flex gap-3 items-center pointer-events-auto'>
+            {/* Global View Controls */}
             {!isDetailView && (
-              <div className="flex gap-2 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex gap-2 p-1 bg-card/80 backdrop-blur-md border rounded-lg shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
                 <Button 
-                  variant={isSplitView ? "default" : "secondary"}
+                  variant={isSplitView ? "default" : "ghost"}
+                  size="sm"
                   onClick={handleToggleSplitView}
-                  className={cn("shadow-lg backdrop-blur-sm px-4 transition-all duration-300", !isSplitView && "bg-card/90")}
-                  title="Toggle Split View (Ida / Vuelta)"
+                  className="px-3"
                 >
                   <Columns2 className="mr-2 h-4 w-4" />
                   <span className="hidden sm:inline">{isSplitView ? 'Close Split' : 'Split View'}</span>
@@ -286,10 +263,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
                 {isSplitView && (
                   <Button 
-                    variant="secondary"
+                    variant="ghost"
+                    size="sm"
                     onClick={handleToggleSplitDirection}
-                    className="shadow-lg backdrop-blur-sm px-4 bg-card/90 animate-in fade-in zoom-in duration-300"
-                    title="Toggle Layout Orientation"
+                    className="px-3"
                   >
                     {splitDirection === 'horizontal' ? <Rows2 className="mr-2 h-4 w-4" /> : <Columns2 className="mr-2 h-4 w-4" />}
                     <span className="hidden sm:inline">{splitDirection === 'horizontal' ? 'Vertical' : 'Horizontal'}</span>
@@ -299,17 +276,18 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 {trackedVehicleIds.length > 0 && (
                    <Button 
                     variant="destructive"
-                    onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: [], visible: false } })} // Just use as a clear all tracking for now
-                    className="shadow-lg backdrop-blur-sm px-4 animate-in fade-in zoom-in"
-                    title="Stop all tracking"
+                    size="sm"
+                    onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: [], visible: false } })}
+                    className="px-3"
                   >
                     <X className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Stop Tracking</span>
+                    <span className="hidden sm:inline">Stop All Tracking</span>
                   </Button>
                 )}
               </div>
             )}
 
+            {/* Panel Restore Button */}
             {!isDetailView && !isPanelOpen ? (
               <div style={{ viewTransitionName: 'filters-transition' }}>
                 <Button 
@@ -323,9 +301,10 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
               </div>
             ) : null}
 
+            {/* Detail View Controls */}
             {isDetailView && !state.isLoadingRoute && !state.isLoadingIncidencias ? (
               <div style={{ viewTransitionName: 'back-button-transition' }} className="flex items-center gap-2">
-                <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm hover:bg-accent transition-colors">
+                <Button onClick={handleBackToFleet} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm hover:bg-accent transition-colors font-semibold">
                   {isIncidenciasSheetOpen ? <X className="mr-2 h-4 w-4" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
                   {isIncidenciasSheetOpen ? 'Cerrar Incidencias' : 'Back to Fleet'}
                 </Button>
@@ -397,7 +376,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
             ) : null}
           </div>
 
-          <div className='flex gap-2 items-start pointer-events-auto'>
+          <div className='flex gap-2 items-center pointer-events-auto'>
             <NotificationsDropdown apiKey={apiKey} />
           </div>
         </div>
@@ -409,9 +388,9 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           style={{ viewTransitionName: 'loading-transition' }}
           className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-[100]"
         >
-          <div className="flex items-center gap-2 text-foreground bg-card p-4 rounded-lg shadow-xl border animate-in zoom-in-95 duration-200">
+          <div className="flex items-center gap-3 text-foreground bg-card p-6 rounded-xl shadow-2xl border animate-in zoom-in-95 duration-200">
             <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
-            <p className="font-medium">{isLoadingIncidencias ? 'Cargando incidencias...' : 'Generando ruta...'}</p>
+            <p className="font-bold text-lg">{isLoadingIncidencias ? 'Cargando incidencias...' : 'Generando ruta...'}</p>
           </div>
         </div>
       )}
