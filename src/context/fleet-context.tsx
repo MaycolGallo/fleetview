@@ -43,6 +43,8 @@ type FleetAction =
   | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: number }
   | { type: 'CREATE_MINIMAP', payload: { vehicleId: number } }
+  | { type: 'CREATE_MINIMAP_MANUAL', payload: { name: string } }
+  | { type: 'UPDATE_MINIMAP_VEHICLES', payload: { miniMapId: string, vehicleIds: number[] } }
   | { type: 'REMOVE_MINIMAP', payload: string }
   | { type: 'ADD_VEHICLE_TO_MINIMAP', payload: { miniMapId: string, vehicleId: number } }
   | { type: 'REMOVE_VEHICLE_FROM_MINIMAP', payload: { miniMapId: string, vehicleId: number } }
@@ -331,6 +333,25 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       };
       const newMaps = [...state.miniMaps, newMap];
       return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+    }
+
+    case 'CREATE_MINIMAP_MANUAL': {
+        const newMap: MiniMapGroup = {
+            id: `map-${Date.now()}`,
+            name: action.payload.name,
+            vehicleIds: []
+        };
+        const newMaps = [...state.miniMaps, newMap];
+        return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+    }
+
+    case 'UPDATE_MINIMAP_VEHICLES': {
+        const newMaps = state.miniMaps.map(m => 
+            m.id === action.payload.miniMapId 
+                ? { ...m, vehicleIds: action.payload.vehicleIds }
+                : m
+        );
+        return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
     }
 
     case 'REMOVE_MINIMAP': {
