@@ -143,6 +143,7 @@ export interface FleetState {
   isLoadingRoute: boolean;
   selectedSegmentIndex: number | null;
   visibleVehicleIds: Set<number>;
+  trackedVehicleIds: number[];
   isMapDark: boolean;
   mapViewport: MapViewport;
   simulationStep: Record<string, number>;

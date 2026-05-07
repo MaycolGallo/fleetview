@@ -12,9 +12,10 @@ import { IncidenciaMarker } from '@/components/incidencias/incidencia-marker';
 
 interface MapControlProps {
   side?: 'ida' | 'vuelta';
+  trackedVehicleId?: number;
 }
 
-export function MapControl({ side }: MapControlProps) {
+export function MapControl({ side, trackedVehicleId }: MapControlProps) {
   const map = useMap();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -34,8 +35,6 @@ export function MapControl({ side }: MapControlProps) {
   useEffect(() => {
     if (!map) return;
     
-    // Safety check for library imports. 
-    // If billing is disabled, these promises might hang or reject.
     const loadLibraries = async () => {
       try {
         await Promise.all([
@@ -52,7 +51,19 @@ export function MapControl({ side }: MapControlProps) {
 
 
   useEffect(() => {
-    if (!map || mapViewport.type === 'idle' || mapViewport.type === 'initial') {
+    if (!map) return;
+
+    // Special behavior for tracking panels
+    if (trackedVehicleId) {
+      const v = state.vehicles.find(v => v.id_vehiculo === trackedVehicleId);
+      if (v) {
+        map.panTo({ lat: v.lat, lng: v.lng });
+        if (map.getZoom()! < 16) map.setZoom(16);
+      }
+      return;
+    }
+
+    if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
       // Special case for Split View in Fleet Management
       if (map && isSplitView && !historyVehicle && !isIncidenciasSheetOpen && masterRoute.length > 0) {
         try {
@@ -104,9 +115,9 @@ export function MapControl({ side }: MapControlProps) {
     
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
 
-  }, [map, mapViewport, dispatch, isSplitView, historyVehicle, isIncidenciasSheetOpen, masterRoute, side]);
+  }, [map, mapViewport, dispatch, isSplitView, historyVehicle, isIncidenciasSheetOpen, masterRoute, side, trackedVehicleId, state.vehicles]);
 
-  const mapVehicles = useMemo(() => selectMapVehicles(state), [state]);
+  const mapVehicles = useMemo(() => selectMapVehicles(state, trackedVehicleId), [state, trackedVehicleId]);
 
   const halfIndex = Math.ceil(routeGroups.length / 2);
   const displayGroups = side === 'ida' 
@@ -119,7 +130,6 @@ export function MapControl({ side }: MapControlProps) {
   const lastGroup = displayGroups?.[displayGroups.length - 1];
   const lastRecord = lastGroup?.records?.[lastGroup.records.length - 1];
 
-  // If map isn't available, we don't render markers to avoid console spamming
   if (!map) return null;
 
   return (

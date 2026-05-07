@@ -10,16 +10,18 @@ import { useSearchParams } from 'next/navigation';
 interface FleetMapProps {
   apiKey: string;
   side?: 'ida' | 'vuelta';
+  trackedVehicleId?: number;
 }
 
-export function FleetMap({ apiKey, side }: FleetMapProps) {
+export function FleetMap({ apiKey, side, trackedVehicleId }: FleetMapProps) {
   const { state } = useFleetState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
-  const { isMapDark } = state;
+  const { isMapDark, vehicles } = state;
+
+  const trackedVehicle = trackedId ? vehicles.find(v => v.id_vehiculo === trackedId) : null;
 
   // If we are in demo mode or the key is a mock, we show a styled placeholder
-  // to prevent the SDK from throwing billing errors visually.
   if (isDemoMode || apiKey === 'MOCK_KEY') {
     return (
       <div className="w-full h-full relative bg-muted/20 flex items-center justify-center overflow-hidden border-2 border-dashed border-primary/10">
@@ -31,17 +33,24 @@ export function FleetMap({ apiKey, side }: FleetMapProps) {
         />
         <div className="text-center z-10 px-6">
           <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-1">
-            {side ? `Visor de Flota: ${side}` : 'Visor de Flota Principal'}
+            {trackedVehicle ? `Tracking: ${trackedVehicle.placa}` : side ? `Visor de Flota: ${side}` : 'Visor de Flota Principal'}
           </p>
           <p className="text-xs text-muted-foreground/60 italic">
-            [Modo Demo: Mapa Real Desactivado por Facturación]
+            [Modo Demo: Mapa Real Desactivado]
           </p>
         </div>
-        {side && (
-          <div className="absolute top-4 right-4 z-10">
-            <div className="bg-card/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-primary">
-              {side === 'ida' ? 'Ida' : 'Vuelta'}
-            </div>
+        {(side || trackedVehicle) && (
+          <div className="absolute top-4 right-4 z-10 flex gap-2">
+            {side && (
+              <div className="bg-card/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-primary">
+                {side === 'ida' ? 'Ida' : 'Vuelta'}
+              </div>
+            )}
+            {trackedVehicle && (
+              <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
+                {trackedVehicle.placa}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -53,19 +62,26 @@ export function FleetMap({ apiKey, side }: FleetMapProps) {
       <div className="w-full h-full relative">
         <Map 
             defaultCenter={{ lat: -12.046374, lng: -77.042793 }}
-            defaultZoom={13}
+            defaultZoom={trackedVehicleId ? 16 : 13}
             gestureHandling={'greedy'}
             disableDefaultUI={true}
             mapId={isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID}
             colorScheme={isMapDark ? ColorScheme.dark : ColorScheme.light}
         >
-          <MapControl side={side} />
+          <MapControl side={side} trackedVehicleId={trackedVehicleId} />
         </Map>
-        {side && (
-          <div className="absolute top-4 right-4 z-10">
-            <div className="bg-card/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-primary">
-              {side === 'ida' ? 'Ida' : 'Vuelta'}
-            </div>
+        {(side || trackedVehicleId) && (
+          <div className="absolute top-4 right-4 z-10 flex gap-2">
+            {side && (
+              <div className="bg-card/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-primary">
+                {side === 'ida' ? 'Ida' : 'Vuelta'}
+              </div>
+            )}
+            {trackedVehicleId && (
+              <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
+                {vehicles.find(v => v.id_vehiculo === trackedVehicleId)?.placa}
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -5,7 +6,7 @@ import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
 import { Button } from './ui/button';
-import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X, Bell, Rows2 } from 'lucide-react';
+import { ArrowLeft, PanelLeft, RefreshCw, Calendar as CalendarIcon, List, Columns2, X, Rows2, Radar } from 'lucide-react';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { cn } from '@/lib/utils';
@@ -55,6 +56,8 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
     isIncidenciasSheetOpen,
     isLoadingIncidencias,
     isLoadingRoute,
+    trackedVehicleIds,
+    masterRoute,
   } = state;
   
   const [date, setDate] = useState<DateRange | undefined>();
@@ -173,31 +176,70 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
 
   const panelContent = <VehiclePanelContent onVehicleSelect={() => {}} onClose={() => setIsPanelOpen(false)} />;
 
-  const loadingMessage = isLoadingIncidencias && isLoadingRoute 
-    ? 'Cargando incidencias y ruta...' 
-    : isLoadingIncidencias 
-      ? 'Cargando incidencias...' 
-      : 'Generando ruta...';
-
   const isDetailView = historyVehicle || isIncidenciasSheetOpen || isLoadingRoute || isLoadingIncidencias;
+
+  const renderMaps = () => {
+    if (isDetailView) {
+      return <FleetMap apiKey={apiKey} />;
+    }
+
+    if (trackedVehicleIds.length > 0) {
+      return (
+        <ResizablePanelGroup direction="horizontal" className="h-full w-full">
+          <ResizablePanel defaultSize={60} className="relative">
+             {!isSplitView ? (
+              <FleetMap apiKey={apiKey} />
+            ) : (
+              <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
+                <ResizablePanel defaultSize={50}>
+                  <FleetMap apiKey={apiKey} side="ida" />
+                </ResizablePanel>
+                <ResizableHandle />
+                <ResizablePanel defaultSize={50}>
+                  <FleetMap apiKey={apiKey} side="vuelta" />
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            )}
+          </ResizablePanel>
+          <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
+          <ResizablePanel defaultSize={40}>
+            <ResizablePanelGroup direction="vertical">
+              {trackedVehicleIds.map((id, index) => (
+                <React.Fragment key={id}>
+                  <ResizablePanel defaultSize={100 / trackedVehicleIds.length}>
+                    <FleetMap apiKey={apiKey} trackedVehicleId={id} />
+                  </ResizablePanel>
+                  {index < trackedVehicleIds.length - 1 && <ResizableHandle withHandle />}
+                </React.Fragment>
+              ))}
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      );
+    }
+
+    if (isSplitView) {
+      return (
+        <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
+          <ResizablePanel defaultSize={50}>
+            <FleetMap apiKey={apiKey} side="ida" />
+          </ResizablePanel>
+          <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
+          <ResizablePanel defaultSize={50}>
+            <FleetMap apiKey={apiKey} side="vuelta" />
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      );
+    }
+
+    return <FleetMap apiKey={apiKey} />;
+  }
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
-      {/* Base Map Layer */}
+      {/* Map Layers */}
       <div className="absolute inset-0 z-0">
-        {!isSplitView ? (
-          <FleetMap apiKey={apiKey} />
-        ) : (
-          <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
-            <ResizablePanel defaultSize={50} className="transition-all duration-500 ease-in-out">
-              <FleetMap apiKey={apiKey} side="ida" />
-            </ResizablePanel>
-            <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-            <ResizablePanel defaultSize={50} className="transition-all duration-500 ease-in-out">
-              <FleetMap apiKey={apiKey} side="vuelta" />
-            </ResizablePanel>
-          </ResizablePanelGroup>
-        )}
+        {renderMaps()}
       </div>
 
       {/* Floating Panel Layer (Desktop) */}
@@ -227,7 +269,6 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
         <div className='relative w-full h-12 flex justify-between'>
           <div className='flex gap-2 items-start pointer-events-auto'>
-            {/* Split View Toggle - Only show if NOT in route history or incidencias */}
             {!isDetailView && (
               <div className="flex gap-2 animate-in fade-in slide-in-from-top-4 duration-500">
                 <Button 
@@ -249,6 +290,18 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                   >
                     {splitDirection === 'horizontal' ? <Rows2 className="mr-2 h-4 w-4" /> : <Columns2 className="mr-2 h-4 w-4" />}
                     <span className="hidden sm:inline">{splitDirection === 'horizontal' ? 'Vertical' : 'Horizontal'}</span>
+                  </Button>
+                )}
+                
+                {trackedVehicleIds.length > 0 && (
+                   <Button 
+                    variant="destructive"
+                    onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: [], visible: false } })} // Just use as a clear all tracking for now
+                    className="shadow-lg backdrop-blur-sm px-4 animate-in fade-in zoom-in"
+                    title="Stop all tracking"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Stop Tracking</span>
                   </Button>
                 )}
               </div>
@@ -355,7 +408,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
         >
           <div className="flex items-center gap-2 text-foreground bg-card p-4 rounded-lg shadow-xl border animate-in zoom-in-95 duration-200">
             <div className="w-6 h-6 border-4 border-dashed rounded-full animate-spin border-primary"></div>
-            <p className="font-medium">{loadingMessage}</p>
+            <p className="font-medium">{isLoadingIncidencias ? 'Cargando incidencias...' : 'Generando ruta...'}</p>
           </div>
         </div>
       )}

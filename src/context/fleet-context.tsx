@@ -21,7 +21,6 @@ const SIMULATION_ROUTE = [
   { lat: -12.047, lng: -77.036 },
 ];
 
-// A static master route for the fleet management view in Lima
 const MASTER_FLEET_ROUTE = [
     { lat: -12.030, lng: -77.020 },
     { lat: -12.040, lng: -77.035 },
@@ -42,6 +41,7 @@ type FleetAction =
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
   | { type: 'SET_ROUTE_SHEET_OPEN', payload: boolean }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY', payload: number }
+  | { type: 'TOGGLE_TRACK_VEHICLE', payload: number }
   | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: number[], visible: boolean } }
   | { type: 'SET_MAP_DARK_MODE', payload: boolean }
   | { type: 'SET_PIN_ROTATION_MODE', payload: 'arrow' | 'pin' }
@@ -72,6 +72,7 @@ const getInitialState = (): FleetState => ({
   isLoadingRoute: false,
   selectedSegmentIndex: null,
   visibleVehicleIds: new Set(),
+  trackedVehicleIds: [],
   isMapDark: false,
   mapViewport: { type: 'initial' },
   simulationStep: {},
@@ -141,7 +142,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         historyVehicle: action.payload,
         isIncidenciasSheetOpen: false,
         wasSplitViewBeforeRoute: state.isSplitView,
-        isSplitView: false, // Always normal view during history analysis
+        isSplitView: false, 
       };
 
     case 'SET_ROUTE_HISTORY': {
@@ -188,7 +189,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             selectedSegmentIndex: null,
             isLoadingRoute: false,
             isRoutePlaying: false,
-            isSplitView: state.wasSplitViewBeforeRoute, // Restore split view preference
+            isSplitView: state.wasSplitViewBeforeRoute, 
             wasSplitViewBeforeRoute: false,
             mapViewport: { type: 'fit_bounds', payload: newBounds },
         };
@@ -299,6 +300,15 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             newVisibleIds.add(action.payload);
         }
         return { ...state, visibleVehicleIds: newVisibleIds };
+    }
+
+    case 'TOGGLE_TRACK_VEHICLE': {
+      const isTracked = state.trackedVehicleIds.includes(action.payload);
+      const newTrackedIds = isTracked 
+        ? state.trackedVehicleIds.filter(id => id !== action.payload)
+        : [...state.trackedVehicleIds, action.payload].slice(0, 4); // Limit to 4 mini-maps
+      
+      return { ...state, trackedVehicleIds: newTrackedIds };
     }
 
     case 'SET_ALL_VEHICLES_VISIBILITY': {
@@ -423,11 +433,19 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
   return visibleVehicles.filter(v => state.statusFilter.includes(String(v.id_estado)));
 };
 
-export const selectMapVehicles = (state: FleetState): Vehicle[] => {
+export const selectMapVehicles = (state: FleetState, trackedId?: number): Vehicle[] => {
   if (state.historyVehicle) {
     return [state.historyVehicle];
   }
-  return selectFilteredVehicles(state);
+  
+  if (trackedId) {
+    const v = state.vehicles.find(v => v.id_vehiculo === trackedId);
+    return v ? [v] : [];
+  }
+
+  const filtered = selectFilteredVehicles(state);
+  // Exclude tracked vehicles from main map
+  return filtered.filter(v => !state.trackedVehicleIds.includes(v.id_vehiculo));
 };
 
 export const selectRouteSummary = (state: FleetState) => {
@@ -498,12 +516,10 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }, [rawVehiclesData]);
 
-    // Simulate occasional random incidents
     useEffect(() => {
       if (state.vehicles.length === 0) return;
 
       const timer = setInterval(() => {
-        // 10% chance to trigger an incident
         if (Math.random() > 0.9) {
           const randomVehicle = state.vehicles[Math.floor(Math.random() * state.vehicles.length)];
           const incident: Notification = {
@@ -524,7 +540,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
             variant: 'destructive',
           });
         }
-      }, 30000); // Check every 30s
+      }, 30000); 
 
       return () => clearInterval(timer);
     }, [state.vehicles]);

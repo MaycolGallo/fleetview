@@ -1,14 +1,17 @@
+
 "use client";
 
 import type { Vehicle } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import React, { useMemo, useCallback } from "react";
-import { useFleetState, useFleetDispatch, selectFilteredVehicles } from "@/context/fleet-context";
-import { Car, Clock, Wifi, Battery } from "lucide-react";
+import { useFleetState, useFleetDispatch } from "@/context/fleet-context";
+import { Car, Clock, Wifi, Battery, Radar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { fromUnixTime, formatDistanceToNow } from 'date-fns';
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface VehicleListProps {
     onVehicleSelect: () => void;
@@ -18,14 +21,18 @@ const VehicleListItem = React.memo(({
     vehicle,
     isSelected,
     isVisible,
+    isTracked,
     onSelect,
     onToggleVisibility,
+    onToggleTrack,
 }: {
     vehicle: Vehicle;
     isSelected: boolean;
     isVisible: boolean;
+    isTracked: boolean;
     onSelect: (vehicle: Vehicle) => void;
     onToggleVisibility: (id: number) => void;
+    onToggleTrack: (id: number) => void;
 }) => {
     return (
         <div
@@ -35,13 +42,30 @@ const VehicleListItem = React.memo(({
             )}
             onClick={() => onSelect(vehicle)}
         >
-            <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+            <div className="flex flex-col gap-3 pt-1" onClick={(e) => e.stopPropagation()}>
                 <Checkbox 
                     checked={isVisible} 
                     onCheckedChange={() => onToggleVisibility(vehicle.id_vehiculo)}
                     aria-label={`Toggle visibility for ${vehicle.placa}`}
                 />
+                
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button 
+                            variant={isTracked ? "default" : "ghost"} 
+                            size="icon" 
+                            className="h-8 w-8 rounded-full"
+                            onClick={() => onToggleTrack(vehicle.id_vehiculo)}
+                        >
+                            <Radar className={cn("h-4 w-4", isTracked && "animate-pulse")} />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">
+                        {isTracked ? "Stop tracking in mini-map" : "Track in mini-map"}
+                    </TooltipContent>
+                </Tooltip>
             </div>
+
             <div className="flex-1">
                 <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
@@ -82,7 +106,7 @@ VehicleListItem.displayName = 'VehicleListItem';
 export function VehicleList({ onVehicleSelect }: VehicleListProps) {
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
-    const { selectedVehicle, visibleVehicleIds } = state;
+    const { selectedVehicle, visibleVehicleIds, trackedVehicleIds } = state;
 
     const handleSelect = useCallback((vehicle: Vehicle) => {
         dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
@@ -91,6 +115,10 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
 
     const handleToggleVisibility = useCallback((id: number) => {
         dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: id });
+    }, [dispatch]);
+
+    const handleToggleTrack = useCallback((id: number) => {
+        dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: id });
     }, [dispatch]);
 
     const listVehicles = useMemo(() => {
@@ -109,8 +137,10 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
                             vehicle={vehicle}
                             isSelected={selectedVehicle?.id_vehiculo === vehicle.id_vehiculo}
                             isVisible={visibleVehicleIds.has(vehicle.id_vehiculo)}
+                            isTracked={trackedVehicleIds.includes(vehicle.id_vehiculo)}
                             onSelect={handleSelect}
                             onToggleVisibility={handleToggleVisibility}
+                            onToggleTrack={handleToggleTrack}
                         />
                     </div>
                 ))}
