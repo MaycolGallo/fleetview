@@ -142,7 +142,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
       return <FleetMap apiKey={apiKey} />;
     }
 
-    if (trackedVehicleIds.length > 0) {
+    if (trackedVehicleIds.length > 0 && !isMobile) {
       return (
         <ResizablePanelGroup direction="horizontal" className="h-full w-full">
           <ResizablePanel defaultSize={70} minSize={40} className="relative">
@@ -153,7 +153,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 <ResizablePanel defaultSize={50}>
                   <FleetMap apiKey={apiKey} side="ida" />
                 </ResizablePanel>
-                <ResizableHandle />
+                <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
                 <ResizablePanel defaultSize={50}>
                   <FleetMap apiKey={apiKey} side="vuelta" />
                 </ResizablePanel>
@@ -162,13 +162,21 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
           </ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
           <ResizablePanel defaultSize={30} minSize={20} className="bg-muted/10">
-            <ResizablePanelGroup direction="vertical" className="h-full w-full p-2 gap-2">
-              <ResizablePanel defaultSize={100} minSize={10}>
-                <div className="h-full w-full rounded-xl overflow-hidden border-2 border-primary/20 bg-background shadow-lg">
-                  <FleetMap apiKey={apiKey} trackedVehicleIds={trackedVehicleIds} />
+            <div className="h-full w-full p-2">
+              <div className="h-full w-full rounded-xl overflow-hidden border-2 border-primary/20 bg-background shadow-lg relative group">
+                <FleetMap apiKey={apiKey} trackedVehicleIds={trackedVehicleIds} />
+                <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <Button 
+                    variant="destructive" 
+                    size="icon" 
+                    className="h-8 w-8"
+                    onClick={() => dispatch({ type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: trackedVehicleIds, visible: false } })}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
+              </div>
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       );
@@ -252,15 +260,15 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 font-bold gap-2 h-10">
                     <Settings2 className="w-4 h-4 text-primary" />
-                    <span className="hidden sm:inline">Vista de Flota</span>
+                    <span className="hidden sm:inline">Configuración de Mapa</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 bg-card/95 backdrop-blur-md" align="center">
-                  <DropdownMenuLabel>Configuración de Mapa</DropdownMenuLabel>
+                <DropdownMenuContent className="w-64 bg-card/95 backdrop-blur-md" align="center">
+                  <DropdownMenuLabel>Vista de Flota</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => dispatch({ type: 'TOGGLE_SPLIT_VIEW' })} className="cursor-pointer">
                     <Columns2 className="mr-2 h-4 w-4" />
-                    <span>{isSplitView ? 'Cerrar Vista Dividida' : 'Vista Dividida (Ida/Vuelta)'}</span>
+                    <span>{isSplitView ? 'Cerrar Vista Dividida' : 'Activar Vista Dividida'}</span>
                   </DropdownMenuItem>
                   {isSplitView && (
                     <DropdownMenuItem onClick={() => dispatch({ type: 'TOGGLE_SPLIT_DIRECTION' })} className="cursor-pointer">
@@ -271,7 +279,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => dispatch({ type: 'SET_MAP_DARK_MODE', payload: !isMapDark })} className="cursor-pointer">
                     {isMapDark ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
-                    <span>Modo {isMapDark ? 'Claro' : 'Oscuro'}</span>
+                    <span>Tema {isMapDark ? 'Claro' : 'Oscuro'}</span>
                   </DropdownMenuItem>
                   {trackedVehicleIds.length > 0 && (
                     <>
@@ -281,7 +289,7 @@ export function FleetViewClient({ apiKey }: FleetViewClientProps) {
                         className="cursor-pointer text-destructive focus:text-destructive"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
-                        <span>Limpiar Mini-Maps</span>
+                        <span>Cerrar Mini-Maps</span>
                       </DropdownMenuItem>
                     </>
                   )}

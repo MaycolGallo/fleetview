@@ -316,9 +316,22 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         if (action.payload.visible) {
             action.payload.ids.forEach(id => newVisibleIds.add(id));
         } else {
-            action.payload.ids.forEach(id => newVisibleIds.delete(id));
+            action.payload.ids.forEach(id => {
+              newVisibleIds.delete(id);
+              // Also untrack if we are clearing visibility/mini-maps
+              if (state.trackedVehicleIds.includes(id)) {
+                state.trackedVehicleIds = state.trackedVehicleIds.filter(tid => tid !== id);
+              }
+            });
         }
-        return { ...state, visibleVehicleIds: newVisibleIds };
+        // Force untrack if clearing tracked ids specifically
+        const updatedTrackedIds = state.trackedVehicleIds.filter(tid => action.payload.visible || !action.payload.ids.includes(tid));
+        
+        return { 
+          ...state, 
+          visibleVehicleIds: newVisibleIds,
+          trackedVehicleIds: updatedTrackedIds
+        };
     }
     
     case 'SET_MAP_DARK_MODE': {
