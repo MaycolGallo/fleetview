@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
@@ -16,23 +16,36 @@ import { MiniMapOverlayGrid } from './minimap/minimap-overlay-grid';
 import { VehiclePanelContent } from './vehicle/vehicle-panel-content';
 import { MiniMapManagementContent } from './minimap/minimap-management-content';
 import { SettingsPanelContent } from './settings/settings-panel-content';
+import { SharePanelContent } from './sharing/share-panel-content';
+import { PublicFleetView } from './sharing/public-fleet-view';
+import { useSearchParams } from 'next/navigation';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
 });
 
-export type PanelType = 'vehicles' | 'minimaps' | 'settings' | null;
+export type PanelType = 'vehicles' | 'minimaps' | 'settings' | 'share' | null;
 
 export function FleetViewClient({ apiKey }: { apiKey: string }) {
   const { state, error } = useFleetState();
   const isMobile = useIsMobile();
+  const searchParams = useSearchParams();
   const [activePanel, setActivePanel] = useState<PanelType>('vehicles');
 
   const { isSplitView, splitDirection, historyVehicle, isIncidenciasSheetOpen, isLoadingRoute, isLoadingIncidencias, focusedMiniMapId } = state;
+
+  // Check for shared mode
+  const shareToken = searchParams.get('s');
+  const isPublicView = !!shareToken;
+
   const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || isLoadingRoute || isLoadingIncidencias || focusedMiniMapId);
 
   if (error) return <div className="flex items-center justify-center h-full text-destructive">Error: {error.message}</div>;
+
+  if (isPublicView) {
+    return <PublicFleetView apiKey={apiKey} token={shareToken} />;
+  }
 
   const renderMaps = () => {
     if (!isDetailView && isSplitView) {
@@ -60,6 +73,7 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
                 {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => {}} />}
                 {activePanel === 'minimaps' && <MiniMapManagementContent />}
                 {activePanel === 'settings' && <SettingsPanelContent />}
+                {activePanel === 'share' && <SharePanelContent />}
               </div>
             </div>
           )}
@@ -76,6 +90,7 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
             <div className="flex-1 overflow-hidden">
               {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => setActivePanel(null)} />}
               {activePanel === 'minimaps' && <MiniMapManagementContent />}
+              {activePanel === 'share' && <SharePanelContent />}
             </div>
           </DrawerContent>
         </Drawer>
