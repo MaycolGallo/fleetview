@@ -13,9 +13,10 @@ import { IncidenciaMarker } from '@/components/incidencias/incidencia-marker';
 interface MapControlProps {
   side?: 'ida' | 'vuelta';
   trackedVehicleIds?: number[];
+  isOverview?: boolean;
 }
 
-export function MapControl({ side, trackedVehicleIds }: MapControlProps) {
+export function MapControl({ side, trackedVehicleIds, isOverview }: MapControlProps) {
   const map = useMap();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -29,7 +30,9 @@ export function MapControl({ side, trackedVehicleIds }: MapControlProps) {
     isIncidenciasSheetOpen,
     historyVehicle,
     masterRoute,
-    isSplitView
+    isSplitView,
+    focusedMiniMapId,
+    miniMaps
   } = state;
 
   useEffect(() => {
@@ -53,9 +56,14 @@ export function MapControl({ side, trackedVehicleIds }: MapControlProps) {
   useEffect(() => {
     if (!map) return;
 
-    // Special behavior for tracking panels
-    if (trackedVehicleIds && trackedVehicleIds.length > 0) {
-      const trackedVehicles = state.vehicles.filter(v => trackedVehicleIds.includes(v.id_vehiculo));
+    // Special behavior for tracking panels or Focused group
+    const isFocusMain = isOverview && focusedMiniMapId;
+    const trackingIds = isFocusMain 
+      ? miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds 
+      : trackedVehicleIds;
+
+    if (trackingIds && trackingIds.length > 0) {
+      const trackedVehicles = state.vehicles.filter(v => trackingIds.includes(v.id_vehiculo));
       if (trackedVehicles.length === 1) {
         const v = trackedVehicles[0];
         map.panTo({ lat: v.lat, lng: v.lng });
@@ -120,9 +128,9 @@ export function MapControl({ side, trackedVehicleIds }: MapControlProps) {
     
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
 
-  }, [map, mapViewport, dispatch, isSplitView, historyVehicle, isIncidenciasSheetOpen, masterRoute, side, trackedVehicleIds, state.vehicles]);
+  }, [map, mapViewport, dispatch, isSplitView, historyVehicle, isIncidenciasSheetOpen, masterRoute, side, trackedVehicleIds, state.vehicles, focusedMiniMapId, isOverview, miniMaps]);
 
-  const mapVehicles = useMemo(() => selectMapVehicles(state, trackedVehicleIds), [state, trackedVehicleIds]);
+  const mapVehicles = useMemo(() => selectMapVehicles(state, trackedVehicleIds, isOverview), [state, trackedVehicleIds, isOverview]);
 
   const halfIndex = Math.ceil(routeGroups.length / 2);
   const displayGroups = side === 'ida' 

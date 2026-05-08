@@ -151,6 +151,7 @@ export interface FleetState {
   visibleVehicleIds: Set<number>;
   miniMaps: MiniMapGroup[];
   trackedVehicleIds: number[]; // Explicitly track which ones are in any minimap
+  focusedMiniMapId: string | null; // The ID of the minimap currently promoted to main view
   isMapDark: boolean;
   mapViewport: MapViewport;
   simulationStep: Record<string, number>;

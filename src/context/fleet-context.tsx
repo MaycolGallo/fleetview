@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
@@ -67,6 +68,8 @@ type FleetAction =
   | { type: 'MARK_NOTIFICATION_READ'; payload: string }
   | { type: 'CLEAR_NOTIFICATIONS' }
   | { type: 'TOGGLE_TRACK_VEHICLE'; payload: number }
+  | { type: 'FOCUS_MINIMAP'; payload: string }
+  | { type: 'UNFOCUS_MINIMAP' }
   | { type: 'INIT_PERSISTED_STATE'; payload: MiniMapGroup[] };
 
 const getInitialState = (): FleetState => ({
@@ -83,6 +86,7 @@ const getInitialState = (): FleetState => ({
   visibleVehicleIds: new Set(),
   miniMaps: [],
   trackedVehicleIds: [],
+  focusedMiniMapId: null,
   isMapDark: false,
   mapViewport: { type: 'initial' },
   simulationStep: {},
@@ -214,6 +218,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             isRoutePlaying: false,
             isSplitView: state.wasSplitViewBeforeRoute, 
             wasSplitViewBeforeRoute: false,
+            focusedMiniMapId: null,
             mapViewport: { type: 'fit_bounds', payload: newBounds },
         };
     }
@@ -356,7 +361,13 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'REMOVE_MINIMAP': {
       const newMaps = state.miniMaps.filter(m => m.id !== action.payload);
-      return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+      const isRemovingFocused = state.focusedMiniMapId === action.payload;
+      return { 
+        ...state, 
+        miniMaps: newMaps, 
+        trackedVehicleIds: getTrackedIds(newMaps),
+        focusedMiniMapId: isRemovingFocused ? null : state.focusedMiniMapId
+      };
     }
 
     case 'ADD_VEHICLE_TO_MINIMAP': {
@@ -378,7 +389,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     }
 
     case 'CLEAR_ALL_MINIMAPS':
-      return { ...state, miniMaps: [], trackedVehicleIds: [] };
+      return { ...state, miniMaps: [], trackedVehicleIds: [], focusedMiniMapId: null };
 
     case 'TOGGLE_TRACK_VEHICLE': {
       const isAlreadyTracked = state.trackedVehicleIds?.includes(action.payload) || false;
@@ -397,6 +408,24 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         const newMaps = [...state.miniMaps, newMap];
         return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
       }
+    }
+
+    case 'FOCUS_MINIMAP': {
+      const group = state.miniMaps.find(m => m.id === action.payload);
+      if (!group) return state;
+      return {
+        ...state,
+        focusedMiniMapId: action.payload,
+        mapViewport: { type: 'fit_bounds', payload: state.vehicles.filter(v => group.vehicleIds.includes(v.id_vehiculo)).map(v => ({ lat: v.lat, lng: v.lng })) }
+      };
+    }
+
+    case 'UNFOCUS_MINIMAP': {
+      return {
+        ...state,
+        focusedMiniMapId: null,
+        mapViewport: { type: 'fit_bounds', payload: state.vehicles.map(v => ({ lat: v.lat, lng: v.lng })) }
+      };
     }
 
     case 'SET_ALL_VEHICLES_VISIBILITY': {
@@ -523,15 +552,30 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
   return visibleVehicles.filter(v => state.statusFilter.includes(String(v.id_estado)));
 };
 
-export const selectMapVehicles = (state: FleetState, trackedIds?: number[]): Vehicle[] => {
+export const selectMapVehicles = (state: FleetState, trackedIds?: number[], isOverview?: boolean): Vehicle[] => {
   if (state.historyVehicle) {
     return [state.historyVehicle];
   }
+
+  // If we are focused on a specific minimap as the main view
+  if (isOverview && state.focusedMiniMapId) {
+    const group = state.miniMaps.find(m => m.id === state.focusedMiniMapId);
+    return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
+  }
   
-  if (trackedIds && trackedIds.length > 0) {
+  // If this is the "Overview Overlay" (The big map moved to a small map)
+  if (trackedIds === undefined && !isOverview && state.focusedMiniMapId) {
+    const filtered = selectFilteredVehicles(state);
+    const allTrackedIds = state.trackedVehicleIds || [];
+    return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
+  }
+
+  // If this is a specific mini-map group map
+  if (trackedIds !== undefined) {
     return state.vehicles.filter(v => trackedIds.includes(v.id_vehiculo));
   }
 
+  // Standard Main Overview logic
   const filtered = selectFilteredVehicles(state);
   const allTrackedIds = state.trackedVehicleIds || [];
   

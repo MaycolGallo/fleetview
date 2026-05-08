@@ -29,8 +29,8 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
   const isMobile = useIsMobile();
   const [activePanel, setActivePanel] = useState<PanelType>('vehicles');
 
-  const { isSplitView, splitDirection, historyVehicle, isIncidenciasSheetOpen, isLoadingRoute, isLoadingIncidencias } = state;
-  const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || isLoadingRoute || isLoadingIncidencias);
+  const { isSplitView, splitDirection, historyVehicle, isIncidenciasSheetOpen, isLoadingRoute, isLoadingIncidencias, focusedMiniMapId } = state;
+  const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || isLoadingRoute || isLoadingIncidencias || focusedMiniMapId);
 
   if (error) return <div className="flex items-center justify-center h-full text-destructive">Error: {error.message}</div>;
 
@@ -38,13 +38,13 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
     if (!isDetailView && isSplitView) {
       return (
         <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
-          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="ida" /></ResizablePanel>
+          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="ida" isOverview={true} /></ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="vuelta" /></ResizablePanel>
+          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="vuelta" isOverview={true} /></ResizablePanel>
         </ResizablePanelGroup>
       );
     }
-    return <FleetMap apiKey={apiKey} />;
+    return <FleetMap apiKey={apiKey} isOverview={true} />;
   };
 
   return (

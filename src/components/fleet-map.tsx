@@ -12,13 +12,17 @@ interface FleetMapProps {
   apiKey: string;
   side?: 'ida' | 'vuelta';
   trackedVehicleIds?: number[];
+  isOverview?: boolean;
 }
 
-export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
+export function FleetMap({ apiKey, side, trackedVehicleIds, isOverview }: FleetMapProps) {
   const { state } = useFleetState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
-  const { isMapDark, vehicles } = state;
+  const { isMapDark, vehicles, focusedMiniMapId, miniMaps } = state;
+
+  const isFocusMode = isOverview && focusedMiniMapId;
+  const focusedGroup = isFocusMode ? miniMaps.find(m => m.id === focusedMiniMapId) : null;
 
   const trackedVehicles = trackedVehicleIds?.map(id => vehicles.find(v => v.id_vehiculo === id)).filter(Boolean) as Vehicle[] || [];
   const isTrackingView = trackedVehicles.length > 0;
@@ -34,13 +38,13 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
         />
         <div className="text-center z-10 px-6">
           <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-1">
-            {isTrackingView ? `${trackedVehicles.length} Units Radar Lock` : side ? `Visor de Flota: ${side}` : 'Visor de Flota Principal'}
+            {isTrackingView ? `${trackedVehicles.length} Units Radar Lock` : side ? `Visor de Flota: ${side}` : isFocusMode ? `Enfocado: ${focusedGroup?.name}` : 'Visor de Flota Principal'}
           </p>
           <p className="text-xs text-muted-foreground/60 italic">
             [Modo Demo: Mapa Real Desactivado]
           </p>
         </div>
-        {(side || isTrackingView) && (
+        {(side || isTrackingView || isFocusMode) && (
           <div className="absolute top-4 right-4 z-10 flex gap-2">
             {side && (
               <div className="bg-card/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-primary">
@@ -50,6 +54,11 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
             {isTrackingView && (
               <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
                 FOCUS: {trackedVehicles.length} units
+              </div>
+            )}
+            {isFocusMode && (
+              <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
+                FOCUSED: {focusedGroup?.name}
               </div>
             )}
           </div>
@@ -63,15 +72,15 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
       <div className="w-full h-full relative">
         <Map 
             defaultCenter={{ lat: -12.046374, lng: -77.042793 }}
-            defaultZoom={isTrackingView ? 16 : 13}
+            defaultZoom={isTrackingView || isFocusMode ? 16 : 13}
             gestureHandling={'greedy'}
             disableDefaultUI={true}
             mapId={isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID}
             colorScheme={isMapDark ? ColorScheme.dark : ColorScheme.light}
         >
-          <MapControl side={side} trackedVehicleIds={trackedVehicleIds} />
+          <MapControl side={side} trackedVehicleIds={trackedVehicleIds} isOverview={isOverview} />
         </Map>
-        {(side || isTrackingView) && (
+        {(side || isTrackingView || isFocusMode) && (
           <div className="absolute top-4 right-4 z-10 flex gap-2">
             {side && (
               <div className="bg-card/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-primary">
@@ -81,6 +90,11 @@ export function FleetMap({ apiKey, side, trackedVehicleIds }: FleetMapProps) {
             {isTrackingView && (
               <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
                 RADAR: {trackedVehicles.length}
+              </div>
+            )}
+            {isFocusMode && (
+              <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
+                FOCUS: {focusedGroup?.name}
               </div>
             )}
           </div>
