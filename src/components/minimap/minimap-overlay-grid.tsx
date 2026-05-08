@@ -4,7 +4,7 @@
 import React from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
-import { Radar, X, Maximize2, RefreshCw } from 'lucide-react';
+import { Radar, X, ArrowLeftRight, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '../ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
@@ -26,7 +26,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
 
   return (
     <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-4 pointer-events-none max-h-[75vh] overflow-y-auto pr-2 no-scrollbar">
-      {/* 1. If focused, show the Overview map as a minimap */}
+      {/* 1. If focused, show the Overview map as a mini-map (Swapped position) */}
       {showOverviewAsMini && (
         <div 
           className="pointer-events-auto relative w-48 sm:w-64 aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/20 animate-in slide-in-from-right-8"
@@ -42,10 +42,10 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
               <Button 
                 variant="secondary" 
                 size="icon" 
-                className="absolute top-2 right-2 h-6 w-6 z-20 shadow-lg hover:scale-110 transition-transform bg-card/90"
+                className="absolute top-2 right-2 h-7 w-7 z-20 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
                 onClick={() => dispatch({ type: 'UNFOCUS_MINIMAP' })}
               >
-                <RefreshCw className="h-3 w-3" />
+                <RefreshCw className="h-4 h-4 text-primary" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="left">Restaurar General</TooltipContent>
@@ -67,7 +67,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
               {map.name}
             </div>
             <div className="bg-card/90 backdrop-blur-sm px-1.5 py-0.5 rounded border shadow-sm text-[8px] font-bold text-foreground uppercase">
-              {map.vehicleIds.length} units
+              {map.vehicleIds.length} unidades
             </div>
           </div>
 
@@ -77,23 +77,28 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                 <Button 
                   variant="secondary" 
                   size="icon" 
-                  className="h-6 w-6 shadow-lg hover:scale-110 transition-transform bg-card/90"
+                  className="h-7 w-7 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
                   onClick={() => dispatch({ type: 'FOCUS_MINIMAP', payload: map.id })}
                 >
-                  <Maximize2 className="h-3 w-3" />
+                  <ArrowLeftRight className="h-4 w-4 text-primary" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="left">Enfocar en Grande</TooltipContent>
+              <TooltipContent side="left">Intercambiar con Mapa Principal</TooltipContent>
             </Tooltip>
             
-            <Button 
-              variant="destructive" 
-              size="icon" 
-              className="h-6 w-6 shadow-lg hover:scale-110 transition-transform"
-              onClick={() => dispatch({ type: 'REMOVE_MINIMAP', payload: map.id })}
-            >
-              <X className="h-3 w-3" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="destructive" 
+                  size="icon" 
+                  className="h-7 w-7 shadow-lg hover:scale-110 transition-transform"
+                  onClick={() => dispatch({ type: 'REMOVE_MINIMAP', payload: map.id })}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="left">Eliminar Radar</TooltipContent>
+            </Tooltip>
           </div>
         </div>
       ))}

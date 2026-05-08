@@ -93,6 +93,7 @@ const getInitialState = (): FleetState => ({
   pinRotationMode: 'arrow',
   isRoutePlaying: false,
   playbackAnimationDuration: 1000,
+  isRouteSheetOpen: false,
   isSplitView: false,
   splitDirection: 'horizontal',
   wasSplitViewBeforeRoute: false,
@@ -413,18 +414,22 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     case 'FOCUS_MINIMAP': {
       const group = state.miniMaps.find(m => m.id === action.payload);
       if (!group) return state;
+      const groupVehicles = state.vehicles.filter(v => group.vehicleIds.includes(v.id_vehiculo));
       return {
         ...state,
         focusedMiniMapId: action.payload,
-        mapViewport: { type: 'fit_bounds', payload: state.vehicles.filter(v => group.vehicleIds.includes(v.id_vehiculo)).map(v => ({ lat: v.lat, lng: v.lng })) }
+        mapViewport: groupVehicles.length > 0 
+          ? { type: 'fit_bounds', payload: groupVehicles.map(v => ({ lat: v.lat, lng: v.lng })) } 
+          : state.mapViewport
       };
     }
 
     case 'UNFOCUS_MINIMAP': {
+      const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
       return {
         ...state,
         focusedMiniMapId: null,
-        mapViewport: { type: 'fit_bounds', payload: state.vehicles.map(v => ({ lat: v.lat, lng: v.lng })) }
+        mapViewport: { type: 'fit_bounds', payload: visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng })) }
       };
     }
 
@@ -557,30 +562,33 @@ export const selectMapVehicles = (state: FleetState, trackedIds?: number[], isOv
     return [state.historyVehicle];
   }
 
-  // If we are focused on a specific minimap as the main view
-  if (isOverview && state.focusedMiniMapId) {
-    const group = state.miniMaps.find(m => m.id === state.focusedMiniMapId);
-    return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
-  }
-  
-  // If this is the "Overview Overlay" (The big map moved to a small map)
-  if (trackedIds === undefined && !isOverview && state.focusedMiniMapId) {
+  // Case 1: The Main Screen (Big Map)
+  if (isOverview) {
+    // If a mini-map is promoted to Big Map
+    if (state.focusedMiniMapId) {
+      const group = state.miniMaps.find(m => m.id === state.focusedMiniMapId);
+      return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
+    }
+    // Standard Overview: All vehicles minus those in ANY mini-map
     const filtered = selectFilteredVehicles(state);
     const allTrackedIds = state.trackedVehicleIds || [];
     return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
   }
 
-  // If this is a specific mini-map group map
+  // Case 2: A Floating Mini-Map
+  // If specific IDs are provided, it's a regular mini-map group
   if (trackedIds !== undefined) {
     return state.vehicles.filter(v => trackedIds.includes(v.id_vehiculo));
   }
 
-  // Standard Main Overview logic
-  const filtered = selectFilteredVehicles(state);
-  const allTrackedIds = state.trackedVehicleIds || [];
-  
-  // Return vehicles that are filtered AND not currently assigned to any mini-map
-  return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
+  // If no IDs and isOverview=false, it's the "Overview" mini-map (when focused mode is on)
+  if (state.focusedMiniMapId) {
+    const filtered = selectFilteredVehicles(state);
+    const allTrackedIds = state.trackedVehicleIds || [];
+    return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
+  }
+
+  return [];
 };
 
 export const selectRouteSummary = (state: FleetState) => {
@@ -679,7 +687,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       if (state.vehicles.length === 0) return;
 
       const timer = setInterval(() => {
-        if (Math.random() > 0.9) {
+        if (Math.random() > 0.95) {
           const randomVehicle = state.vehicles[Math.floor(Math.random() * state.vehicles.length)];
           const incident: Notification = {
             id: `noti-${Date.now()}`,
@@ -699,7 +707,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
             variant: 'destructive',
           });
         }
-      }, 30000); 
+      }, 45000); 
 
       return () => clearInterval(timer);
     }, [state.vehicles]);

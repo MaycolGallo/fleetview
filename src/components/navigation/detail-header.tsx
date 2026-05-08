@@ -32,13 +32,13 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
           {!isBusy && (
             <Button onClick={handleBack} variant="secondary" className="shadow-lg bg-card/90 backdrop-blur-sm font-bold border border-primary/20 h-10">
               {isIncidenciasSheetOpen || focusedMiniMapId ? <X className="mr-2 h-4 w-4" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
-              {isIncidenciasSheetOpen ? 'Cerrar Incidencias' : focusedMiniMapId ? `Volver a General` : 'Volver'}
+              {isIncidenciasSheetOpen ? 'Cerrar Incidencias' : focusedMiniMapId ? `Restaurar Vista General` : 'Volver'}
             </Button>
           )}
           {focusedGroup && (
-            <div className="bg-primary/10 backdrop-blur-sm border border-primary/20 px-4 h-10 rounded-lg flex items-center gap-2 shadow-sm text-sm font-bold">
+            <div className="bg-primary/10 backdrop-blur-sm border border-primary/20 px-4 h-10 rounded-lg flex items-center gap-2 shadow-sm text-sm font-bold animate-in slide-in-from-left-2">
               <LayoutGrid className="w-4 h-4 text-primary" />
-              <span>Vista Enfocada: <span className="text-primary">{focusedGroup.name}</span></span>
+              <span>Enfocado: <span className="text-primary">{focusedGroup.name}</span></span>
             </div>
           )}
         </div>
