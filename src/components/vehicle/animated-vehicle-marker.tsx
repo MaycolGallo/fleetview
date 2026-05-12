@@ -23,15 +23,13 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
   const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
 
-  const isPlaybackMarker = historyVehicle?.id_vehiculo === vehicle.id_vehiculo;
+  const isPlaybackMarker = !!historyVehicle;
 
   const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
   
-  // Use the dynamic duration during playback, otherwise a default for regular clicks.
   const animationDuration = (isPlaybackMarker && isRoutePlaying) ? playbackAnimationDuration : 1000;
   const animatedPosition = useAnimatedPosition(targetPosition, { duration: animationDuration });
 
-  // We now always use the animated position for smooth movement.
   const position = animatedPosition;
 
   const handleLeftClick = (e: google.maps.MapMouseEvent | MouseEvent) => {
@@ -61,7 +59,7 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
         setContextMenuPosition({ x: touch.clientX, y: touch.clientY });
         setContextMenuOpen(true);
       }
-    }, 500); // 500ms for a long press
+    }, 500); 
   };
 
   const handleTouchEnd = () => {
@@ -81,8 +79,8 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
   const color = vehicle.statusColor || '#9E9E9E';
   const speed = parseFloat(vehicle.velocidad) || 0;
 
-  // History markers should always be on top of stop markers (zIndex 2) and flags (zIndex 4)
-  const zIndex = isPlaybackMarker ? 20 : (isSelected ? 10 : 1);
+  // History marker has the highest priority to prevent overlapping
+  const zIndex = isPlaybackMarker ? 50 : (isSelected ? 10 : 1);
 
   return (
     <>
@@ -103,22 +101,25 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
                 isSelected && 'scale-125'
             )}
         >
-            <div
-                className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10"
-            >
+            {/* Velocity tag - only shown if speed > 0 and not in playback or if explicitly focused */}
+            {speed > 0 && (
                 <div
-                    style={{ backgroundColor: color }}
-                    className="flex items-center gap-1 shadow-md rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-white"
+                    className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10"
                 >
-                    <Gauge className="w-3 h-3" />
-                    <span>{speed.toFixed(0)}</span>
+                    <div
+                        style={{ backgroundColor: color }}
+                        className="flex items-center gap-1 shadow-md rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-white"
+                    >
+                        <Gauge className="w-3 h-3" />
+                        <span>{speed.toFixed(0)}</span>
+                    </div>
                 </div>
-            </div>
+            )}
 
           <VehiclePin
             vehicle={vehicle}
             isSelected={isSelected}
-            isHistory={!!historyVehicle}
+            isHistory={isPlaybackMarker}
           />
         </div>
       </AdvancedMarker>

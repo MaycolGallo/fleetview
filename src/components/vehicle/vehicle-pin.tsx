@@ -3,7 +3,7 @@
 import { cn } from '@/lib/utils';
 import type { Vehicle } from '@/lib/types';
 import React from 'react';
-import { Car, Navigation } from 'lucide-react';
+import { Car } from 'lucide-react';
 
 interface VehiclePinProps {
   vehicle: Vehicle;
@@ -16,22 +16,26 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
   
   if (isHistory) {
     return (
-      <div className='relative w-8 h-8 flex items-center justify-center'>
+      <div className='relative w-6 h-6 flex items-center justify-center'>
         <div 
           className={cn(
-            "w-8 h-8 rounded-full border-2 border-white shadow-2xl flex items-center justify-center transition-all duration-300",
-            isSelected ? "ring-2 ring-primary/30 scale-110" : "scale-100"
+            "w-6 h-6 rounded-full border-[1.5px] border-white shadow-xl flex items-center justify-center transition-all duration-300",
+            isSelected ? "ring-2 ring-primary/40 scale-110" : "scale-100"
           )}
           style={{ backgroundColor: color }}
         >
+          {/* Custom high-precision arrow pointing straight UP at 0 degrees */}
           <div 
             style={{ transform: `rotate(${vehicle.rumbo}deg)` }}
             className="flex items-center justify-center"
           >
-            <Navigation 
-              className="w-4 h-4 text-white fill-white" 
-              strokeWidth={2.5}
-            />
+            <svg 
+                viewBox="0 0 24 24" 
+                className="w-3.5 h-3.5 fill-white"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" />
+            </svg>
           </div>
         </div>
       </div>
@@ -70,7 +74,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
               </div>
           </div>
 
-           {/* Heading Arrow */}
+           {/* Heading Arrow (Standard View) */}
           <div className="absolute bottom-[-10px] w-full h-full flex justify-center items-end">
               <div
                 className='vehicle-pin-arrow'
@@ -78,12 +82,13 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
                     transform: `rotate(${vehicle.rumbo}deg) translateY(4px)`
                 }}
               >
-                  <Navigation
-                    className="h-5 w-5 drop-shadow-md"
-                    fill='black'
-                    stroke='white'
-                    strokeWidth={1.5}
-                  />
+                  <svg 
+                    viewBox="0 0 24 24" 
+                    className="h-4 w-4 drop-shadow-md fill-black stroke-white"
+                    strokeWidth="1.5"
+                  >
+                    <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" />
+                  </svg>
             </div>
         </div>
       </div>
