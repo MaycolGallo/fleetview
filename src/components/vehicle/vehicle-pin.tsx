@@ -9,19 +9,41 @@ import { Car, Navigation } from 'lucide-react';
 interface VehiclePinProps {
   vehicle: Vehicle;
   isSelected: boolean;
+  isHistory?: boolean;
 }
 
-export const VehiclePin = React.memo(({ vehicle, isSelected }: VehiclePinProps) => {
+export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: VehiclePinProps) => {
   const color = vehicle.statusColor || '#9E9E9E';
-
-  const rotation = 0;
+  
+  if (isHistory) {
+    return (
+      <div className='relative w-10 h-10 flex items-center justify-center'>
+        <div 
+          className={cn(
+            "w-10 h-10 rounded-full border-[3px] border-white shadow-2xl flex items-center justify-center transition-all duration-300",
+            isSelected ? "ring-4 ring-primary/30 scale-110" : "scale-100"
+          )}
+          style={{ backgroundColor: color }}
+        >
+          <div 
+            style={{ transform: `rotate(${vehicle.rumbo}deg)` }}
+            className="flex items-center justify-center"
+          >
+            <Navigation 
+              className="w-5 h-5 text-white fill-white" 
+              strokeWidth={2.5}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
       <div className='relative w-10 h-14 flex flex-col items-center'>
           {/* Main Pin */}
           <div
             className='relative w-10 h-12 vehicle-pin-main'
-            style={{ transform: `rotate(${rotation}deg)` }}
           >
               <div className="absolute top-0 left-0 w-10 h-12">
                  <svg

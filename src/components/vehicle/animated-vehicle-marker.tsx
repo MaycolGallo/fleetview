@@ -116,6 +116,7 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
           <VehiclePin
             vehicle={vehicle}
             isSelected={isSelected}
+            isHistory={!!historyVehicle}
           />
         </div>
       </AdvancedMarker>
