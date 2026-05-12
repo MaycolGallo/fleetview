@@ -19,7 +19,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
       <div className='relative w-6 h-6 flex items-center justify-center'>
         <div 
           className={cn(
-            "w-6 h-6 rounded-full border-[1.5px] border-white shadow-xl flex items-center justify-center transition-all duration-300",
+            "w-6 h-6 rounded-full border-2 border-white shadow-xl flex items-center justify-center transition-all duration-300",
             isSelected ? "ring-2 ring-primary/40 scale-110" : "scale-100"
           )}
           style={{ backgroundColor: color }}
