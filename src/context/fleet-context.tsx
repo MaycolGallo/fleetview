@@ -16,6 +16,30 @@ const fetchVehicles = async (): Promise<RawVehicle[]> => {
   return res.json();
 };
 
+const fetchRouteHistory = async (vehicleId: number): Promise<VHistorial> => {
+  const res = await fetch('/api/routes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vehicleId }),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch route history');
+  }
+  return res.json();
+};
+
+const fetchIncidencias = async (vehicleId: number): Promise<Incidencia[]> => {
+  const res = await fetch('/api/incidencias', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vehicleId }),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch incidencias');
+  }
+  return res.json();
+};
+
 const SIMULATION_ROUTE = [
   { lat: -12.045, lng: -77.040 },
   { lat: -12.048, lng: -77.042 },
@@ -167,7 +191,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         ...state,
         selectedVehicle: null,
         isLoadingRoute: true,
-        // Only update historyVehicle if it's not a refresh to prevent state loss
         historyVehicle: isRefreshing ? state.historyVehicle : action.payload,
         isIncidenciasSheetOpen: false,
         isRouteSheetOpen: isRefreshing ? state.isRouteSheetOpen : false,
@@ -194,7 +217,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             routePath: routePoints,
             routeGroups: filteredGroups,
             by_estado: historyData.by_estado,
-            isRouteSheetOpen: true, // Always show sheet when data is ready
+            isRouteSheetOpen: true,
             historyVehicle: updatedHistoryVehicle,
             isRoutePlaying: false,
             mapViewport: state.isIncidenciasSheetOpen 
@@ -282,7 +305,6 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         selectedVehicle: null,
         isLoadingIncidencias: true,
         isLoadingRoute: false,
-        // Only update historyVehicle if it's not a refresh
         historyVehicle: isRefreshing ? state.historyVehicle : action.payload,
         isRouteSheetOpen: false,
         isIncidenciasSheetOpen: isRefreshing ? state.isIncidenciasSheetOpen : false,
@@ -568,26 +590,20 @@ export const selectMapVehicles = (state: FleetState, trackedIds?: number[], isOv
     return [state.historyVehicle];
   }
 
-  // Case 1: The Main Screen (Big Map)
   if (isOverview) {
-    // If a mini-map is promoted to Big Map
     if (state.focusedMiniMapId) {
       const group = state.miniMaps.find(m => m.id === state.focusedMiniMapId);
       return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
     }
-    // Standard Overview: All vehicles minus those in ANY mini-map
     const filtered = selectFilteredVehicles(state);
     const allTrackedIds = state.trackedVehicleIds || [];
     return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
   }
 
-  // Case 2: A Floating Mini-Map
-  // If specific IDs are provided, it's a regular mini-map group
   if (trackedIds !== undefined) {
     return state.vehicles.filter(v => trackedIds.includes(v.id_vehiculo));
   }
 
-  // If no IDs and isOverview=false, it's the "Overview" mini-map (when focused mode is on)
   if (state.focusedMiniMapId) {
     const filtered = selectFilteredVehicles(state);
     const allTrackedIds = state.trackedVehicleIds || [];
@@ -636,11 +652,35 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     } = useQuery<RawVehicle[], Error>({
       queryKey: ['vehicles'],
       queryFn: fetchVehicles,
-      refetchOnWindowFocus: false, 
-      staleTime: 1000 * 60 * 5, 
+      refetchInterval: 30000,
+      staleTime: 1000 * 30,
     });
 
-    // Handle initial state hydration from localStorage
+    // Queries for Route and Incidencias
+    const routeQuery = useQuery({
+      queryKey: ['route-history', state.historyVehicle?.id_vehiculo],
+      queryFn: () => fetchRouteHistory(state.historyVehicle!.id_vehiculo),
+      enabled: !!state.historyVehicle && state.isLoadingRoute,
+    });
+
+    const incidenciasQuery = useQuery({
+      queryKey: ['incidencias-history', state.historyVehicle?.id_vehiculo],
+      queryFn: () => fetchIncidencias(state.historyVehicle!.id_vehiculo),
+      enabled: !!state.historyVehicle && state.isLoadingIncidencias,
+    });
+
+    useEffect(() => {
+      if (routeQuery.data) {
+        dispatch({ type: 'SET_ROUTE_HISTORY', payload: routeQuery.data });
+      }
+    }, [routeQuery.data]);
+
+    useEffect(() => {
+      if (incidenciasQuery.data) {
+        dispatch({ type: 'SET_INCIDENCIAS', payload: incidenciasQuery.data });
+      }
+    }, [incidenciasQuery.data]);
+
     useEffect(() => {
       const savedState = localStorage.getItem(STORAGE_KEY);
       if (savedState) {
@@ -655,7 +695,6 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }, []);
 
-    // Handle state persistence to localStorage
     useEffect(() => {
       if (state.miniMaps.length > 0 || state.trackedVehicleIds.length > 0) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state.miniMaps));
@@ -717,71 +756,6 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
 
       return () => clearInterval(timer);
     }, [state.vehicles]);
-
-
-    useEffect(() => {
-        const { historyVehicle } = state;
-        if (!historyVehicle || !state.isLoadingRoute) return;
-
-        const fetchRoute = async () => {
-            try {
-                const response = await fetch('/api/routes', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        vehicleId: historyVehicle.id_vehiculo,
-                    }),
-                });
-                if (!response.ok) throw new Error('Failed to fetch route');
-                const data = await response.json();
-                
-                if (typeof document !== 'undefined' && (document as any).startViewTransition) {
-                    (document as any).startViewTransition(() => {
-                        dispatch({ type: 'SET_ROUTE_HISTORY', payload: data });
-                    });
-                } else {
-                    dispatch({ type: 'SET_ROUTE_HISTORY', payload: data });
-                }
-            } catch (error) {
-                console.error("Error fetching route", error);
-                dispatch({ type: 'BACK_TO_FLEET' });
-            }
-        };
-
-        fetchRoute();
-    }, [state.historyVehicle?.id_vehiculo, state.isLoadingRoute]);
-
-    useEffect(() => {
-      const { historyVehicle } = state;
-      if (!historyVehicle || !state.isLoadingIncidencias) return;
-
-      const fetchIncidencias = async () => {
-          try {
-              const response = await fetch('/api/incidencias', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                      vehicleId: historyVehicle.id_vehiculo,
-                  }),
-              });
-              if (!response.ok) throw new Error('Failed to fetch incidencias');
-              const data = await response.json();
-              
-              if (typeof document !== 'undefined' && (document as any).startViewTransition) {
-                  (document as any).startViewTransition(() => {
-                      dispatch({ type: 'SET_INCIDENCIAS', payload: data });
-                  });
-              } else {
-                  dispatch({ type: 'SET_INCIDENCIAS', payload: data });
-              }
-          } catch (error) {
-              console.error("Error fetching incidencias", error);
-              dispatch({ type: 'BACK_TO_FLEET' });
-          }
-      };
-
-      fetchIncidencias();
-  }, [state.historyVehicle?.id_vehiculo, state.isLoadingIncidencias]);
 
     const stateContextValue = useMemo(() => ({
         state,
