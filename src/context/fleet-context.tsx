@@ -93,7 +93,6 @@ const getInitialState = (): FleetState => ({
   pinRotationMode: 'arrow',
   isRoutePlaying: false,
   playbackAnimationDuration: 1000,
-  isRouteSheetOpen: false,
   isSplitView: false,
   splitDirection: 'horizontal',
   wasSplitViewBeforeRoute: false,
@@ -162,16 +161,20 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
     case 'SET_ROUTE_SHEET_OPEN':
       return { ...state, isRouteSheetOpen: action.payload };
 
-    case 'START_ROUTE_LOADING':
+    case 'START_ROUTE_LOADING': {
+      const isRefreshing = state.historyVehicle?.id_vehiculo === action.payload.id_vehiculo;
       return {
         ...state,
         selectedVehicle: null,
         isLoadingRoute: true,
-        historyVehicle: action.payload,
+        // Only update historyVehicle if it's not a refresh to prevent state loss
+        historyVehicle: isRefreshing ? state.historyVehicle : action.payload,
         isIncidenciasSheetOpen: false,
+        isRouteSheetOpen: isRefreshing ? state.isRouteSheetOpen : false,
         wasSplitViewBeforeRoute: state.isSplitView,
         isSplitView: false, 
       };
+    }
 
     case 'SET_ROUTE_HISTORY': {
         const historyData = action.payload;
@@ -191,7 +194,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             routePath: routePoints,
             routeGroups: filteredGroups,
             by_estado: historyData.by_estado,
-            isRouteSheetOpen: !state.isLoadingIncidencias && !state.isIncidenciasSheetOpen,
+            isRouteSheetOpen: true, // Always show sheet when data is ready
             historyVehicle: updatedHistoryVehicle,
             isRoutePlaying: false,
             mapViewport: state.isIncidenciasSheetOpen 
@@ -272,18 +275,21 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
       };
     }
 
-    case 'START_INCIDENCIAS_LOADING':
+    case 'START_INCIDENCIAS_LOADING': {
+      const isRefreshing = state.historyVehicle?.id_vehiculo === action.payload.id_vehiculo;
       return {
         ...state,
         selectedVehicle: null,
         isLoadingIncidencias: true,
         isLoadingRoute: false,
-        historyVehicle: action.payload,
+        // Only update historyVehicle if it's not a refresh
+        historyVehicle: isRefreshing ? state.historyVehicle : action.payload,
         isRouteSheetOpen: false,
-        isIncidenciasSheetOpen: false,
+        isIncidenciasSheetOpen: isRefreshing ? state.isIncidenciasSheetOpen : false,
         wasSplitViewBeforeRoute: state.isSplitView,
         isSplitView: false,
       };
+    }
 
     case 'SET_INCIDENCIAS':
       return {

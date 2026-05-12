@@ -19,6 +19,7 @@ import { SettingsPanelContent } from './settings/settings-panel-content';
 import { SharePanelContent } from './sharing/share-panel-content';
 import { PublicFleetView } from './sharing/public-fleet-view';
 import { useSearchParams } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
@@ -33,13 +34,27 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
   const searchParams = useSearchParams();
   const [activePanel, setActivePanel] = useState<PanelType>('vehicles');
 
-  const { isSplitView, splitDirection, historyVehicle, isIncidenciasSheetOpen, isLoadingRoute, isLoadingIncidencias, focusedMiniMapId } = state;
+  const { 
+    isSplitView, 
+    splitDirection, 
+    historyVehicle, 
+    isIncidenciasSheetOpen, 
+    isLoadingRoute, 
+    isLoadingIncidencias, 
+    focusedMiniMapId,
+    routeGroups,
+    incidencias
+  } = state;
 
   // Check for shared mode
   const shareToken = searchParams.get('s');
   const isPublicView = !!shareToken;
 
-  const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || isLoadingRoute || isLoadingIncidencias || focusedMiniMapId);
+  const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || focusedMiniMapId);
+
+  // Determine if we should show the INITIAL big loader
+  // This only shows if we are loading but have NO existing data to show yet
+  const isInitialLoading = (isLoadingRoute && routeGroups.length === 0) || (isLoadingIncidencias && incidencias.length === 0);
 
   if (error) return <div className="flex items-center justify-center h-full text-destructive">Error: {error.message}</div>;
 
@@ -98,6 +113,18 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
 
       <RouteHistorySheet date={undefined} setDate={() => {}} onApply={() => {}} />
       <IncidenciasSheet />
+
+      {/* Full screen loading for INITIAL load only */}
+      {isInitialLoading && (
+        <div className="absolute inset-0 z-[100] bg-background/80 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-300">
+           <div className="p-8 rounded-full bg-primary/10 border-2 border-primary/20 animate-pulse mb-6">
+              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+           </div>
+           <p className="text-sm font-bold uppercase tracking-widest text-primary animate-bounce">
+              Cargando Telemetría...
+           </p>
+        </div>
+      )}
     </div>
   );
 }
