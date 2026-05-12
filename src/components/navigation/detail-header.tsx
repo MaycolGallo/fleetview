@@ -10,7 +10,7 @@ import { NotificationsDropdown } from '@/components/notifications/notifications-
 export function DetailHeader({ apiKey }: { apiKey: string }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isIncidenciasSheetOpen, isLoadingRoute, isLoadingIncidencias, focusedMiniMapId, miniMaps } = state;
+  const { isIncidenciasSheetOpen, isLoadingRoute, isLoadingIncidencias, focusedMiniMapId, miniMaps, historyVehicle } = state;
 
   const handleBack = () => {
     if (isIncidenciasSheetOpen) {
@@ -19,6 +19,16 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
       dispatch({ type: 'UNFOCUS_MINIMAP' });
     } else {
       dispatch({ type: 'BACK_TO_FLEET' });
+    }
+  };
+
+  const handleRefresh = () => {
+    if (historyVehicle) {
+      if (isIncidenciasSheetOpen) {
+        dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: historyVehicle });
+      } else {
+        dispatch({ type: 'START_ROUTE_LOADING', payload: historyVehicle });
+      }
     }
   };
 
@@ -44,8 +54,13 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
         </div>
 
         <div className="flex gap-2 items-center pointer-events-auto">
-          {!isIncidenciasSheetOpen && !isBusy && !focusedMiniMapId && (
-            <Button variant="secondary" size="icon" className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 h-10 w-10">
+          {historyVehicle && !isBusy && (
+            <Button 
+              variant="secondary" 
+              size="icon" 
+              className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 h-10 w-10 hover:scale-110 transition-transform active:rotate-180 duration-500"
+              onClick={handleRefresh}
+            >
               <RefreshCw className="h-4 w-4" />
             </Button>
           )}
