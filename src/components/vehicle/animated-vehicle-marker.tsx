@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Vehicle } from '@/lib/types';
@@ -82,13 +81,16 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
   const color = vehicle.statusColor || '#9E9E9E';
   const speed = parseFloat(vehicle.velocidad) || 0;
 
+  // History markers should always be on top of stop markers (zIndex 2) and flags (zIndex 4)
+  const zIndex = isPlaybackMarker ? 20 : (isSelected ? 10 : 1);
+
   return (
     <>
       <AdvancedMarker
         key={vehicle.id_vehiculo}
         position={position}
         onClick={handleLeftClick}
-        zIndex={isSelected ? 10 : 1}
+        zIndex={zIndex}
       >
         <div
             onContextMenu={handleContextMenu}

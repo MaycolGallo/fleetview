@@ -1,4 +1,3 @@
-
 'use client';
 
 import { cn } from '@/lib/utils';
@@ -17,11 +16,11 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
   
   if (isHistory) {
     return (
-      <div className='relative w-10 h-10 flex items-center justify-center'>
+      <div className='relative w-8 h-8 flex items-center justify-center'>
         <div 
           className={cn(
-            "w-10 h-10 rounded-full border-[3px] border-white shadow-2xl flex items-center justify-center transition-all duration-300",
-            isSelected ? "ring-4 ring-primary/30 scale-110" : "scale-100"
+            "w-8 h-8 rounded-full border-2 border-white shadow-2xl flex items-center justify-center transition-all duration-300",
+            isSelected ? "ring-2 ring-primary/30 scale-110" : "scale-100"
           )}
           style={{ backgroundColor: color }}
         >
@@ -30,7 +29,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
             className="flex items-center justify-center"
           >
             <Navigation 
-              className="w-5 h-5 text-white fill-white" 
+              className="w-4 h-4 text-white fill-white" 
               strokeWidth={2.5}
             />
           </div>
