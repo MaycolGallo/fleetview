@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -6,9 +7,12 @@ import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/f
 import { RouteHistoryContent } from './route-history-content';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronLeft, ChevronRight, Clock, Milestone, ParkingSquare, Pause, Play, Truck } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Clock, Milestone, ParkingSquare, Pause, Play, Truck, RefreshCw } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import type { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface RouteHistorySheetProps {
   date: DateRange | undefined;
@@ -31,7 +35,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   const isMobile = useIsMobile();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle, by_estado, selectedSegmentIndex } = state;
+  const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle, by_estado, selectedSegmentIndex, lastUpdatedRoute } = state;
   const { totalDistance, totalDuration } = useMemo(() => selectRouteSummary(state), [state]);
   
   const playbackIndexRef = useRef(0);
@@ -40,6 +44,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [justUpdated, setJustUpdated] = useState(false);
 
   const checkScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -66,6 +71,14 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
       clearTimeout(timeout);
     };
   }, [checkScroll, routeGroups, isRouteSheetOpen]);
+
+  useEffect(() => {
+    if (lastUpdatedRoute) {
+        setJustUpdated(true);
+        const t = setTimeout(() => setJustUpdated(false), 2000);
+        return () => clearTimeout(t);
+    }
+  }, [lastUpdatedRoute]);
 
   const statusColorMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -208,27 +221,35 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                 <DrawerHeader className="text-left p-4 pt-0 pb-2 flex-shrink-0">
                      <div className="flex justify-between items-start gap-4">
                         <div className="flex-1 overflow-hidden">
-                            <DrawerTitle className="truncate">Route: {historyVehicle?.placa}</DrawerTitle>
+                            <DrawerTitle className="truncate">Ruta: {historyVehicle?.placa}</DrawerTitle>
                             <DrawerDescription asChild>
-                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs mt-2">
-                                    <div className="flex items-center gap-1.5">
-                                    <Milestone className="w-3 h-3 text-primary" />
-                                    <span>
-                                        Dist:{' '}
-                                        <strong className="text-foreground">
-                                        {totalDistance.toFixed(1)} km
-                                        </strong>
-                                    </span>
+                                <div className="flex flex-col gap-1 mt-2">
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                                        <div className="flex items-center gap-1.5">
+                                            <Milestone className="w-3 h-3 text-primary" />
+                                            <span>
+                                                Dist:{' '}
+                                                <strong className="text-foreground">
+                                                {totalDistance.toFixed(1)} km
+                                                </strong>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5">
+                                            <Clock className="w-3 h-3 text-primary" />
+                                            <span>
+                                                Time:{' '}
+                                                <strong className="text-foreground">
+                                                {formatDuration(totalDuration)}
+                                                </strong>
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center gap-1.5">
-                                    <Clock className="w-3 h-3 text-primary" />
-                                    <span>
-                                        Time:{' '}
-                                        <strong className="text-foreground">
-                                        {formatDuration(totalDuration)}
-                                        </strong>
-                                    </span>
-                                    </div>
+                                    {lastUpdatedRoute && (
+                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                            <RefreshCw className={cn("w-2.5 h-2.5", justUpdated && "animate-spin text-primary")} />
+                                            Actualizado: {format(lastUpdatedRoute, 'HH:mm:ss')}
+                                        </div>
+                                    )}
                                 </div>
                             </DrawerDescription>
                         </div>
@@ -257,7 +278,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                         </div>
                     </div>
                 </DrawerHeader>
-                <div className="flex-1 min-h-0">
+                <div className={cn("flex-1 min-h-0 transition-opacity duration-500", justUpdated ? "opacity-50" : "opacity-100")}>
                   <RouteHistoryContent />
                 </div>
             </DrawerContent>
@@ -283,17 +304,23 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                 <div>
                     <div className="flex justify-between items-center gap-4 mb-4">
                         <div className='flex items-center gap-4'>
-                            <div className="text-2xl font-semibold flex items-center">
+                            <div className="text-2xl font-semibold flex items-center gap-3">
                                 {historyVehicle?.placa}
+                                {lastUpdatedRoute && (
+                                    <Badge variant="secondary" className={cn("text-[10px] h-5 transition-all", justUpdated && "bg-primary/20 scale-110")}>
+                                        <RefreshCw className={cn("w-3 h-3 mr-1", justUpdated && "animate-spin text-primary")} />
+                                        {format(lastUpdatedRoute, 'HH:mm:ss')}
+                                    </Badge>
+                                )}
                             </div>
                         </div>
                         <div className='flex items-center gap-6'>
                             <div className='text-right'>
-                                <p className='text-xs text-muted-foreground uppercase tracking-wider'>Duration</p>
+                                <p className='text-xs text-muted-foreground uppercase tracking-wider'>Duración</p>
                                 <p className='text-xl font-semibold'>{formatDuration(totalDuration)}</p>
                             </div>
                             <div className='text-right'>
-                                <p className='text-xs text-muted-foreground uppercase tracking-wider'>Distance</p>
+                                <p className='text-xs text-muted-foreground uppercase tracking-wider'>Distancia</p>
                                 <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -319,7 +346,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                     </div>
                 </div>
             </CardHeader>
-            <div className="relative flex items-center h-[180px]">
+            <div className={cn("relative flex items-center h-[180px] transition-all duration-700", justUpdated && "bg-primary/5")}>
                 {/* Horizontal Scroll Buttons - Only show if can scroll */}
                 {canScrollLeft && (
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 animate-in fade-in zoom-in duration-200">

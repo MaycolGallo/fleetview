@@ -170,4 +170,7 @@ export interface FleetState {
   notifications: Notification[];
   // Fleet Master Route
   masterRoute: { lat: number, lng: number }[];
+  // Data refresh tracking
+  lastUpdatedRoute?: number;
+  lastUpdatedIncidencias?: number;
 }

@@ -220,6 +220,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
             isRouteSheetOpen: true,
             historyVehicle: updatedHistoryVehicle,
             isRoutePlaying: false,
+            lastUpdatedRoute: Date.now(),
             mapViewport: state.isIncidenciasSheetOpen 
               ? state.mapViewport 
               : { type: 'fit_route', payload: routePoints.flat() },
@@ -319,6 +320,7 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
         isLoadingIncidencias: false,
         incidencias: action.payload,
         isIncidenciasSheetOpen: true,
+        lastUpdatedIncidencias: Date.now(),
         mapViewport: { type: 'fit_bounds', payload: action.payload.map(i => ({ lat: i.lat, lng: i.lng })) },
       };
 

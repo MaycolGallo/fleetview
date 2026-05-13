@@ -7,11 +7,12 @@ import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
-import { AlertCircle, Zap, ShieldAlert, Gauge, Clock, Calendar as CalendarIcon, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AlertCircle, Zap, ShieldAlert, Gauge, Clock, Calendar as CalendarIcon, MapPin, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { format, fromUnixTime } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Incidencia } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
 
 const typeIconMap: Record<Incidencia['type'], React.ElementType> = {
   panic: ShieldAlert,
@@ -41,13 +42,14 @@ export function IncidenciasSheet() {
   const isMobile = useIsMobile();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isIncidenciasSheetOpen, incidencias, historyVehicle, selectedIncidenciaId } = state;
+  const { isIncidenciasSheetOpen, incidencias, historyVehicle, selectedIncidenciaId, lastUpdatedIncidencias } = state;
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
+  const [justUpdated, setJustUpdated] = useState(false);
 
   const checkScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -75,6 +77,14 @@ export function IncidenciasSheet() {
     }
   }, [selectedIncidenciaId]);
 
+  useEffect(() => {
+    if (lastUpdatedIncidencias) {
+        setJustUpdated(true);
+        const t = setTimeout(() => setJustUpdated(false), 2000);
+        return () => clearTimeout(t);
+    }
+  }, [lastUpdatedIncidencias]);
+
   const handleClose = useCallback(() => {
     dispatch({ type: 'CLOSE_INCIDENCIAS' });
   }, [dispatch]);
@@ -100,11 +110,19 @@ export function IncidenciasSheet() {
                 <DrawerHandle />
                 <DrawerHeader className="text-left p-4 pt-0 pb-2 flex-shrink-0">
                     <DrawerTitle>Incidencias: {historyVehicle?.placa}</DrawerTitle>
-                    <DrawerDescription>
-                        Timeline de eventos críticos detectados recientemente.
+                    <DrawerDescription asChild>
+                        <div className="flex flex-col gap-1">
+                            <span>Timeline de eventos críticos detectados recientemente.</span>
+                            {lastUpdatedIncidencias && (
+                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                    <RefreshCw className={cn("w-2.5 h-2.5", justUpdated && "animate-spin text-primary")} />
+                                    Actualizado: {format(lastUpdatedIncidencias, 'HH:mm:ss')}
+                                </div>
+                            )}
+                        </div>
                     </DrawerDescription>
                 </DrawerHeader>
-                <div className="flex-1 min-h-0">
+                <div className={cn("flex-1 min-h-0 transition-opacity duration-500", justUpdated ? "opacity-50" : "opacity-100")}>
                     <ScrollArea className="h-full">
                         <div className="p-4 space-y-3">
                             {incidencias.map((inc) => {
@@ -163,13 +181,19 @@ export function IncidenciasSheet() {
                 <h2 className="text-xl font-bold flex items-center gap-2">
                     <AlertCircle className="w-5 h-5 text-destructive" />
                     Incidencias: {historyVehicle?.placa}
+                    {lastUpdatedIncidencias && (
+                        <Badge variant="secondary" className={cn("text-[10px] h-5 transition-all ml-2", justUpdated && "bg-primary/20 scale-110")}>
+                            <RefreshCw className={cn("w-3 h-3 mr-1", justUpdated && "animate-spin text-primary")} />
+                            {format(lastUpdatedIncidencias, 'HH:mm:ss')}
+                        </Badge>
+                    )}
                 </h2>
                 <p className="text-xs text-muted-foreground">Línea de tiempo de alertas de telemetría críticas</p>
             </div>
             <Button variant="outline" size="sm" onClick={handleClose}>Cerrar</Button>
         </CardHeader>
         
-        <div className="relative flex items-center h-[200px]">
+        <div className={cn("relative flex items-center h-[200px] transition-all duration-700", justUpdated && "bg-primary/5")}>
             {canScrollLeft && (
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
                     <Button 
