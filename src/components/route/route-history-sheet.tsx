@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -224,7 +225,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                                             <Milestone className="w-3 h-3 text-primary" />
                                             <span>
                                                 Dist:{' '}
-                                                <strong className="text-foreground">
+                                                <strong className={cn("transition-all duration-500", justUpdated ? "text-primary scale-110" : "text-foreground")}>
                                                 {totalDistance.toFixed(1)} km
                                                 </strong>
                                             </span>
@@ -233,7 +234,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                                             <Clock className="w-3 h-3 text-primary" />
                                             <span>
                                                 Time:{' '}
-                                                <strong className="text-foreground">
+                                                <strong className={cn("transition-all duration-500", justUpdated ? "text-primary scale-110" : "text-foreground")}>
                                                 {formatDuration(totalDuration)}
                                                 </strong>
                                             </span>
@@ -273,7 +274,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                         </div>
                     </div>
                 </DrawerHeader>
-                <div className={cn("flex-1 min-h-0 transition-opacity duration-500", justUpdated ? "opacity-50" : "opacity-100")}>
+                <div className={cn("flex-1 min-h-0 transition-all duration-700", justUpdated ? "bg-primary/5 ring-1 ring-inset ring-primary/20" : "opacity-100")}>
                   <RouteHistoryContent />
                 </div>
             </DrawerContent>
@@ -312,11 +313,11 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                         <div className='flex items-center gap-6'>
                             <div className='text-right'>
                                 <p className='text-xs text-muted-foreground uppercase tracking-wider'>Duración</p>
-                                <p className='text-xl font-semibold'>{formatDuration(totalDuration)}</p>
+                                <p className={cn('text-xl font-semibold transition-all duration-500', justUpdated && "text-primary scale-105")}>{formatDuration(totalDuration)}</p>
                             </div>
                             <div className='text-right'>
                                 <p className='text-xs text-muted-foreground uppercase tracking-wider'>Distancia</p>
-                                <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
+                                <p className={cn('text-xl font-semibold transition-all duration-500', justUpdated ? "text-primary scale-110" : "text-primary")}>{totalDistance.toFixed(2)}km</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0 shadow-md h-12 w-12 rounded-full">
@@ -332,9 +333,9 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                                 <div key={statusId} className="flex items-center gap-2">
                                     <Icon className="w-4 h-4" style={{ color: statusColorMap.get(Number(statusId)) || 'hsl(var(--primary))' }} />
                                     <span className='font-medium text-foreground uppercase text-xs'>{statusData.name}:</span>
-                                    <span className="text-xs">{statusData.total_distance_km.toFixed(2)}km</span>
+                                    <span className={cn("text-xs transition-colors duration-500", justUpdated && "text-primary font-bold")}>{statusData.total_distance_km.toFixed(2)}km</span>
                                     <span className='text-border'>/</span>
-                                    <span className="text-xs">{statusData.total_time_formatted}</span>
+                                    <span className={cn("text-xs transition-colors duration-500", justUpdated && "text-primary font-bold")}>{statusData.total_time_formatted}</span>
                                 </div>
                             )
                         })}

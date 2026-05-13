@@ -70,30 +70,37 @@ export async function POST(req: NextRequest) {
   try {
     const { vehicleId } = await req.json();
 
-    // Create dynamic timestamps relative to "now"
+    // Create truly dynamic timestamps relative to "now"
+    // Add jitter so the start time isn't always identical
     const now = Math.floor(Date.now() / 1000);
-    let currentTime = now - 18500; // Start roughly 5h 10m ago
+    const jitterStart = Math.floor(Math.random() * 600) - 300; // +/- 5 mins
+    let currentTime = now - 18500 + jitterStart; 
 
-    const processedGroups = await Promise.all(baseVehicleHistoryData.groups.map(async (group, groupIndex) => {
+    const processedGroups = await Promise.all(baseVehicleHistoryData.groups.map(async (group) => {
       const firstRecord = group.records[0];
       let address = 'Address lookup failed';
       let address_short = 'Unknown Location';
 
-      // Update records with live timestamps
+      // Add randomness to group duration so distance/time changes on refresh
+      const durationJitter = Math.floor(Math.random() * 120) - 60; // +/- 2 mins
+      const actualGroupDuration = Math.max(60, group.total_time_seconds + durationJitter);
+      const actualDistance = group.id_estado === 6 ? group.total_distance_km + (Math.random() * 0.5) : group.total_distance_km;
+
+      // Update records with live, jittered timestamps
       const liveRecords = group.records.map((rec, recIndex) => {
-          const step = Math.floor(group.total_time_seconds / group.records.length);
+          const step = Math.floor(actualGroupDuration / group.records.length);
           const recTimestamp = currentTime + (recIndex * step);
           return { ...rec, fecha: recTimestamp };
       });
 
       // Advance clock for next group
-      currentTime += group.total_time_seconds + 60; // Add 1m gap between states
+      currentTime += actualGroupDuration + 60; // Add 1m gap between states
 
       if (firstRecord) {
         try {
           const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${firstRecord.lat}&lon=${firstRecord.lng}`, {
             headers: {
-              'User-Agent': 'FirebaseStudio/1.0 (for a vehicle tracking app)'
+              'User-Agent': 'FleetView/1.0'
             }
           });
           if (geoRes.ok) {
@@ -112,6 +119,9 @@ export async function POST(req: NextRequest) {
 
       return {
         ...group,
+        total_time_seconds: actualGroupDuration,
+        total_distance_km: actualDistance,
+        total_time_formatted: `${Math.floor(actualGroupDuration / 60)}m ${actualGroupDuration % 60}s`,
         records: liveRecords,
         description: group.records[0]?.param1 || 'Unknown',
         color: statusColorMap[group.id_estado as keyof typeof statusColorMap] || '#B0BEC5',
@@ -129,9 +139,9 @@ export async function POST(req: NextRequest) {
       total_time_seconds: totalTime,
       total_time_formatted: `${Math.floor(totalTime / 3600)}h ${Math.floor((totalTime % 3600) / 60)}m`,
       by_estado: {
-        "4": { name: "Ralenti", total_time_seconds: 200, total_time_formatted: "3m 20s", total_distance_km: 0, count: 1 },
-        "5": { name: "Estacionado", total_time_seconds: 18000, total_time_formatted: "5h 0m", total_distance_km: 0.01, count: 1 },
-        "6": { name: "Transitando", total_time_seconds: 280, total_time_formatted: "4m 40s", total_distance_km: 3.5, count: 1 }
+        "4": { name: "Ralenti", total_time_seconds: processedGroups[0].total_time_seconds, total_time_formatted: processedGroups[0].total_time_formatted, total_distance_km: processedGroups[0].total_distance_km, count: 1 },
+        "5": { name: "Estacionado", total_time_seconds: processedGroups[2].total_time_seconds, total_time_formatted: processedGroups[2].total_time_formatted, total_distance_km: processedGroups[2].total_distance_km, count: 1 },
+        "6": { name: "Transitando", total_time_seconds: processedGroups[1].total_time_seconds, total_time_formatted: processedGroups[1].total_time_formatted, total_distance_km: processedGroups[1].total_distance_km, count: 1 }
       }
     };
 
