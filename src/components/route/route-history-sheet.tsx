@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -49,7 +48,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   const checkScroll = useCallback(() => {
     const el = scrollContainerRef.current;
     if (el) {
-      // Check if scrollable
       const hasLeft = el.scrollLeft > 0;
       const hasRight = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
       setCanScrollLeft(hasLeft);
@@ -62,7 +60,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
     if (!el) return;
 
     el.addEventListener('scroll', checkScroll);
-    // Initial check and check after a small delay to allow for rendering/layout
     checkScroll();
     const timeout = setTimeout(checkScroll, 150);
 
@@ -93,7 +90,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   const movingPoints = useMemo(() => {
     if (!isRouteSheetOpen) return [];
     return routeGroups
-        .filter(seg => seg.id_estado === 6) // Transitando
+        .filter(seg => seg.id_estado === 6)
         .flatMap(seg => seg.records.map(r => {
             return { lat: r.lat, lng: r.lng, rumbo: r.rumbo, fecha: r.fecha, velocidad: parseInt(r.velocidad, 10) || 0 };
         }));
@@ -137,12 +134,11 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
         if (nextIndex < movingPoints.length) {
             const nextPoint = movingPoints[nextIndex];
             const timeDiffSeconds = nextPoint.fecha - currentPoint.fecha;
-            
             const PLAYBACK_SPEED_MULTIPLIER = 10;
             delay = (timeDiffSeconds * 1000) / PLAYBACK_SPEED_MULTIPLIER;
             delay = Math.max(50, Math.min(delay, 500));
         } else {
-            delay = 500; // Final animation
+            delay = 500;
         }
 
         dispatch({ type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: currentPoint.lat, lng: currentPoint.lng, rumbo: currentPoint.rumbo, velocidad: currentPoint.velocidad, animationDuration: delay } });
@@ -158,7 +154,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
     };
 
     playNextPoint();
-
     return cleanup;
   }, [isRoutePlaying, dispatch, movingPoints]);
 
@@ -287,9 +282,9 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   }
 
   const statusIconMap: { [key: number]: React.ElementType } = {
-    4: Clock, // Ralenti
-    5: ParkingSquare, // Estacionado
-    6: Truck, // Transitando
+    4: Clock,
+    5: ParkingSquare,
+    6: Truck,
   };
   
   return (
@@ -347,7 +342,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                 </div>
             </CardHeader>
             <div className={cn("relative flex items-center h-[180px] transition-all duration-700", justUpdated && "bg-primary/5")}>
-                {/* Horizontal Scroll Buttons - Only show if can scroll */}
                 {canScrollLeft && (
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 animate-in fade-in zoom-in duration-200">
                       <Button 

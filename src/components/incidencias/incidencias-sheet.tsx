@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -28,14 +27,6 @@ const typeColorMap: Record<Incidencia['type'], string> = {
   harsh_brake: 'bg-orange-500',
   speeding: 'bg-red-600',
   excessive_idle: 'bg-gray-500',
-};
-
-const typeTextColorMap: Record<Incidencia['type'], string> = {
-  panic: 'text-red-500',
-  harsh_accel: 'text-amber-500',
-  harsh_brake: 'text-orange-500',
-  speeding: 'text-red-600',
-  excessive_idle: 'text-gray-500',
 };
 
 export function IncidenciasSheet() {
@@ -223,12 +214,10 @@ export function IncidenciasSheet() {
                                 )}
                                 onClick={() => handleIncidenciaSelect(inc.id)}
                             >
-                                {/* Connector Line */}
                                 {index < incidencias.length - 1 && (
                                     <div className="absolute top-5 left-1/2 w-full h-0.5 bg-border z-0" />
                                 )}
 
-                                {/* Icon Circle */}
                                 <div
                                     className={cn(
                                         "z-10 flex h-10 w-10 items-center justify-center rounded-full text-white transition-all shadow-md",
@@ -239,7 +228,6 @@ export function IncidenciasSheet() {
                                     <Icon className="h-6 w-6" />
                                 </div>
 
-                                {/* Content Card */}
                                 <div className={cn(
                                     "mt-4 text-center p-2 rounded-lg transition-colors w-full px-4",
                                     isSelected ? "bg-primary/5 border border-primary/20" : "group-hover:bg-accent/50"
