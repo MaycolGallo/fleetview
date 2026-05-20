@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -6,7 +7,7 @@ import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
-import { AlertCircle, Zap, ShieldAlert, Gauge, Clock, Calendar as CalendarIcon, MapPin, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
+import { AlertCircle, Zap, ShieldAlert, Gauge, Clock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { format, fromUnixTime } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -57,6 +58,7 @@ export function IncidenciasSheet() {
     return () => el.removeEventListener('scroll', checkScroll);
   }, [isIncidenciasSheetOpen, checkScroll, incidencias]);
 
+  // Effect for side effects like scrolling into view is correct
   useEffect(() => {
     if (selectedIncidenciaId && itemRefs.current[selectedIncidenciaId]) {
         itemRefs.current[selectedIncidenciaId]?.scrollIntoView({

@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useFleetState } from '@/context/fleet-context';
 import { Skeleton } from '../ui/skeleton';
@@ -11,7 +11,7 @@ import { Badge } from '../ui/badge';
 
 const FleetMap = dynamic(() => import('../fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
-  loading: () => <Skeleton className="h-full w-full" />,
+  loading: () => <Skeleton className="h-screen w-screen" />,
 });
 
 interface PublicFleetViewProps {
@@ -28,19 +28,17 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
   const { state } = useFleetState();
   const { vehicles } = state;
 
-  const [payload, setPayload] = useState<SharePayload | null>(null);
-  const [isExpired, setIsExpired] = useState(false);
-
-  useEffect(() => {
+  // Derived state: Decoding and expiration check happen during render
+  const { payload, isExpired } = useMemo(() => {
     try {
       const decoded = JSON.parse(atob(token)) as SharePayload;
-      setPayload(decoded);
-      if (Date.now() > decoded.exp) {
-        setIsExpired(true);
-      }
+      return {
+        payload: decoded,
+        isExpired: Date.now() > decoded.exp
+      };
     } catch (e) {
       console.error("Invalid share token", e);
-      setIsExpired(true);
+      return { payload: null, isExpired: true };
     }
   }, [token]);
 

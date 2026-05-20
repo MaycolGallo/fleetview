@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useRef } from 'react';
@@ -16,10 +17,7 @@ export function RouteHistoryContent({ viewportRef }: RouteHistoryContentProps) {
     const { routeGroups: groups, selectedSegmentIndex } = state;
     const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-    useEffect(() => {
-        itemRefs.current = itemRefs.current.slice(0, groups.length);
-    }, [groups]);
-
+    // Effect for DOM manipulation (scrollIntoView) is still necessary
     useEffect(() => {
         if (selectedSegmentIndex !== null && itemRefs.current[selectedSegmentIndex]) {
             itemRefs.current[selectedSegmentIndex]?.scrollIntoView({
