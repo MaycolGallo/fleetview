@@ -76,7 +76,7 @@ export function FleetMap({ apiKey, side, trackedVehicleIds, isOverview }: FleetM
             gestureHandling={'greedy'}
             disableDefaultUI={true}
             mapId={isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID}
-            colorScheme={isMapDark ? ColorScheme.dark : ColorScheme.light}
+            colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
           <MapControl side={side} trackedVehicleIds={trackedVehicleIds} isOverview={isOverview} />
         </Map>
