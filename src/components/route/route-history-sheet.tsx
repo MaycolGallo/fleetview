@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -44,7 +43,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [justUpdated, setJustUpdated] = useState(false);
 
   const checkScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -69,14 +67,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
       clearTimeout(timeout);
     };
   }, [checkScroll, routeGroups, isRouteSheetOpen]);
-
-  useEffect(() => {
-    if (lastUpdatedRoute) {
-        setJustUpdated(true);
-        const t = setTimeout(() => setJustUpdated(false), 2000);
-        return () => clearTimeout(t);
-    }
-  }, [lastUpdatedRoute]);
 
   const statusColorMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -223,26 +213,26 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                                         <div className="flex items-center gap-1.5">
                                             <Milestone className="w-3 h-3 text-primary" />
-                                            <span>
+                                            <span key={`dist-${lastUpdatedRoute}`} className={cn(lastUpdatedRoute && "animate-scale-pulse")}>
                                                 Dist:{' '}
-                                                <strong className={cn("transition-all duration-500", justUpdated ? "text-primary scale-110" : "text-foreground")}>
+                                                <strong className="text-foreground">
                                                 {totalDistance.toFixed(1)} km
                                                 </strong>
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <Clock className="w-3 h-3 text-primary" />
-                                            <span>
+                                            <span key={`time-${lastUpdatedRoute}`} className={cn(lastUpdatedRoute && "animate-scale-pulse")}>
                                                 Time:{' '}
-                                                <strong className={cn("transition-all duration-500", justUpdated ? "text-primary scale-110" : "text-foreground")}>
+                                                <strong className="text-foreground">
                                                 {formatDuration(totalDuration)}
                                                 </strong>
                                             </span>
                                         </div>
                                     </div>
                                     {lastUpdatedRoute && (
-                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                            <RefreshCw className={cn("w-2.5 h-2.5", justUpdated && "animate-spin text-primary")} />
+                                        <div key={lastUpdatedRoute} className="flex items-center gap-1 text-[10px] text-muted-foreground animate-in fade-in">
+                                            <RefreshCw className="w-2.5 h-2.5" />
                                             Actualizado: {format(lastUpdatedRoute, 'HH:mm:ss')}
                                         </div>
                                     )}
@@ -274,7 +264,10 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                         </div>
                     </div>
                 </DrawerHeader>
-                <div className={cn("flex-1 min-h-0 transition-all duration-700", justUpdated ? "bg-primary/5 ring-1 ring-inset ring-primary/20" : "opacity-100")}>
+                <div 
+                    key={lastUpdatedRoute}
+                    className={cn("flex-1 min-h-0", lastUpdatedRoute && "animate-data-pulse")}
+                >
                   <RouteHistoryContent />
                 </div>
             </DrawerContent>
@@ -303,8 +296,12 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                             <div className="text-2xl font-semibold flex items-center gap-3">
                                 {historyVehicle?.placa}
                                 {lastUpdatedRoute && (
-                                    <Badge variant="secondary" className={cn("text-[10px] h-5 transition-all", justUpdated && "bg-primary/20 scale-110")}>
-                                        <RefreshCw className={cn("w-3 h-3 mr-1", justUpdated && "animate-spin text-primary")} />
+                                    <Badge 
+                                        key={lastUpdatedRoute}
+                                        variant="secondary" 
+                                        className="text-[10px] h-5 animate-scale-pulse"
+                                    >
+                                        <RefreshCw className="w-3 h-3 mr-1" />
                                         {format(lastUpdatedRoute, 'HH:mm:ss')}
                                     </Badge>
                                 )}
@@ -313,11 +310,11 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                         <div className='flex items-center gap-6'>
                             <div className='text-right'>
                                 <p className='text-xs text-muted-foreground uppercase tracking-wider'>Duración</p>
-                                <p className={cn('text-xl font-semibold transition-all duration-500', justUpdated && "text-primary scale-105")}>{formatDuration(totalDuration)}</p>
+                                <p key={`dur-${lastUpdatedRoute}`} className={cn('text-xl font-semibold', lastUpdatedRoute && "animate-scale-pulse")}>{formatDuration(totalDuration)}</p>
                             </div>
                             <div className='text-right'>
                                 <p className='text-xs text-muted-foreground uppercase tracking-wider'>Distancia</p>
-                                <p className={cn('text-xl font-semibold transition-all duration-500', justUpdated ? "text-primary scale-110" : "text-primary")}>{totalDistance.toFixed(2)}km</p>
+                                <p key={`dist-${lastUpdatedRoute}`} className={cn('text-xl font-semibold text-primary', lastUpdatedRoute && "animate-scale-pulse")}>{totalDistance.toFixed(2)}km</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0 shadow-md h-12 w-12 rounded-full">
@@ -326,23 +323,29 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-x-6 gap-y-2 text-sm text-muted-foreground flex-wrap border-t pt-2">
+                    <div 
+                        key={`summary-${lastUpdatedRoute}`}
+                        className={cn("flex items-center gap-x-6 gap-y-2 text-sm text-muted-foreground flex-wrap border-t pt-2 transition-colors", lastUpdatedRoute && "animate-in fade-in")}
+                    >
                         {Object.entries(by_estado).map(([statusId, statusData]) => {
                             const Icon = statusIconMap[Number(statusId)] || Milestone;
                             return (
                                 <div key={statusId} className="flex items-center gap-2">
                                     <Icon className="w-4 h-4" style={{ color: statusColorMap.get(Number(statusId)) || 'hsl(var(--primary))' }} />
                                     <span className='font-medium text-foreground uppercase text-xs'>{statusData.name}:</span>
-                                    <span className={cn("text-xs transition-colors duration-500", justUpdated && "text-primary font-bold")}>{statusData.total_distance_km.toFixed(2)}km</span>
+                                    <span className="text-xs">{statusData.total_distance_km.toFixed(2)}km</span>
                                     <span className='text-border'>/</span>
-                                    <span className={cn("text-xs transition-colors duration-500", justUpdated && "text-primary font-bold")}>{statusData.total_time_formatted}</span>
+                                    <span className="text-xs">{statusData.total_time_formatted}</span>
                                 </div>
                             )
                         })}
                     </div>
                 </div>
             </CardHeader>
-            <div className={cn("relative flex items-center h-[180px] transition-all duration-700", justUpdated && "bg-primary/5")}>
+            <div 
+                key={`content-${lastUpdatedRoute}`}
+                className={cn("relative flex items-center h-[180px]", lastUpdatedRoute && "animate-data-pulse")}
+            >
                 {canScrollLeft && (
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 animate-in fade-in zoom-in duration-200">
                       <Button 

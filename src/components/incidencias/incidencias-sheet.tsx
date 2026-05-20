@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -41,7 +40,6 @@ export function IncidenciasSheet() {
 
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [justUpdated, setJustUpdated] = useState(false);
 
   const checkScroll = useCallback(() => {
     const el = scrollContainerRef.current;
@@ -68,14 +66,6 @@ export function IncidenciasSheet() {
         });
     }
   }, [selectedIncidenciaId]);
-
-  useEffect(() => {
-    if (lastUpdatedIncidencias) {
-        setJustUpdated(true);
-        const t = setTimeout(() => setJustUpdated(false), 2000);
-        return () => clearTimeout(t);
-    }
-  }, [lastUpdatedIncidencias]);
 
   const handleClose = useCallback(() => {
     dispatch({ type: 'CLOSE_INCIDENCIAS' });
@@ -106,15 +96,18 @@ export function IncidenciasSheet() {
                         <div className="flex flex-col gap-1">
                             <span>Timeline de eventos críticos detectados recientemente.</span>
                             {lastUpdatedIncidencias && (
-                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                    <RefreshCw className={cn("w-2.5 h-2.5", justUpdated && "animate-spin text-primary")} />
+                                <div key={lastUpdatedIncidencias} className="flex items-center gap-1 text-[10px] text-muted-foreground animate-in fade-in">
+                                    <RefreshCw className="w-2.5 h-2.5" />
                                     Actualizado: {format(lastUpdatedIncidencias, 'HH:mm:ss')}
                                 </div>
                             )}
                         </div>
                     </DrawerDescription>
                 </DrawerHeader>
-                <div className={cn("flex-1 min-h-0 transition-all duration-700", justUpdated ? "bg-primary/5" : "opacity-100")}>
+                <div 
+                    key={lastUpdatedIncidencias}
+                    className={cn("flex-1 min-h-0", lastUpdatedIncidencias && "animate-data-pulse")}
+                >
                     <ScrollArea className="h-full">
                         <div className="p-4 space-y-3">
                             {incidencias.map((inc) => {
@@ -126,8 +119,7 @@ export function IncidenciasSheet() {
                                         onClick={() => handleIncidenciaSelect(inc.id)}
                                         className={cn(
                                             "flex items-start gap-4 p-3 rounded-lg border transition-all cursor-pointer",
-                                            isSelected ? "bg-accent border-primary ring-1 ring-primary/20 scale-[1.02]" : "bg-card hover:bg-accent border-border",
-                                            justUpdated && "animate-pulse"
+                                            isSelected ? "bg-accent border-primary ring-1 ring-primary/20 scale-[1.02]" : "bg-card hover:bg-accent border-border"
                                         )}
                                     >
                                         <div className={cn("p-2 rounded-full text-white", typeColorMap[inc.type])}>
@@ -136,7 +128,7 @@ export function IncidenciasSheet() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-start gap-2">
                                                 <p className="font-semibold text-sm truncate">{inc.description}</p>
-                                                <p className={cn("text-[10px] whitespace-nowrap bg-muted px-1.5 py-0.5 rounded font-bold transition-colors duration-500", justUpdated ? "text-primary bg-primary/10" : "text-muted-foreground")}>
+                                                <p className="text-[10px] whitespace-nowrap bg-muted px-1.5 py-0.5 rounded font-bold text-muted-foreground">
                                                     {format(fromUnixTime(inc.timestamp), 'HH:mm')}
                                                 </p>
                                             </div>
@@ -175,8 +167,12 @@ export function IncidenciasSheet() {
                     <AlertCircle className="w-5 h-5 text-destructive" />
                     Incidencias: {historyVehicle?.placa}
                     {lastUpdatedIncidencias && (
-                        <Badge variant="secondary" className={cn("text-[10px] h-5 transition-all ml-2", justUpdated && "bg-primary/20 scale-110")}>
-                            <RefreshCw className={cn("w-3 h-3 mr-1", justUpdated && "animate-spin text-primary")} />
+                        <Badge 
+                            key={lastUpdatedIncidencias}
+                            variant="secondary" 
+                            className="text-[10px] h-5 ml-2 animate-scale-pulse"
+                        >
+                            <RefreshCw className="w-3 h-3 mr-1" />
                             {format(lastUpdatedIncidencias, 'HH:mm:ss')}
                         </Badge>
                     )}
@@ -186,7 +182,10 @@ export function IncidenciasSheet() {
             <Button variant="outline" size="sm" onClick={handleClose}>Cerrar</Button>
         </CardHeader>
         
-        <div className={cn("relative flex items-center h-[200px] transition-all duration-700", justUpdated && "bg-primary/5")}>
+        <div 
+            key={lastUpdatedIncidencias}
+            className={cn("relative flex items-center h-[200px]", lastUpdatedIncidencias && "animate-data-pulse")}
+        >
             {canScrollLeft && (
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
                     <Button 
@@ -224,25 +223,23 @@ export function IncidenciasSheet() {
                                     className={cn(
                                         "z-10 flex h-10 w-10 items-center justify-center rounded-full text-white transition-all shadow-md",
                                         typeColorMap[inc.type],
-                                        isSelected ? 'ring-4 ring-primary ring-offset-2' : 'ring-2 ring-white',
-                                        justUpdated && "animate-pulse"
+                                        isSelected ? 'ring-4 ring-primary ring-offset-2' : 'ring-2 ring-white'
                                     )}
                                 >
                                     <Icon className="h-6 w-6" />
                                 </div>
 
                                 <div className={cn(
-                                    "mt-4 text-center p-2 rounded-lg transition-all duration-500 w-full px-4",
-                                    isSelected ? "bg-primary/5 border border-primary/20" : "group-hover:bg-accent/50",
-                                    justUpdated && "ring-2 ring-primary/20 scale-105"
+                                    "mt-4 text-center p-2 rounded-lg transition-all w-full px-4",
+                                    isSelected ? "bg-primary/5 border border-primary/20" : "group-hover:bg-accent/50"
                                 )}>
                                     <p className={cn(
-                                        "font-bold text-xs truncate mb-1 transition-colors duration-500",
-                                        isSelected ? 'text-primary' : (justUpdated ? 'text-primary' : 'text-foreground')
+                                        "font-bold text-xs truncate mb-1",
+                                        isSelected ? 'text-primary' : 'text-foreground'
                                     )}>
                                         {inc.description}
                                     </p>
-                                    <p className={cn("text-[10px] font-medium transition-colors duration-500", justUpdated ? "text-primary" : "text-muted-foreground")}>
+                                    <p className="text-[10px] font-medium text-muted-foreground">
                                         {format(fromUnixTime(inc.timestamp), 'HH:mm:ss')}
                                     </p>
                                     {inc.value && (
