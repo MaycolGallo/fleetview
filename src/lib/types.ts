@@ -41,6 +41,11 @@ export interface Vehicle {
 
 export type VehicleStatus = string;
 
+export interface Point {
+  lat: number;
+  lng: number;
+}
+
 export interface Incidencia {
   id: string;
   type: 'panic' | 'harsh_accel' | 'harsh_brake' | 'speeding' | 'excessive_idle';

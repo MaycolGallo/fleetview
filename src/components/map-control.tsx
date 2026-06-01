@@ -56,13 +56,15 @@ export function MapControl({ side, trackedVehicleIds, isOverview }: MapControlPr
   useEffect(() => {
     if (!map) return;
 
-    // Special behavior for tracking panels or Focused group
+    // Only auto-pan for radar tracking views inside mini-maps,
+    // or when the main overview map is currently swapped with a focused radar group.
     const isFocusMain = isOverview && focusedMiniMapId;
+    const shouldPanRadar = (isFocusMain && miniMaps.length > 0) || (!isOverview && trackedVehicleIds && trackedVehicleIds.length > 0);
     const trackingIds = isFocusMain 
       ? miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds 
       : trackedVehicleIds;
 
-    if (trackingIds && trackingIds.length > 0) {
+    if (shouldPanRadar && trackingIds && trackingIds.length > 0) {
       const trackedVehicles = state.vehicles.filter(v => trackingIds.includes(v.id_vehiculo));
       if (trackedVehicles.length === 1) {
         const v = trackedVehicles[0];

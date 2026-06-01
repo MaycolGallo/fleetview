@@ -66,13 +66,13 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
     if (!isDetailView && isSplitView) {
       return (
         <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
-          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="ida" isOverview={true} /></ResizablePanel>
+          <ResizablePanel defaultSize={50}><FleetMap key="ida-map" apiKey={apiKey} side="ida" isOverview={true} /></ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="vuelta" isOverview={true} /></ResizablePanel>
+          <ResizablePanel defaultSize={50}><FleetMap key="vuelta-map" apiKey={apiKey} side="vuelta" isOverview={true} /></ResizablePanel>
         </ResizablePanelGroup>
       );
     }
-    return <FleetMap apiKey={apiKey} isOverview={true} />;
+    return <FleetMap key="main-map" apiKey={apiKey} isOverview={true} />;
   };
 
   return (
