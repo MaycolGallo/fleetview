@@ -1,7 +1,14 @@
 
 "use client";
 
-import { LeafletFleetMap } from './leaflet-map';
+import dynamic from 'next/dynamic';
+
+const DynamicLeafletFleetMap = dynamic(
+  () => import('./leaflet-map').then(mod => mod.LeafletFleetMap),
+  {
+    ssr: false,
+  }
+);
 
 interface FleetMapProps {
   apiKey: string;
@@ -11,10 +18,8 @@ interface FleetMapProps {
 }
 
 export function FleetMap({ apiKey, side, trackedVehicleIds, isOverview }: FleetMapProps) {
-  // Leaflet map is now the default - no API key needed
   return (
-    <LeafletFleetMap 
-      side={side} 
+    <DynamicLeafletFleetMap 
       trackedVehicleIds={trackedVehicleIds} 
       isOverview={isOverview} 
     />
