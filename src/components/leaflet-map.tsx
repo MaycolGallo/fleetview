@@ -1,10 +1,22 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import L from "leaflet";
 import { useFleetState } from "@/context/fleet-context";
+import { useEffect, useRef } from "react";
 import type { Vehicle } from "@/lib/types";
 import "leaflet/dist/leaflet.css";
+
+// Fix Leaflet default icon issue in Next.js
+const defaultIcon = L.icon({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 interface LeafletFleetMapProps {
   side?: "ida" | "vuelta";
@@ -12,32 +24,118 @@ interface LeafletFleetMapProps {
   isOverview?: boolean;
 }
 
+function MapContent({
+  side,
+  trackedVehicleIds,
+  isOverview,
+  tileUrl,
+  attribution,
+  defaultCenter,
+  defaultZoom,
+  vehicles,
+  selectedVehicleId,
+}: LeafletFleetMapProps & {
+  tileUrl: string;
+  attribution: string;
+  defaultCenter: [number, number];
+  defaultZoom: number;
+  vehicles: Vehicle[];
+  selectedVehicleId?: number;
+}) {
+  return (
+    <>
+      <TileLayer url={tileUrl} attribution={attribution} maxZoom={19} />
+
+      {/* Vehicle Markers */}
+      {vehicles.map((vehicle) => {
+        // Filter by side if specified
+        if (side && vehicle.lado !== side) return null;
+
+        // Filter by tracking if specified
+        if (trackedVehicleIds && !trackedVehicleIds.includes(vehicle.id_vehiculo))
+          return null;
+
+        const position: [number, number] = [vehicle.latitud, vehicle.longitud];
+        const isSelected = vehicle.id_vehiculo === selectedVehicleId;
+
+        const vehicleIcon = L.divIcon({
+          className: "vehicle-marker",
+          html: `
+            <div style="
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 40px;
+              height: 40px;
+              background: ${isSelected ? "#3b82f6" : "#10b981"};
+              border: 2px solid white;
+              border-radius: 50%;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+              transform: rotate(${vehicle.rumbo || 0}deg);
+              font-weight: bold;
+              color: white;
+              font-size: 14px;
+            ">
+              ▲
+            </div>
+          `,
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
+          popupAnchor: [0, -20],
+        });
+
+        return (
+          <Marker key={vehicle.id_vehiculo} position={position} icon={vehicleIcon}>
+            <Popup>
+              <div className="text-sm">
+                <p className="font-bold">{vehicle.placa}</p>
+                <p>Conductor: {vehicle.conductor}</p>
+                <p>Velocidad: {vehicle.velocidad} km/h</p>
+                <p>Estado: {vehicle.estado}</p>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
+
+      {/* Route Polylines */}
+      {vehicles.map((vehicle) => {
+        if (!vehicle.ruta || vehicle.ruta.length === 0) return null;
+
+        // Filter by side if specified
+        if (side && vehicle.lado !== side) return null;
+
+        const polylinePositions: [number, number][] = vehicle.ruta
+          .map((point: any) => [point.latitud, point.longitud])
+          .filter(([lat, lng]) => lat && lng);
+
+        if (polylinePositions.length === 0) return null;
+
+        return (
+          <Polyline
+            key={`route-${vehicle.id_vehiculo}`}
+            positions={polylinePositions}
+            color={vehicle.lado === "ida" ? "#ef4444" : "#3b82f6"}
+            weight={2}
+            opacity={0.6}
+            dashArray={side === vehicle.lado ? undefined : "5, 5"}
+          />
+        );
+      })}
+    </>
+  );
+}
+
 export function LeafletFleetMap({
   side,
   trackedVehicleIds,
   isOverview,
 }: LeafletFleetMapProps) {
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
+  const mapRef = useRef(false);
   const { state } = useFleetState();
-  const {
-    isMapDark,
-    vehicles,
-    focusedMiniMapId,
-    miniMaps,
-    mapViewport,
-    routeGroups,
-    selectedSegmentIndex,
-    incidencias,
-    historyVehicle,
-    isIncidenciasSheetOpen,
-    isSplitView,
-  } = state;
+  const { isMapDark, vehicles, focusedMiniMapId, miniMaps, selectedVehicleId } = state;
 
   const isFocusMode = isOverview && focusedMiniMapId;
-  const focusedGroup = isFocusMode
-    ? miniMaps.find((m) => m.id === focusedMiniMapId)
-    : null;
 
   const trackedVehicles =
     trackedVehicleIds
@@ -45,149 +143,42 @@ export function LeafletFleetMap({
       .filter(Boolean) || [];
   const isTrackingView = trackedVehicles.length > 0;
 
-  // Initialize map
+  const defaultCenter: [number, number] = [-12.046374, -77.042793];
+  const defaultZoom = isTrackingView || isFocusMode ? 16 : 13;
+
+  const tileUrl = isMapDark
+    ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+  const attribution = isMapDark
+    ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+  // Prevent double-mounting in StrictMode
   useEffect(() => {
-    if (!mapContainerRef.current) return;
-
-    // Prevent re-initialization
-    if (mapInstanceRef.current) return;
-
-    try {
-      const defaultCenter: L.LatLngExpression = [-12.046374, -77.042793];
-      const defaultZoom = isTrackingView || isFocusMode ? 16 : 13;
-
-      // Create map instance
-      const map = L.map(mapContainerRef.current, {
-        center: defaultCenter,
-        zoom: defaultZoom,
-        zoomControl: true,
-        attributionControl: true,
-      });
-
-      mapInstanceRef.current = map;
-
-      // Choose tile layer based on dark mode
-      const tileUrl = isMapDark
-        ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-
-      const attribution = isMapDark
-        ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
-
-      // Add tile layer
-      L.tileLayer(tileUrl, {
-        attribution,
-        maxZoom: 19,
-      }).addTo(map);
-    } catch (error) {
-      console.error("Error initializing Leaflet map:", error);
-    }
-
-    return () => {
-      // Don't destroy the map on unmount to avoid re-initialization issues
-      // Only destroy on complete component removal
-    };
+    mapRef.current = true;
   }, []);
 
-  // Update zoom based on tracking view
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-
-    const newZoom = isTrackingView || isFocusMode ? 16 : 13;
-    mapInstanceRef.current.setZoom(newZoom);
-  }, [isTrackingView, isFocusMode]);
-
-  // Update viewport
-  useEffect(() => {
-    if (!mapInstanceRef.current) return;
-
-    // Special behavior for tracking panels
-    if (trackedVehicles.length > 0) {
-      const positions: Array<[number, number]> = [];
-      trackedVehicles.forEach((v) => {
-        if (v.ultima_ubicacion) {
-          positions.push([
-            v.ultima_ubicacion.latitud,
-            v.ultima_ubicacion.longitud,
-          ]);
-        }
-      });
-
-      if (positions.length > 0) {
-        const bounds = L.latLngBounds(positions);
-        mapInstanceRef.current.fitBounds(bounds, {
-          padding: [100, 100],
-          maxZoom: 15,
-        });
-      }
-      return;
-    }
-
-    // For route view
-    if (historyVehicle && routeGroups.length > 0) {
-      const positions: Array<[number, number]> = [];
-      const selectedRoute = routeGroups[selectedSegmentIndex || 0];
-      if (selectedRoute && selectedRoute.route) {
-        selectedRoute.route.forEach((point) => {
-          if (point.latitud && point.longitud) {
-            positions.push([point.latitud, point.longitud]);
-          }
-        });
-      }
-
-      if (positions.length > 0) {
-        const bounds = L.latLngBounds(positions);
-        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
-      }
-      return;
-    }
-
-    // For incidencia view
-    if (isIncidenciasSheetOpen && incidencias.length > 0) {
-      const positions: Array<[number, number]> = [];
-      incidencias.forEach((inc) => {
-        if (inc.latitud && inc.longitud) {
-          positions.push([inc.latitud, inc.longitud]);
-        }
-      });
-
-      if (positions.length > 0) {
-        const bounds = L.latLngBounds(positions);
-        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
-      }
-      return;
-    }
-
-    // Default behavior
-    if (mapViewport && mapViewport.center && !isSplitView) {
-      mapInstanceRef.current.setView(
-        [mapViewport.center.lat, mapViewport.center.lng],
-        mapViewport.zoom
-      );
-    } else if (!isSplitView) {
-      mapInstanceRef.current.setView([-12.046374, -77.042793], 13);
-    }
-  }, [
-    trackedVehicles,
-    historyVehicle,
-    routeGroups,
-    selectedSegmentIndex,
-    isIncidenciasSheetOpen,
-    incidencias,
-    mapViewport,
-    isSplitView,
-  ]);
+  if (!mapRef.current) return null;
 
   return (
-    <div
-      ref={mapContainerRef}
-      style={{
-        width: "100%",
-        height: "100%",
-        position: "relative",
-      }}
-      className="leaflet-map-container"
-    />
+    <MapContainer
+      center={defaultCenter}
+      zoom={defaultZoom}
+      style={{ width: "100%", height: "100%" }}
+      className="z-0"
+    >
+      <MapContent
+        side={side}
+        trackedVehicleIds={trackedVehicleIds}
+        isOverview={isOverview}
+        tileUrl={tileUrl}
+        attribution={attribution}
+        defaultCenter={defaultCenter}
+        defaultZoom={defaultZoom}
+        vehicles={vehicles}
+        selectedVehicleId={selectedVehicleId}
+      />
+    </MapContainer>
   );
 }
