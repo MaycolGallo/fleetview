@@ -80,10 +80,8 @@ export function LeafletFleetMap({
         attribution,
         maxZoom: 19,
       }).addTo(map);
-
-      console.log("[v0] Leaflet map initialized successfully");
     } catch (error) {
-      console.error("[v0] Error initializing Leaflet map:", error);
+      console.error("Error initializing Leaflet map:", error);
     }
 
     return () => {
