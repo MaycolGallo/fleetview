@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -147,10 +146,11 @@ export function MapControl({ side, trackedVehicleIds, isOverview }: MapControlPr
 
   return (
     <>
-      {mapVehicles.map((vehicle) => (
+      {mapVehicles.map((vehicle, index) => (
         <AnimatedVehicleMarker
           key={vehicle.id_vehiculo}
           vehicle={vehicle}
+          index={index}
         />
       ))}
 

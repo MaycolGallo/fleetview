@@ -12,7 +12,7 @@ import { VehicleContextMenu } from '@/components/vehicle/vehicle-context-menu';
 import { VehicleMobileContextMenu } from '@/components/vehicle/vehicle-mobile-context-menu';
 import { cn } from '@/lib/utils';
 
-function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
+function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehicle; index?: number }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
   const { selectedVehicle, isRoutePlaying, historyVehicle, playbackAnimationDuration } = state;
@@ -96,8 +96,9 @@ function AnimatedVehicleMarkerComponent({ vehicle }: { vehicle: Vehicle }) {
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             data-vehicle-id={vehicle.id_vehiculo}
+            style={{ animationDelay: `${index * 50}ms` }}
             className={cn(
-                "relative cursor-pointer flex justify-center items-center transition-transform duration-300",
+                "relative cursor-pointer flex justify-center items-center transition-transform duration-300 animate-marker-drop opacity-0",
                 isSelected && 'scale-125'
             )}
         >
