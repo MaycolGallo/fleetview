@@ -91,13 +91,17 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
         zIndex={zIndex}
       >
         <motion.div
-            initial={{ y: -50, scale: 0, opacity: 0 }}
-            animate={{ y: 0, scale: isSelected ? 1.25 : 1, opacity: 1 }}
+            initial={{ y: -40, opacity: 0, scale: 0.5 }}
+            animate={{ 
+                y: 0, 
+                opacity: 1, 
+                scale: isSelected ? 1.25 : 1,
+            }}
             transition={{ 
                 type: "spring", 
                 stiffness: 260, 
                 damping: 20, 
-                delay: index * 0.05 
+                delay: isPlaybackMarker ? 0 : index * 0.05 
             }}
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}

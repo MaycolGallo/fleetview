@@ -37,7 +37,7 @@ export function VehiclePanelContent({ onVehicleSelect }: VehiclePanelContentProp
 
     return (
         <div className="h-full relative overflow-hidden">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
                 {selectedVehicle ? (
                     <motion.div 
                         key="details"

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -70,16 +69,17 @@ export function RouteSegments({ side, isOverview }: RouteSegmentsProps) {
         ? routeGroups.slice(halfIndex) 
         : routeGroups;
 
-    // Fleet Master Route logic - DO NOT show on main overview maps to keep them clean
+    // Fleet Master Route logic - ONLY show in Split View (when side is defined)
+    // and strictly hide on the general overview or radar mini-maps.
     const fleetRoutePoints = useMemo(() => {
-        if (historyVehicle || isIncidenciasSheetOpen || isOverview) return null;
+        if (!side || historyVehicle || isIncidenciasSheetOpen) return null;
         if (!masterRoute || masterRoute.length === 0) return null;
         
         const halfMaster = Math.ceil(masterRoute.length / 2);
         if (side === 'ida') return masterRoute.slice(0, halfMaster);
         if (side === 'vuelta') return masterRoute.slice(halfMaster - 1);
-        return masterRoute;
-    }, [masterRoute, historyVehicle, isIncidenciasSheetOpen, side, isOverview]);
+        return null;
+    }, [masterRoute, historyVehicle, isIncidenciasSheetOpen, side]);
 
     const incidenciasPath = useMemo(() => {
         if (!isIncidenciasSheetOpen || incidencias.length < 2) return null;
@@ -138,7 +138,7 @@ export function RouteSegments({ side, isOverview }: RouteSegmentsProps) {
                 }
             });
         } 
-        // Scenario 2: Draw Fleet Master Route (Outbound/Inbound legs)
+        // Scenario 2: Draw Fleet Master Route (Specific to Ida/Vuelta panels)
         else if (fleetRoutePoints) {
             const path = catmullRomSpline(fleetRoutePoints, 15);
             const color = side === 'vuelta' ? '#3B82F6' : '#22C55E'; // Blue for return, Green for outbound
