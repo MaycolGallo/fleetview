@@ -52,9 +52,10 @@ function catmullRomSpline(
 
 interface RouteSegmentsProps {
     side?: 'ida' | 'vuelta';
+    isOverview?: boolean;
 }
 
-export function RouteSegments({ side }: RouteSegmentsProps) {
+export function RouteSegments({ side, isOverview }: RouteSegmentsProps) {
     const map = useMap();
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
@@ -69,16 +70,16 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
         ? routeGroups.slice(halfIndex) 
         : routeGroups;
 
-    // Fleet Master Route logic
+    // Fleet Master Route logic - DO NOT show on main overview maps to keep them clean
     const fleetRoutePoints = useMemo(() => {
-        if (historyVehicle || isIncidenciasSheetOpen) return null;
+        if (historyVehicle || isIncidenciasSheetOpen || isOverview) return null;
         if (!masterRoute || masterRoute.length === 0) return null;
         
         const halfMaster = Math.ceil(masterRoute.length / 2);
         if (side === 'ida') return masterRoute.slice(0, halfMaster);
         if (side === 'vuelta') return masterRoute.slice(halfMaster - 1);
         return masterRoute;
-    }, [masterRoute, historyVehicle, isIncidenciasSheetOpen, side]);
+    }, [masterRoute, historyVehicle, isIncidenciasSheetOpen, side, isOverview]);
 
     const incidenciasPath = useMemo(() => {
         if (!isIncidenciasSheetOpen || incidencias.length < 2) return null;

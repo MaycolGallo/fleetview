@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -26,15 +27,15 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
 
   return (
     <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-4 pointer-events-none max-h-[75vh] overflow-y-auto pr-2 no-scrollbar">
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="popLayout" initial={false}>
         {showOverviewAsMini && (
           <motion.div 
             key="overview-mini"
             layout
-            initial={{ x: 50, scale: 0.8, opacity: 0 }}
+            initial={{ x: 100, scale: 0.8, opacity: 0 }}
             animate={{ x: 0, scale: 1, opacity: 1 }}
-            exit={{ x: 50, scale: 0.8, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            exit={{ x: 100, scale: 0.8, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 350, damping: 30 }}
             className="pointer-events-auto relative w-48 sm:w-64 aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/20"
           >
             <FleetMap apiKey={apiKey} isOverview={false} />
@@ -65,13 +66,13 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
           <motion.div 
             key={map.id} 
             layout
-            initial={{ x: 50, scale: 0.8, opacity: 0 }}
+            initial={{ x: 100, scale: 0.8, opacity: 0 }}
             animate={{ x: 0, scale: 1, opacity: 1 }}
-            exit={{ x: 50, scale: 0.8, opacity: 0 }}
+            exit={{ x: 100, scale: 0.8, opacity: 0 }}
             transition={{ 
                 type: "spring", 
-                stiffness: 300, 
-                damping: 25,
+                stiffness: 350, 
+                damping: 30,
                 delay: index * 0.05
             }}
             className="pointer-events-auto relative w-48 sm:w-64 aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10"

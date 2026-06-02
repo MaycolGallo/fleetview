@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -154,7 +155,7 @@ export function MapControl({ side, trackedVehicleIds, isOverview }: MapControlPr
         />
       ))}
 
-      <RouteSegments side={side} />
+      <RouteSegments side={side} isOverview={isOverview} />
       
       {historyVehicle && firstRecord && lastRecord && selectedSegmentIndex === null && !isIncidenciasSheetOpen && (
         <>
