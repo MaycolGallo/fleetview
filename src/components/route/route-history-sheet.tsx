@@ -12,6 +12,7 @@ import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useRoutePlayback } from '@/hooks/use-route-playback';
 
 interface RouteHistorySheetProps {
   date: DateRange | undefined;
@@ -23,45 +24,37 @@ function formatDuration(minutes: number) {
   const totalSeconds = Math.round(minutes * 60);
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
-
-  if (h > 0) {
-    return `${h}h ${m}m`;
-  }
-  return `${m}m`;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetProps) {
   const isMobile = useIsMobile();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isRouteSheetOpen, isRoutePlaying, routeGroups, historyVehicle, by_estado, selectedSegmentIndex, lastUpdatedRoute } = state;
+  const { isRouteSheetOpen, routeGroups, historyVehicle, by_estado, selectedSegmentIndex, lastUpdatedRoute } = state;
   const { totalDistance, totalDuration } = useMemo(() => selectRouteSummary(state), [state]);
   
-  const playbackIndexRef = useRef(0);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  // Custom hook for route playback logic
+  const { isRoutePlaying } = useRoutePlayback();
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
   const checkScroll = useCallback(() => {
     const el = scrollContainerRef.current;
     if (el) {
-      const hasLeft = el.scrollLeft > 0;
-      const hasRight = el.scrollLeft < el.scrollWidth - el.clientWidth - 1;
-      setCanScrollLeft(hasLeft);
-      setCanScrollRight(hasRight);
+      setCanScrollLeft(el.scrollLeft > 0);
+      setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
     }
   }, []);
 
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
-
     el.addEventListener('scroll', checkScroll);
     checkScroll();
     const timeout = setTimeout(checkScroll, 150);
-
     return () => {
       el.removeEventListener('scroll', checkScroll);
       clearTimeout(timeout);
@@ -71,133 +64,37 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   const statusColorMap = useMemo(() => {
     const map = new Map<number, string>();
     state.routeGroups.forEach(g => {
-        if (!map.has(g.id_estado)) {
-            map.set(g.id_estado, g.color);
-        }
+        if (!map.has(g.id_estado)) map.set(g.id_estado, g.color);
     });
     return map;
   }, [state.routeGroups]);
 
-  const movingPoints = useMemo(() => {
-    if (!isRouteSheetOpen) return [];
-    return routeGroups
-        .filter(seg => seg.id_estado === 6)
-        .flatMap(seg => seg.records.map(r => {
-            return { lat: r.lat, lng: r.lng, rumbo: r.rumbo, fecha: r.fecha, velocidad: parseInt(r.velocidad, 10) || 0 };
-        }));
-  }, [isRouteSheetOpen, routeGroups]);
-
-  useEffect(() => {
-    const cleanup = () => {
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-        }
-    };
-
-    if (!isRoutePlaying) {
-        cleanup();
-        return;
-    }
-    
-    if (playbackIndexRef.current >= movingPoints.length -1 || playbackIndexRef.current === 0) {
-        playbackIndexRef.current = 0;
-    }
-    
-    if (movingPoints.length === 0) {
-        dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
-        return;
-    }
-
-    const playNextPoint = () => {
-        const currentIndex = playbackIndexRef.current;
-        
-        if (currentIndex >= movingPoints.length) {
-            dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
-            cleanup();
-            return;
-        }
-
-        const currentPoint = movingPoints[currentIndex];
-        const nextIndex = currentIndex + 1;
-        
-        let delay;
-        if (nextIndex < movingPoints.length) {
-            const nextPoint = movingPoints[nextIndex];
-            const timeDiffSeconds = nextPoint.fecha - currentPoint.fecha;
-            const PLAYBACK_SPEED_MULTIPLIER = 10;
-            delay = (timeDiffSeconds * 1000) / PLAYBACK_SPEED_MULTIPLIER;
-            delay = Math.max(50, Math.min(delay, 500));
-        } else {
-            delay = 500;
-        }
-
-        dispatch({ type: 'UPDATE_HISTORY_VEHICLE_POSITION', payload: { lat: currentPoint.lat, lng: currentPoint.lng, rumbo: currentPoint.rumbo, velocidad: currentPoint.velocidad, animationDuration: delay } });
-        
-        playbackIndexRef.current = nextIndex;
-
-        if (nextIndex < movingPoints.length && isRoutePlaying) {
-            timeoutRef.current = setTimeout(playNextPoint, delay);
-        } else {
-             dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
-             cleanup();
-        }
-    };
-
-    playNextPoint();
-    return cleanup;
-  }, [isRoutePlaying, dispatch, movingPoints]);
-
-
   const handleOpenChange = useCallback((isOpen: boolean) => {
     if (!isOpen) {
         dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' }); 
-        if (document.startViewTransition) {
-            document.startViewTransition(() => {
-                dispatch({ type: 'BACK_TO_FLEET' });
-            });
-        } else {
-            dispatch({ type: 'BACK_TO_FLEET' });
-        }
+        dispatch({ type: 'BACK_TO_FLEET' });
     }
   }, [dispatch]);
 
    const handlePlayPause = useCallback(() => {
-    if (isRoutePlaying) {
-        dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
-    } else {
-        dispatch({ type: 'START_ROUTE_PLAYBACK' });
-    }
+    if (isRoutePlaying) dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
+    else dispatch({ type: 'START_ROUTE_PLAYBACK' });
   }, [dispatch, isRoutePlaying]);
 
-  const handleScrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -400, behavior: 'smooth' });
-    }
+  const handleScroll = (dir: 'left' | 'right') => {
+    scrollContainerRef.current?.scrollBy({ left: dir === 'left' ? -400 : 400, behavior: 'smooth' });
   };
 
-  const handleScrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 400, behavior: 'smooth' });
-    }
-  };
-
-  const handleNextSegment = useCallback(() => {
+  const handleSegmentNav = (dir: 'next' | 'prev') => {
     const maxIndex = routeGroups.length - 1;
-    if (selectedSegmentIndex === null) {
-      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: 0 });
-    } else if (selectedSegmentIndex < maxIndex) {
-      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: selectedSegmentIndex + 1 });
+    if (dir === 'next') {
+      const next = selectedSegmentIndex === null ? 0 : Math.min(maxIndex, selectedSegmentIndex + 1);
+      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: next });
+    } else {
+      const prev = selectedSegmentIndex === null ? maxIndex : Math.max(0, selectedSegmentIndex - 1);
+      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: prev });
     }
-  }, [dispatch, routeGroups.length, selectedSegmentIndex]);
-
-  const handlePrevSegment = useCallback(() => {
-    if (selectedSegmentIndex === null) {
-      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: routeGroups.length - 1 });
-    } else if (selectedSegmentIndex > 0) {
-      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: selectedSegmentIndex - 1 });
-    }
-  }, [dispatch, routeGroups.length, selectedSegmentIndex]);
+  };
   
   if (isMobile) {
     return (
@@ -230,16 +127,13 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                             </DrawerDescription>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
-                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={handlePrevSegment} disabled={selectedSegmentIndex === 0}><ChevronLeft className="w-5 h-5" /></Button>
+                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleSegmentNav('prev')} disabled={selectedSegmentIndex === 0}><ChevronLeft className="w-5 h-5" /></Button>
                             <Button size="icon" onClick={handlePlayPause} className="h-10 w-10"><Play className="w-5 h-5" /></Button>
-                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleNextSegment} disabled={selectedSegmentIndex === routeGroups.length - 1}><ChevronRight className="w-5 h-5" /></Button>
+                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleSegmentNav('next')} disabled={selectedSegmentIndex === routeGroups.length - 1}><ChevronRight className="w-5 h-5" /></Button>
                         </div>
                     </div>
                 </DrawerHeader>
-                <div 
-                  key={lastUpdatedRoute} 
-                  className={cn("flex-1 min-h-0", lastUpdatedRoute && "animate-data-pulse")}
-                >
+                <div key={lastUpdatedRoute} className={cn("flex-1 min-h-0", lastUpdatedRoute && "animate-data-pulse")}>
                   <RouteHistoryContent />
                 </div>
             </DrawerContent>
@@ -300,13 +194,10 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                     </div>
                 </div>
             </CardHeader>
-            <div 
-                key={lastUpdatedRoute}
-                className={cn("relative flex items-center h-[180px]", lastUpdatedRoute && "animate-data-pulse")}
-            >
+            <div key={lastUpdatedRoute} className={cn("relative flex items-center h-[180px]", lastUpdatedRoute && "animate-data-pulse")}>
                 {canScrollLeft && (
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
-                      <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90" onClick={handleScrollLeft}>
+                      <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90" onClick={() => handleScroll('left')}>
                           <ChevronLeft className="w-8 h-8" />
                       </Button>
                   </div>
@@ -314,7 +205,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                 <div className="flex-1 w-full overflow-hidden"><RouteHistoryContent viewportRef={scrollContainerRef} /></div>
                 {canScrollRight && (
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
-                      <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90" onClick={handleScrollRight}>
+                      <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90" onClick={() => handleScroll('right')}>
                           <ChevronRight className="w-8 h-8" />
                       </Button>
                   </div>
