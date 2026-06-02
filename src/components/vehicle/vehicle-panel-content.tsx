@@ -44,7 +44,7 @@ export function VehiclePanelContent({ onVehicleSelect }: VehiclePanelContentProp
                         initial={{ x: 20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: -20, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         className="h-full w-full"
                     >
                         <ClientOnly>
@@ -57,7 +57,7 @@ export function VehiclePanelContent({ onVehicleSelect }: VehiclePanelContentProp
                         initial={{ x: -20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: 20, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
                         className="h-full flex flex-col"
                     >
                         <div className="p-4 border-b space-y-4 bg-muted/20">

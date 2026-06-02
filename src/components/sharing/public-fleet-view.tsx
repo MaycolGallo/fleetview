@@ -27,7 +27,7 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
   const { state } = useFleetState();
   const { vehicles } = state;
 
-  // Derived state: Decoding and expiration check happen during render
+  // Use synchronous rendering logic for token decoding
   const { payload, isExpired } = useMemo(() => {
     try {
       const decoded = JSON.parse(atob(token)) as SharePayload;
@@ -74,7 +74,6 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
         />
       </main>
 
-      {/* Header Badge */}
       <div className="absolute top-6 left-6 right-6 z-10 flex flex-col items-center pointer-events-none">
         <div className="bg-card/90 backdrop-blur-md border border-primary/20 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3 pointer-events-auto">
           <div className="p-1.5 bg-primary/10 rounded-full">
@@ -92,7 +91,6 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
         </div>
       </div>
 
-      {/* Bottom Units Card */}
       <div className="absolute bottom-6 left-6 z-10 pointer-events-none">
          <div className="bg-card/95 backdrop-blur-md border border-border rounded-xl shadow-2xl p-4 w-64 pointer-events-auto space-y-3">
             <div className="flex items-center gap-2 border-b pb-2">
@@ -116,7 +114,6 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
          </div>
       </div>
 
-      {/* Brand Watermark */}
       <div className="absolute bottom-6 right-6 z-10 pointer-events-none opacity-50">
         <div className="flex items-center gap-2">
           <div className="bg-primary p-1 rounded">

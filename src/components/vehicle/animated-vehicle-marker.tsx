@@ -3,7 +3,7 @@
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from '@/components/vehicle/vehicle-pin';
-import React, { useState, useRef, MouseEvent } from 'react';
+import React, { useState, useRef } from 'react';
 import { Gauge } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
@@ -33,14 +33,14 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
 
   const position = animatedPosition;
 
-  const handleLeftClick = (e: google.maps.MapMouseEvent | MouseEvent) => {
+  const handleLeftClick = (e: google.maps.MapMouseEvent | React.MouseEvent) => {
     if ('domEvent' in e && e.domEvent) {
       e.domEvent.stopPropagation();
-    } else if (e.stopPropagation) {
+    } else if ('stopPropagation' in e) {
       e.stopPropagation();
     }
     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
-  }
+  };
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -80,7 +80,6 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
   const color = vehicle.statusColor || '#9E9E9E';
   const speed = parseFloat(vehicle.velocidad) || 0;
 
-  // History marker has high priority
   const zIndex = isPlaybackMarker ? 50 : (isSelected ? 10 : 1);
 
   return (
@@ -92,13 +91,13 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
         zIndex={zIndex}
       >
         <motion.div
-            initial={{ y: -20, scale: 0.5, opacity: 0 }}
+            initial={{ y: -50, scale: 0, opacity: 0 }}
             animate={{ y: 0, scale: isSelected ? 1.25 : 1, opacity: 1 }}
             transition={{ 
                 type: "spring", 
                 stiffness: 260, 
                 damping: 20, 
-                delay: index * 0.03 
+                delay: index * 0.05 
             }}
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
@@ -109,7 +108,6 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
                 "relative cursor-pointer flex justify-center items-center"
             )}
         >
-            {/* Velocity tag */}
             {speed > 0 && (
                 <div
                     className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10"

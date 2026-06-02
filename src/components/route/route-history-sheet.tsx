@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
@@ -7,7 +6,7 @@ import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/f
 import { RouteHistoryContent } from './route-history-content';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronDown, ChevronLeft, ChevronRight, Clock, Milestone, ParkingSquare, Pause, Play, Truck, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Milestone, ParkingSquare, Pause, Play, Truck, RefreshCw } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
@@ -214,25 +213,15 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
                                         <div className="flex items-center gap-1.5">
                                             <Milestone className="w-3 h-3 text-primary" />
-                                            <span key={`dist-${lastUpdatedRoute}`} className={cn(lastUpdatedRoute && "animate-scale-pulse")}>
-                                                Dist:{' '}
-                                                <strong className="text-foreground">
-                                                {totalDistance.toFixed(1)} km
-                                                </strong>
-                                            </span>
+                                            <span>Dist: <strong className="text-foreground">{totalDistance.toFixed(1)} km</strong></span>
                                         </div>
                                         <div className="flex items-center gap-1.5">
                                             <Clock className="w-3 h-3 text-primary" />
-                                            <span key={`time-${lastUpdatedRoute}`} className={cn(lastUpdatedRoute && "animate-scale-pulse")}>
-                                                Time:{' '}
-                                                <strong className="text-foreground">
-                                                {formatDuration(totalDuration)}
-                                                </strong>
-                                            </span>
+                                            <span>Time: <strong className="text-foreground">{formatDuration(totalDuration)}</strong></span>
                                         </div>
                                     </div>
                                     {lastUpdatedRoute && (
-                                        <div key={lastUpdatedRoute} className="flex items-center gap-1 text-[10px] text-muted-foreground animate-in fade-in">
+                                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                                             <RefreshCw className="w-2.5 h-2.5" />
                                             Actualizado: {format(lastUpdatedRoute, 'HH:mm:ss')}
                                         </div>
@@ -241,33 +230,15 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                             </DrawerDescription>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
-                            <Button 
-                                variant="outline"
-                                size="icon" 
-                                className="h-9 w-9"
-                                onClick={handlePrevSegment}
-                                disabled={selectedSegmentIndex === 0}
-                            >
-                                <ChevronLeft className="w-5 h-5" />
-                            </Button>
-                            <Button size="icon" onClick={handlePlayPause} className="h-10 w-10 flex-shrink-0">
-                                {isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                            </Button>
-                            <Button 
-                                variant="outline"
-                                size="icon" 
-                                className="h-9 w-9"
-                                onClick={handleNextSegment}
-                                disabled={selectedSegmentIndex === routeGroups.length - 1}
-                            >
-                                <ChevronRight className="w-5 h-5" />
-                            </Button>
+                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={handlePrevSegment} disabled={selectedSegmentIndex === 0}><ChevronLeft className="w-5 h-5" /></Button>
+                            <Button size="icon" onClick={handlePlayPause} className="h-10 w-10"><Play className="w-5 h-5" /></Button>
+                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleNextSegment} disabled={selectedSegmentIndex === routeGroups.length - 1}><ChevronRight className="w-5 h-5" /></Button>
                         </div>
                     </div>
                 </DrawerHeader>
                 <div 
-                    key={lastUpdatedRoute}
-                    className={cn("flex-1 min-h-0", lastUpdatedRoute && "animate-data-pulse")}
+                  key={lastUpdatedRoute} 
+                  className={cn("flex-1 min-h-0", lastUpdatedRoute && "animate-data-pulse")}
                 >
                   <RouteHistoryContent />
                 </div>
@@ -276,19 +247,12 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
     )
   }
 
-  const statusIconMap: { [key: number]: React.ElementType } = {
-    4: Clock,
-    5: ParkingSquare,
-    6: Truck,
-  };
+  const statusIconMap: { [key: number]: React.ElementType } = { 4: Clock, 5: ParkingSquare, 6: Truck };
   
   return (
     <>
       {isRouteSheetOpen && (
-        <div
-          style={{ viewTransitionName: 'route-sheet-transition' }}
-          className="absolute bottom-4 left-4 right-4 z-20"
-        >
+        <div style={{ viewTransitionName: 'route-sheet-transition' }} className="absolute bottom-4 left-4 right-4 z-20">
           <Card className="max-w-full mx-auto bg-card/95 backdrop-blur-md border-primary/20 shadow-2xl h-auto flex flex-col overflow-hidden">
             <CardHeader className="pb-2 border-b">
                 <div>
@@ -297,11 +261,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                             <div className="text-2xl font-semibold flex items-center gap-3">
                                 {historyVehicle?.placa}
                                 {lastUpdatedRoute && (
-                                    <Badge 
-                                        key={lastUpdatedRoute}
-                                        variant="secondary" 
-                                        className="text-[10px] h-5 animate-scale-pulse"
-                                    >
+                                    <Badge variant="secondary" className="text-[10px] h-5">
                                         <RefreshCw className="w-3 h-3 mr-1" />
                                         {format(lastUpdatedRoute, 'HH:mm:ss')}
                                     </Badge>
@@ -311,11 +271,11 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                         <div className='flex items-center gap-6'>
                             <div className='text-right'>
                                 <p className='text-xs text-muted-foreground uppercase tracking-wider'>Duración</p>
-                                <p key={`dur-${lastUpdatedRoute}`} className={cn('text-xl font-semibold', lastUpdatedRoute && "animate-scale-pulse")}>{formatDuration(totalDuration)}</p>
+                                <p className='text-xl font-semibold'>{formatDuration(totalDuration)}</p>
                             </div>
                             <div className='text-right'>
                                 <p className='text-xs text-muted-foreground uppercase tracking-wider'>Distancia</p>
-                                <p key={`dist-${lastUpdatedRoute}`} className={cn('text-xl font-semibold text-primary', lastUpdatedRoute && "animate-scale-pulse")}>{totalDistance.toFixed(2)}km</p>
+                                <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0 shadow-md h-12 w-12 rounded-full">
@@ -324,10 +284,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                             </div>
                         </div>
                     </div>
-                    <div 
-                        key={`summary-${lastUpdatedRoute}`}
-                        className={cn("flex items-center gap-x-6 gap-y-2 text-sm text-muted-foreground flex-wrap border-t pt-2 transition-colors", lastUpdatedRoute && "animate-in fade-in")}
-                    >
+                    <div className="flex items-center gap-x-6 gap-y-2 text-sm text-muted-foreground flex-wrap border-t pt-2 transition-colors">
                         {Object.entries(by_estado).map(([statusId, statusData]) => {
                             const Icon = statusIconMap[Number(statusId)] || Milestone;
                             return (
@@ -344,34 +301,20 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                 </div>
             </CardHeader>
             <div 
-                key={`content-${lastUpdatedRoute}`}
+                key={lastUpdatedRoute}
                 className={cn("relative flex items-center h-[180px]", lastUpdatedRoute && "animate-data-pulse")}
             >
                 {canScrollLeft && (
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 animate-in fade-in zoom-in duration-200">
-                      <Button 
-                          variant="secondary" 
-                          size="icon" 
-                          className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90"
-                          onClick={handleScrollLeft}
-                      >
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
+                      <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90" onClick={handleScrollLeft}>
                           <ChevronLeft className="w-8 h-8" />
                       </Button>
                   </div>
                 )}
-
-                <div className="flex-1 w-full overflow-hidden">
-                    <RouteHistoryContent viewportRef={scrollContainerRef} />
-                </div>
-
+                <div className="flex-1 w-full overflow-hidden"><RouteHistoryContent viewportRef={scrollContainerRef} /></div>
                 {canScrollRight && (
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 animate-in fade-in zoom-in duration-200">
-                      <Button 
-                          variant="secondary" 
-                          size="icon" 
-                          className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90"
-                          onClick={handleScrollRight}
-                      >
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
+                      <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90" onClick={handleScrollRight}>
                           <ChevronRight className="w-8 h-8" />
                       </Button>
                   </div>

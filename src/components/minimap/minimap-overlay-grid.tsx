@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Radar, X, ArrowLeftRight, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '../ui/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const FleetMap = dynamic(() => import('../fleet-map').then(mod => mod.FleetMap), {
@@ -27,13 +27,13 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   return (
     <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-4 pointer-events-none max-h-[75vh] overflow-y-auto pr-2 no-scrollbar">
       <AnimatePresence mode="popLayout">
-        {/* 1. If focused, show the Overview map as a mini-map */}
         {showOverviewAsMini && (
           <motion.div 
             key="overview-mini"
-            initial={{ x: 20, scale: 0.8, opacity: 0 }}
+            layout
+            initial={{ x: 50, scale: 0.8, opacity: 0 }}
             animate={{ x: 0, scale: 1, opacity: 1 }}
-            exit={{ x: 20, scale: 0.8, opacity: 0 }}
+            exit={{ x: 50, scale: 0.8, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
             className="pointer-events-auto relative w-48 sm:w-64 aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/20"
           >
@@ -43,30 +43,31 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                 Vista General
               </div>
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="secondary" 
-                  size="icon" 
-                  className="absolute top-2 right-2 h-7 w-7 z-20 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
-                  onClick={() => dispatch({ type: 'UNFOCUS_MINIMAP' })}
-                >
-                  <RefreshCw className="h-4 h-4 text-primary" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="left">Restaurar General</TooltipContent>
-            </Tooltip>
+            <TooltipProvider>
+                <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button 
+                    variant="secondary" 
+                    size="icon" 
+                    className="absolute top-2 right-2 h-7 w-7 z-20 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
+                    onClick={() => dispatch({ type: 'UNFOCUS_MINIMAP' })}
+                    >
+                    <RefreshCw className="h-4 h-4 text-primary" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">Restaurar General</TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
           </motion.div>
         )}
 
-        {/* 2. Show the regular mini-map groups */}
         {filteredMiniMaps.map((map, index) => (
           <motion.div 
             key={map.id} 
             layout
-            initial={{ x: 20, scale: 0.8, opacity: 0 }}
+            initial={{ x: 50, scale: 0.8, opacity: 0 }}
             animate={{ x: 0, scale: 1, opacity: 1 }}
-            exit={{ x: 20, scale: 0.8, opacity: 0 }}
+            exit={{ x: 50, scale: 0.8, opacity: 0 }}
             transition={{ 
                 type: "spring", 
                 stiffness: 300, 
@@ -88,33 +89,35 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
             </div>
 
             <div className="absolute top-2 right-2 z-20 flex flex-col gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="secondary" 
-                    size="icon" 
-                    className="h-7 w-7 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
-                    onClick={() => dispatch({ type: 'FOCUS_MINIMAP', payload: map.id })}
-                  >
-                    <ArrowLeftRight className="h-4 w-4 text-primary" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">Intercambiar con Mapa Principal</TooltipContent>
-              </Tooltip>
-              
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant="destructive" 
-                    size="icon" 
-                    className="h-7 w-7 shadow-lg hover:scale-110 transition-transform"
-                    onClick={() => dispatch({ type: 'REMOVE_MINIMAP', payload: map.id })}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">Eliminar Radar</TooltipContent>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                    <Button 
+                        variant="secondary" 
+                        size="icon" 
+                        className="h-7 w-7 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
+                        onClick={() => dispatch({ type: 'FOCUS_MINIMAP', payload: map.id })}
+                    >
+                        <ArrowLeftRight className="h-4 w-4 text-primary" />
+                    </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">Intercambiar con Mapa Principal</TooltipContent>
+                </Tooltip>
+                
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                    <Button 
+                        variant="destructive" 
+                        size="icon" 
+                        className="h-7 w-7 shadow-lg hover:scale-110 transition-transform"
+                        onClick={() => dispatch({ type: 'REMOVE_MINIMAP', payload: map.id })}
+                    >
+                        <X className="h-4 w-4" />
+                    </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">Eliminar Radar</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </motion.div>
         ))}

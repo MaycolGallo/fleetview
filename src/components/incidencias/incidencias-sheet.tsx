@@ -57,7 +57,6 @@ export function IncidenciasSheet() {
     return () => el.removeEventListener('scroll', checkScroll);
   }, [isIncidenciasSheetOpen, checkScroll, incidencias]);
 
-  // Effect for side effects like scrolling into view is correct
   useEffect(() => {
     if (selectedIncidenciaId && itemRefs.current[selectedIncidenciaId]) {
         itemRefs.current[selectedIncidenciaId]?.scrollIntoView({
@@ -97,7 +96,7 @@ export function IncidenciasSheet() {
                         <div className="flex flex-col gap-1">
                             <span>Timeline de eventos críticos detectados recientemente.</span>
                             {lastUpdatedIncidencias && (
-                                <div key={lastUpdatedIncidencias} className="flex items-center gap-1 text-[10px] text-muted-foreground animate-in fade-in">
+                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                                     <RefreshCw className="w-2.5 h-2.5" />
                                     Actualizado: {format(lastUpdatedIncidencias, 'HH:mm:ss')}
                                 </div>
@@ -168,11 +167,7 @@ export function IncidenciasSheet() {
                     <AlertCircle className="w-5 h-5 text-destructive" />
                     Incidencias: {historyVehicle?.placa}
                     {lastUpdatedIncidencias && (
-                        <Badge 
-                            key={lastUpdatedIncidencias}
-                            variant="secondary" 
-                            className="text-[10px] h-5 ml-2 animate-scale-pulse"
-                        >
+                        <Badge variant="secondary" className="text-[10px] h-5 ml-2">
                             <RefreshCw className="w-3 h-3 mr-1" />
                             {format(lastUpdatedIncidencias, 'HH:mm:ss')}
                         </Badge>
