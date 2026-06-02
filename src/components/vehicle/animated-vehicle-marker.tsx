@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Vehicle } from '@/lib/types';
@@ -11,6 +12,7 @@ import { useAnimatedPosition } from '@/hooks/use-animated-position';
 import { VehicleContextMenu } from '@/components/vehicle/vehicle-context-menu';
 import { VehicleMobileContextMenu } from '@/components/vehicle/vehicle-mobile-context-menu';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehicle; index?: number }) {
   const { state } = useFleetState();
@@ -79,7 +81,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
   const color = vehicle.statusColor || '#9E9E9E';
   const speed = parseFloat(vehicle.velocidad) || 0;
 
-  // History marker has the highest priority to prevent overlapping
+  // History marker has high priority
   const zIndex = isPlaybackMarker ? 50 : (isSelected ? 10 : 1);
 
   return (
@@ -90,19 +92,25 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
         onClick={handleLeftClick}
         zIndex={zIndex}
       >
-        <div
+        <motion.div
+            initial={{ y: -20, scale: 0.5, opacity: 0 }}
+            animate={{ y: 0, scale: isSelected ? 1.25 : 1, opacity: 1 }}
+            transition={{ 
+                type: "spring", 
+                stiffness: 260, 
+                damping: 20, 
+                delay: index * 0.03 
+            }}
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             data-vehicle-id={vehicle.id_vehiculo}
-            style={{ animationDelay: `${index * 50}ms` }}
             className={cn(
-                "relative cursor-pointer flex justify-center items-center transition-transform duration-300 animate-marker-drop opacity-0",
-                isSelected && 'scale-125'
+                "relative cursor-pointer flex justify-center items-center"
             )}
         >
-            {/* Velocity tag - only shown if speed > 0 and not in playback or if explicitly focused */}
+            {/* Velocity tag */}
             {speed > 0 && (
                 <div
                     className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10"
@@ -122,7 +130,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
             isSelected={isSelected}
             isHistory={isPlaybackMarker}
           />
-        </div>
+        </motion.div>
       </AdvancedMarker>
 
        {contextMenuOpen && !isMobile && (
