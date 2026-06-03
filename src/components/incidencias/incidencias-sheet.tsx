@@ -3,7 +3,7 @@
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
-import { useCallback, useRef, useEffect, useState } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
 import { AlertCircle, Zap, ShieldAlert, Gauge, Clock, Calendar as CalendarIcon, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react';
@@ -12,6 +12,7 @@ import { format, fromUnixTime } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Incidencia } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import { useHorizontalScroll } from '@/hooks/use-horizontal-scroll';
 
 const typeIconMap: Record<Incidencia['type'], React.ElementType> = {
   panic: ShieldAlert,
@@ -35,27 +36,14 @@ export function IncidenciasSheet() {
   const dispatch = useFleetDispatch();
   const { isIncidenciasSheetOpen, incidencias, historyVehicle, selectedIncidenciaId, lastUpdatedIncidencias } = state;
   
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { scrollContainerRef, canScrollLeft, canScrollRight, scroll, checkScroll } = useHorizontalScroll();
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const checkScroll = useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (el) {
-      setCanScrollLeft(el.scrollLeft > 0);
-      setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
-    }
-  }, []);
-
   useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el || !isIncidenciasSheetOpen) return;
-    el.addEventListener('scroll', checkScroll);
-    checkScroll();
-    return () => el.removeEventListener('scroll', checkScroll);
-  }, [isIncidenciasSheetOpen, checkScroll, incidencias]);
+    if (isIncidenciasSheetOpen) {
+        checkScroll();
+    }
+  }, [isIncidenciasSheetOpen, incidencias, checkScroll]);
 
   useEffect(() => {
     if (selectedIncidenciaId && itemRefs.current[selectedIncidenciaId]) {
@@ -74,14 +62,6 @@ export function IncidenciasSheet() {
   const handleIncidenciaSelect = useCallback((id: string) => {
     dispatch({ type: 'SELECT_INCIDENCIA', payload: id });
   }, [dispatch]);
-
-  const handleScrollLeft = () => {
-    scrollContainerRef.current?.scrollBy({ left: -300, behavior: 'smooth' });
-  };
-
-  const handleScrollRight = () => {
-    scrollContainerRef.current?.scrollBy({ left: 300, behavior: 'smooth' });
-  };
 
   if (!isIncidenciasSheetOpen) return null;
 
@@ -188,7 +168,7 @@ export function IncidenciasSheet() {
                         variant="secondary" 
                         size="icon" 
                         className="h-10 w-10 rounded-full shadow-lg border bg-card/90"
-                        onClick={handleScrollLeft}
+                        onClick={() => scroll('left', 300)}
                     >
                         <ChevronLeft className="w-6 h-6" />
                     </Button>
@@ -257,7 +237,7 @@ export function IncidenciasSheet() {
                         variant="secondary" 
                         size="icon" 
                         className="h-10 w-10 rounded-full shadow-lg border bg-card/90"
-                        onClick={handleScrollRight}
+                        onClick={() => scroll('right', 300)}
                     >
                         <ChevronRight className="w-6 h-6" />
                     </Button>

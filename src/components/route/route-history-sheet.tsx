@@ -4,7 +4,7 @@ import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerD
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Clock, Milestone, ParkingSquare, Pause, Play, Truck, RefreshCw } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useRoutePlayback } from '@/hooks/use-route-playback';
+import { useHorizontalScroll } from '@/hooks/use-horizontal-scroll';
 
 interface RouteHistorySheetProps {
   date: DateRange | undefined;
@@ -37,29 +38,14 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   // Custom hook for route playback logic
   const { isRoutePlaying } = useRoutePlayback();
 
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-
-  const checkScroll = useCallback(() => {
-    const el = scrollContainerRef.current;
-    if (el) {
-      setCanScrollLeft(el.scrollLeft > 0);
-      setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 1);
-    }
-  }, []);
+  // Custom hook for horizontal scroll management
+  const { scrollContainerRef, canScrollLeft, canScrollRight, scroll, checkScroll } = useHorizontalScroll();
 
   useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-    el.addEventListener('scroll', checkScroll);
-    checkScroll();
-    const timeout = setTimeout(checkScroll, 150);
-    return () => {
-      el.removeEventListener('scroll', checkScroll);
-      clearTimeout(timeout);
-    };
-  }, [checkScroll, routeGroups, isRouteSheetOpen]);
+    if (isRouteSheetOpen) {
+        checkScroll();
+    }
+  }, [isRouteSheetOpen, routeGroups, checkScroll]);
 
   const statusColorMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -80,10 +66,6 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
     if (isRoutePlaying) dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
     else dispatch({ type: 'START_ROUTE_PLAYBACK' });
   }, [dispatch, isRoutePlaying]);
-
-  const handleScroll = (dir: 'left' | 'right') => {
-    scrollContainerRef.current?.scrollBy({ left: dir === 'left' ? -400 : 400, behavior: 'smooth' });
-  };
 
   const handleSegmentNav = (dir: 'next' | 'prev') => {
     const maxIndex = routeGroups.length - 1;
@@ -197,7 +179,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
             <div key={lastUpdatedRoute} className={cn("relative flex items-center h-[180px]", lastUpdatedRoute && "animate-data-pulse")}>
                 {canScrollLeft && (
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20">
-                      <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90" onClick={() => handleScroll('left')}>
+                      <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90" onClick={() => scroll('left')}>
                           <ChevronLeft className="w-8 h-8" />
                       </Button>
                   </div>
@@ -205,7 +187,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                 <div className="flex-1 w-full overflow-hidden"><RouteHistoryContent viewportRef={scrollContainerRef} /></div>
                 {canScrollRight && (
                   <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
-                      <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90" onClick={() => handleScroll('right')}>
+                      <Button variant="secondary" size="icon" className="h-12 w-12 rounded-full shadow-lg border-2 border-primary/20 hover:scale-110 transition-transform bg-card/90" onClick={() => scroll('right')}>
                           <ChevronRight className="w-8 h-8" />
                       </Button>
                   </div>
