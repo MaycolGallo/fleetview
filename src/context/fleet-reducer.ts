@@ -5,7 +5,7 @@ import type { Vehicle, VehicleStatus, VHistorial, MapViewport, FleetState, Incid
 import { MASTER_FLEET_ROUTE, SIMULATION_ROUTE } from '@/services/fleet-api';
 
 export type FleetAction =
-  | { type: 'SET_VE_HICLES'; payload: Vehicle[] }
+  | { type: 'SET_VEHICLES'; payload: Vehicle[] }
   | { type: 'SET_MINIMAPS'; payload: MiniMapGroup[] }
   | { type: 'TOGGLE_MINIMAP_VISIBILITY'; payload: string }
   | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus[] }
@@ -23,7 +23,7 @@ export type FleetAction =
   | { type: 'ADD_VEHICLE_TO_MINIMAP', payload: { miniMapId: string, vehicleId: number } }
   | { type: 'REMOVE_VEHICLE_FROM_MINIMAP', payload: { miniMapId: string, vehicleId: number } }
   | { type: 'CLEAR_ALL_MINIMAPS' }
-  | { type: 'SET_ALL_VE_HICLES_VISIBILITY', payload: { ids: number[], visible: boolean } }
+  | { type: 'SET_ALL_VEHICLES_VISIBILITY', payload: { ids: number[], visible: boolean } }
   | { type: 'SET_MAP_DARK_MODE', payload: boolean }
   | { type: 'SET_PIN_ROTATION_MODE', payload: 'arrow' | 'pin' }
   | { type: 'SIMULATE_VEHICLE_MOVE', payload: number }
@@ -124,7 +124,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
         trackedVehicleIds: getTrackedIds(action.payload.miniMaps),
       };
     }
-    case 'SET_VE_HICLES': {
+    case 'SET_VEHICLES': {
       const newVisibleIds = state.vehicles.length === 0 
         ? new Set(action.payload.map(v => v.id_vehiculo))
         : state.visibleVehicleIds;
@@ -156,7 +156,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'SET_STATUS_FILTER':
       return { ...state, statusFilter: action.payload };
     
-    case 'PAN_TO_VE_HICLE': {
+    case 'PAN_TO_VEHICLE': {
       if (action.payload === null) return { ...state, selectedVehicle: null };
       return {
         ...state,
@@ -426,7 +426,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
       };
     }
 
-    case 'SET_ALL_VE_HICLES_VISIBILITY': {
+    case 'SET_ALL_VEHICLES_VISIBILITY': {
         const newVisibleIds = new Set(state.visibleVehicleIds);
         if (action.payload.visible) action.payload.ids.forEach(id => newVisibleIds.add(id));
         else action.payload.ids.forEach(id => newVisibleIds.delete(id));

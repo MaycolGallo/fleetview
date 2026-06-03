@@ -105,7 +105,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
             statusColor: raw.estado.param3,
           };
         });
-        dispatch({ type: 'SET_VE_HICLES', payload: processedVehicles });
+        dispatch({ type: 'SET_VEHICLES', payload: processedVehicles });
       }
     }, [rawVehiclesData]);
 
