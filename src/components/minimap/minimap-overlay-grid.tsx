@@ -37,7 +37,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
             className="pointer-events-auto relative w-48 sm:w-64 aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/20"
           >
-            <FleetMap apiKey={apiKey} isOverview={false} />
+            <FleetMap apiKey={apiKey} isMainMap={false} />
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
               <div className="bg-muted px-1.5 py-0.5 rounded shadow-sm text-[8px] font-bold text-muted-foreground uppercase flex items-center gap-1">
                 Vista General
@@ -75,7 +75,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
             }}
             className="pointer-events-auto relative w-48 sm:w-64 aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10"
           >
-            <FleetMap apiKey={apiKey} trackedVehicleIds={map.vehicleIds} isOverview={false} />
+            <FleetMap apiKey={apiKey} trackedVehicleIds={map.vehicleIds} isMainMap={false} />
             
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
               <div className="bg-primary px-1.5 py-0.5 rounded shadow-sm text-[8px] font-bold text-white uppercase flex items-center gap-1">

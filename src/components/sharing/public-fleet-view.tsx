@@ -70,7 +70,7 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
         <FleetMap 
           apiKey={apiKey} 
           trackedVehicleIds={payload.ids} 
-          isOverview={false} 
+          isMainMap={false} 
         />
       </main>
 

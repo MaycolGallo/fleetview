@@ -1,4 +1,3 @@
-
 "use client";
 
 import { APIProvider, Map, ColorScheme } from '@vis.gl/react-google-maps';
@@ -12,16 +11,16 @@ interface FleetMapProps {
   apiKey: string;
   side?: 'ida' | 'vuelta';
   trackedVehicleIds?: number[];
-  isOverview?: boolean;
+  isMainMap?: boolean;
 }
 
-export function FleetMap({ apiKey, side, trackedVehicleIds, isOverview }: FleetMapProps) {
+export function FleetMap({ apiKey, side, trackedVehicleIds, isMainMap }: FleetMapProps) {
   const { state } = useFleetState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
   const { isMapDark, vehicles, focusedMiniMapId, miniMaps } = state;
 
-  const isFocusMode = isOverview && focusedMiniMapId;
+  const isFocusMode = isMainMap && focusedMiniMapId;
   const focusedGroup = isFocusMode ? miniMaps.find(m => m.id === focusedMiniMapId) : null;
 
   const trackedVehicles = trackedVehicleIds?.map(id => vehicles.find(v => v.id_vehiculo === id)).filter(Boolean) as Vehicle[] || [];
@@ -78,7 +77,7 @@ export function FleetMap({ apiKey, side, trackedVehicleIds, isOverview }: FleetM
             mapId={isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID}
             colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
-          <MapControl side={side} trackedVehicleIds={trackedVehicleIds} isOverview={isOverview} />
+          <MapControl side={side} trackedVehicleIds={trackedVehicleIds} isMainMap={isMainMap} />
         </Map>
         {(side || isTrackingView || isFocusMode) && (
           <div className="absolute top-4 right-4 z-10 flex gap-2">

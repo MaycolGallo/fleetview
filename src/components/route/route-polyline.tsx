@@ -51,10 +51,10 @@ function catmullRomSpline(
 
 interface RouteSegmentsProps {
     side?: 'ida' | 'vuelta';
-    isOverview?: boolean;
+    isMainMap?: boolean;
 }
 
-export function RouteSegments({ side, isOverview }: RouteSegmentsProps) {
+export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
     const map = useMap();
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -67,13 +66,13 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
     if (!isDetailView && isSplitView) {
       return (
         <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
-          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="ida" isOverview={true} /></ResizablePanel>
+          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="ida" isMainMap={true} /></ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="vuelta" isOverview={true} /></ResizablePanel>
+          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="vuelta" isMainMap={true} /></ResizablePanel>
         </ResizablePanelGroup>
       );
     }
-    return <FleetMap apiKey={apiKey} isOverview={true} />;
+    return <FleetMap apiKey={apiKey} isMainMap={true} />;
   };
 
   return (

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -13,10 +12,10 @@ import { IncidenciaMarker } from '@/components/incidencias/incidencia-marker';
 interface MapControlProps {
   side?: 'ida' | 'vuelta';
   trackedVehicleIds?: number[];
-  isOverview?: boolean;
+  isMainMap?: boolean;
 }
 
-export function MapControl({ side, trackedVehicleIds, isOverview }: MapControlProps) {
+export function MapControl({ side, trackedVehicleIds, isMainMap }: MapControlProps) {
   const map = useMap();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -57,7 +56,7 @@ export function MapControl({ side, trackedVehicleIds, isOverview }: MapControlPr
     if (!map) return;
 
     // Special behavior for tracking panels or Focused group
-    const isFocusMain = isOverview && focusedMiniMapId;
+    const isFocusMain = isMainMap && focusedMiniMapId;
     const trackingIds = isFocusMain 
       ? miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds 
       : trackedVehicleIds;
@@ -128,9 +127,9 @@ export function MapControl({ side, trackedVehicleIds, isOverview }: MapControlPr
     
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
 
-  }, [map, mapViewport, dispatch, isSplitView, historyVehicle, isIncidenciasSheetOpen, masterRoute, side, trackedVehicleIds, state.vehicles, focusedMiniMapId, isOverview, miniMaps]);
+  }, [map, mapViewport, dispatch, isSplitView, historyVehicle, isIncidenciasSheetOpen, masterRoute, side, trackedVehicleIds, state.vehicles, focusedMiniMapId, isMainMap, miniMaps]);
 
-  const mapVehicles = useMemo(() => selectMapVehicles(state, trackedVehicleIds, isOverview), [state, trackedVehicleIds, isOverview]);
+  const mapVehicles = useMemo(() => selectMapVehicles(state, trackedVehicleIds, isMainMap), [state, trackedVehicleIds, isMainMap]);
 
   const halfIndex = Math.ceil(routeGroups.length / 2);
   const displayGroups = side === 'ida' 
@@ -155,7 +154,7 @@ export function MapControl({ side, trackedVehicleIds, isOverview }: MapControlPr
         />
       ))}
 
-      <RouteSegments side={side} isOverview={isOverview} />
+      <RouteSegments side={side} isMainMap={isMainMap} />
       
       {historyVehicle && firstRecord && lastRecord && selectedSegmentIndex === null && !isIncidenciasSheetOpen && (
         <>

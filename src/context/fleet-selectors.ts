@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Vehicle, FleetState } from '@/lib/types';
@@ -13,10 +12,10 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
   return visibleVehicles.filter(v => state.statusFilter.includes(String(v.id_estado)));
 };
 
-export const selectMapVehicles = (state: FleetState, trackedIds?: number[], isOverview?: boolean): Vehicle[] => {
+export const selectMapVehicles = (state: FleetState, trackedIds?: number[], isMainMap?: boolean): Vehicle[] => {
   if (state.historyVehicle) return [state.historyVehicle];
 
-  if (isOverview) {
+  if (isMainMap) {
     if (state.focusedMiniMapId) {
       const group = state.miniMaps.find(m => m.id === state.focusedMiniMapId);
       return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
