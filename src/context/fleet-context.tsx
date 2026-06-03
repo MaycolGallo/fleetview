@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
@@ -7,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { fleetReducer, getInitialState, type FleetAction } from './fleet-reducer';
 import { fetchVehicles, fetchRouteHistory, fetchIncidencias, fetchMiniMaps } from '@/services/fleet-api';
 
-const STORAGE_KEY = 'fleet_minimaps_state';
+const STORAGE_KEY = 'fleet_minimaps_state_v2';
 
 interface FleetStateContextValue {
     state: FleetState;
@@ -31,7 +32,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: miniMapsData } = useQuery({
         queryKey: ['minimaps'],
         queryFn: fetchMiniMaps,
-        staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+        staleTime: 1000 * 60 * 5,
     });
 
     const routeQuery = useQuery({
@@ -65,18 +66,24 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       if (savedState) {
         try {
           const parsed = JSON.parse(savedState);
-          if (Array.isArray(parsed)) dispatch({ type: 'INIT_PERSISTED_STATE', payload: parsed });
+          if (parsed && typeof parsed === 'object') {
+             dispatch({ type: 'INIT_PERSISTED_STATE', payload: { 
+               miniMaps: parsed.miniMaps || [], 
+               visibleIds: parsed.visibleIds || [] 
+             }});
+          }
         } catch (e) { console.error("Failed to load persisted state", e); }
       }
     }, []);
 
     useEffect(() => {
-      if (state.miniMaps.length > 0 || state.trackedVehicleIds.length > 0) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.miniMaps));
-      } else {
-        localStorage.removeItem(STORAGE_KEY);
+      if (state.miniMaps.length > 0 || state.visibleMiniMapIds.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          miniMaps: state.miniMaps,
+          visibleIds: state.visibleMiniMapIds
+        }));
       }
-    }, [state.miniMaps, state.trackedVehicleIds]);
+    }, [state.miniMaps, state.visibleMiniMapIds]);
     
     useEffect(() => {
       if (rawVehiclesData) {
@@ -98,7 +105,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
             statusColor: raw.estado.param3,
           };
         });
-        dispatch({ type: 'SET_VEHICLES', payload: processedVehicles });
+        dispatch({ type: 'SET_VE_HICLES', payload: processedVehicles });
       }
     }, [rawVehiclesData]);
 

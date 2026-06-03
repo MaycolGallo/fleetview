@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -17,12 +18,12 @@ const FleetMap = dynamic(() => import('../fleet-map').then(mod => mod.FleetMap),
 export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { miniMaps, focusedMiniMapId } = state;
+  const { miniMaps, visibleMiniMapIds, focusedMiniMapId } = state;
 
   const showOverviewAsMini = !!focusedMiniMapId;
-  const filteredMiniMaps = miniMaps.filter(m => m.id !== focusedMiniMapId);
+  const activeMiniMaps = miniMaps.filter(m => visibleMiniMapIds.includes(m.id) && m.id !== focusedMiniMapId);
 
-  if (!showOverviewAsMini && miniMaps.length === 0) return null;
+  if (!showOverviewAsMini && activeMiniMaps.length === 0) return null;
 
   return (
     <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-4 pointer-events-none max-h-[75vh] overflow-y-auto pr-2 no-scrollbar">
@@ -61,7 +62,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
           </motion.div>
         )}
 
-        {filteredMiniMaps.map((map, index) => (
+        {activeMiniMaps.map((map, index) => (
           <motion.div 
             key={map.id} 
             layout
@@ -72,7 +73,6 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                 type: "spring", 
                 stiffness: 350, 
                 damping: 30,
-                delay: index * 0.05
             }}
             className="pointer-events-auto relative w-48 sm:w-64 aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10"
           >
@@ -107,15 +107,15 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                 <Tooltip>
                     <TooltipTrigger asChild>
                     <Button 
-                        variant="destructive" 
+                        variant="secondary" 
                         size="icon" 
-                        className="h-7 w-7 shadow-lg hover:scale-110 transition-transform"
-                        onClick={() => dispatch({ type: 'REMOVE_MINIMAP', payload: map.id })}
+                        className="h-7 w-7 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
+                        onClick={() => dispatch({ type: 'TOGGLE_MINIMAP_VISIBILITY', payload: map.id })}
                     >
                         <X className="h-4 w-4" />
                     </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="left">Eliminar Radar</TooltipContent>
+                    <TooltipContent side="left">Quitar del Mapa</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
