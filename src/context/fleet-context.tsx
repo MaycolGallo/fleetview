@@ -57,6 +57,29 @@ const MASTER_FLEET_ROUTE = [
     { lat: -12.100, lng: -77.085 },
 ];
 
+const PREDEFINED_MINIMAPS: MiniMapGroup[] = [
+  {
+    id: 'predefined-1',
+    name: 'Grupo Norte',
+    vehicleIds: [],
+  },
+  {
+    id: 'predefined-2',
+    name: 'Grupo Sur',
+    vehicleIds: [],
+  },
+  {
+    id: 'predefined-3',
+    name: 'Grupo Centro',
+    vehicleIds: [],
+  },
+  {
+    id: 'predefined-4',
+    name: 'Vehículos Críticos',
+    vehicleIds: [],
+  },
+];
+
 type FleetAction =
   | { type: 'SET_VEHICLES'; payload: Vehicle[] }
   | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus[] }
@@ -94,6 +117,7 @@ type FleetAction =
   | { type: 'TOGGLE_TRACK_VEHICLE'; payload: number }
   | { type: 'FOCUS_MINIMAP'; payload: string }
   | { type: 'UNFOCUS_MINIMAP' }
+  | { type: 'ADD_PREDEFINED_MINIMAP'; payload: string }
   | { type: 'INIT_PERSISTED_STATE'; payload: MiniMapGroup[] };
 
 const getInitialState = (): FleetState => ({
@@ -109,6 +133,7 @@ const getInitialState = (): FleetState => ({
   selectedSegmentIndex: null,
   visibleVehicleIds: new Set(),
   miniMaps: [],
+  predefinedMiniMaps: PREDEFINED_MINIMAPS,
   trackedVehicleIds: [],
   focusedMiniMapId: null,
   isMapDark: false,
@@ -421,6 +446,18 @@ const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
 
     case 'CLEAR_ALL_MINIMAPS':
       return { ...state, miniMaps: [], trackedVehicleIds: [], focusedMiniMapId: null };
+
+    case 'ADD_PREDEFINED_MINIMAP': {
+      const predefinedMap = state.predefinedMiniMaps.find(m => m.id === action.payload);
+      if (!predefinedMap) return state;
+      
+      // Check if this predefined minimap is already in active minimaps
+      const alreadyExists = state.miniMaps.some(m => m.id === predefinedMap.id);
+      if (alreadyExists) return state;
+      
+      const newMaps = [...state.miniMaps, { ...predefinedMap }];
+      return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+    }
 
     case 'TOGGLE_TRACK_VEHICLE': {
       const isAlreadyTracked = state.trackedVehicleIds?.includes(action.payload) || false;

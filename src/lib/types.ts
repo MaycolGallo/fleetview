@@ -155,6 +155,7 @@ export interface FleetState {
   selectedSegmentIndex: number | null;
   visibleVehicleIds: Set<number>;
   miniMaps: MiniMapGroup[];
+  predefinedMiniMaps: MiniMapGroup[];
   trackedVehicleIds: number[]; // Explicitly track which ones are in any minimap
   focusedMiniMapId: string | null; // The ID of the minimap currently promoted to main view
   isMapDark: boolean;
