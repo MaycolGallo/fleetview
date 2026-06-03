@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -62,7 +61,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
           </motion.div>
         )}
 
-        {activeMiniMaps.map((map, index) => (
+        {activeMiniMaps.map((map) => (
           <motion.div 
             key={map.id} 
             layout

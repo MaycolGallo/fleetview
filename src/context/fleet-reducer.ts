@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Vehicle, VehicleStatus, VHistorial, MapViewport, FleetState, Incidencia, Notification, MiniMapGroup } from '@/lib/types';
