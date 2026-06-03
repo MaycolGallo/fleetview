@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { Vehicle, FleetState, MiniMapGroup, Notification } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
 import { fleetReducer, getInitialState, type FleetAction } from './fleet-reducer';
-import { fetchVehicles, fetchRouteHistory, fetchIncidencias } from '@/services/fleet-api';
+import { fetchVehicles, fetchRouteHistory, fetchIncidencias, fetchMiniMaps } from '@/services/fleet-api';
 
 const STORAGE_KEY = 'fleet_minimaps_state';
 
@@ -28,6 +28,12 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       staleTime: 1000 * 30,
     });
 
+    const { data: miniMapsData } = useQuery({
+        queryKey: ['minimaps'],
+        queryFn: fetchMiniMaps,
+        staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    });
+
     const routeQuery = useQuery({
       queryKey: ['route-history', state.historyVehicle?.id_vehiculo],
       queryFn: () => fetchRouteHistory(state.historyVehicle!.id_vehiculo),
@@ -39,6 +45,12 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       queryFn: () => fetchIncidencias(state.historyVehicle!.id_vehiculo),
       enabled: !!state.historyVehicle && state.isLoadingIncidencias,
     });
+
+    useEffect(() => {
+        if (miniMapsData) {
+            dispatch({ type: 'SET_MINIMAPS', payload: miniMapsData });
+        }
+    }, [miniMapsData]);
 
     useEffect(() => {
       if (routeQuery.data) dispatch({ type: 'SET_ROUTE_HISTORY', payload: routeQuery.data });

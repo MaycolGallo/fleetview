@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Vehicle, VehicleStatus, VHistorial, MapViewport, FleetState, Incidencia, Notification, MiniMapGroup } from '@/lib/types';
@@ -6,6 +5,7 @@ import { MASTER_FLEET_ROUTE, SIMULATION_ROUTE } from '@/services/fleet-api';
 
 export type FleetAction =
   | { type: 'SET_VEHICLES'; payload: Vehicle[] }
+  | { type: 'SET_MINIMAPS'; payload: MiniMapGroup[] }
   | { type: 'SET_STATUS_FILTER'; payload: VehicleStatus[] }
   | { type: 'PAN_TO_VEHICLE'; payload: Vehicle | null }
   | { type: 'START_ROUTE_LOADING'; payload: Vehicle }
@@ -86,6 +86,23 @@ const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
 
 export const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
+    case 'SET_MINIMAPS': {
+        // Merge fetched minimaps with existing ones, avoiding duplicates by name or ID
+        const existingNames = new Set(state.miniMaps.map(m => m.name));
+        const newMiniMaps = [...state.miniMaps];
+        
+        action.payload.forEach(fetchedMap => {
+            if (!existingNames.has(fetchedMap.name)) {
+                newMiniMaps.push(fetchedMap);
+            }
+        });
+
+        return {
+            ...state,
+            miniMaps: newMiniMaps,
+            trackedVehicleIds: getTrackedIds(newMiniMaps)
+        };
+    }
     case 'INIT_PERSISTED_STATE': {
       return {
         ...state,
