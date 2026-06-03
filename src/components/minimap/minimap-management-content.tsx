@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Radar, Plus, Trash2, X, Car, Eye, EyeOff } from 'lucide-react';
+import { Radar, Plus, Trash2, X, Car, Eye, EyeOff, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -89,6 +88,8 @@ export function MiniMapManagementContent() {
             ) : (
                 miniMaps.map((map) => {
                     const isVisible = visibleMiniMapIds.includes(map.id);
+                    const isProtected = !map.id.startsWith('map-');
+                    
                     return (
                         <div key={map.id} className={cn(
                             "p-4 rounded-xl border bg-card shadow-sm space-y-3 animate-in slide-in-from-bottom-2 duration-300 transition-colors",
@@ -102,7 +103,14 @@ export function MiniMapManagementContent() {
                                     )}>
                                         <Radar className={cn("w-4 h-4", isVisible ? "text-primary" : "text-muted-foreground")} />
                                     </div>
-                                    <span className="font-bold text-sm">{map.name}</span>
+                                    <div className='flex flex-col'>
+                                        <span className="font-bold text-sm leading-tight">{map.name}</span>
+                                        {isProtected && (
+                                            <span className='text-[9px] font-black uppercase text-primary tracking-tighter flex items-center gap-1'>
+                                                <Lock className='w-2 h-2' /> Grupo Protegido
+                                            </span>
+                                        )}
+                                    </div>
                                     <Badge variant="secondary" className="text-[10px] h-4">
                                         {map.vehicleIds.length}
                                     </Badge>
@@ -145,19 +153,36 @@ export function MiniMapManagementContent() {
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">
-                                    Asignar Unidades
+                                    {isProtected ? 'Unidades Asignadas (Sólo Lectura)' : 'Asignar Unidades'}
                                 </label>
-                                <MultiSelect
-                                    options={vehicleOptions}
-                                    onValueChange={(val) => handleUpdateVehicles(map.id, val)}
-                                    defaultValue={map.vehicleIds.map(String)}
-                                    placeholder="Seleccionar vehículos..."
-                                    className="bg-background shadow-none"
-                                    maxCount={2}
-                                />
+                                {!isProtected ? (
+                                    <MultiSelect
+                                        options={vehicleOptions}
+                                        onValueChange={(val) => handleUpdateVehicles(map.id, val)}
+                                        defaultValue={map.vehicleIds.map(String)}
+                                        placeholder="Seleccionar vehículos..."
+                                        className="bg-background shadow-none"
+                                        maxCount={2}
+                                    />
+                                ) : (
+                                    <div className="flex flex-wrap gap-1 mt-1 p-2 bg-muted/30 rounded-lg border border-dashed">
+                                        {map.vehicleIds.length > 0 ? (
+                                            map.vehicleIds.map(id => {
+                                                const v = vehicles.find(v => v.id_vehiculo === id);
+                                                return (
+                                                    <Badge key={id} variant="secondary" className="text-[10px] bg-background">
+                                                        {v?.placa || `ID: ${id}`}
+                                                    </Badge>
+                                                );
+                                            })
+                                        ) : (
+                                            <span className='text-[10px] text-muted-foreground italic'>Sin unidades asignadas</span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
-                            {map.vehicleIds.length > 0 && (
+                            {!isProtected && map.vehicleIds.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
                                     {map.vehicleIds.map(id => {
                                         const v = vehicles.find(v => v.id_vehiculo === id);

@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Vehicle, VehicleStatus, VHistorial, MapViewport, FleetState, Incidencia, Notification, MiniMapGroup } from '@/lib/types';
@@ -87,6 +86,8 @@ const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
   return Array.from(ids);
 };
 
+const isUserGroup = (id: string) => id.startsWith('map-');
+
 export const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_MINIMAPS': {
@@ -154,7 +155,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'SET_STATUS_FILTER':
       return { ...state, statusFilter: action.payload };
     
-    case 'PAN_TO_VEHICLE': {
+    case 'PAN_TO_VE_HICLE': {
       if (action.payload === null) return { ...state, selectedVehicle: null };
       return {
         ...state,
@@ -348,6 +349,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     }
 
     case 'UPDATE_MINIMAP_VEHICLES': {
+        if (!isUserGroup(action.payload.miniMapId)) return state;
         const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: action.payload.vehicleIds } : m);
         return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
     }
@@ -364,11 +366,13 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     }
 
     case 'ADD_VEHICLE_TO_MINIMAP': {
+      if (!isUserGroup(action.payload.miniMapId)) return state;
       const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleId])) } : m);
       return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
     }
 
     case 'REMOVE_VEHICLE_FROM_MINIMAP': {
+      if (!isUserGroup(action.payload.miniMapId)) return state;
       const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: m.vehicleIds.filter(id => id !== action.payload.vehicleId) } : m);
       return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
     }
@@ -379,7 +383,14 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'TOGGLE_TRACK_VEHICLE': {
       const isAlreadyTracked = state.trackedVehicleIds?.includes(action.payload) || false;
       if (isAlreadyTracked) {
-        const newMaps = state.miniMaps.map(m => ({ ...m, vehicleIds: m.vehicleIds.filter(id => id !== action.payload) })).filter(m => m.vehicleIds.length > 0);
+        // Only allow removing from user-created maps via this shortcut
+        const newMaps = state.miniMaps.map(m => {
+            if (isUserGroup(m.id)) {
+                return { ...m, vehicleIds: m.vehicleIds.filter(id => id !== action.payload) };
+            }
+            return m;
+        }).filter(m => m.vehicleIds.length > 0 || !isUserGroup(m.id));
+        
         return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
       } else {
         const newId = `map-${Date.now()}`;
