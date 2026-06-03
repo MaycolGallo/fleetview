@@ -8,6 +8,7 @@ import { RouteSegments } from '@/components/route/route-polyline';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { Flag, Play } from 'lucide-react';
 import { IncidenciaMarker } from '@/components/incidencias/incidencia-marker';
+import { useMapViewport } from '@/hooks/use-map-viewport';
 
 interface MapControlProps {
   side?: 'ida' | 'vuelta';
@@ -21,19 +22,15 @@ export function MapControl({ side, trackedVehicleIds, isMainMap }: MapControlPro
   const dispatch = useFleetDispatch();
 
   const {
-    mapViewport,
     routeGroups,
     selectedSegmentIndex,
     incidencias,
     selectedIncidenciaId,
     isIncidenciasSheetOpen,
     historyVehicle,
-    masterRoute,
-    isSplitView,
-    focusedMiniMapId,
-    miniMaps
   } = state;
 
+  // Initialize Libraries
   useEffect(() => {
     if (!map) return;
     
@@ -51,83 +48,15 @@ export function MapControl({ side, trackedVehicleIds, isMainMap }: MapControlPro
     loadLibraries();
   }, [map]);
 
-
-  useEffect(() => {
-    if (!map) return;
-
-    // Special behavior for tracking panels or Focused group
-    const isFocusMain = isMainMap && focusedMiniMapId;
-    const trackingIds = isFocusMain 
-      ? miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds 
-      : trackedVehicleIds;
-
-    if (trackingIds && trackingIds.length > 0) {
-      const trackedVehicles = state.vehicles.filter(v => trackingIds.includes(v.id_vehiculo));
-      if (trackedVehicles.length === 1) {
-        const v = trackedVehicles[0];
-        map.panTo({ lat: v.lat, lng: v.lng });
-        if (map.getZoom()! < 16) map.setZoom(16);
-      } else if (trackedVehicles.length > 1) {
-        const bounds = new google.maps.LatLngBounds();
-        trackedVehicles.forEach(v => bounds.extend({ lat: v.lat, lng: v.lng }));
-        map.fitBounds(bounds, 50);
-      }
-      return;
-    }
-
-    if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
-      // Special case for Split View in Fleet Management
-      if (map && isSplitView && !historyVehicle && !isIncidenciasSheetOpen && masterRoute.length > 0) {
-        try {
-          const halfIndex = Math.ceil(masterRoute.length / 2);
-          const points = side === 'ida' ? masterRoute.slice(0, halfIndex) : masterRoute.slice(halfIndex - 1);
-          const bounds = new google.maps.LatLngBounds();
-          points.forEach(p => bounds.extend(p));
-          map.fitBounds(bounds, 50);
-        } catch (e) {
-          console.warn('Could not fit bounds', e);
-        }
-      }
-      return;
-    }
-
-    try {
-      switch (mapViewport.type) {
-        case 'pan_to_vehicle': {
-          const { lat, lng } = mapViewport.payload;
-          map.panTo({ lat: lat, lng: lng });
-          if (map.getZoom()! < 15) {
-            map.setZoom(15);
-          }
-          break;
-        }
-        case 'fit_bounds':
-        case 'fit_route': {
-          const points = mapViewport.payload;
-          if (points && points.length > 0) {
-            if (points.length === 1) {
-              map.panTo(points[0]);
-              if (map.getZoom()! < 15) {
-                  map.setZoom(15);
-              }
-            } else {
-              const bounds = new google.maps.LatLngBounds();
-              points.forEach(point => bounds.extend(point));
-              map.fitBounds(bounds, 100);
-            }
-          }
-          break;
-        }
-        default:
-          break;
-      }
-    } catch (e) {
-      console.warn('Map interaction failed', e);
-    }
-    
-    dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
-
-  }, [map, mapViewport, dispatch, isSplitView, historyVehicle, isIncidenciasSheetOpen, masterRoute, side, trackedVehicleIds, state.vehicles, focusedMiniMapId, isMainMap, miniMaps]);
+  // Hook to handle all map viewport logic (pan, zoom, bounds)
+  useMapViewport({
+    map,
+    state,
+    dispatch,
+    isMainMap,
+    side,
+    trackedVehicleIds
+  });
 
   const mapVehicles = useMemo(() => selectMapVehicles(state, trackedVehicleIds, isMainMap), [state, trackedVehicleIds, isMainMap]);
 
