@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Vehicle, VehicleStatus, VHistorial, MapViewport, FleetState, Incidencia, Notification, MiniMapGroup } from '@/lib/types';
@@ -40,6 +41,8 @@ export type FleetAction =
   | { type: 'TOGGLE_TRACK_VEHICLE'; payload: number }
   | { type: 'FOCUS_MINIMAP'; payload: string }
   | { type: 'UNFOCUS_MINIMAP' }
+  | { type: 'SET_AI_INSIGHT'; payload: string }
+  | { type: 'SET_AI_INSIGHT_LOADING'; payload: boolean }
   | { type: 'INIT_PERSISTED_STATE'; payload: MiniMapGroup[] };
 
 export const getInitialState = (): FleetState => ({
@@ -72,6 +75,7 @@ export const getInitialState = (): FleetState => ({
   selectedIncidenciaId: null,
   notifications: [],
   masterRoute: MASTER_FLEET_ROUTE,
+  isLoadingAiInsight: false,
 });
 
 const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
@@ -114,6 +118,10 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
           : state.mapViewport,
        };
     }
+    case 'SET_AI_INSIGHT':
+        return { ...state, aiFleetInsight: action.payload };
+    case 'SET_AI_INSIGHT_LOADING':
+        return { ...state, isLoadingAiInsight: action.payload };
     case 'SET_STATUS_FILTER':
       return { ...state, statusFilter: action.payload };
     

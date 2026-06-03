@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Radar, Car, Settings2, Share2 } from 'lucide-react';
+import { Radar, Car, Settings2, Share2, BarChart3 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,12 @@ export function FloatingToolbar({ activePanel, setActivePanel }: FloatingToolbar
           label="Gestión Radar" 
           isActive={activePanel === 'minimaps'} 
           onClick={() => togglePanel('minimaps')} 
+        />
+        <ToolbarButton 
+          icon={BarChart3} 
+          label="Estadísticas" 
+          isActive={activePanel === 'stats'} 
+          onClick={() => togglePanel('stats')} 
         />
         <ToolbarButton 
           icon={Share2} 

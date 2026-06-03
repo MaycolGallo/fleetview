@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
@@ -17,16 +17,18 @@ import { VehiclePanelContent } from './vehicle/vehicle-panel-content';
 import { MiniMapManagementContent } from './minimap/minimap-management-content';
 import { SettingsPanelContent } from './settings/settings-panel-content';
 import { SharePanelContent } from './sharing/share-panel-content';
+import { FleetAnalyticsContent } from './analytics/fleet-analytics-content';
 import { PublicFleetView } from './sharing/public-fleet-view';
 import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
 });
 
-export type PanelType = 'vehicles' | 'minimaps' | 'settings' | 'share' | null;
+export type PanelType = 'vehicles' | 'minimaps' | 'settings' | 'share' | 'stats' | null;
 
 export function FleetViewClient({ apiKey }: { apiKey: string }) {
   const { state, error } = useFleetState();
@@ -53,7 +55,6 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
   const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || focusedMiniMapId);
 
   // Determine if we should show the INITIAL big loader
-  // This only shows if we are loading but have NO existing data to show yet
   const isInitialLoading = (isLoadingRoute && routeGroups.length === 0) || (isLoadingIncidencias && incidencias.length === 0);
 
   if (error) return <div className="flex items-center justify-center h-full text-destructive">Error: {error.message}</div>;
@@ -82,16 +83,28 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
       {!isDetailView && (
         <>
           <FloatingToolbar activePanel={activePanel} setActivePanel={setActivePanel} />
-          {!isMobile && activePanel && (
-            <div className="absolute top-6 left-24 bottom-6 w-[380px] z-40 animate-in slide-in-from-left-4 fade-in">
-              <div className="h-full w-full bg-card/95 backdrop-blur-md rounded-2xl border shadow-2xl overflow-hidden">
-                {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => {}} />}
-                {activePanel === 'minimaps' && <MiniMapManagementContent />}
-                {activePanel === 'settings' && <SettingsPanelContent />}
-                {activePanel === 'share' && <SharePanelContent />}
-              </div>
-            </div>
-          )}
+          
+          <AnimatePresence mode="wait">
+            {!isMobile && activePanel && (
+              <motion.div 
+                key={activePanel}
+                initial={{ x: -100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: -100, opacity: 0 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                className="absolute top-6 left-24 bottom-6 w-[420px] z-40"
+              >
+                <div className="h-full w-full bg-card/95 backdrop-blur-md rounded-2xl border shadow-2xl overflow-hidden flex flex-col">
+                  {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => {}} />}
+                  {activePanel === 'minimaps' && <MiniMapManagementContent />}
+                  {activePanel === 'settings' && <SettingsPanelContent />}
+                  {activePanel === 'share' && <SharePanelContent />}
+                  {activePanel === 'stats' && <FleetAnalyticsContent />}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <MiniMapOverlayGrid apiKey={apiKey} />
         </>
       )}
@@ -100,11 +113,12 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
 
       {isMobile && !isDetailView && activePanel && (
         <Drawer open={!!activePanel} onOpenChange={(open) => !open && setActivePanel(null)} modal={false}>
-          <DrawerContent className="h-[75vh]">
+          <DrawerContent className="h-[85vh]">
             <DrawerHandle />
             <div className="flex-1 overflow-hidden">
               {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => setActivePanel(null)} />}
               {activePanel === 'minimaps' && <MiniMapManagementContent />}
+              {activePanel === 'stats' && <FleetAnalyticsContent />}
               {activePanel === 'share' && <SharePanelContent />}
             </div>
           </DrawerContent>
@@ -114,7 +128,6 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
       <RouteHistorySheet date={undefined} setDate={() => {}} onApply={() => {}} />
       <IncidenciasSheet />
 
-      {/* Full screen loading for INITIAL load only */}
       {isInitialLoading && (
         <div className="absolute inset-0 z-[100] bg-background/80 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-300">
            <div className="p-8 rounded-full bg-primary/10 border-2 border-primary/20 animate-pulse mb-6">

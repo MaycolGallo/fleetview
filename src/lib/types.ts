@@ -170,6 +170,9 @@ export interface FleetState {
   notifications: Notification[];
   // Fleet Master Route
   masterRoute: { lat: number, lng: number }[];
+  // AI Insights
+  aiFleetInsight?: string;
+  isLoadingAiInsight: boolean;
   // Data refresh tracking
   lastUpdatedRoute?: number;
   lastUpdatedIncidencias?: number;
