@@ -1,92 +1,54 @@
+
 'use client';
 
 import type { Vehicle } from '@/lib/types';
 import { AdvancedMarker } from '@vis.gl/react-google-maps';
 import { VehiclePin } from '@/components/vehicle/vehicle-pin';
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { Gauge } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
+import { useFleetState } from '@/context/fleet-context';
 import { useAnimatedPosition } from '@/hooks/use-animated-position';
 import { VehicleContextMenu } from '@/components/vehicle/vehicle-context-menu';
 import { VehicleMobileContextMenu } from '@/components/vehicle/vehicle-mobile-context-menu';
+import { useVehicleMarkerInteraction } from '@/hooks/use-vehicle-marker-interaction';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehicle; index?: number }) {
   const { state } = useFleetState();
-  const dispatch = useFleetDispatch();
   const { selectedVehicle, isRoutePlaying, historyVehicle, playbackAnimationDuration } = state;
   const isSelected = selectedVehicle?.id_vehiculo === vehicle.id_vehiculo;
-  const [contextMenuOpen, setContextMenuOpen] = useState(false);
-  const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 });
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const pressTimer = useRef<NodeJS.Timeout | null>(null);
   const isMobile = useIsMobile();
 
-  const isPlaybackMarker = !!historyVehicle;
+  const {
+    contextMenuOpen,
+    contextMenuPosition,
+    drawerOpen,
+    setDrawerOpen,
+    handleLeftClick,
+    handleContextMenu,
+    handleTouchStart,
+    handleTouchEnd,
+    handleTouchMove,
+    closeContextMenu,
+  } = useVehicleMarkerInteraction({ vehicle });
 
+  const isPlaybackMarker = !!historyVehicle;
   const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
   
   const animationDuration = (isPlaybackMarker && isRoutePlaying) ? playbackAnimationDuration : 1000;
   const animatedPosition = useAnimatedPosition(targetPosition, { duration: animationDuration });
 
-  const position = animatedPosition;
-
-  const handleLeftClick = (e: google.maps.MapMouseEvent | React.MouseEvent) => {
-    if ('domEvent' in e && e.domEvent) {
-      e.domEvent.stopPropagation();
-    } else if ('stopPropagation' in e) {
-      e.stopPropagation();
-    }
-    dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
-  };
-
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isMobile) return;
-    setContextMenuPosition({ x: e.clientX, y: e.clientY });
-    setContextMenuOpen(true);
-  };
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    e.stopPropagation();
-    pressTimer.current = setTimeout(() => {
-      if (isMobile) {
-        setDrawerOpen(true);
-      } else {
-        const touch = e.touches[0];
-        setContextMenuPosition({ x: touch.clientX, y: touch.clientY });
-        setContextMenuOpen(true);
-      }
-    }, 500); 
-  };
-
-  const handleTouchEnd = () => {
-    if (pressTimer.current) {
-      clearTimeout(pressTimer.current);
-      pressTimer.current = null;
-    }
-  };
-
-  const handleTouchMove = () => {
-    if (pressTimer.current) {
-      clearTimeout(pressTimer.current);
-      pressTimer.current = null;
-    }
-  };
-
   const color = vehicle.statusColor || '#9E9E9E';
   const speed = parseFloat(vehicle.velocidad) || 0;
-
   const zIndex = isPlaybackMarker ? 50 : (isSelected ? 10 : 1);
 
   return (
     <>
       <AdvancedMarker
         key={vehicle.id_vehiculo}
-        position={position}
+        position={animatedPosition}
         onClick={handleLeftClick}
         zIndex={zIndex}
       >
@@ -108,14 +70,10 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
             data-vehicle-id={vehicle.id_vehiculo}
-            className={cn(
-                "relative cursor-pointer flex justify-center items-center"
-            )}
+            className={cn("relative cursor-pointer flex justify-center items-center")}
         >
             {speed > 0 && (
-                <div
-                    className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10"
-                >
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10">
                     <div
                         style={{ backgroundColor: color }}
                         className="flex items-center gap-1 shadow-md rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-white"
@@ -138,7 +96,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
         <VehicleContextMenu
           vehicle={vehicle}
           position={contextMenuPosition}
-          onClose={() => setContextMenuOpen(false)}
+          onClose={closeContextMenu}
         />
       )}
 
