@@ -23,7 +23,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   const activeMiniMaps = miniMaps.filter(m => visibleMiniMapIds.includes(m.id) && m.id !== focusedMiniMapId);
 
   // We keep the container mounted so AnimatePresence can handle the exit of the LAST item.
-  // The container is pointer-events-none so it doesn't block map interactions.
+  // The grid direction flex-col-reverse with flex-wrap-reverse ensures we fill from bottom-right up to 4 per column.
 
   return (
     <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-4 pointer-events-none h-[80vh] overflow-visible">

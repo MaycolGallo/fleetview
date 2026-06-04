@@ -11,7 +11,6 @@ import { Drawer, DrawerContent, DrawerHandle } from '@/components/ui/drawer';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { FloatingToolbar } from './navigation/floating-toolbar';
 import { DetailHeader } from './navigation/detail-header';
-import { MiniMapOverlayGrid } from './minimap/minimap-overlay-grid';
 import { VehiclePanelContent } from './vehicle/vehicle-panel-content';
 import { MiniMapManagementContent } from './minimap/minimap-management-content';
 import { SettingsPanelContent } from './settings/settings-panel-content';
@@ -25,6 +24,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
+});
+
+const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid').then(mod => mod.MiniMapOverlayGrid), {
+  ssr: false,
 });
 
 export type PanelType = 'vehicles' | 'minimaps' | 'settings' | 'share' | 'stats' | null;
