@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -30,7 +29,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
    * - Constraints the container to 80% of viewport height (80vh).
    * - Each item height is calculated as (20vh - 12px) where 12px is the gap.
    * - This forces exactly 4 items per column before wrapping to the left.
-   * - aspect-square ensures they stay proportionally sized as they shrink.
+   * - Fixed width (w-80) ensures windows are large enough to be tactically useful.
    */
   return (
     <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-3 pointer-events-none max-h-[80vh]">
@@ -43,7 +42,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
             animate={{ x: 0, scale: 1, opacity: 1 }}
             exit={{ x: 100, scale: 0.8, opacity: 0 }}
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
-            className="pointer-events-auto relative h-[calc(20vh-12px)] aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/20"
+            className="pointer-events-auto relative h-[calc(20vh-12px)] w-80 border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/20"
           >
             <FleetMap apiKey={apiKey} isMainMap={false} />
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
@@ -81,7 +80,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                 stiffness: 350, 
                 damping: 30,
             }}
-            className="pointer-events-auto relative h-[calc(20vh-12px)] aspect-square border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10"
+            className="pointer-events-auto relative h-[calc(20vh-12px)] w-80 border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10"
           >
             <FleetMap apiKey={apiKey} trackedVehicleIds={map.vehicleIds} isMainMap={false} />
             
