@@ -26,14 +26,15 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   if (!showOverviewAsMini && activeMiniMaps.length === 0) return null;
 
   /**
-   * Layout Logic:
-   * - Grow from bottom-right.
-   * - Max 4 items per column.
-   * - Using a fixed max-height that roughly fits 4 units (assuming ~256px + gap per unit).
-   * - Wrap leftwards.
+   * Layout Strategy:
+   * - Grow from bottom-right towards top-left.
+   * - Use flex-col-reverse for bottom-to-top stacking.
+   * - Use flex-wrap-reverse for right-to-left wrapping when height limit is hit.
+   * - max-h-[80vh] ensures we never pass the top header or overflow the screen vertically.
+   * - shrink-0 ensures mini-maps maintain their 256px tactical resolution.
    */
   return (
-    <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-4 pointer-events-none max-h-[calc(100vh-100px)] lg:max-h-[1100px]">
+    <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-4 pointer-events-none max-h-[80vh]">
       <AnimatePresence mode="popLayout">
         {showOverviewAsMini && (
           <motion.div 
