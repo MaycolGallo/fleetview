@@ -25,7 +25,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   if (!showOverviewAsMini && activeMiniMaps.length === 0) return null;
 
   return (
-    <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-3 pointer-events-none h-[80vh]">
+    <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-4 pointer-events-none h-[80vh] overflow-visible">
       <AnimatePresence mode="popLayout">
         {showOverviewAsMini && (
           <motion.div 
@@ -35,7 +35,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
             animate={{ x: 0, scale: 1, opacity: 1 }}
             exit={{ x: 100, scale: 0.8, opacity: 0 }}
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
-            className="pointer-events-auto relative flex-1 min-h-[calc(20vh-12px)] w-96 border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/20"
+            className="pointer-events-auto relative flex-none h-[calc(20vh-16px)] w-96 border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/20"
           >
             <FleetMap apiKey={apiKey} isMainMap={false} />
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
@@ -73,7 +73,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                 stiffness: 350, 
                 damping: 30,
             }}
-            className="pointer-events-auto relative flex-1 min-h-[calc(20vh-12px)] w-96 border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10"
+            className="pointer-events-auto relative flex-none h-[calc(20vh-16px)] w-96 border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10"
           >
             <FleetMap apiKey={apiKey} trackedVehicleIds={map.vehicleIds} isMainMap={false} />
             
