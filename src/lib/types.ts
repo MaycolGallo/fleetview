@@ -1,4 +1,3 @@
-
 // The raw, nested data structure from the API
 export interface RawVehicle {
   id_ubicacion: number;
@@ -41,9 +40,14 @@ export interface Vehicle {
 
 export type VehicleStatus = string;
 
+export interface Point {
+  lat: number;
+  lng: number;
+}
+
 export interface Incidencia {
   id: string;
-  type: 'panic' | 'harsh_accel' | 'harsh_brake' | 'speeding' | 'excessive_idle';
+  type: "panic" | "harsh_accel" | "harsh_brake" | "speeding" | "excessive_idle";
   lat: number;
   lng: number;
   timestamp: number;
@@ -85,11 +89,13 @@ export interface VehiculoUbicacionHistorial {
 }
 
 // The processed record used in the UI, with parsed coordinates
-export interface ProcessedRouteRecord extends Omit<VehiculoUbicacionHistorial, 'coordenadas'>{
-    lat: number;
-    lng: number;
+export interface ProcessedRouteRecord extends Omit<
+  VehiculoUbicacionHistorial,
+  "coordenadas"
+> {
+  lat: number;
+  lng: number;
 }
-
 
 export interface VehiculoHistorialGrouped {
   id_estado: number;
@@ -125,11 +131,11 @@ export interface VHistorial {
 }
 
 export type MapViewport =
-  | { type: 'initial' }
-  | { type: 'idle' }
-  | { type: 'pan_to_vehicle'; payload: { lat: number; lng: number } }
-  | { type: 'fit_bounds'; payload: { lat: number; lng: number }[] }
-  | { type: 'fit_route'; payload: { lat: number; lng: number }[] };
+  | { type: "initial" }
+  | { type: "idle" }
+  | { type: "pan_to_vehicle"; payload: { lat: number; lng: number } }
+  | { type: "fit_bounds"; payload: { lat: number; lng: number }[] }
+  | { type: "fit_route"; payload: { lat: number; lng: number }[] };
 
 export interface MiniMapGroup {
   id: string;
@@ -144,23 +150,24 @@ export interface FleetState {
   historyVehicle: Vehicle | null;
   routePath: { lat: number; lng: number }[][] | null;
   routeGroups: VehiculoHistorialGrouped[];
-  by_estado: VHistorial['by_estado'];
+  by_estado: VHistorial["by_estado"];
   isRouteSheetOpen: boolean;
   isLoadingRoute: boolean;
   selectedSegmentIndex: number | null;
   visibleVehicleIds: Set<number>;
   miniMaps: MiniMapGroup[];
+  predefinedMiniMaps: MiniMapGroup[];
   visibleMiniMapIds: string[]; // Track which groups are actually shown on map
   trackedVehicleIds: number[]; // Explicitly track which ones are in any minimap
   focusedMiniMapId: string | null; // The ID of the minimap currently promoted to main view
   isMapDark: boolean;
   mapViewport: MapViewport;
   simulationStep: Record<string, number>;
-  pinRotationMode: 'arrow' | 'pin';
+  pinRotationMode: "arrow" | "pin";
   isRoutePlaying: boolean;
   playbackAnimationDuration: number;
   isSplitView: boolean;
-  splitDirection: 'horizontal' | 'vertical';
+  splitDirection: "horizontal" | "vertical";
   wasSplitViewBeforeRoute: boolean;
   // Incidencias
   incidencias: Incidencia[];
@@ -170,7 +177,7 @@ export interface FleetState {
   // Notifications
   notifications: Notification[];
   // Fleet Master Route
-  masterRoute: { lat: number, lng: number }[];
+  masterRoute: { lat: number; lng: number }[];
   // AI Insights
   aiFleetInsight?: string;
   isLoadingAiInsight: boolean;

@@ -52,8 +52,9 @@ export function MiniMapManagementContent() {
 
   return (
     <div className="h-full flex flex-col animate-in fade-in duration-300">
-      <div className="p-4 border-b space-y-4 bg-muted/20">
-        <div className="flex items-center gap-2">
+      <Tabs defaultValue="available" className="flex-1 flex flex-col">
+        <div className="px-4 pt-4 pb-2">
+          <div className="flex items-center gap-2 mb-4">
             <Radar className="w-5 h-5 text-primary" />
             <div>
                 <h2 className="text-lg font-bold leading-tight">Radar Groups</h2>

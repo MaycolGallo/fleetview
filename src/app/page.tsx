@@ -16,11 +16,12 @@ interface PageProps {
 
 export default async function Home({ searchParams }: PageProps) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  const { demo } = await searchParams;
+  const { demo, map } = await searchParams;
   const isDemoMode = demo === 'true';
+  const wantsGoogleMap = map === 'google';
 
-  // If no API key is provided and we aren't in demo mode, show instructions
-  if (!apiKey && !isDemoMode) {
+  // Only require a Google Maps API key when the user explicitly requests Google Maps.
+  if (!apiKey && wantsGoogleMap && !isDemoMode) {
     return <ApiKeyInstructions />;
   }
 

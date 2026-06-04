@@ -164,6 +164,8 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
     }, [dispatch]);
 
     const listVehicles = useMemo(() => {
+        // Keep radar-grouped vehicles in the fleet list as well.
+        // The panel should show all vehicles filtered only by status, not by radar membership.
         if (state.statusFilter.length === 0) {
             return state.vehicles;
         }
