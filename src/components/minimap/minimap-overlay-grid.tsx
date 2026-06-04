@@ -25,7 +25,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   if (!showOverviewAsMini && activeMiniMaps.length === 0) return null;
 
   return (
-    <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-4 pointer-events-none max-h-[75vh] overflow-y-auto pr-2 no-scrollbar">
+    <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-4 pointer-events-none max-h-[calc(100vh-120px)] max-w-[calc(100vw-450px)]">
       <AnimatePresence mode="popLayout">
         {showOverviewAsMini && (
           <motion.div 
@@ -52,7 +52,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                     className="absolute top-2 right-2 h-7 w-7 z-20 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
                     onClick={() => dispatch({ type: 'UNFOCUS_MINIMAP' })}
                     >
-                    <RefreshCw className="h-4 h-4 text-primary" />
+                    <RefreshCw className="h-4 w-4 text-primary" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left">Restaurar General</TooltipContent>
