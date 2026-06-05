@@ -87,9 +87,10 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
     [state, miniMapId, manualVehicleIds, isMainMap]
   );
 
+  // Voyager is a more colorful/vibrant tile set than the default desaturated light set
   const tileUrl = isMapDark 
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
 
   const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
