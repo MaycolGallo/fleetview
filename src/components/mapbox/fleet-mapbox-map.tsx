@@ -3,7 +3,7 @@
 import React, { useMemo, useRef } from 'react';
 import Map, { MapRef } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fleet-context';
+import { useFleetState, selectMapVehicles } from '@/context/fleet-context';
 import { MapboxVehicleMarker } from './mapbox-vehicle-marker';
 import { useMapViewport } from '@/hooks/use-map-viewport';
 import { MapboxRoutePolylines } from './mapbox-route-polylines';
@@ -21,15 +21,12 @@ export default function FleetMapboxMap(props: FleetMapboxMapProps) {
   const { side, miniMapId, manualVehicleIds, isMainMap } = props;
   const mapRef = useRef<MapRef>(null);
   const { state } = useFleetState();
-  const dispatch = useFleetDispatch();
   const { isMapDark } = state;
 
   // Utilize the unified viewport hook
   useMapViewport({
     map: mapRef.current,
     provider: 'mapbox',
-    state,
-    dispatch,
     ...props
   });
 

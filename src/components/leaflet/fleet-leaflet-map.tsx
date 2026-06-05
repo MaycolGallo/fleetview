@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fleet-context';
+import { useFleetState, selectMapVehicles } from '@/context/fleet-context';
 import { LeafletVehicleMarker } from './leaflet-vehicle-marker';
 import { useMapViewport } from '@/hooks/use-map-viewport';
 import { LeafletRoutePolylines } from './leaflet-route-polylines';
@@ -19,14 +19,10 @@ interface FleetLeafletMapProps {
  */
 function MapViewportSync(props: FleetLeafletMapProps) {
   const map = useMap();
-  const { state } = useFleetState();
-  const dispatch = useFleetDispatch();
 
   useMapViewport({
     map,
     provider: 'leaflet',
-    state,
-    dispatch,
     ...props
   });
 

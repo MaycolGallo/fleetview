@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -55,8 +54,6 @@ export function MapControl(props: MapControlProps) {
   useMapViewport({
     map,
     provider: 'google',
-    state,
-    dispatch,
     ...props
   });
 

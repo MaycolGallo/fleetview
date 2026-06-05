@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { FleetState, MapProvider } from '@/lib/types';
-import type { FleetAction } from '@/context/fleet-reducer';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
+import type { MapProvider } from '@/lib/types';
 import type { MapRef } from 'react-map-gl';
 import L from 'leaflet';
 
@@ -15,8 +15,6 @@ type MapInstance = google.maps.Map | L.Map | MapRef | null | undefined;
 interface UseMapViewportProps {
   map: MapInstance;
   provider: MapProvider;
-  state: FleetState;
-  dispatch: React.Dispatch<FleetAction>;
   isMainMap?: boolean;
   side?: 'ida' | 'vuelta';
   miniMapId?: string;
@@ -25,18 +23,19 @@ interface UseMapViewportProps {
 
 /**
  * Unified custom hook to handle map viewport synchronization (pan, zoom, fitBounds).
- * Supports Google Maps, Leaflet, and Mapbox GL with full type safety.
+ * Consumes FleetContext directly to manage tactical movement across Google, Leaflet, and Mapbox.
  */
 export function useMapViewport({
   map,
   provider,
-  state,
-  dispatch,
   isMainMap,
   side,
   miniMapId,
   manualVehicleIds
 }: UseMapViewportProps) {
+  const { state } = useFleetState();
+  const dispatch = useFleetDispatch();
+
   const {
     mapViewport,
     focusedMiniMapId,
@@ -128,7 +127,6 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
     const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
     (map as L.Map).fitBounds(bounds, { padding: [padding, padding] });
   } else if (provider === 'mapbox' && 'fitBounds' in map) {
-    // Manually calculate bounds and cast to LngLatBoundsLike compatible structure
     const initialLng = points[0].lng;
     const initialLat = points[0].lat;
     
