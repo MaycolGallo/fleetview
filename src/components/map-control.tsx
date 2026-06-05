@@ -18,7 +18,8 @@ interface MapControlProps {
   isMainMap?: boolean;
 }
 
-export function MapControl({ side, miniMapId, manualVehicleIds, isMainMap }: MapControlProps) {
+export function MapControl(props: MapControlProps) {
+  const { side, miniMapId, manualVehicleIds, isMainMap } = props;
   const map = useMap();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -50,18 +51,15 @@ export function MapControl({ side, miniMapId, manualVehicleIds, isMainMap }: Map
     loadLibraries();
   }, [map]);
 
-  // Hook to handle all map viewport logic (pan, zoom, bounds)
+  // Hook to handle all map viewport logic (pan, zoom, bounds) for Google
   useMapViewport({
     map,
+    provider: 'google',
     state,
     dispatch,
-    isMainMap,
-    side,
-    miniMapId,
-    manualVehicleIds
+    ...props
   });
 
-  // Calculate units specifically for this map instance
   const mapVehicles = useMemo(
     () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
     [state, miniMapId, manualVehicleIds, isMainMap]

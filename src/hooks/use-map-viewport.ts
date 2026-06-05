@@ -2,11 +2,13 @@
 'use client';
 
 import { useEffect } from 'react';
-import type { FleetState } from '@/lib/types';
+import type { FleetState, MapProvider } from '@/lib/types';
 import type { FleetAction } from '@/context/fleet-reducer';
+import L from 'leaflet';
 
 interface UseMapViewportProps {
-  map: google.maps.Map | null;
+  map: any; // Can be google.maps.Map, L.Map (Leaflet), or MapRef (Mapbox)
+  provider: MapProvider;
   state: FleetState;
   dispatch: React.Dispatch<FleetAction>;
   isMainMap?: boolean;
@@ -16,11 +18,12 @@ interface UseMapViewportProps {
 }
 
 /**
- * Custom hook to handle map viewport synchronization (pan, zoom, fitBounds).
- * Encapsulates logic for Focus Mode, Split View, and Radar Tracking.
+ * Unified custom hook to handle map viewport synchronization (pan, zoom, fitBounds).
+ * Supports Google Maps, Leaflet, and Mapbox GL.
  */
 export function useMapViewport({
   map,
+  provider,
   state,
   dispatch,
   isMainMap,
@@ -42,96 +45,85 @@ export function useMapViewport({
   useEffect(() => {
     if (!map) return;
 
-    // 1. Determine the set of vehicles this map instance is tracking
+    // 1. Determine targets for this instance
     let targetVehicleIds: number[] = [];
-    
-    if (manualVehicleIds) {
-      targetVehicleIds = manualVehicleIds;
-    } else if (miniMapId) {
-      targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
-    } else if (isMainMap && focusedMiniMapId) {
-      targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
-    }
+    if (manualVehicleIds) targetVehicleIds = manualVehicleIds;
+    else if (miniMapId) targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
+    else if (isMainMap && focusedMiniMapId) targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
 
-    // 2. If tracking specific units, keep them in view
+    // 2. High-Priority Tracking (Radar Lock / Focus Mode)
     if (targetVehicleIds.length > 0) {
       const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
+      const points = trackedUnits.map(v => ({ lat: v.lat, lng: v.lng }));
+      
       if (trackedUnits.length === 1) {
-        const v = trackedUnits[0];
-        map.panTo({ lat: v.lat, lng: v.lng });
-        if (map.getZoom()! < 16) map.setZoom(16);
+        performPan(map, provider, points[0], 16);
       } else if (trackedUnits.length > 1) {
-        const bounds = new google.maps.LatLngBounds();
-        trackedUnits.forEach(v => bounds.extend({ lat: v.lat, lng: v.lng }));
-        map.fitBounds(bounds, 50);
+        performFitBounds(map, provider, points, 50);
       }
       return;
     }
 
-    // 3. Handle default Viewport Actions (State-driven)
+    // 3. Handle Default Viewport Actions (State-driven)
     if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
-      // Fit bounds to Master Route in Split View
       if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && masterRoute.length > 0) {
-        try {
-          const halfIndex = Math.ceil(masterRoute.length / 2);
-          const points = side === 'ida' ? masterRoute.slice(0, halfIndex) : masterRoute.slice(halfIndex - 1);
-          const bounds = new google.maps.LatLngBounds();
-          points.forEach(p => bounds.extend(p));
-          map.fitBounds(bounds, 50);
-        } catch (e) {
-          console.warn('Could not fit bounds for master route', e);
-        }
+        const halfIndex = Math.ceil(masterRoute.length / 2);
+        const points = side === 'ida' ? masterRoute.slice(0, halfIndex) : masterRoute.slice(halfIndex - 1);
+        performFitBounds(map, provider, points, 50);
       }
       return;
     }
 
-    // 4. Explicit Viewport Mutations
-    try {
-      switch (mapViewport.type) {
-        case 'pan_to_vehicle': {
-          const { lat, lng } = mapViewport.payload;
-          map.panTo({ lat: lat, lng: lng });
-          if (map.getZoom()! < 15) {
-            map.setZoom(15);
-          }
-          break;
+    // 4. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.)
+    switch (mapViewport.type) {
+      case 'pan_to_vehicle':
+        performPan(map, provider, mapViewport.payload, 15);
+        break;
+      case 'fit_bounds':
+      case 'fit_route':
+        if (mapViewport.payload.length > 0) {
+          performFitBounds(map, provider, mapViewport.payload, 100);
         }
-        case 'fit_bounds':
-        case 'fit_route': {
-          const points = mapViewport.payload;
-          if (points && points.length > 0) {
-            if (points.length === 1) {
-              map.panTo(points[0]);
-              if (map.getZoom()! < 15) map.setZoom(15);
-            } else {
-              const bounds = new google.maps.LatLngBounds();
-              points.forEach(point => bounds.extend(point));
-              map.fitBounds(bounds, 100);
-            }
-          }
-          break;
-        }
-      }
-    } catch (e) {
-      console.warn('Map viewport update failed', e);
+        break;
     }
-    
+
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
 
-  }, [
-    map, 
-    mapViewport, 
-    dispatch, 
-    isSplitView, 
-    historyVehicle, 
-    isIncidenciasSheetOpen, 
-    masterRoute, 
-    side, 
-    miniMapId,
-    manualVehicleIds,
-    vehicles, 
-    focusedMiniMapId, 
-    isMainMap, 
-    miniMaps
-  ]);
+  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds]);
+}
+
+/**
+ * Native Panning Wrappers
+ */
+function performPan(map: any, provider: MapProvider, point: { lat: number, lng: number }, zoom: number) {
+  if (provider === 'google') {
+    map.panTo(point);
+    if (map.getZoom() < zoom) map.setZoom(zoom);
+  } else if (provider === 'leaflet') {
+    map.setView([point.lat, point.lng], zoom, { animate: true });
+  } else if (provider === 'mapbox') {
+    map.flyTo({ center: [point.lng, point.lat], zoom, duration: 1000 });
+  }
+}
+
+/**
+ * Native FitBounds Wrappers
+ */
+function performFitBounds(map: any, provider: MapProvider, points: { lat: number, lng: number }[], padding: number) {
+  if (provider === 'google') {
+    const bounds = new google.maps.LatLngBounds();
+    points.forEach(p => bounds.extend(p));
+    map.fitBounds(bounds, padding);
+  } else if (provider === 'leaflet') {
+    const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
+    map.fitBounds(bounds, { padding: [padding, padding] });
+  } else if (provider === 'mapbox') {
+    const bounds = points.reduce((acc, p) => {
+      return [
+        [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],
+        [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
+      ] as [[number, number], [number, number]];
+    }, [[points[0].lng, points[0].lat], [points[0].lng, points[0].lat]]);
+    map.fitBounds(bounds, { padding });
+  }
 }

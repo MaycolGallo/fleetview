@@ -1,73 +1,11 @@
+
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, useMap, Polyline, CircleMarker } from 'react-leaflet';
 import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fleet-context';
 import { LeafletVehicleMarker } from './leaflet-vehicle-marker';
-import L from 'leaflet';
-
-interface MapSyncProps {
-  state: any;
-  dispatch: any;
-  side?: string;
-  miniMapId?: string;
-  manualVehicleIds?: number[];
-  isMainMap?: boolean;
-}
-
-function MapSync({ state, dispatch, side, miniMapId, manualVehicleIds, isMainMap }: MapSyncProps) {
-  const map = useMap();
-  const { mapViewport, vehicles, miniMaps, focusedMiniMapId, isSplitView, masterRoute, historyVehicle, isIncidenciasSheetOpen } = state;
-
-  useEffect(() => {
-    if (!map) return;
-
-    // 1. Determine targets for this instance
-    let targetVehicleIds: number[] = [];
-    if (manualVehicleIds) targetVehicleIds = manualVehicleIds;
-    else if (miniMapId) targetVehicleIds = miniMaps.find((m: any) => m.id === miniMapId)?.vehicleIds || [];
-    else if (isMainMap && focusedMiniMapId) targetVehicleIds = miniMaps.find((m: any) => m.id === focusedMiniMapId)?.vehicleIds || [];
-
-    if (targetVehicleIds.length > 0) {
-      const trackedUnits = vehicles.filter((v: any) => targetVehicleIds.includes(v.id_vehiculo));
-      if (trackedUnits.length === 1) {
-        map.setView([trackedUnits[0].lat, trackedUnits[0].lng], 16, { animate: true });
-      } else if (trackedUnits.length > 1) {
-        const bounds = L.latLngBounds(trackedUnits.map((v: any) => [v.lat, v.lng]));
-        map.fitBounds(bounds, { padding: [50, 50] });
-      }
-      return;
-    }
-
-    // 2. Viewport Actions
-    if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
-       if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && masterRoute.length > 0) {
-         const halfIndex = Math.ceil(masterRoute.length / 2);
-         const points = side === 'ida' ? masterRoute.slice(0, halfIndex) : masterRoute.slice(halfIndex - 1);
-         const bounds = L.latLngBounds(points.map((p: any) => [p.lat, p.lng]));
-         map.fitBounds(bounds, { padding: [50, 50] });
-       }
-       return;
-    }
-
-    switch (mapViewport.type) {
-      case 'pan_to_vehicle':
-        map.setView([mapViewport.payload.lat, mapViewport.payload.lng], 15, { animate: true });
-        break;
-      case 'fit_bounds':
-      case 'fit_route':
-        if (mapViewport.payload.length > 0) {
-          const bounds = L.latLngBounds(mapViewport.payload.map((p: any) => [p.lat, p.lng]));
-          map.fitBounds(bounds, { padding: [100, 100] });
-        }
-        break;
-    }
-
-    dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
-  }, [map, mapViewport, dispatch, side, miniMapId, manualVehicleIds, vehicles, focusedMiniMapId, isSplitView, masterRoute, historyVehicle, isIncidenciasSheetOpen]);
-
-  return null;
-}
+import { useMapViewport } from '@/hooks/use-map-viewport';
 
 interface FleetLeafletMapProps {
   side?: 'ida' | 'vuelta';
@@ -76,17 +14,35 @@ interface FleetLeafletMapProps {
   isMainMap?: boolean;
 }
 
-export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isMainMap }: FleetLeafletMapProps) {
+/**
+ * Internal Sync component to bridge Leaflet context with our unified hook
+ */
+function MapViewportSync(props: FleetLeafletMapProps) {
+  const map = useMap();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isMapDark, routeGroups, incidencias, isIncidenciasSheetOpen, historyVehicle, masterRoute } = state;
+
+  useMapViewport({
+    map,
+    provider: 'leaflet',
+    state,
+    dispatch,
+    ...props
+  });
+
+  return null;
+}
+
+export default function FleetLeafletMap(props: FleetLeafletMapProps) {
+  const { side, miniMapId, manualVehicleIds, isMainMap } = props;
+  const { state } = useFleetState();
+  const { routeGroups, incidencias, isIncidenciasSheetOpen, historyVehicle, masterRoute } = state;
 
   const mapVehicles = useMemo(
     () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
     [state, miniMapId, manualVehicleIds, isMainMap]
   );
 
-  // Fleet Master Route logic for Leaflet
   const fleetRoutePoints = useMemo(() => {
       if (!side || historyVehicle || isIncidenciasSheetOpen) return null;
       if (!masterRoute || masterRoute.length === 0) return null;
@@ -97,8 +53,6 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
       return null;
   }, [masterRoute, historyVehicle, isIncidenciasSheetOpen, side]);
 
-  // We use the same OSM tile source for both modes.
-  // The dark mode is now handled via CSS filter in globals.css.
   const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
   const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
@@ -111,26 +65,14 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
         className="w-full h-full"
         zoomControl={false}
       >
-        <TileLayer 
-          key={tileUrl} // Keep key for consistency
-          url={tileUrl} 
-          attribution={attribution} 
-        />
+        <TileLayer url={tileUrl} attribution={attribution} />
         
-        <MapSync 
-          state={state} 
-          dispatch={dispatch} 
-          side={side} 
-          miniMapId={miniMapId} 
-          manualVehicleIds={manualVehicleIds}
-          isMainMap={isMainMap}
-        />
+        <MapViewportSync {...props} />
 
         {mapVehicles.map((vehicle, idx) => (
           <LeafletVehicleMarker key={vehicle.id_vehiculo} vehicle={vehicle} index={idx} />
         ))}
 
-        {/* 1. History Mode Route Rendering */}
         {historyVehicle && !isIncidenciasSheetOpen && routeGroups.map((group, idx) => {
            if (group.id_estado === 6) {
              const points = group.records.map(r => [r.lat, r.lng] as [number, number]);
@@ -158,7 +100,6 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
            return null;
         })}
 
-        {/* 2. Master Route Rendering (Split View Only) */}
         {fleetRoutePoints && (
           <Polyline 
             positions={fleetRoutePoints.map(p => [p.lat, p.lng] as [number, number])}
@@ -169,7 +110,6 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
           />
         )}
 
-        {/* 3. Incidencias Path Rendering */}
         {isIncidenciasSheetOpen && incidencias.length > 1 && (
            <Polyline 
              positions={incidencias.map(i => [i.lat, i.lng] as [number, number])} 
