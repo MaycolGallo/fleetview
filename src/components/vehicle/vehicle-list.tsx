@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { fromUnixTime, formatDistanceToNow } from 'date-fns';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Popover,
   PopoverContent,
@@ -23,23 +23,23 @@ interface VehicleListProps {
 
 const VehicleListItem = React.memo(({
     vehicle,
-    isSelected,
-    isVisible,
     onSelect,
-    onToggleVisibility,
 }: {
     vehicle: Vehicle;
-    isSelected: boolean;
-    isVisible: boolean;
     onSelect: (vehicle: Vehicle) => void;
-    onToggleVisibility: (id: number) => void;
 }) => {
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
-    const { miniMaps } = state;
+    const { miniMaps, selectedVehicle, visibleVehicleIds } = state;
 
+    const isSelected = selectedVehicle?.id_vehiculo === vehicle.id_vehiculo;
+    const isVisible = visibleVehicleIds.has(vehicle.id_vehiculo);
     const vehicleInMaps = miniMaps.filter(m => m.vehicleIds.includes(vehicle.id_vehiculo));
     const isTracked = vehicleInMaps.length > 0;
+
+    const handleToggleVisibility = () => {
+        dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: vehicle.id_vehiculo });
+    };
 
     return (
         <div
@@ -52,7 +52,7 @@ const VehicleListItem = React.memo(({
             <div className="flex flex-col gap-3 pt-1" onClick={(e) => e.stopPropagation()}>
                 <Checkbox 
                     checked={isVisible} 
-                    onCheckedChange={() => onToggleVisibility(vehicle.id_vehiculo)}
+                    onCheckedChange={handleToggleVisibility}
                     aria-label={`Toggle visibility for ${vehicle.placa}`}
                 />
                 
@@ -152,16 +152,11 @@ VehicleListItem.displayName = 'VehicleListItem';
 export function VehicleList({ onVehicleSelect }: VehicleListProps) {
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
-    const { selectedVehicle, visibleVehicleIds } = state;
 
     const handleSelect = useCallback((vehicle: Vehicle) => {
         dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
         onVehicleSelect();
     }, [dispatch, onVehicleSelect]);
-
-    const handleToggleVisibility = useCallback((id: number) => {
-        dispatch({ type: 'TOGGLE_VEHICLE_VISIBILITY', payload: id });
-    }, [dispatch]);
 
     const listVehicles = useMemo(() => {
         if (state.statusFilter.length === 0) {
@@ -177,10 +172,7 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
                     <div key={vehicle.id_vehiculo} style={{ animationDelay: `${index * 30}ms` }}>
                         <VehicleListItem
                             vehicle={vehicle}
-                            isSelected={selectedVehicle?.id_vehiculo === vehicle.id_vehiculo}
-                            isVisible={visibleVehicleIds.has(vehicle.id_vehiculo)}
                             onSelect={handleSelect}
-                            onToggleVisibility={handleToggleVisibility}
                         />
                     </div>
                 ))}
