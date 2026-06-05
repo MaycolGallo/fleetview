@@ -72,9 +72,22 @@
   }
   .animate-data-pulse { animation: data-pulse 1.5s ease-out forwards; }
 
-  /* Marker animations targeting only internal elements to avoid breaking map coordinates */
+  /* High-fidelity Leaflet Dark Mode using requested filter */
+  .dark .leaflet-layer,
+  .dark .leaflet-control-zoom-in,
+  .dark .leaflet-control-zoom-out,
+  .dark .leaflet-control-attribution {
+    filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+  }
+
+  /* Stabilize marker transitions to prevent blinking */
+  .leaflet-marker-icon {
+    transition: none !important;
+  }
+
   .vehicle-marker-inner {
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    will-change: transform;
   }
   
   .leaflet-marker-selected .vehicle-marker-inner {

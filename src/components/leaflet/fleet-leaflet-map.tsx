@@ -97,13 +97,10 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
       return null;
   }, [masterRoute, historyVehicle, isIncidenciasSheetOpen, side]);
 
-  const tileUrl = isMapDark 
-    ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-  const attribution = isMapDark
-    ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  // We use the same OSM tile source for both modes.
+  // The dark mode is now handled via CSS filter in globals.css.
+  const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   return (
     <div className="w-full h-full relative z-0">
@@ -114,11 +111,8 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
         className="w-full h-full"
         zoomControl={false}
       >
-        {/* CRITICAL: The 'key' prop on TileLayer is required to force Leaflet to 
-            refresh tiles when switching themes. Without it, the map can get stuck 
-            showing old tiles or a dark void. */}
         <TileLayer 
-          key={tileUrl}
+          key={tileUrl} // Keep key for consistency
           url={tileUrl} 
           attribution={attribution} 
         />
