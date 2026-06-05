@@ -15,6 +15,11 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
 
 /**
  * Main logic to determine which vehicles appear on a specific map instance.
+ * Handles:
+ * 1. History mode (single vehicle)
+ * 2. Shared/Manual mode (token payload)
+ * 3. Mini-map/Radar mode (group lookup)
+ * 4. Main Map mode (remaining visible vehicles)
  */
 export const selectMapVehicles = (
   state: FleetState, 
@@ -22,30 +27,31 @@ export const selectMapVehicles = (
   manualVehicleIds?: number[],
   isMainMap?: boolean
 ): Vehicle[] => {
-  // If we are viewing a vehicle's history, only that vehicle exists on map
+  // 1. If we are viewing a vehicle's history, only that vehicle exists on map
   if (state.historyVehicle) return [state.historyVehicle];
 
-  // Manual list (e.g., Public Shared View)
+  // 2. Manual list override (e.g., Public Shared View via Token)
   if (manualVehicleIds && manualVehicleIds.length > 0) {
     return state.vehicles.filter(v => manualVehicleIds.includes(v.id_vehiculo));
   }
 
-  // Radar Group lookup
+  // 3. Radar Group lookup (Mini-map instance)
   if (miniMapId) {
     const group = state.miniMaps.find(m => m.id === miniMapId);
     if (!group) return [];
     return state.vehicles.filter(v => group.vehicleIds.includes(v.id_vehiculo));
   }
 
-  // Main Map Logic
+  // 4. Main Map Logic
   if (isMainMap) {
-    // If a specific group is focused, show only those
+    // If a specific group is focused (Promoted from mini to main)
     if (state.focusedMiniMapId) {
       const group = state.miniMaps.find(m => m.id === state.focusedMiniMapId);
       return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
     }
     
-    // Otherwise, show filtered vehicles that are NOT in any radar group
+    // Otherwise, show filtered vehicles that are NOT currently in any active radar group
+    // to keep the main view clean and focused on untracked units.
     const filtered = selectFilteredVehicles(state);
     const allTrackedIds = state.allTrackedVehicleIds || [];
     return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
