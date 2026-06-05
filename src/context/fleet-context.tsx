@@ -3,7 +3,8 @@
 
 import React, { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import type { Vehicle, FleetState, MiniMapGroup, Notification } from '@/lib/types';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import type { Vehicle, FleetState, MiniMapGroup, Notification, MapProvider } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
 import { fleetReducer, getInitialState, type FleetAction } from './fleet-reducer';
 import { fetchVehicles, fetchRouteHistory, fetchIncidencias, fetchMiniMaps } from '@/services/fleet-api';
@@ -21,6 +22,17 @@ const FleetDispatchContext = createContext<Dispatch<FleetAction> | undefined>(un
 
 export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useReducer(fleetReducer, getInitialState());
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    // 1. Sync Map Provider from URL on Mount and URL change
+    useEffect(() => {
+        const urlMap = searchParams.get('map') as MapProvider;
+        if (urlMap && (urlMap === 'google' || urlMap === 'leaflet') && urlMap !== state.mapProvider) {
+            dispatch({ type: 'SET_MAP_PROVIDER', payload: urlMap });
+        }
+    }, [searchParams, state.mapProvider]);
 
     const { data: rawVehiclesData, isLoading: isLoadingVehicles, error } = useQuery({
       queryKey: ['vehicles'],
