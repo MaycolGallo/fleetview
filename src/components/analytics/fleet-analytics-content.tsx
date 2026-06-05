@@ -4,7 +4,7 @@
 import React, { useMemo } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BarChart3, Activity, Battery, ShieldAlert, Sparkles, RefreshCw, Loader2 } from 'lucide-react';
+import { BarChart3, Activity, Battery, ShieldAlert, Sparkles, RefreshCw, Loader2, Navigation } from 'lucide-react';
 import { 
     PieChart, Pie, Cell, ResponsiveContainer, 
     BarChart, Bar, XAxis, YAxis, Tooltip as ChartTooltip 
@@ -13,12 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { generateFleetSummary } from '@/ai/flows/fleet-summary-flow';
+import { simulateVehicleTelemetry } from '@/ai/flows/simulate-vehicle-telemetry';
 import { toast } from '@/hooks/use-toast';
 
 export function FleetAnalyticsContent() {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { vehicles, notifications, aiFleetInsight, isLoadingAiInsight } = state;
+  const { vehicles, notifications, aiFleetInsight, isLoadingAiInsight, isSimulatingAiPatrol } = state;
 
   const statusStats = useMemo(() => {
     const counts: Record<string, { count: number, color: string }> = {};
@@ -78,6 +79,29 @@ export function FleetAnalyticsContent() {
     }
   };
 
+  const handleSimulateAiPatrol = async () => {
+    dispatch({ type: 'SET_AI_PATROL_LOADING', payload: true });
+    try {
+        const result = await simulateVehicleTelemetry({ numberOfVehicles: Math.min(10, vehicles.length) });
+        
+        // Map simulated points to existing vehicle IDs
+        const updates = result.map((sim, i) => ({
+            id: vehicles[i].id_vehiculo,
+            lat: sim.latitude,
+            lng: sim.longitude,
+            status: sim.status === 'active' ? 'Transitando' : sim.status === 'idle' ? 'Ralenti' : 'Mantenimiento'
+        }));
+
+        dispatch({ type: 'UPDATE_VEHICLE_POSITIONS', payload: updates });
+        toast({ title: "AI Patrol Sync", description: "La flota ha sido posicionada por la IA." });
+    } catch (e) {
+        console.error(e);
+        toast({ title: "Error de Simulación", description: "No se pudo contactar con el simulador GenAI.", variant: "destructive" });
+    } finally {
+        dispatch({ type: 'SET_AI_PATROL_LOADING', payload: false });
+    }
+  };
+
   const aiData = aiFleetInsight ? JSON.parse(aiFleetInsight) : null;
 
   return (
@@ -93,16 +117,27 @@ export function FleetAnalyticsContent() {
                     </p>
                 </div>
             </div>
-            <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-8 gap-2 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary font-bold"
-                onClick={handleGetAiInsight}
-                disabled={isLoadingAiInsight}
-            >
-                {isLoadingAiInsight ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                IA BRIEFING
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className="h-8 w-8 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary"
+                  onClick={handleSimulateAiPatrol}
+                  disabled={isSimulatingAiPatrol}
+              >
+                  {isSimulatingAiPatrol ? <Loader2 className="w-3 h-3 animate-spin" /> : <Navigation className="w-3 h-3" />}
+              </Button>
+              <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-8 gap-2 bg-primary/5 hover:bg-primary/10 border-primary/20 text-primary font-bold"
+                  onClick={handleGetAiInsight}
+                  disabled={isLoadingAiInsight}
+              >
+                  {isLoadingAiInsight ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                  IA BRIEFING
+              </Button>
+            </div>
         </div>
       </div>
 

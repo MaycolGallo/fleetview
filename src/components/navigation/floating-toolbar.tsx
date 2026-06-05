@@ -7,16 +7,16 @@ import { Radar, Car, Settings2, Share2, BarChart3 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
 import { cn } from '@/lib/utils';
-import { PanelType } from '../fleet-view-client';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
+import type { PanelType } from '@/lib/types';
 
-interface FloatingToolbarProps {
-  activePanel: PanelType;
-  setActivePanel: (panel: PanelType) => void;
-}
+export function FloatingToolbar() {
+  const { state } = useFleetState();
+  const dispatch = useFleetDispatch();
+  const { activePanel } = state;
 
-export function FloatingToolbar({ activePanel, setActivePanel }: FloatingToolbarProps) {
   const togglePanel = (panel: PanelType) => {
-    setActivePanel(activePanel === panel ? null : panel);
+    dispatch({ type: 'SET_ACTIVE_PANEL', payload: activePanel === panel ? null : panel });
   };
 
   return (

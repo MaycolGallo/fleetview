@@ -1,12 +1,12 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
 import { Skeleton } from './ui/skeleton';
-import { useFleetState } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Drawer, DrawerContent, DrawerHandle } from '@/components/ui/drawer';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -41,13 +41,11 @@ const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid'
   ssr: false,
 });
 
-export type PanelType = 'vehicles' | 'minimaps' | 'settings' | 'share' | 'stats' | null;
-
 export function FleetViewClient({ apiKey }: { apiKey: string }) {
   const { state, error } = useFleetState();
+  const dispatch = useFleetDispatch();
   const isMobile = useIsMobile();
   const searchParams = useSearchParams();
-  const [activePanel, setActivePanel] = useState<PanelType>('vehicles');
 
   const { 
     isSplitView, 
@@ -59,7 +57,8 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
     focusedMiniMapId,
     routeGroups,
     incidencias,
-    mapProvider
+    mapProvider,
+    activePanel
   } = state;
 
   const shareToken = searchParams.get('s');
@@ -104,7 +103,7 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
 
       {!isDetailView && (
         <>
-          <FloatingToolbar activePanel={activePanel} setActivePanel={setActivePanel} />
+          <FloatingToolbar />
           
           <AnimatePresence mode="wait">
             {!isMobile && activePanel && (
@@ -134,11 +133,11 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
       {isDetailView && <DetailHeader apiKey={apiKey} />}
 
       {isMobile && !isDetailView && activePanel && (
-        <Drawer open={!!activePanel} onOpenChange={(open) => !open && setActivePanel(null)} modal={false}>
+        <Drawer open={!!activePanel} onOpenChange={(open) => !open && dispatch({ type: 'SET_ACTIVE_PANEL', payload: null })} modal={false}>
           <DrawerContent className="h-[85vh]">
             <DrawerHandle />
             <div className="flex-1 overflow-hidden">
-              {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => setActivePanel(null)} />}
+              {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => dispatch({ type: 'SET_ACTIVE_PANEL', payload: null })} />}
               {activePanel === 'minimaps' && <MiniMapManagementContent />}
               {activePanel === 'stats' && <FleetAnalyticsContent />}
               {activePanel === 'share' && <SharePanelContent />}

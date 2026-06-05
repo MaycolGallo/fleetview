@@ -1,5 +1,4 @@
 
-
 // The raw, nested data structure from the API
 export interface RawVehicle {
   id_ubicacion: number;
@@ -140,6 +139,8 @@ export interface MiniMapGroup {
 
 export type MapProvider = 'google' | 'leaflet' | 'mapbox';
 
+export type PanelType = 'vehicles' | 'minimaps' | 'settings' | 'share' | 'stats' | null;
+
 export interface FleetState {
   vehicles: Vehicle[];
   statusFilter: VehicleStatus[];
@@ -153,9 +154,9 @@ export interface FleetState {
   selectedSegmentIndex: number | null;
   visibleVehicleIds: Set<number>;
   miniMaps: MiniMapGroup[];
-  visibleMiniMapIds: string[]; // Track which groups are actually shown on map
-  allTrackedVehicleIds: number[]; // All IDs present in ANY radar group (used to hide from main map)
-  focusedMiniMapId: string | null; // The ID of the minimap currently promoted to main view
+  visibleMiniMapIds: string[]; 
+  allTrackedVehicleIds: number[]; 
+  focusedMiniMapId: string | null; 
   isMapDark: boolean;
   mapProvider: MapProvider;
   mapViewport: MapViewport;
@@ -166,6 +167,7 @@ export interface FleetState {
   isSplitView: boolean;
   splitDirection: 'horizontal' | 'vertical';
   wasSplitViewBeforeRoute: boolean;
+  activePanel: PanelType;
   // Incidencias
   incidencias: Incidencia[];
   isLoadingIncidencias: boolean;
@@ -178,6 +180,7 @@ export interface FleetState {
   // AI Insights
   aiFleetInsight?: string;
   isLoadingAiInsight: boolean;
+  isSimulatingAiPatrol: boolean;
   // Data refresh tracking
   lastUpdatedRoute?: number;
   lastUpdatedIncidencias?: number;

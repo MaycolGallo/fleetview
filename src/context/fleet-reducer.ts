@@ -1,15 +1,17 @@
 
 'use client';
 
-import type { FleetState, MiniMapGroup, MapProvider } from '@/lib/types';
+import type { FleetState, MiniMapGroup, MapProvider, PanelType } from '@/lib/types';
 import { DESPACHO_BASE_ROUTE, SIMULATION_ROUTE } from '@/services/fleet-api';
 
 export type FleetAction =
   | { type: 'SET_VEHICLES'; payload: any[] }
+  | { type: 'UPDATE_VEHICLE_POSITIONS'; payload: { id: number, lat: number, lng: number, status?: any }[] }
   | { type: 'PAN_TO_VEHICLE'; payload: any | null }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY'; payload: number }
   | { type: 'SET_ALL_VEHICLES_VISIBILITY'; payload: { ids: number[], visible: boolean } }
   | { type: 'SET_STATUS_FILTER'; payload: string[] }
+  | { type: 'SET_ACTIVE_PANEL'; payload: PanelType }
   | { type: 'START_ROUTE_LOADING'; payload: any }
   | { type: 'SET_ROUTE_HISTORY'; payload: any }
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
@@ -43,7 +45,8 @@ export type FleetAction =
   | { type: 'MARK_NOTIFICATION_READ'; payload: string }
   | { type: 'CLEAR_NOTIFICATIONS' }
   | { type: 'SET_AI_INSIGHT'; payload: string }
-  | { type: 'SET_AI_INSIGHT_LOADING'; payload: boolean };
+  | { type: 'SET_AI_INSIGHT_LOADING'; payload: boolean }
+  | { type: 'SET_AI_PATROL_LOADING'; payload: boolean };
 
 export const getInitialState = (): FleetState => ({
   vehicles: [],
@@ -71,6 +74,7 @@ export const getInitialState = (): FleetState => ({
   isSplitView: false,
   splitDirection: 'horizontal',
   wasSplitViewBeforeRoute: false,
+  activePanel: 'vehicles',
   incidencias: [],
   isLoadingIncidencias: false,
   isIncidenciasSheetOpen: false,
@@ -78,6 +82,7 @@ export const getInitialState = (): FleetState => ({
   notifications: [],
   despachoBaseRoute: DESPACHO_BASE_ROUTE,
   isLoadingAiInsight: false,
+  isSimulatingAiPatrol: false,
 });
 
 const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
@@ -108,6 +113,23 @@ const handleVehicleActions = (state: FleetState, action: FleetAction): FleetStat
           ? { type: 'fit_bounds', payload: newBounds } 
           : state.mapViewport,
        };
+    }
+    case 'UPDATE_VEHICLE_POSITIONS': {
+      return {
+        ...state,
+        vehicles: state.vehicles.map(v => {
+          const update = action.payload.find(u => u.id === v.id_vehiculo);
+          if (update) {
+            return { 
+              ...v, 
+              lat: update.lat, 
+              lng: update.lng, 
+              statusName: update.status || v.statusName 
+            };
+          }
+          return v;
+        })
+      };
     }
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) return { ...state, selectedVehicle: null };
@@ -252,8 +274,10 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
   switch (action.type) {
     case 'INIT_PERSISTED_STATE': return { ...state, miniMaps: action.payload.miniMaps, visibleMiniMapIds: action.payload.visibleIds, allTrackedVehicleIds: getTrackedIds(action.payload.miniMaps) };
     case 'SET_STATUS_FILTER': return { ...state, statusFilter: action.payload };
+    case 'SET_ACTIVE_PANEL': return { ...state, activePanel: action.payload };
     case 'SET_AI_INSIGHT': return { ...state, aiFleetInsight: action.payload };
     case 'SET_AI_INSIGHT_LOADING': return { ...state, isLoadingAiInsight: action.payload };
+    case 'SET_AI_PATROL_LOADING': return { ...state, isSimulatingAiPatrol: action.payload };
     case 'SET_MAP_DARK_MODE': return { ...state, isMapDark: action.payload };
     case 'SET_MAP_PROVIDER': return { ...state, mapProvider: action.payload };
     case 'TOGGLE_SPLIT_VIEW': return { ...state, isSplitView: !state.isSplitView };
