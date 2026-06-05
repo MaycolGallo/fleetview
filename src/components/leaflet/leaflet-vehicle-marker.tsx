@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo } from 'react';
@@ -37,14 +36,20 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
     return L.divIcon({
       className: 'custom-vehicle-icon',
       html: renderToStaticMarkup(
-        <div className={cn("relative flex flex-col items-center justify-center", isSelected ? "z-50" : "z-0")}>
+        <div 
+          className={cn(
+            "relative flex flex-col items-center justify-center animate-marker-drop", 
+            isSelected ? "z-50" : "z-0"
+          )}
+          style={{ animationDelay: isPlaybackMarker ? '0ms' : `${index * 50}ms` }}
+        >
           {speed > 0 && !isPlaybackMarker && (
-              <div className="absolute top-[-10px] z-10">
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10">
                   <div
                       style={{ backgroundColor: color }}
-                      className="flex items-center gap-1 shadow-md rounded-md px-2 py-1 text-[10px] font-bold whitespace-nowrap text-white"
+                      className="flex items-center gap-1 shadow-md rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-white"
                   >
-                      <Gauge className="w-2.5 h-2.5" />
+                      <Gauge className="w-3 h-3" />
                       <span>{speed.toFixed(0)}</span>
                   </div>
               </div>
@@ -58,11 +63,11 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
           </div>
         </div>
       ),
-      // Standard pin is roughly 40x56, Anchor near bottom tip (20, 48)
+      // Standard pin is roughly 40x56, Anchor near bottom tip (20, 56)
       iconSize: isPlaybackMarker ? [24, 24] : [40, 56],
-      iconAnchor: isPlaybackMarker ? [12, 12] : [20, 48],
+      iconAnchor: isPlaybackMarker ? [12, 12] : [20, 56],
     });
-  }, [vehicle.rumbo, vehicle.statusColor, vehicle.placa, isSelected, isPlaybackMarker, speed, color]);
+  }, [vehicle.rumbo, vehicle.statusColor, vehicle.placa, isSelected, isPlaybackMarker, speed, color, index]);
 
   return (
     <Marker 
@@ -72,7 +77,7 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
         click: () => dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle })
       }}
     >
-      <Tooltip direction="top" offset={[0, -20]} opacity={0.9}>
+      <Tooltip direction="top" offset={[0, -40]} opacity={0.9}>
         <div className="font-bold text-xs uppercase tracking-wider">{vehicle.placa}</div>
       </Tooltip>
     </Marker>

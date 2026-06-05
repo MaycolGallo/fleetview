@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
@@ -87,12 +86,14 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
     [state, miniMapId, manualVehicleIds, isMainMap]
   );
 
-  // Voyager is a more colorful/vibrant tile set than the default desaturated light set
+  // Use standard OpenStreetMap for light mode as requested, and Carto Dark for dark mode
   const tileUrl = isMapDark 
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-    : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
+  const attribution = isMapDark
+    ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   return (
     <div className="w-full h-full relative z-0">
