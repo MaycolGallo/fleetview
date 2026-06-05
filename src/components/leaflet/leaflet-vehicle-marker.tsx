@@ -32,12 +32,12 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
   const speed = parseFloat(vehicle.velocidad) || 0;
   const color = vehicle.statusColor || '#9E9E9E';
 
-  // Memoize icon to prevent heavy re-renders, but allow rumbo updates
+  // Use a stable class for the marker to avoid transform conflicts
   const icon = useMemo(() => {
     return L.divIcon({
-      className: 'custom-leaflet-marker', // Simple class, no animation here to avoid blinking
+      className: 'leaflet-vehicle-marker-container',
       html: renderToStaticMarkup(
-        <div className="leaflet-vehicle-icon-inner relative flex flex-col items-center justify-center">
+        <div className="vehicle-marker-inner relative flex flex-col items-center justify-center">
           {speed > 0 && !isPlaybackMarker && (
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10">
                   <div
@@ -51,7 +51,7 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
           )}
           <VehiclePin
               vehicle={vehicle}
-              isSelected={false} // Selection handled via DOM class logic below
+              isSelected={false} 
               isHistory={isPlaybackMarker}
           />
         </div>
@@ -61,8 +61,7 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
     });
   }, [vehicle.id_vehiculo, vehicle.rumbo, vehicle.statusColor, isPlaybackMarker, speed]);
 
-  // Handle selection state directly on the DOM element to ensure zero-latency feedback
-  // and prevent Leaflet from recreating the marker and losing animations.
+  // Handle z-index and selection state directly on DOM to prevent blinking
   useEffect(() => {
     const marker = markerRef.current;
     if (!marker) return;

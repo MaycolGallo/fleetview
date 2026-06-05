@@ -16,7 +16,7 @@ const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
 
 /**
  * A custom React hook that smoothly animates a geographical position.
- * Fixed to ensure independent position state for every marker instance.
+ * Optimized to prevent coordinate clustering and handle rapid updates.
  */
 export const useAnimatedPosition = (
   targetPosition: Position,
@@ -24,18 +24,23 @@ export const useAnimatedPosition = (
 ) => {
   const { duration = 1000, easing = easeOutCubic } = options;
 
-  // Initialize with target position
   const [currentPosition, setCurrentPosition] = useState<Position>(targetPosition);
-
   const animationRef = useRef<number | null>(null);
   const startPositionRef = useRef<Position>(targetPosition);
   const startTimeRef = useRef<number | null>(null);
-  
-  // Ref to track the actual current value for the next animation start
   const lastResolvedPosition = useRef<Position>(targetPosition);
 
+  // Sync state immediately if jumping or initialization
   useEffect(() => {
-    // If we are already at the target, do nothing
+    if (!lastResolvedPosition.current) {
+      setCurrentPosition(targetPosition);
+      lastResolvedPosition.current = targetPosition;
+      return;
+    }
+  }, []);
+
+  useEffect(() => {
+    // If coords are the same, don't restart animation
     if (
       lastResolvedPosition.current.lat === targetPosition.lat &&
       lastResolvedPosition.current.lng === targetPosition.lng
@@ -47,7 +52,6 @@ export const useAnimatedPosition = (
       cancelAnimationFrame(animationRef.current);
     }
 
-    // Start from wherever we were last resolved
     startPositionRef.current = lastResolvedPosition.current;
     startTimeRef.current = null;
 
@@ -60,14 +64,11 @@ export const useAnimatedPosition = (
       const progress = Math.min(elapsed / duration, 1);
       const easedProgress = easing(progress);
 
-      const newLat =
-        startPositionRef.current.lat +
-        (targetPosition.lat - startPositionRef.current.lat) * easedProgress;
-      const newLng =
-        startPositionRef.current.lng +
-        (targetPosition.lng - startPositionRef.current.lng) * easedProgress;
+      const nextPos = {
+        lat: startPositionRef.current.lat + (targetPosition.lat - startPositionRef.current.lat) * easedProgress,
+        lng: startPositionRef.current.lng + (targetPosition.lng - startPositionRef.current.lng) * easedProgress,
+      };
 
-      const nextPos = { lat: newLat, lng: newLng };
       setCurrentPosition(nextPos);
       lastResolvedPosition.current = nextPos;
 
@@ -82,9 +83,7 @@ export const useAnimatedPosition = (
     animationRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [targetPosition.lat, targetPosition.lng, duration, easing]);
 

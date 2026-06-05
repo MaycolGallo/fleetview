@@ -36,7 +36,6 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
   const isPlaybackMarker = !!historyVehicle;
   const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
   
-  // Standard movement is slow (1s), playback follows telemetry timing
   const animationDuration = (isPlaybackMarker && isRoutePlaying) ? playbackAnimationDuration : 1000;
   const animatedPosition = useAnimatedPosition(targetPosition, { duration: animationDuration });
 
@@ -49,11 +48,11 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
   return (
     <>
       <AdvancedMarker
-        key={vehicle.id_vehiculo}
         position={animatedPosition}
         onClick={handleLeftClick}
         zIndex={zIndex}
       >
+        {/* motion.div must be internal to the AdvancedMarker so it doesn't break coordinate transforms */}
         <motion.div
             initial={{ y: -40, opacity: 0, scale: 0.5 }}
             animate={{ 
@@ -71,7 +70,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
-            className={cn("relative cursor-pointer flex justify-center items-center")}
+            className="relative cursor-pointer flex justify-center items-center"
         >
             {speed > 0 && !isPlaybackMarker && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10">
