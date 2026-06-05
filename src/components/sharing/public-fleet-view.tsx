@@ -19,6 +19,11 @@ const FleetLeafletMap = dynamic(() => import('../leaflet/fleet-leaflet-map'), {
   loading: () => <Skeleton className="h-screen w-screen" />,
 });
 
+const FleetMapboxMap = dynamic(() => import('../mapbox/fleet-mapbox-map'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-screen w-screen" />,
+});
+
 interface PublicFleetViewProps {
   apiKey: string;
   token: string;
@@ -73,6 +78,9 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
     const props = { manualVehicleIds: payload.ids, isMainMap: false };
     if (mapProvider === 'leaflet') {
       return <FleetLeafletMap {...props} />;
+    }
+    if (mapProvider === 'mapbox') {
+      return <FleetMapboxMap {...props} />;
     }
     return <FleetMap apiKey={apiKey} {...props} />;
   };

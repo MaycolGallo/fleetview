@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import type { Vehicle, FleetState, MiniMapGroup, Notification, MapProvider } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
 import { fleetReducer, getInitialState, type FleetAction } from './fleet-reducer';
@@ -36,7 +36,8 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     // 2. Sync Map Provider from URL on Mount and URL change
     useEffect(() => {
         const urlMap = searchParams.get('map') as MapProvider;
-        if (urlMap && (urlMap === 'google' || urlMap === 'leaflet') && urlMap !== state.mapProvider) {
+        const validProviders: MapProvider[] = ['google', 'leaflet', 'mapbox'];
+        if (urlMap && validProviders.includes(urlMap) && urlMap !== state.mapProvider) {
             dispatch({ type: 'SET_MAP_PROVIDER', payload: urlMap });
         }
     }, [searchParams, state.mapProvider]);

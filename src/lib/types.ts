@@ -1,4 +1,5 @@
 
+
 // The raw, nested data structure from the API
 export interface RawVehicle {
   id_ubicacion: number;
@@ -137,7 +138,7 @@ export interface MiniMapGroup {
   vehicleIds: number[];
 }
 
-export type MapProvider = 'google' | 'leaflet';
+export type MapProvider = 'google' | 'leaflet' | 'mapbox';
 
 export interface FleetState {
   vehicles: Vehicle[];

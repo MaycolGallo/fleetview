@@ -4,7 +4,7 @@
 import React from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
-import { Layers, Columns2, Rows2, Sun, Moon, Trash2, Map as MapIcon, Globe } from 'lucide-react';
+import { Layers, Columns2, Rows2, Sun, Moon, Trash2, Map as MapIcon, Globe, Navigation } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
@@ -21,10 +21,8 @@ export function SettingsPanelContent() {
 
   const handleProviderChange = (val: string) => {
     const provider = val as MapProvider;
-    // 1. Update Context State immediately for responsive UI
     dispatch({ type: 'SET_MAP_PROVIDER', payload: provider });
     
-    // 2. Update URL for persistence
     const params = new URLSearchParams(searchParams.toString());
     params.set('map', provider);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -44,12 +42,15 @@ export function SettingsPanelContent() {
             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Proveedor de Mapas</h3>
         </div>
         <Tabs value={mapProvider} onValueChange={handleProviderChange}>
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="google" className="gap-2">
-                    <MapIcon className="w-4 h-4" /> Google
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="google" className="gap-2 text-[10px]">
+                    <MapIcon className="w-3 h-3" /> Google
                 </TabsTrigger>
-                <TabsTrigger value="leaflet" className="gap-2">
-                    <Layers className="w-4 h-4" /> Leaflet
+                <TabsTrigger value="leaflet" className="gap-2 text-[10px]">
+                    <Layers className="w-3 h-3" /> Leaflet
+                </TabsTrigger>
+                <TabsTrigger value="mapbox" className="gap-2 text-[10px]">
+                    <Navigation className="w-3 h-3" /> Mapbox
                 </TabsTrigger>
             </TabsList>
         </Tabs>

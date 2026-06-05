@@ -20,6 +20,11 @@ const FleetLeafletMap = dynamic(() => import('../leaflet/fleet-leaflet-map'), {
   loading: () => <Skeleton className="h-full w-full" />,
 });
 
+const FleetMapboxMap = dynamic(() => import('../mapbox/fleet-mapbox-map'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full w-full" />,
+});
+
 export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -31,6 +36,9 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   const renderMapInstance = (props: any) => {
     if (mapProvider === 'leaflet') {
       return <FleetLeafletMap {...props} />;
+    }
+    if (mapProvider === 'mapbox') {
+      return <FleetMapboxMap {...props} />;
     }
     return <FleetMap apiKey={apiKey} {...props} />;
   };
