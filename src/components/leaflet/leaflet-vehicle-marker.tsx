@@ -31,17 +31,15 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
   const speed = parseFloat(vehicle.velocidad) || 0;
   const color = vehicle.statusColor || '#9E9E9E';
 
-  // Use useMemo to generate the icon to mirror Google Maps visual exactly
+  // We use useMemo to generate the icon. 
+  // IMPORTANT: We removed 'animate-marker-drop' here because Leaflet re-renders the icon 
+  // when 'isSelected' changes, which would restart the entrance animation (and the 0% opacity dip).
   const icon = useMemo(() => {
     return L.divIcon({
       className: 'custom-vehicle-icon',
       html: renderToStaticMarkup(
         <div 
-          className={cn(
-            "relative flex flex-col items-center justify-center animate-marker-drop", 
-            isSelected ? "z-50" : "z-0"
-          )}
-          style={{ animationDelay: isPlaybackMarker ? '0ms' : `${index * 50}ms` }}
+          className="relative flex flex-col items-center justify-center"
         >
           {speed > 0 && !isPlaybackMarker && (
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10">
@@ -67,12 +65,13 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
       iconSize: isPlaybackMarker ? [24, 24] : [40, 56],
       iconAnchor: isPlaybackMarker ? [12, 12] : [20, 56],
     });
-  }, [vehicle.rumbo, vehicle.statusColor, vehicle.placa, isSelected, isPlaybackMarker, speed, color, index]);
+  }, [vehicle.rumbo, vehicle.statusColor, vehicle.placa, isSelected, isPlaybackMarker, speed, color]);
 
   return (
     <Marker 
       position={[animatedPosition.lat, animatedPosition.lng]} 
       icon={icon}
+      zIndexOffset={isSelected ? 1000 : index}
       eventHandlers={{
         click: () => dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle })
       }}
