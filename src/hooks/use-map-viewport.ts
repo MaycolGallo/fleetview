@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect } from 'react';
@@ -106,10 +105,10 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
   if (!map) return;
 
   if (provider === 'google' && 'panTo' in map) {
-    map.panTo(point);
-    if (map.getZoom()! < zoom) map.setZoom(zoom);
+    (map as google.maps.Map).panTo(point);
+    if ((map as google.maps.Map).getZoom()! < zoom) (map as google.maps.Map).setZoom(zoom);
   } else if (provider === 'leaflet' && 'setView' in map) {
-    map.setView([point.lat, point.lng], zoom, { animate: true });
+    (map as L.Map).setView([point.lat, point.lng], zoom, { animate: true });
   } else if (provider === 'mapbox' && 'flyTo' in map) {
     (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 1000 });
   }
@@ -124,17 +123,22 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
   if (provider === 'google' && 'fitBounds' in map) {
     const bounds = new google.maps.LatLngBounds();
     points.forEach(p => bounds.extend(p));
-    map.fitBounds(bounds, padding);
+    (map as google.maps.Map).fitBounds(bounds, padding);
   } else if (provider === 'leaflet' && 'fitBounds' in map) {
     const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
-    map.fitBounds(bounds, { padding: [padding, padding] });
+    (map as L.Map).fitBounds(bounds, { padding: [padding, padding] });
   } else if (provider === 'mapbox' && 'fitBounds' in map) {
-    const bounds = points.reduce((acc, p) => {
+    // Manually calculate bounds and cast to LngLatBoundsLike compatible structure
+    const initialLng = points[0].lng;
+    const initialLat = points[0].lat;
+    
+    const bounds: [[number, number], [number, number]] = points.reduce((acc, p) => {
       return [
         [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],
         [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
       ] as [[number, number], [number, number]];
-    }, [[points[0].lng, points[0].lat], [points[0].lng, points[0].lat]]);
+    }, [[initialLng, initialLat], [initialLng, initialLat]] as [[number, number], [number, number]]);
+    
     (map as MapRef).fitBounds(bounds, { padding });
   }
 }
