@@ -1,11 +1,12 @@
 
 "use client";
 
-import { APIProvider, Map, ColorScheme } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, ColorScheme, useMap } from '@vis.gl/react-google-maps';
 import { useFleetState } from '@/context/fleet-context';
 import { LIGHT_MAP_ID, DARK_MAP_ID } from '@/lib/map-styles';
 import { MapControl } from './map-control';
 import { useSearchParams } from 'next/navigation';
+import React, { useEffect } from 'react';
 
 interface FleetMapProps {
   apiKey: string;
@@ -15,11 +16,34 @@ interface FleetMapProps {
   isMainMap?: boolean;
 }
 
+/**
+ * Internal Traffic Layer component for Google Maps
+ */
+function TrafficLayer() {
+  const map = useMap();
+  const { state } = useFleetState();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const trafficLayer = new google.maps.TrafficLayer();
+    if (state.showTraffic) {
+      trafficLayer.setMap(map);
+    } else {
+      trafficLayer.setMap(null);
+    }
+
+    return () => trafficLayer.setMap(null);
+  }, [map, state.showTraffic]);
+
+  return null;
+}
+
 export function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, isMainMap }: FleetMapProps) {
   const { state } = useFleetState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
-  const { isMapDark, vehicles, focusedMiniMapId, miniMaps } = state;
+  const { isMapDark, focusedMiniMapId, miniMaps, mapType, showTraffic } = state;
 
   // Derive display context
   const isFocusMode = isMainMap && focusedMiniMapId;
@@ -46,25 +70,6 @@ export function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, isMainMap 
             [Modo Demo: Mapa Real Desactivado]
           </p>
         </div>
-        {(side || isTrackingView || isFocusMode) && (
-          <div className="absolute top-4 right-4 z-10 flex gap-2">
-            {side && (
-              <div className="bg-card/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-primary">
-                {side === 'ida' ? 'Ida' : 'Vuelta'}
-              </div>
-            )}
-            {isTrackingView && (
-              <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
-                FOCUS: {unitCount} units
-              </div>
-            )}
-            {isFocusMode && (
-              <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
-                FOCUSED: {focusedGroup?.name}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     );
   }
@@ -77,8 +82,9 @@ export function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, isMainMap 
             defaultZoom={isTrackingView || isFocusMode ? 16 : 13}
             gestureHandling={'greedy'}
             disableDefaultUI={true}
-            mapId={isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID}
+            mapId={mapType === 'satellite' ? undefined : (isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID)}
             colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
+            mapTypeId={mapType === 'satellite' ? 'satellite' : 'roadmap'}
         >
           <MapControl 
             side={side} 
@@ -86,26 +92,8 @@ export function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, isMainMap 
             manualVehicleIds={manualVehicleIds}
             isMainMap={isMainMap} 
           />
+          <TrafficLayer />
         </Map>
-        {(side || isTrackingView || isFocusMode) && (
-          <div className="absolute top-4 right-4 z-10 flex gap-2">
-            {side && (
-              <div className="bg-card/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-primary">
-                {side === 'ida' ? 'Ida' : 'Vuelta'}
-              </div>
-            )}
-            {isTrackingView && (
-              <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
-                RADAR: {unitCount}
-              </div>
-            )}
-            {isFocusMode && (
-              <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
-                FOCUS: {focusedGroup?.name}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     </APIProvider>
   );

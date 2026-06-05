@@ -4,16 +4,18 @@
 import React from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
-import { Layers, Columns2, Rows2, Sun, Moon, Trash2, Map as MapIcon, Globe, Navigation } from 'lucide-react';
+import { Layers, Columns2, Rows2, Sun, Moon, Trash2, Map as MapIcon, Globe, Navigation, Satellite, Route } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import type { MapProvider } from '@/lib/types';
+import type { MapProvider, MapType } from '@/lib/types';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export function SettingsPanelContent() {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isSplitView, splitDirection, isMapDark, miniMaps, mapProvider } = state;
+  const { isSplitView, splitDirection, isMapDark, miniMaps, mapProvider, mapType, showTraffic } = state;
   
   const router = useRouter();
   const pathname = usePathname();
@@ -32,8 +34,13 @@ export function SettingsPanelContent() {
     dispatch({ type: 'SET_MAP_DARK_MODE', payload: !isMapDark });
   };
 
+  const setMapType = (type: MapType) => {
+    dispatch({ type: 'SET_MAP_TYPE', payload: type });
+  };
+
   return (
     <div className="p-4 flex flex-col gap-6 animate-in fade-in duration-300">
+      {/* Map Provider Selection */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
             <div className="p-2 bg-primary/10 rounded-lg">
@@ -56,6 +63,35 @@ export function SettingsPanelContent() {
         </Tabs>
       </div>
 
+      {/* Map Type & Traffic Toggles */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+            <div className="p-2 bg-primary/10 rounded-lg">
+                <MapIcon className="w-5 h-5 text-primary" />
+            </div>
+            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Capas Tácticas</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+            <Button 
+                variant="outline" 
+                className={cn("h-16 flex flex-col items-center justify-center gap-1", mapType === 'satellite' && "border-primary bg-primary/5")}
+                onClick={() => setMapType(mapType === 'satellite' ? 'standard' : 'satellite')}
+            >
+                <Satellite className={cn("w-5 h-5", mapType === 'satellite' ? "text-primary" : "text-muted-foreground")} />
+                <span className="text-[10px] font-bold uppercase">Satélite</span>
+            </Button>
+            <Button 
+                variant="outline" 
+                className={cn("h-16 flex flex-col items-center justify-center gap-1", showTraffic && "border-primary bg-primary/5")}
+                onClick={() => dispatch({ type: 'TOGGLE_TRAFFIC' })}
+            >
+                <Route className={cn("w-5 h-5", showTraffic ? "text-primary" : "text-muted-foreground")} />
+                <span className="text-[10px] font-bold uppercase">Tráfico</span>
+            </Button>
+        </div>
+      </div>
+
+      {/* View Configuration */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
             <div className="p-2 bg-primary/10 rounded-lg">

@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { FleetState, MiniMapGroup, MapProvider, PanelType } from '@/lib/types';
+import type { FleetState, MiniMapGroup, MapProvider, PanelType, MapType } from '@/lib/types';
 import { DESPACHO_BASE_ROUTE, SIMULATION_ROUTE } from '@/services/fleet-api';
 
 export type FleetAction =
@@ -18,6 +18,8 @@ export type FleetAction =
   | { type: 'BACK_TO_FLEET' }
   | { type: 'SET_MAP_DARK_MODE'; payload: boolean }
   | { type: 'SET_MAP_PROVIDER'; payload: MapProvider }
+  | { type: 'SET_MAP_TYPE'; payload: MapType }
+  | { type: 'TOGGLE_TRAFFIC' }
   | { type: 'TOGGLE_SPLIT_VIEW' }
   | { type: 'TOGGLE_SPLIT_DIRECTION' }
   | { type: 'VIEWPORT_ACTION_COMPLETE' }
@@ -66,6 +68,8 @@ export const getInitialState = (): FleetState => ({
   focusedMiniMapId: null,
   isMapDark: false,
   mapProvider: 'google',
+  mapType: 'standard',
+  showTraffic: false,
   mapViewport: { type: 'initial' },
   simulationStep: {},
   pinRotationMode: 'arrow',
@@ -280,6 +284,8 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'SET_AI_PATROL_LOADING': return { ...state, isSimulatingAiPatrol: action.payload };
     case 'SET_MAP_DARK_MODE': return { ...state, isMapDark: action.payload };
     case 'SET_MAP_PROVIDER': return { ...state, mapProvider: action.payload };
+    case 'SET_MAP_TYPE': return { ...state, mapType: action.payload };
+    case 'TOGGLE_TRAFFIC': return { ...state, showTraffic: !state.showTraffic };
     case 'TOGGLE_SPLIT_VIEW': return { ...state, isSplitView: !state.isSplitView };
     case 'TOGGLE_SPLIT_DIRECTION': return { ...state, splitDirection: state.splitDirection === 'horizontal' ? 'vertical' : 'horizontal' };
     case 'VIEWPORT_ACTION_COMPLETE': return { ...state, mapViewport: { type: 'idle' } };

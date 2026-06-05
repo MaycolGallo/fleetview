@@ -138,6 +138,7 @@ export interface MiniMapGroup {
 }
 
 export type MapProvider = 'google' | 'leaflet' | 'mapbox';
+export type MapType = 'standard' | 'satellite';
 
 export type PanelType = 'vehicles' | 'minimaps' | 'settings' | 'share' | 'stats' | null;
 
@@ -159,6 +160,8 @@ export interface FleetState {
   focusedMiniMapId: string | null; 
   isMapDark: boolean;
   mapProvider: MapProvider;
+  mapType: MapType;
+  showTraffic: boolean;
   mapViewport: MapViewport;
   simulationStep: Record<string, number>;
   pinRotationMode: 'arrow' | 'pin';

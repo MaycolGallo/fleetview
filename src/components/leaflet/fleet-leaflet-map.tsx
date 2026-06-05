@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -30,16 +31,23 @@ function MapViewportSync(props: FleetLeafletMapProps) {
 }
 
 export default function FleetLeafletMap(props: FleetLeafletMapProps) {
-  const { side, miniMapId, manualVehicleIds, isMainMap } = props;
+  const { miniMapId, manualVehicleIds, isMainMap, side } = props;
   const { state } = useFleetState();
+  const { isMapDark, mapType } = state;
 
   const mapVehicles = useMemo(
     () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
     [state, miniMapId, manualVehicleIds, isMainMap]
   );
 
-  const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-  const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  // Tile sources
+  const standardTile = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const satelliteTile = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+  
+  const tileUrl = mapType === 'satellite' ? satelliteTile : standardTile;
+  const attribution = mapType === 'satellite' 
+    ? 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   return (
     <div className="w-full h-full relative z-0">
@@ -50,8 +58,8 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
         className="w-full h-full"
         zoomControl={false}
       >
-        {/* Dynamic Key forces tile refresh on theme/provider switch */}
-        <TileLayer key={`${tileUrl}-${state.isMapDark}`} url={tileUrl} attribution={attribution} />
+        {/* Dynamic Key forces tile refresh on theme/provider/type switch */}
+        <TileLayer key={`${tileUrl}-${isMapDark}`} url={tileUrl} attribution={attribution} />
         
         <MapViewportSync {...props} />
 
