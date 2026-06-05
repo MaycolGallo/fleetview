@@ -15,11 +15,7 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
 
 /**
  * Main logic to determine which vehicles appear on a specific map instance.
- * Handles:
- * 1. History mode (single vehicle)
- * 2. Shared/Manual mode (token payload)
- * 3. Mini-map/Radar mode (group lookup)
- * 4. Main Map mode (remaining visible vehicles)
+ * Handles four distinct tactical scenarios:
  */
 export const selectMapVehicles = (
   state: FleetState, 
@@ -27,31 +23,37 @@ export const selectMapVehicles = (
   manualVehicleIds?: number[],
   isMainMap?: boolean
 ): Vehicle[] => {
-  // 1. If we are viewing a vehicle's history, only that vehicle exists on map
+  // SCENARIO 1: History Mode
+  // If we are investigating a specific vehicle's past, only that unit (at its historical position) exists.
   if (state.historyVehicle) return [state.historyVehicle];
 
-  // 2. Manual list override (e.g., Public Shared View via Token)
+  // SCENARIO 2: Manual Override (Public Shared Links)
+  // If a list of IDs is passed directly (e.g. from a decoded URL token), show exactly those units.
   if (manualVehicleIds && manualVehicleIds.length > 0) {
     return state.vehicles.filter(v => manualVehicleIds.includes(v.id_vehiculo));
   }
 
-  // 3. Radar Group lookup (Mini-map instance)
+  // SCENARIO 3: Mini-map / Radar Window
+  // This instance is a small tactical window. It only shows vehicles belonging to its assigned group.
   if (miniMapId) {
     const group = state.miniMaps.find(m => m.id === miniMapId);
     if (!group) return [];
     return state.vehicles.filter(v => group.vehicleIds.includes(v.id_vehiculo));
   }
 
-  // 4. Main Map Logic
+  // SCENARIO 4: Main Command Map
+  // This is the big background map. It has two sub-behaviors:
   if (isMainMap) {
-    // If a specific group is focused (Promoted from mini to main)
+    // 4a. Promotion/Focus Mode: 
+    // If a mini-map group has been "promoted" to the main view, show ONLY that group.
     if (state.focusedMiniMapId) {
       const group = state.miniMaps.find(m => m.id === state.focusedMiniMapId);
       return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
     }
     
-    // Otherwise, show filtered vehicles that are NOT currently in any active radar group
-    // to keep the main view clean and focused on untracked units.
+    // 4b. General Fleet Overview:
+    // Show the rest of the fleet (respecting filters), but HIDE units already being 
+    // tracked in small radar windows to reduce clutter and avoid marker duplication.
     const filtered = selectFilteredVehicles(state);
     const allTrackedIds = state.allTrackedVehicleIds || [];
     return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
