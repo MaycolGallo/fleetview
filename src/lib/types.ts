@@ -137,6 +137,8 @@ export interface MiniMapGroup {
   vehicleIds: number[];
 }
 
+export type MapProvider = 'google' | 'leaflet';
+
 export interface FleetState {
   vehicles: Vehicle[];
   statusFilter: VehicleStatus[];
@@ -154,6 +156,7 @@ export interface FleetState {
   allTrackedVehicleIds: number[]; // All IDs present in ANY radar group (used to hide from main map)
   focusedMiniMapId: string | null; // The ID of the minimap currently promoted to main view
   isMapDark: boolean;
+  mapProvider: MapProvider;
   mapViewport: MapViewport;
   simulationStep: Record<string, number>;
   pinRotationMode: 'arrow' | 'pin';

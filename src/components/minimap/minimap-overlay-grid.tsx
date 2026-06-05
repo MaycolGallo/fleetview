@@ -15,15 +15,26 @@ const FleetMap = dynamic(() => import('../fleet-map').then(mod => mod.FleetMap),
   loading: () => <Skeleton className="h-full w-full" />,
 });
 
+const FleetLeafletMap = dynamic(() => import('../leaflet/fleet-leaflet-map'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full w-full" />,
+});
+
 export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { miniMaps, visibleMiniMapIds, focusedMiniMapId } = state;
+  const { miniMaps, visibleMiniMapIds, focusedMiniMapId, mapProvider } = state;
 
   const showOverviewAsMini = !!focusedMiniMapId;
   const activeMiniMaps = miniMaps.filter(m => visibleMiniMapIds.includes(m.id) && m.id !== focusedMiniMapId);
 
-  // We keep the container mounted so AnimatePresence can handle the exit of the last item.
+  const renderMapInstance = (props: any) => {
+    if (mapProvider === 'leaflet') {
+      return <FleetLeafletMap {...props} />;
+    }
+    return <FleetMap apiKey={apiKey} {...props} />;
+  };
+
   return (
     <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-4 pointer-events-none h-[80vh] overflow-visible">
       <AnimatePresence mode="popLayout">
@@ -37,7 +48,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
             className="pointer-events-auto relative flex-grow shrink-0 min-h-[calc(20vh-16px)] max-h-[calc(40vh-16px)] w-96 border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/20"
           >
-            <FleetMap apiKey={apiKey} isMainMap={false} />
+            {renderMapInstance({ isMainMap: false })}
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
               <div className="bg-muted px-1.5 py-0.5 rounded shadow-sm text-[8px] font-bold text-muted-foreground uppercase flex items-center gap-1">
                 Vista General
@@ -75,7 +86,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
             }}
             className="pointer-events-auto relative flex-grow shrink-0 min-h-[calc(20vh-16px)] max-h-[calc(40vh-16px)] w-96 border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10"
           >
-            <FleetMap apiKey={apiKey} miniMapId={map.id} isMainMap={false} />
+            {renderMapInstance({ miniMapId: map.id, isMainMap: false })}
             
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
               <div className="bg-primary px-1.5 py-0.5 rounded shadow-sm text-[8px] font-bold text-white uppercase flex items-center gap-1">

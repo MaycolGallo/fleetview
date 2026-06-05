@@ -14,6 +14,11 @@ const FleetMap = dynamic(() => import('../fleet-map').then(mod => mod.FleetMap),
   loading: () => <Skeleton className="h-screen w-screen" />,
 });
 
+const FleetLeafletMap = dynamic(() => import('../leaflet/fleet-leaflet-map'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-screen w-screen" />,
+});
+
 interface PublicFleetViewProps {
   apiKey: string;
   token: string;
@@ -26,7 +31,7 @@ interface SharePayload {
 
 export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
   const { state } = useFleetState();
-  const { vehicles } = state;
+  const { vehicles, mapProvider } = state;
 
   const { payload, isExpired } = useMemo(() => {
     try {
@@ -64,14 +69,18 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
 
   if (!payload) return <Skeleton className="h-screen w-screen" />;
 
+  const renderMap = () => {
+    const props = { manualVehicleIds: payload.ids, isMainMap: false };
+    if (mapProvider === 'leaflet') {
+      return <FleetLeafletMap {...props} />;
+    }
+    return <FleetMap apiKey={apiKey} {...props} />;
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
       <main className="absolute inset-0 z-0">
-        <FleetMap 
-          apiKey={apiKey} 
-          manualVehicleIds={payload.ids} 
-          isMainMap={false} 
-        />
+        {renderMap()}
       </main>
 
       <div className="absolute top-6 left-6 right-6 z-10 flex flex-col items-center pointer-events-none">

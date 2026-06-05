@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -26,6 +27,11 @@ const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), 
   loading: () => <Skeleton className="h-full w-full" />,
 });
 
+const FleetLeafletMap = dynamic(() => import('./leaflet/fleet-leaflet-map'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-full w-full" />,
+});
+
 const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid').then(mod => mod.MiniMapOverlayGrid), {
   ssr: false,
 });
@@ -47,16 +53,15 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
     isLoadingIncidencias, 
     focusedMiniMapId,
     routeGroups,
-    incidencias
+    incidencias,
+    mapProvider
   } = state;
 
-  // Check for shared mode
   const shareToken = searchParams.get('s');
   const isPublicView = !!shareToken;
 
   const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || focusedMiniMapId);
 
-  // Determine if we should show the INITIAL big loader
   const isInitialLoading = (isLoadingRoute && routeGroups.length === 0) || (isLoadingIncidencias && incidencias.length === 0);
 
   if (error) return <div className="flex items-center justify-center h-full text-destructive">Error: {error.message}</div>;
@@ -65,17 +70,24 @@ export function FleetViewClient({ apiKey }: { apiKey: string }) {
     return <PublicFleetView apiKey={apiKey} token={shareToken} />;
   }
 
+  const renderMapInstance = (props: any) => {
+    if (mapProvider === 'leaflet') {
+       return <FleetLeafletMap {...props} />;
+    }
+    return <FleetMap apiKey={apiKey} {...props} />;
+  };
+
   const renderMaps = () => {
     if (!isDetailView && isSplitView) {
       return (
         <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
-          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="ida" isMainMap={true} /></ResizablePanel>
+          <ResizablePanel defaultSize={50}>{renderMapInstance({ side: 'ida', isMainMap: true })}</ResizablePanel>
           <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-          <ResizablePanel defaultSize={50}><FleetMap apiKey={apiKey} side="vuelta" isMainMap={true} /></ResizablePanel>
+          <ResizablePanel defaultSize={50}>{renderMapInstance({ side: 'vuelta', isMainMap: true })}</ResizablePanel>
         </ResizablePanelGroup>
       );
     }
-    return <FleetMap apiKey={apiKey} isMainMap={true} />;
+    return renderMapInstance({ isMainMap: true });
   };
 
   return (

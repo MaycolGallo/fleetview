@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { FleetState, MiniMapGroup } from '@/lib/types';
+import type { FleetState, MiniMapGroup, MapProvider } from '@/lib/types';
 import { MASTER_FLEET_ROUTE, SIMULATION_ROUTE } from '@/services/fleet-api';
 
 export type FleetAction =
@@ -15,6 +15,7 @@ export type FleetAction =
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
   | { type: 'BACK_TO_FLEET' }
   | { type: 'SET_MAP_DARK_MODE'; payload: boolean }
+  | { type: 'SET_MAP_PROVIDER'; payload: MapProvider }
   | { type: 'TOGGLE_SPLIT_VIEW' }
   | { type: 'TOGGLE_SPLIT_DIRECTION' }
   | { type: 'VIEWPORT_ACTION_COMPLETE' }
@@ -61,6 +62,7 @@ export const getInitialState = (): FleetState => ({
   allTrackedVehicleIds: [],
   focusedMiniMapId: null,
   isMapDark: false,
+  mapProvider: 'google',
   mapViewport: { type: 'initial' },
   simulationStep: {},
   pinRotationMode: 'arrow',
@@ -86,7 +88,6 @@ const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
 
 const isUserGroup = (id: string) => id.startsWith('map-');
 
-// Sub-reducer for vehicle-related actions
 const handleVehicleActions = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
@@ -143,7 +144,6 @@ const handleVehicleActions = (state: FleetState, action: FleetAction): FleetStat
   }
 };
 
-// Sub-reducer for route and history actions
 const handleRouteActions = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'START_ROUTE_LOADING': {
@@ -187,7 +187,6 @@ const handleRouteActions = (state: FleetState, action: FleetAction): FleetState 
   }
 };
 
-// Sub-reducer for minimap and focus actions
 const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_MINIMAPS': {
@@ -246,18 +245,17 @@ const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetStat
 };
 
 export const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
-  // Handle categorized actions via sub-reducers
   if (action.type.includes('VEHICLE')) return handleVehicleActions(state, action);
   if (action.type.includes('ROUTE') || action.type.includes('HISTORY') || action.type === 'BACK_TO_FLEET') return handleRouteActions(state, action);
   if (action.type.includes('MINIMAP')) return handleMiniMapActions(state, action);
 
-  // Remaining miscellaneous actions
   switch (action.type) {
     case 'INIT_PERSISTED_STATE': return { ...state, miniMaps: action.payload.miniMaps, visibleMiniMapIds: action.payload.visibleIds, allTrackedVehicleIds: getTrackedIds(action.payload.miniMaps) };
     case 'SET_STATUS_FILTER': return { ...state, statusFilter: action.payload };
     case 'SET_AI_INSIGHT': return { ...state, aiFleetInsight: action.payload };
     case 'SET_AI_INSIGHT_LOADING': return { ...state, isLoadingAiInsight: action.payload };
     case 'SET_MAP_DARK_MODE': return { ...state, isMapDark: action.payload };
+    case 'SET_MAP_PROVIDER': return { ...state, mapProvider: action.payload };
     case 'TOGGLE_SPLIT_VIEW': return { ...state, isSplitView: !state.isSplitView };
     case 'TOGGLE_SPLIT_DIRECTION': return { ...state, splitDirection: state.splitDirection === 'horizontal' ? 'vertical' : 'horizontal' };
     case 'VIEWPORT_ACTION_COMPLETE': return { ...state, mapViewport: { type: 'idle' } };
