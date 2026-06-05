@@ -2,7 +2,7 @@
 'use client';
 
 import type { FleetState, MiniMapGroup, MapProvider } from '@/lib/types';
-import { MASTER_FLEET_ROUTE, SIMULATION_ROUTE } from '@/services/fleet-api';
+import { DESPACHO_BASE_ROUTE, SIMULATION_ROUTE } from '@/services/fleet-api';
 
 export type FleetAction =
   | { type: 'SET_VEHICLES'; payload: any[] }
@@ -76,7 +76,7 @@ export const getInitialState = (): FleetState => ({
   isIncidenciasSheetOpen: false,
   selectedIncidenciaId: null,
   notifications: [],
-  masterRoute: MASTER_FLEET_ROUTE,
+  despachoBaseRoute: DESPACHO_BASE_ROUTE,
   isLoadingAiInsight: false,
 });
 

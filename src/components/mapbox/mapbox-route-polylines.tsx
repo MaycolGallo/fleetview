@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -14,7 +15,7 @@ interface MapboxRoutePolylinesProps {
  */
 export function MapboxRoutePolylines({ side }: MapboxRoutePolylinesProps) {
   const { state } = useFleetState();
-  const { routeGroups, incidencias, isIncidenciasSheetOpen, historyVehicle, masterRoute } = state;
+  const { routeGroups, incidencias, isIncidenciasSheetOpen, historyVehicle, despachoBaseRoute } = state;
 
   // History Path GeoJSON
   const routeGeoJSON = useMemo((): FeatureCollection | null => {
@@ -36,11 +37,11 @@ export function MapboxRoutePolylines({ side }: MapboxRoutePolylinesProps) {
       };
   }, [routeGroups, side, historyVehicle, isIncidenciasSheetOpen]);
 
-  // Master Route GeoJSON
-  const masterRouteGeoJSON = useMemo((): FeatureCollection | null => {
-      if (!side || historyVehicle || isIncidenciasSheetOpen || !masterRoute.length) return null;
-      const half = Math.ceil(masterRoute.length / 2);
-      const points = side === 'ida' ? masterRoute.slice(0, half) : masterRoute.slice(half - 1);
+  // Despacho Base Route GeoJSON
+  const despachoRouteGeoJSON = useMemo((): FeatureCollection | null => {
+      if (!side || historyVehicle || isIncidenciasSheetOpen || !despachoBaseRoute.length) return null;
+      const half = Math.ceil(despachoBaseRoute.length / 2);
+      const points = side === 'ida' ? despachoBaseRoute.slice(0, half) : despachoBaseRoute.slice(half - 1);
       return {
           type: 'FeatureCollection',
           features: [{
@@ -52,7 +53,7 @@ export function MapboxRoutePolylines({ side }: MapboxRoutePolylinesProps) {
               }
           }]
       };
-  }, [masterRoute, side, historyVehicle, isIncidenciasSheetOpen]);
+  }, [despachoBaseRoute, side, historyVehicle, isIncidenciasSheetOpen]);
 
   // Incidents Path GeoJSON
   const incidenciasGeoJSON = useMemo((): FeatureCollection | null => {
@@ -87,10 +88,10 @@ export function MapboxRoutePolylines({ side }: MapboxRoutePolylinesProps) {
            </Source>
         )}
 
-        {masterRouteGeoJSON && (
-            <Source type="geojson" data={masterRouteGeoJSON}>
+        {despachoRouteGeoJSON && (
+            <Source type="geojson" data={despachoRouteGeoJSON}>
                 <Layer 
-                    id="master-route" 
+                    id="despacho-base-route" 
                     type="line" 
                     paint={{ 
                         'line-color': ['get', 'color'], 

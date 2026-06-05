@@ -173,8 +173,8 @@ export interface FleetState {
   selectedIncidenciaId: string | null;
   // Notifications
   notifications: Notification[];
-  // Fleet Master Route
-  masterRoute: { lat: number, lng: number }[];
+  // Fleet Despacho Tactical Baseline
+  despachoBaseRoute: { lat: number, lng: number }[];
   // AI Insights
   aiFleetInsight?: string;
   isLoadingAiInsight: boolean;

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -44,7 +45,7 @@ export function useMapViewport({
     isSplitView,
     historyVehicle,
     isIncidenciasSheetOpen,
-    masterRoute
+    despachoBaseRoute
   } = state;
 
   useEffect(() => {
@@ -71,9 +72,9 @@ export function useMapViewport({
 
     // 3. Handle Default Viewport Actions (State-driven)
     if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
-      if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && masterRoute.length > 0) {
-        const halfIndex = Math.ceil(masterRoute.length / 2);
-        const points = side === 'ida' ? masterRoute.slice(0, halfIndex) : masterRoute.slice(halfIndex - 1);
+      if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && despachoBaseRoute.length > 0) {
+        const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
+        const points = side === 'ida' ? despachoBaseRoute.slice(0, halfIndex) : despachoBaseRoute.slice(halfIndex - 1);
         performFitBounds(map, provider, points, 50);
       }
       return;
@@ -130,6 +131,7 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
     const initialLng = points[0].lng;
     const initialLat = points[0].lat;
     
+    // Type-safe tuple for Mapbox fitBounds
     const bounds: [[number, number], [number, number]] = points.reduce((acc, p) => {
       return [
         [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],

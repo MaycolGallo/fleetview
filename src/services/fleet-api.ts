@@ -1,3 +1,4 @@
+
 import type { RawVehicle, VHistorial, Incidencia, MiniMapGroup } from '@/lib/types';
 
 export const SIMULATION_ROUTE = [
@@ -8,10 +9,10 @@ export const SIMULATION_ROUTE = [
 ];
 
 /**
- * MASTER_FLEET_ROUTE: The "Theoretical Standard Path" for the fleet.
+ * DESPACHO_BASE_ROUTE: The "Theoretical Standard Path" for the fleet.
  * Used as a visual baseline in Split View and for initial viewport framing.
  */
-export const MASTER_FLEET_ROUTE = [
+export const DESPACHO_BASE_ROUTE = [
     { lat: -12.030, lng: -77.020 },
     { lat: -12.040, lng: -77.035 },
     { lat: -12.046, lng: -77.042 },

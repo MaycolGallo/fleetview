@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -9,21 +10,21 @@ interface LeafletRoutePolylinesProps {
 }
 
 /**
- * Renders all tactical polyline layers for Leaflet (History, Master Route, Incidents).
+ * Renders all tactical polyline layers for Leaflet (History, Despacho Base Route, Incidents).
  */
 export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
   const { state } = useFleetState();
-  const { routeGroups, incidencias, isIncidenciasSheetOpen, historyVehicle, masterRoute } = state;
+  const { routeGroups, incidencias, isIncidenciasSheetOpen, historyVehicle, despachoBaseRoute } = state;
 
-  const fleetRoutePoints = useMemo(() => {
+  const despachoRoutePoints = useMemo(() => {
       if (!side || historyVehicle || isIncidenciasSheetOpen) return null;
-      if (!masterRoute || masterRoute.length === 0) return null;
+      if (!despachoBaseRoute || despachoBaseRoute.length === 0) return null;
       
-      const halfMaster = Math.ceil(masterRoute.length / 2);
-      if (side === 'ida') return masterRoute.slice(0, halfMaster);
-      if (side === 'vuelta') return masterRoute.slice(halfMaster - 1);
+      const halfMaster = Math.ceil(despachoBaseRoute.length / 2);
+      if (side === 'ida') return despachoBaseRoute.slice(0, halfMaster);
+      if (side === 'vuelta') return despachoBaseRoute.slice(halfMaster - 1);
       return null;
-  }, [masterRoute, historyVehicle, isIncidenciasSheetOpen, side]);
+  }, [despachoBaseRoute, historyVehicle, isIncidenciasSheetOpen, side]);
 
   return (
     <>
@@ -55,10 +56,10 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
            return null;
         })}
 
-        {/* Scenario 2: Master Fleet Route (Split View) */}
-        {fleetRoutePoints && (
+        {/* Scenario 2: Despacho Base Route (Split View Reference) */}
+        {despachoRoutePoints && (
           <Polyline 
-            positions={fleetRoutePoints.map(p => [p.lat, p.lng] as [number, number])}
+            positions={despachoRoutePoints.map(p => [p.lat, p.lng] as [number, number])}
             color={side === 'vuelta' ? '#3B82F6' : '#22C55E'}
             weight={5}
             opacity={0.4}

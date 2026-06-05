@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -56,13 +57,13 @@ interface RouteSegmentsProps {
 
 /**
  * RouteSegments: Tactical layer for Google Maps.
- * Manages Historical paths, the Master Operational baseline, and Incident timelines.
+ * Manages Historical paths, the Despacho Operational baseline, and Incident timelines.
  */
 export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
     const map = useMap();
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
-    const { routeGroups, selectedSegmentIndex, incidencias, isIncidenciasSheetOpen, masterRoute, historyVehicle } = state;
+    const { routeGroups, selectedSegmentIndex, incidencias, isIncidenciasSheetOpen, despachoBaseRoute, historyVehicle } = state;
     const polylinesRef = useRef<google.maps.Polyline[]>([]);
   
     // Determine the segments to display based on whether we are in history or fleet mode
@@ -73,18 +74,18 @@ export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
         ? routeGroups.slice(halfIndex) 
         : routeGroups;
 
-    // Fleet Master Route logic:
+    // Despacho Base Route logic:
     // This is the "Planned Tactical Baseline". It only shows in Split View (when side is defined)
     // to provide a visual reference for outbound vs inbound operational paths.
-    const fleetRoutePoints = useMemo(() => {
+    const despachoRoutePoints = useMemo(() => {
         if (!side || historyVehicle || isIncidenciasSheetOpen) return null;
-        if (!masterRoute || masterRoute.length === 0) return null;
+        if (!despachoBaseRoute || despachoBaseRoute.length === 0) return null;
         
-        const halfMaster = Math.ceil(masterRoute.length / 2);
-        if (side === 'ida') return masterRoute.slice(0, halfMaster);
-        if (side === 'vuelta') return masterRoute.slice(halfMaster - 1);
+        const halfMaster = Math.ceil(despachoBaseRoute.length / 2);
+        if (side === 'ida') return despachoBaseRoute.slice(0, halfMaster);
+        if (side === 'vuelta') return despachoBaseRoute.slice(halfMaster - 1);
         return null;
-    }, [masterRoute, historyVehicle, isIncidenciasSheetOpen, side]);
+    }, [despachoBaseRoute, historyVehicle, isIncidenciasSheetOpen, side]);
 
     const incidenciasPath = useMemo(() => {
         if (!isIncidenciasSheetOpen || incidencias.length < 2) return null;
@@ -143,9 +144,9 @@ export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
                 }
             });
         } 
-        // Scenario 2: Draw Fleet Master Route (Baseline for Split View)
-        else if (fleetRoutePoints) {
-            const path = catmullRomSpline(fleetRoutePoints, 15);
+        // Scenario 2: Draw Despacho Base Route (Baseline for Split View)
+        else if (despachoRoutePoints) {
+            const path = catmullRomSpline(despachoRoutePoints, 15);
             const color = side === 'vuelta' ? '#3B82F6' : '#22C55E'; // Blue for return, Green for outbound
             
             const polyline = new google.maps.Polyline({
@@ -201,7 +202,7 @@ export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
                 p.setMap(null);
             });
         };
-    }, [map, displayGroups, selectedSegmentIndex, dispatch, isIncidenciasSheetOpen, incidenciasPath, fleetRoutePoints, side, historyVehicle]);
+    }, [map, displayGroups, selectedSegmentIndex, dispatch, isIncidenciasSheetOpen, incidenciasPath, despachoRoutePoints, side, historyVehicle]);
   
     return (
         <>
