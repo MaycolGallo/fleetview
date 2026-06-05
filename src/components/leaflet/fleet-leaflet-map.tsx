@@ -79,14 +79,24 @@ interface FleetLeafletMapProps {
 export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isMainMap }: FleetLeafletMapProps) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isMapDark, routeGroups, incidencias, isIncidenciasSheetOpen, historyVehicle } = state;
+  const { isMapDark, routeGroups, incidencias, isIncidenciasSheetOpen, historyVehicle, masterRoute } = state;
 
   const mapVehicles = useMemo(
     () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
     [state, miniMapId, manualVehicleIds, isMainMap]
   );
 
-  // Use standard OpenStreetMap for light mode as requested, and Carto Dark for dark mode
+  // Fleet Master Route logic for Leaflet
+  const fleetRoutePoints = useMemo(() => {
+      if (!side || historyVehicle || isIncidenciasSheetOpen) return null;
+      if (!masterRoute || masterRoute.length === 0) return null;
+      
+      const halfMaster = Math.ceil(masterRoute.length / 2);
+      if (side === 'ida') return masterRoute.slice(0, halfMaster);
+      if (side === 'vuelta') return masterRoute.slice(halfMaster - 1);
+      return null;
+  }, [masterRoute, historyVehicle, isIncidenciasSheetOpen, side]);
+
   const tileUrl = isMapDark 
     ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
     : 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -119,19 +129,27 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
           <LeafletVehicleMarker key={vehicle.id_vehiculo} vehicle={vehicle} index={idx} />
         ))}
 
-        {/* Route visualization for history mode */}
+        {/* 1. History Mode Route Rendering */}
         {historyVehicle && !isIncidenciasSheetOpen && routeGroups.map((group, idx) => {
            if (group.id_estado === 6) {
              const points = group.records.map(r => [r.lat, r.lng] as [number, number]);
-             return <Polyline key={idx} positions={points} color={group.color} weight={4} opacity={0.8} />;
+             return (
+              <Polyline 
+                key={`hist-${idx}`} 
+                positions={points} 
+                color={group.color} 
+                weight={6} 
+                opacity={0.8} 
+              />
+            );
            }
            if (group.id_estado === 4 || group.id_estado === 5) {
              const first = group.records[0];
              return (
                 <CircleMarker 
-                  key={idx} 
+                  key={`stop-${idx}`} 
                   center={[first.lat, first.lng]} 
-                  radius={6} 
+                  radius={8} 
                   pathOptions={{ fillColor: group.color, color: 'white', weight: 2, fillOpacity: 1 }}
                 />
              );
@@ -139,13 +157,25 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
            return null;
         })}
 
-        {/* Incidencias path */}
+        {/* 2. Master Route Rendering (Split View Only) */}
+        {fleetRoutePoints && (
+          <Polyline 
+            positions={fleetRoutePoints.map(p => [p.lat, p.lng] as [number, number])}
+            color={side === 'vuelta' ? '#3B82F6' : '#22C55E'}
+            weight={5}
+            opacity={0.4}
+            dashArray="10, 10"
+          />
+        )}
+
+        {/* 3. Incidencias Path Rendering */}
         {isIncidenciasSheetOpen && incidencias.length > 1 && (
            <Polyline 
              positions={incidencias.map(i => [i.lat, i.lng] as [number, number])} 
              color="#EF4444" 
-             weight={3} 
+             weight={4} 
              dashArray="5, 10"
+             opacity={0.6}
            />
         )}
       </MapContainer>

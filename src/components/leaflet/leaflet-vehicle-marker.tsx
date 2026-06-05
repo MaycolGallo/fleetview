@@ -9,6 +9,10 @@ import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { VehiclePin } from '@/components/vehicle/vehicle-pin';
 import { Gauge } from 'lucide-react';
+import { useVehicleMarkerInteraction } from '@/hooks/use-vehicle-marker-interaction';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { VehicleContextMenu } from '@/components/vehicle/vehicle-context-menu';
+import { VehicleMobileContextMenu } from '@/components/vehicle/vehicle-mobile-context-menu';
 
 interface LeafletVehicleMarkerProps {
   vehicle: Vehicle;
@@ -19,9 +23,24 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
   const markerRef = useRef<L.Marker>(null);
+  const isMobile = useIsMobile();
   
   const { selectedVehicle, isRoutePlaying, historyVehicle, playbackAnimationDuration } = state;
   const isSelected = selectedVehicle?.id_vehiculo === vehicle.id_vehiculo;
+
+  // Use the same shared interaction logic as Google Maps
+  const {
+    contextMenuOpen,
+    contextMenuPosition,
+    drawerOpen,
+    setDrawerOpen,
+    handleLeftClick,
+    handleContextMenu,
+    handleTouchStart,
+    handleTouchEnd,
+    handleTouchMove,
+    closeContextMenu,
+  } = useVehicleMarkerInteraction({ vehicle });
 
   const isPlaybackMarker = !!historyVehicle;
   const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
@@ -32,7 +51,6 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
   const speed = parseFloat(vehicle.velocidad) || 0;
   const color = vehicle.statusColor || '#9E9E9E';
 
-  // Use a stable class for the marker to avoid transform conflicts
   const icon = useMemo(() => {
     return L.divIcon({
       className: 'leaflet-vehicle-marker-container',
@@ -59,9 +77,20 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
       iconSize: isPlaybackMarker ? [24, 24] : [40, 56],
       iconAnchor: isPlaybackMarker ? [12, 12] : [20, 56],
     });
-  }, [vehicle.id_vehiculo, vehicle.rumbo, vehicle.statusColor, isPlaybackMarker, speed]);
+  }, [vehicle.id_vehiculo, vehicle.rumbo, vehicle.statusColor, isPlaybackMarker, speed, color]);
 
-  // Handle z-index and selection state directly on DOM to prevent blinking
+  // Handle standard Leaflet click vs our specialized interactions
+  const handleMarkerClick = (e: L.LeafletMouseEvent) => {
+    L.DomEvent.stopPropagation(e);
+    handleLeftClick(e.originalEvent);
+  };
+
+  const handleMarkerContextMenu = (e: L.LeafletMouseEvent) => {
+    L.DomEvent.stopPropagation(e);
+    handleContextMenu(e.originalEvent as any);
+  };
+
+  // Lifecycle to handle manual DOM manipulations (Z-Index, Touch Events)
   useEffect(() => {
     const marker = markerRef.current;
     if (!marker) return;
@@ -69,6 +98,7 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
     const element = marker.getElement();
     if (!element) return;
 
+    // Selection styling and Priority
     if (isSelected) {
       element.classList.add('leaflet-marker-selected');
       marker.setZIndexOffset(1000);
@@ -76,23 +106,51 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
       element.classList.remove('leaflet-marker-selected');
       marker.setZIndexOffset(index);
     }
-  }, [isSelected, index]);
+
+    // Attach touch listeners directly to marker DOM for long-press support
+    element.addEventListener('touchstart', handleTouchStart as any, { passive: true });
+    element.addEventListener('touchend', handleTouchEnd as any, { passive: true });
+    element.addEventListener('touchmove', handleTouchMove as any, { passive: true });
+
+    return () => {
+      element.removeEventListener('touchstart', handleTouchStart as any);
+      element.removeEventListener('touchend', handleTouchEnd as any);
+      element.removeEventListener('touchmove', handleTouchMove as any);
+    };
+  }, [isSelected, index, handleTouchStart, handleTouchEnd, handleTouchMove]);
 
   return (
-    <Marker 
-      ref={markerRef}
-      position={[animatedPosition.lat, animatedPosition.lng]} 
-      icon={icon}
-      eventHandlers={{
-        click: (e) => {
-            L.DomEvent.stopPropagation(e);
-            dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
-        }
-      }}
-    >
-      <Tooltip direction="top" offset={[0, -40]} opacity={0.9}>
-        <div className="font-bold text-xs uppercase tracking-wider">{vehicle.placa}</div>
-      </Tooltip>
-    </Marker>
+    <>
+      <Marker 
+        ref={markerRef}
+        position={[animatedPosition.lat, animatedPosition.lng]} 
+        icon={icon}
+        eventHandlers={{
+          click: handleMarkerClick,
+          contextmenu: handleMarkerContextMenu
+        }}
+      >
+        <Tooltip direction="top" offset={[0, -40]} opacity={0.9}>
+          <div className="font-bold text-xs uppercase tracking-wider">{vehicle.placa}</div>
+        </Tooltip>
+      </Marker>
+
+      {/* Render Context Menus based on interaction state */}
+      {contextMenuOpen && !isMobile && (
+        <VehicleContextMenu
+          vehicle={vehicle}
+          position={contextMenuPosition}
+          onClose={closeContextMenu}
+        />
+      )}
+
+      {isMobile && (
+         <VehicleMobileContextMenu
+            isOpen={drawerOpen}
+            onOpenChange={setDrawerOpen}
+            vehicle={vehicle}
+        />
+      )}
+    </>
   );
 }
