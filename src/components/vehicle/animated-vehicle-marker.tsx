@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Vehicle } from '@/lib/types';
@@ -37,11 +36,14 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
   const isPlaybackMarker = !!historyVehicle;
   const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
   
+  // Standard movement is slow (1s), playback follows telemetry timing
   const animationDuration = (isPlaybackMarker && isRoutePlaying) ? playbackAnimationDuration : 1000;
   const animatedPosition = useAnimatedPosition(targetPosition, { duration: animationDuration });
 
   const color = vehicle.statusColor || '#9E9E9E';
   const speed = parseFloat(vehicle.velocidad) || 0;
+  
+  // Elevate history and selected markers
   const zIndex = isPlaybackMarker ? 50 : (isSelected ? 1000 : 1 + index);
 
   return (
@@ -53,8 +55,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
         zIndex={zIndex}
       >
         <motion.div
-            layout
-            initial={{ y: -60, opacity: 0, scale: 0.3 }}
+            initial={{ y: -40, opacity: 0, scale: 0.5 }}
             animate={{ 
                 y: 0, 
                 opacity: 1, 
@@ -63,27 +64,24 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
             transition={{ 
                 type: "spring", 
                 stiffness: 260, 
-                damping: 20, 
-                delay: isPlaybackMarker ? 0 : (index % 20) * 0.03 
+                damping: 20,
+                delay: isPlaybackMarker ? 0 : (index % 10) * 0.05 
             }}
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             onTouchMove={handleTouchMove}
-            data-vehicle-id={vehicle.id_vehiculo}
             className={cn("relative cursor-pointer flex justify-center items-center")}
         >
-            {speed > 0 && (
+            {speed > 0 && !isPlaybackMarker && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10">
-                    <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
+                    <div
                         style={{ backgroundColor: color }}
                         className="flex items-center gap-1 shadow-md rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-white"
                     >
                         <Gauge className="w-3 h-3" />
                         <span>{speed.toFixed(0)}</span>
-                    </motion.div>
+                    </div>
                 </div>
             )}
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useMemo, useRef, useEffect } from 'react';
@@ -10,7 +9,6 @@ import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { VehiclePin } from '@/components/vehicle/vehicle-pin';
 import { Gauge } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface LeafletVehicleMarkerProps {
   vehicle: Vehicle;
@@ -34,14 +32,12 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
   const speed = parseFloat(vehicle.velocidad) || 0;
   const color = vehicle.statusColor || '#9E9E9E';
 
-  // We use a STABLE icon that doesn't depend on 'isSelected'.
-  // This prevents the entire marker DOM from being replaced when clicked, 
-  // which is what causes the "blink" and resets animations.
+  // Memoize icon to prevent heavy re-renders, but allow rumbo updates
   const icon = useMemo(() => {
     return L.divIcon({
-      className: 'custom-vehicle-marker-wrapper animate-marker-drop',
+      className: 'custom-leaflet-marker', // Simple class, no animation here to avoid blinking
       html: renderToStaticMarkup(
-        <div className="relative flex flex-col items-center justify-center leaflet-vehicle-icon-inner">
+        <div className="leaflet-vehicle-icon-inner relative flex flex-col items-center justify-center">
           {speed > 0 && !isPlaybackMarker && (
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10">
                   <div
@@ -55,7 +51,7 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
           )}
           <VehiclePin
               vehicle={vehicle}
-              isSelected={false} // Selection handled via CSS class on the container
+              isSelected={false} // Selection handled via DOM class logic below
               isHistory={isPlaybackMarker}
           />
         </div>
@@ -63,9 +59,10 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
       iconSize: isPlaybackMarker ? [24, 24] : [40, 56],
       iconAnchor: isPlaybackMarker ? [12, 12] : [20, 56],
     });
-  }, [vehicle.id_vehiculo, vehicle.rumbo, vehicle.statusColor, isPlaybackMarker]);
+  }, [vehicle.id_vehiculo, vehicle.rumbo, vehicle.statusColor, isPlaybackMarker, speed]);
 
-  // Handle selection state via DOM manipulation to avoid the "blink"
+  // Handle selection state directly on the DOM element to ensure zero-latency feedback
+  // and prevent Leaflet from recreating the marker and losing animations.
   useEffect(() => {
     const marker = markerRef.current;
     if (!marker) return;
@@ -73,7 +70,6 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
     const element = marker.getElement();
     if (!element) return;
 
-    // Use setZIndexOffset to move selected markers to front
     if (isSelected) {
       element.classList.add('leaflet-marker-selected');
       marker.setZIndexOffset(1000);
