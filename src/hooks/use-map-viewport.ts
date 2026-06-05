@@ -4,10 +4,17 @@
 import { useEffect } from 'react';
 import type { FleetState, MapProvider } from '@/lib/types';
 import type { FleetAction } from '@/context/fleet-reducer';
+import type { MapRef } from 'react-map-gl';
 import L from 'leaflet';
 
+/**
+ * Unified Map Instance Type
+ * Represents the native instances provided by our three tactical engines.
+ */
+type MapInstance = google.maps.Map | L.Map | MapRef | null | undefined;
+
 interface UseMapViewportProps {
-  map: any; // Can be google.maps.Map, L.Map (Leaflet), or MapRef (Mapbox)
+  map: MapInstance;
   provider: MapProvider;
   state: FleetState;
   dispatch: React.Dispatch<FleetAction>;
@@ -19,7 +26,7 @@ interface UseMapViewportProps {
 
 /**
  * Unified custom hook to handle map viewport synchronization (pan, zoom, fitBounds).
- * Supports Google Maps, Leaflet, and Mapbox GL.
+ * Supports Google Maps, Leaflet, and Mapbox GL with full type safety.
  */
 export function useMapViewport({
   map,
@@ -93,37 +100,41 @@ export function useMapViewport({
 }
 
 /**
- * Native Panning Wrappers
+ * Native Panning Wrappers with Type Guarding
  */
-function performPan(map: any, provider: MapProvider, point: { lat: number, lng: number }, zoom: number) {
-  if (provider === 'google') {
+function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number) {
+  if (!map) return;
+
+  if (provider === 'google' && 'panTo' in map) {
     map.panTo(point);
-    if (map.getZoom() < zoom) map.setZoom(zoom);
-  } else if (provider === 'leaflet') {
+    if (map.getZoom()! < zoom) map.setZoom(zoom);
+  } else if (provider === 'leaflet' && 'setView' in map) {
     map.setView([point.lat, point.lng], zoom, { animate: true });
-  } else if (provider === 'mapbox') {
-    map.flyTo({ center: [point.lng, point.lat], zoom, duration: 1000 });
+  } else if (provider === 'mapbox' && 'flyTo' in map) {
+    (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 1000 });
   }
 }
 
 /**
- * Native FitBounds Wrappers
+ * Native FitBounds Wrappers with Type Guarding
  */
-function performFitBounds(map: any, provider: MapProvider, points: { lat: number, lng: number }[], padding: number) {
-  if (provider === 'google') {
+function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat: number, lng: number }[], padding: number) {
+  if (!map || points.length === 0) return;
+
+  if (provider === 'google' && 'fitBounds' in map) {
     const bounds = new google.maps.LatLngBounds();
     points.forEach(p => bounds.extend(p));
     map.fitBounds(bounds, padding);
-  } else if (provider === 'leaflet') {
+  } else if (provider === 'leaflet' && 'fitBounds' in map) {
     const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
     map.fitBounds(bounds, { padding: [padding, padding] });
-  } else if (provider === 'mapbox') {
+  } else if (provider === 'mapbox' && 'fitBounds' in map) {
     const bounds = points.reduce((acc, p) => {
       return [
         [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],
         [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
       ] as [[number, number], [number, number]];
     }, [[points[0].lng, points[0].lat], [points[0].lng, points[0].lat]]);
-    map.fitBounds(bounds, { padding });
+    (map as MapRef).fitBounds(bounds, { padding });
   }
 }
