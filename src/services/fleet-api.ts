@@ -7,6 +7,10 @@ export const SIMULATION_ROUTE = [
   { lat: -12.047, lng: -77.036 },
 ];
 
+/**
+ * MASTER_FLEET_ROUTE: The "Theoretical Standard Path" for the fleet.
+ * Used as a visual baseline in Split View and for initial viewport framing.
+ */
 export const MASTER_FLEET_ROUTE = [
     { lat: -12.030, lng: -77.020 },
     { lat: -12.040, lng: -77.035 },

@@ -54,6 +54,10 @@ interface RouteSegmentsProps {
     isMainMap?: boolean;
 }
 
+/**
+ * RouteSegments: Tactical layer for Google Maps.
+ * Manages Historical paths, the Master Operational baseline, and Incident timelines.
+ */
 export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
     const map = useMap();
     const { state } = useFleetState();
@@ -69,8 +73,9 @@ export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
         ? routeGroups.slice(halfIndex) 
         : routeGroups;
 
-    // Fleet Master Route logic - ONLY show in Split View (when side is defined)
-    // and strictly hide on the general overview or radar mini-maps.
+    // Fleet Master Route logic:
+    // This is the "Planned Tactical Baseline". It only shows in Split View (when side is defined)
+    // to provide a visual reference for outbound vs inbound operational paths.
     const fleetRoutePoints = useMemo(() => {
         if (!side || historyVehicle || isIncidenciasSheetOpen) return null;
         if (!masterRoute || masterRoute.length === 0) return null;
@@ -138,7 +143,7 @@ export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
                 }
             });
         } 
-        // Scenario 2: Draw Fleet Master Route (Specific to Ida/Vuelta panels)
+        // Scenario 2: Draw Fleet Master Route (Baseline for Split View)
         else if (fleetRoutePoints) {
             const path = catmullRomSpline(fleetRoutePoints, 15);
             const color = side === 'vuelta' ? '#3B82F6' : '#22C55E'; // Blue for return, Green for outbound
