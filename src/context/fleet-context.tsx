@@ -23,10 +23,17 @@ const FleetDispatchContext = createContext<Dispatch<FleetAction> | undefined>(un
 export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     const [state, dispatch] = useReducer(fleetReducer, getInitialState());
     const searchParams = useSearchParams();
-    const router = useRouter();
-    const pathname = usePathname();
 
-    // 1. Sync Map Provider from URL on Mount and URL change
+    // 1. Sync Theme (Dark Mode) to Document Root
+    useEffect(() => {
+        if (state.isMapDark) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [state.isMapDark]);
+
+    // 2. Sync Map Provider from URL on Mount and URL change
     useEffect(() => {
         const urlMap = searchParams.get('map') as MapProvider;
         if (urlMap && (urlMap === 'google' || urlMap === 'leaflet') && urlMap !== state.mapProvider) {

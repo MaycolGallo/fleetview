@@ -19,14 +19,19 @@ export function SettingsPanelContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const handleProviderChange = (val: MapProvider) => {
-    // 1. Update Context State
-    dispatch({ type: 'SET_MAP_PROVIDER', payload: val });
+  const handleProviderChange = (val: string) => {
+    const provider = val as MapProvider;
+    // 1. Update Context State immediately for responsive UI
+    dispatch({ type: 'SET_MAP_PROVIDER', payload: provider });
     
     // 2. Update URL for persistence
     const params = new URLSearchParams(searchParams.toString());
-    params.set('map', val);
+    params.set('map', provider);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const toggleDarkMode = () => {
+    dispatch({ type: 'SET_MAP_DARK_MODE', payload: !isMapDark });
   };
 
   return (
@@ -38,7 +43,7 @@ export function SettingsPanelContent() {
             </div>
             <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Proveedor de Mapas</h3>
         </div>
-        <Tabs value={mapProvider} onValueChange={(val: any) => handleProviderChange(val)}>
+        <Tabs value={mapProvider} onValueChange={handleProviderChange}>
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="google" className="gap-2">
                     <MapIcon className="w-4 h-4" /> Google
@@ -77,7 +82,7 @@ export function SettingsPanelContent() {
             </Button>
             )}
 
-            <Button variant="outline" className="w-full justify-start h-12 gap-3" onClick={() => dispatch({ type: 'SET_MAP_DARK_MODE', payload: !isMapDark })}>
+            <Button variant="outline" className="w-full justify-start h-12 gap-3" onClick={toggleDarkMode}>
             {isMapDark ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-primary" />}
             <div className="flex flex-col items-start">
                 <span className="text-sm font-bold">Modo {isMapDark ? 'Claro' : 'Oscuro'}</span>
