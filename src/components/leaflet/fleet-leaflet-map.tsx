@@ -114,7 +114,14 @@ export default function FleetLeafletMap({ side, miniMapId, manualVehicleIds, isM
         className="w-full h-full"
         zoomControl={false}
       >
-        <TileLayer url={tileUrl} attribution={attribution} />
+        {/* CRITICAL: The 'key' prop on TileLayer is required to force Leaflet to 
+            refresh tiles when switching themes. Without it, the map can get stuck 
+            showing old tiles or a dark void. */}
+        <TileLayer 
+          key={tileUrl}
+          url={tileUrl} 
+          attribution={attribution} 
+        />
         
         <MapSync 
           state={state} 
