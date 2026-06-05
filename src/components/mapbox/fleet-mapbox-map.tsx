@@ -1,8 +1,8 @@
 
 'use client';
 
-import React, { useMemo, useRef } from 'react';
-import Map, { MapRef, Source, Layer } from 'react-map-gl';
+import React, { useMemo, useRef, useCallback } from 'react';
+import Map, { MapRef, Source, Layer, MapLayerMouseEvent } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useFleetState, selectMapVehicles } from '@/context/fleet-context';
 import { MapboxVehicleMarker } from './mapbox-vehicle-marker';
@@ -41,6 +41,28 @@ export default function FleetMapboxMap(props: FleetMapboxMapProps) {
     return isMapDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
   }, [mapType, isMapDark]);
 
+  /**
+   * Tactical Localization: Forces labels to Spanish (es)
+   */
+  const handleMapLoad = useCallback((evt: any) => {
+    const map = evt.target;
+    const layers = map.getStyle().layers;
+    
+    if (layers) {
+      layers.forEach((layer: any) => {
+        // Find layers that render text (symbol types with text-field)
+        if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+          // Use Mapbox GL expression to prefer Spanish names
+          map.setLayoutProperty(layer.id, 'text-field', [
+            'coalesce',
+            ['get', 'name_es'],
+            ['get', 'name']
+          ]);
+        }
+      });
+    }
+  }, []);
+
   return (
     <div className="w-full h-full relative overflow-hidden">
       <Map
@@ -51,6 +73,7 @@ export default function FleetMapboxMap(props: FleetMapboxMapProps) {
           longitude: -77.042793,
           zoom: 13
         }}
+        onLoad={handleMapLoad}
         mapStyle={mapStyle}
         style={{ width: '100%', height: '100%' }}
       >

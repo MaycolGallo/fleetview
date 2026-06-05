@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -21,6 +22,7 @@ import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+// Robust dynamic imports using default exports for stability
 const FleetMap = dynamic(() => import('./fleet-map'), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
