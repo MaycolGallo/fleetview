@@ -22,7 +22,7 @@ import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-const FleetMap = dynamic(() => import('./fleet-map').then(mod => mod.FleetMap), {
+const FleetMap = dynamic(() => import('./fleet-map'), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
 });
@@ -41,7 +41,7 @@ const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid'
   ssr: false,
 });
 
-export function FleetViewClient({ apiKey }: { apiKey: string }) {
+export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   const { state, error } = useFleetState();
   const dispatch = useFleetDispatch();
   const isMobile = useIsMobile();

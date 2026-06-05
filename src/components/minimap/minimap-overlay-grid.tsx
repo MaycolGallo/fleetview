@@ -10,7 +10,7 @@ import { Skeleton } from '../ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const FleetMap = dynamic(() => import('../fleet-map').then(mod => mod.FleetMap), {
+const FleetMap = dynamic(() => import('../fleet-map'), {
   ssr: false,
   loading: () => <Skeleton className="h-full w-full" />,
 });

@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
 
 const FleetViewClient = dynamic(
-  () => import('@/components/fleet-view-client').then(mod => mod.FleetViewClient),
+  () => import('@/components/fleet-view-client'),
   {
     loading: () => <Skeleton className="h-full w-full" />,
   }

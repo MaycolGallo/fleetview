@@ -9,7 +9,7 @@ import { ShieldCheck, Clock, AlertTriangle, Car } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '../ui/badge';
 
-const FleetMap = dynamic(() => import('../fleet-map').then(mod => mod.FleetMap), {
+const FleetMap = dynamic(() => import('../fleet-map'), {
   ssr: false,
   loading: () => <Skeleton className="h-screen w-screen" />,
 });

@@ -39,7 +39,7 @@ function TrafficLayer() {
   return null;
 }
 
-export function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, isMainMap }: FleetMapProps) {
+export default function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, isMainMap }: FleetMapProps) {
   const { state } = useFleetState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
