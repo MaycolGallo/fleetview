@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { Marker, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 import type { Vehicle } from '@/lib/types';
@@ -19,6 +20,8 @@ interface LeafletVehicleMarkerProps {
 export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarkerProps) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
+  const markerRef = useRef<L.Marker>(null);
+  
   const { selectedVehicle, isRoutePlaying, historyVehicle, playbackAnimationDuration } = state;
   const isSelected = selectedVehicle?.id_vehiculo === vehicle.id_vehiculo;
 
@@ -31,16 +34,14 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
   const speed = parseFloat(vehicle.velocidad) || 0;
   const color = vehicle.statusColor || '#9E9E9E';
 
-  // We use useMemo to generate the icon. 
-  // IMPORTANT: We removed 'animate-marker-drop' here because Leaflet re-renders the icon 
-  // when 'isSelected' changes, which would restart the entrance animation (and the 0% opacity dip).
+  // We use a STABLE icon that doesn't depend on 'isSelected'.
+  // This prevents the entire marker DOM from being replaced when clicked, 
+  // which is what causes the "blink" and resets animations.
   const icon = useMemo(() => {
     return L.divIcon({
-      className: 'custom-vehicle-icon',
+      className: 'custom-vehicle-marker-wrapper animate-marker-drop',
       html: renderToStaticMarkup(
-        <div 
-          className="relative flex flex-col items-center justify-center"
-        >
+        <div className="relative flex flex-col items-center justify-center leaflet-vehicle-icon-inner">
           {speed > 0 && !isPlaybackMarker && (
               <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10">
                   <div
@@ -52,28 +53,46 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
                   </div>
               </div>
           )}
-          <div className={cn("transition-transform duration-300", isSelected ? "scale-125" : "scale-100")}>
-            <VehiclePin
-                vehicle={vehicle}
-                isSelected={isSelected}
-                isHistory={isPlaybackMarker}
-            />
-          </div>
+          <VehiclePin
+              vehicle={vehicle}
+              isSelected={false} // Selection handled via CSS class on the container
+              isHistory={isPlaybackMarker}
+          />
         </div>
       ),
-      // Standard pin is roughly 40x56, Anchor near bottom tip (20, 56)
       iconSize: isPlaybackMarker ? [24, 24] : [40, 56],
       iconAnchor: isPlaybackMarker ? [12, 12] : [20, 56],
     });
-  }, [vehicle.rumbo, vehicle.statusColor, vehicle.placa, isSelected, isPlaybackMarker, speed, color]);
+  }, [vehicle.id_vehiculo, vehicle.rumbo, vehicle.statusColor, isPlaybackMarker]);
+
+  // Handle selection state via DOM manipulation to avoid the "blink"
+  useEffect(() => {
+    const marker = markerRef.current;
+    if (!marker) return;
+
+    const element = marker.getElement();
+    if (!element) return;
+
+    // Use setZIndexOffset to move selected markers to front
+    if (isSelected) {
+      element.classList.add('leaflet-marker-selected');
+      marker.setZIndexOffset(1000);
+    } else {
+      element.classList.remove('leaflet-marker-selected');
+      marker.setZIndexOffset(index);
+    }
+  }, [isSelected, index]);
 
   return (
     <Marker 
+      ref={markerRef}
       position={[animatedPosition.lat, animatedPosition.lng]} 
       icon={icon}
-      zIndexOffset={isSelected ? 1000 : index}
       eventHandlers={{
-        click: () => dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle })
+        click: (e) => {
+            L.DomEvent.stopPropagation(e);
+            dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
+        }
       }}
     >
       <Tooltip direction="top" offset={[0, -40]} opacity={0.9}>

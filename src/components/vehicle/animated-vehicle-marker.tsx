@@ -42,7 +42,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
 
   const color = vehicle.statusColor || '#9E9E9E';
   const speed = parseFloat(vehicle.velocidad) || 0;
-  const zIndex = isPlaybackMarker ? 50 : (isSelected ? 10 : 1);
+  const zIndex = isPlaybackMarker ? 50 : (isSelected ? 1000 : 1 + index);
 
   return (
     <>
@@ -53,7 +53,8 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
         zIndex={zIndex}
       >
         <motion.div
-            initial={{ y: -40, opacity: 0, scale: 0.5 }}
+            layout
+            initial={{ y: -60, opacity: 0, scale: 0.3 }}
             animate={{ 
                 y: 0, 
                 opacity: 1, 
@@ -63,7 +64,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
                 type: "spring", 
                 stiffness: 260, 
                 damping: 20, 
-                delay: isPlaybackMarker ? 0 : index * 0.05 
+                delay: isPlaybackMarker ? 0 : (index % 20) * 0.03 
             }}
             onContextMenu={handleContextMenu}
             onTouchStart={handleTouchStart}
@@ -74,13 +75,15 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
         >
             {speed > 0 && (
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full mb-2 z-10">
-                    <div
+                    <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
                         style={{ backgroundColor: color }}
                         className="flex items-center gap-1 shadow-md rounded-md px-2 py-1 text-xs font-semibold whitespace-nowrap text-white"
                     >
                         <Gauge className="w-3 h-3" />
                         <span>{speed.toFixed(0)}</span>
-                    </div>
+                    </motion.div>
                 </div>
             )}
 
