@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -99,7 +98,20 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
-      <main className="absolute inset-0 z-0">{renderMaps()}</main>
+      <main className="absolute inset-0 z-0">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${mapProvider}-${isSplitView}-${splitDirection}-${isDetailView}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="h-full w-full"
+          >
+            {renderMaps()}
+          </motion.div>
+        </AnimatePresence>
+      </main>
 
       {!isDetailView && (
         <>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -48,7 +47,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
       <AnimatePresence mode="popLayout">
         {showOverviewAsMini && (
           <motion.div 
-            key="overview-mini"
+            key={`overview-mini-${mapProvider}`}
             layout
             initial={{ x: 100, scale: 0.8, opacity: 0 }}
             animate={{ x: 0, scale: 1, opacity: 1 }}
@@ -82,7 +81,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
 
         {activeMiniMaps.map((map) => (
           <motion.div 
-            key={map.id} 
+            key={`${map.id}-${mapProvider}`} 
             layout
             initial={{ x: 100, scale: 0.8, opacity: 0 }}
             animate={{ x: 0, scale: 1, opacity: 1 }}
