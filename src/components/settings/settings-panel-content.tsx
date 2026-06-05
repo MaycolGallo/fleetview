@@ -11,6 +11,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import type { MapProvider, MapType } from '@/lib/types';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export function SettingsPanelContent() {
   const { state } = useFleetState();
@@ -37,6 +38,8 @@ export function SettingsPanelContent() {
   const setMapType = (type: MapType) => {
     dispatch({ type: 'SET_MAP_TYPE', payload: type });
   };
+
+  const isTrafficAvailable = mapProvider !== 'leaflet';
 
   return (
     <div className="p-4 flex flex-col gap-6 animate-in fade-in duration-300">
@@ -80,14 +83,35 @@ export function SettingsPanelContent() {
                 <Satellite className={cn("w-5 h-5", mapType === 'satellite' ? "text-primary" : "text-muted-foreground")} />
                 <span className="text-[10px] font-bold uppercase">Satélite</span>
             </Button>
-            <Button 
-                variant="outline" 
-                className={cn("h-16 flex flex-col items-center justify-center gap-1", showTraffic && "border-primary bg-primary/5")}
-                onClick={() => dispatch({ type: 'TOGGLE_TRAFFIC' })}
-            >
-                <Route className={cn("w-5 h-5", showTraffic ? "text-primary" : "text-muted-foreground")} />
-                <span className="text-[10px] font-bold uppercase">Tráfico</span>
-            </Button>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="w-full">
+                    <Button 
+                        variant="outline" 
+                        className={cn(
+                          "h-16 w-full flex flex-col items-center justify-center gap-1 transition-all", 
+                          showTraffic && isTrafficAvailable && "border-primary bg-primary/5",
+                          !isTrafficAvailable && "opacity-50 grayscale"
+                        )}
+                        onClick={() => isTrafficAvailable && dispatch({ type: 'TOGGLE_TRAFFIC' })}
+                        disabled={!isTrafficAvailable}
+                    >
+                        <Route className={cn("w-5 h-5", showTraffic && isTrafficAvailable ? "text-primary" : "text-muted-foreground")} />
+                        <span className="text-[10px] font-bold uppercase whitespace-nowrap">
+                          {isTrafficAvailable ? 'Tráfico' : 'No Disponible'}
+                        </span>
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+                {!isTrafficAvailable && (
+                  <TooltipContent>
+                    <p className="text-xs">El tráfico en tiempo real no está disponible para Leaflet (OSM).</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
         </div>
       </div>
 
