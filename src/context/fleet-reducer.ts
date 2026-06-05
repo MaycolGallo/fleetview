@@ -3,7 +3,46 @@
 
 import type { FleetState, MiniMapGroup } from '@/lib/types';
 import { MASTER_FLEET_ROUTE, SIMULATION_ROUTE } from '@/services/fleet-api';
-import { FleetAction } from './fleet-reducer';
+
+export type FleetAction =
+  | { type: 'SET_VEHICLES'; payload: any[] }
+  | { type: 'PAN_TO_VEHICLE'; payload: any | null }
+  | { type: 'TOGGLE_VEHICLE_VISIBILITY'; payload: number }
+  | { type: 'SET_ALL_VEHICLES_VISIBILITY'; payload: { ids: number[], visible: boolean } }
+  | { type: 'SET_STATUS_FILTER'; payload: string[] }
+  | { type: 'START_ROUTE_LOADING'; payload: any }
+  | { type: 'SET_ROUTE_HISTORY'; payload: any }
+  | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
+  | { type: 'BACK_TO_FLEET' }
+  | { type: 'SET_MAP_DARK_MODE'; payload: boolean }
+  | { type: 'TOGGLE_SPLIT_VIEW' }
+  | { type: 'TOGGLE_SPLIT_DIRECTION' }
+  | { type: 'VIEWPORT_ACTION_COMPLETE' }
+  | { type: 'SIMULATE_VEHICLE_MOVE'; payload: number }
+  | { type: 'START_ROUTE_PLAYBACK' }
+  | { type: 'PAUSE_ROUTE_PLAYBACK' }
+  | { type: 'UPDATE_HISTORY_VEHICLE_POSITION'; payload: { lat: number, lng: number, rumbo: number, velocidad: number, animationDuration: number } }
+  | { type: 'INIT_PERSISTED_STATE'; payload: { miniMaps: MiniMapGroup[], visibleIds: string[] } }
+  | { type: 'SET_MINIMAPS'; payload: MiniMapGroup[] }
+  | { type: 'CREATE_MINIMAP'; payload: { vehicleId: number } }
+  | { type: 'CREATE_MINIMAP_MANUAL'; payload: { name: string } }
+  | { type: 'UPDATE_MINIMAP_VEHICLES'; payload: { miniMapId: string, vehicleIds: number[] } }
+  | { type: 'ADD_VEHICLE_TO_MINIMAP'; payload: { miniMapId: string, vehicleId: number } }
+  | { type: 'REMOVE_VEHICLE_FROM_MINIMAP'; payload: { miniMapId: string, vehicleId: number } }
+  | { type: 'REMOVE_MINIMAP'; payload: string }
+  | { type: 'TOGGLE_MINIMAP_VISIBILITY'; payload: string }
+  | { type: 'FOCUS_MINIMAP'; payload: string }
+  | { type: 'UNFOCUS_MINIMAP' }
+  | { type: 'CLEAR_ALL_MINIMAPS' }
+  | { type: 'START_INCIDENCIAS_LOADING'; payload: any }
+  | { type: 'SET_INCIDENCIAS'; payload: any[] }
+  | { type: 'SELECT_INCIDENCIA'; payload: string | null }
+  | { type: 'CLOSE_INCIDENCIAS' }
+  | { type: 'ADD_NOTIFICATION'; payload: any }
+  | { type: 'MARK_NOTIFICATION_READ'; payload: string }
+  | { type: 'CLEAR_NOTIFICATIONS' }
+  | { type: 'SET_AI_INSIGHT'; payload: string }
+  | { type: 'SET_AI_INSIGHT_LOADING'; payload: boolean };
 
 export const getInitialState = (): FleetState => ({
   vehicles: [],
@@ -19,7 +58,7 @@ export const getInitialState = (): FleetState => ({
   visibleVehicleIds: new Set(),
   miniMaps: [],
   visibleMiniMapIds: [],
-  trackedVehicleIds: [],
+  allTrackedVehicleIds: [],
   focusedMiniMapId: null,
   isMapDark: false,
   mapViewport: { type: 'initial' },
@@ -155,7 +194,7 @@ const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetStat
         const existingIds = new Set(state.miniMaps.map(m => m.id));
         const newMiniMaps = [...state.miniMaps];
         action.payload.forEach(fetchedMap => { if (!existingIds.has(fetchedMap.id)) newMiniMaps.push(fetchedMap); });
-        return { ...state, miniMaps: newMiniMaps, trackedVehicleIds: getTrackedIds(newMiniMaps) };
+        return { ...state, miniMaps: newMiniMaps, allTrackedVehicleIds: getTrackedIds(newMiniMaps) };
     }
     case 'TOGGLE_MINIMAP_VISIBILITY': {
       const isVisible = state.visibleMiniMapIds.includes(action.payload);
@@ -165,32 +204,32 @@ const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetStat
       const newId = `map-${Date.now()}`;
       const newMap: MiniMapGroup = { id: newId, name: `Radar Lock ${state.miniMaps.length + 1}`, vehicleIds: [action.payload.vehicleId] };
       const newMaps = [...state.miniMaps, newMap];
-      return { ...state, miniMaps: newMaps, visibleMiniMapIds: [...state.visibleMiniMapIds, newId], trackedVehicleIds: getTrackedIds(newMaps) };
+      return { ...state, miniMaps: newMaps, visibleMiniMapIds: [...state.visibleMiniMapIds, newId], allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
     case 'CREATE_MINIMAP_MANUAL': {
         const newId = `map-${Date.now()}`;
         const newMap: MiniMapGroup = { id: newId, name: action.payload.name, vehicleIds: [] };
         const newMaps = [...state.miniMaps, newMap];
-        return { ...state, miniMaps: newMaps, visibleMiniMapIds: [...state.visibleMiniMapIds, newId], trackedVehicleIds: getTrackedIds(newMaps) };
+        return { ...state, miniMaps: newMaps, visibleMiniMapIds: [...state.visibleMiniMapIds, newId], allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
     case 'UPDATE_MINIMAP_VEHICLES': {
         if (!isUserGroup(action.payload.miniMapId)) return state;
         const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: action.payload.vehicleIds } : m);
-        return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+        return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
     case 'REMOVE_MINIMAP': {
       const newMaps = state.miniMaps.filter(m => m.id !== action.payload);
-      return { ...state, miniMaps: newMaps, visibleMiniMapIds: state.visibleMiniMapIds.filter(id => id !== action.payload), trackedVehicleIds: getTrackedIds(newMaps), focusedMiniMapId: state.focusedMiniMapId === action.payload ? null : state.focusedMiniMapId };
+      return { ...state, miniMaps: newMaps, visibleMiniMapIds: state.visibleMiniMapIds.filter(id => id !== action.payload), allTrackedVehicleIds: getTrackedIds(newMaps), focusedMiniMapId: state.focusedMiniMapId === action.payload ? null : state.focusedMiniMapId };
     }
     case 'ADD_VEHICLE_TO_MINIMAP': {
       if (!isUserGroup(action.payload.miniMapId)) return state;
       const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleId])) } : m);
-      return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+      return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
     case 'REMOVE_VEHICLE_FROM_MINIMAP': {
       if (!isUserGroup(action.payload.miniMapId)) return state;
       const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: m.vehicleIds.filter(id => id !== action.payload.vehicleId) } : m);
-      return { ...state, miniMaps: newMaps, trackedVehicleIds: getTrackedIds(newMaps) };
+      return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
     case 'FOCUS_MINIMAP': {
       const group = state.miniMaps.find(m => m.id === action.payload);
@@ -214,7 +253,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
 
   // Remaining miscellaneous actions
   switch (action.type) {
-    case 'INIT_PERSISTED_STATE': return { ...state, miniMaps: action.payload.miniMaps, visibleMiniMapIds: action.payload.visibleIds, trackedVehicleIds: getTrackedIds(action.payload.miniMaps) };
+    case 'INIT_PERSISTED_STATE': return { ...state, miniMaps: action.payload.miniMaps, visibleMiniMapIds: action.payload.visibleIds, allTrackedVehicleIds: getTrackedIds(action.payload.miniMaps) };
     case 'SET_STATUS_FILTER': return { ...state, statusFilter: action.payload };
     case 'SET_AI_INSIGHT': return { ...state, aiFleetInsight: action.payload };
     case 'SET_AI_INSIGHT_LOADING': return { ...state, isLoadingAiInsight: action.payload };
@@ -236,7 +275,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'ADD_NOTIFICATION': return { ...state, notifications: [action.payload, ...state.notifications].slice(0, 50) };
     case 'MARK_NOTIFICATION_READ': return { ...state, notifications: state.notifications.map(n => n.id === action.payload ? { ...n, isRead: true } : n) };
     case 'CLEAR_NOTIFICATIONS': return { ...state, notifications: [] };
-    case 'CLEAR_ALL_MINIMAPS': return { ...state, miniMaps: [], visibleMiniMapIds: [], trackedVehicleIds: [], focusedMiniMapId: null };
+    case 'CLEAR_ALL_MINIMAPS': return { ...state, miniMaps: [], visibleMiniMapIds: [], allTrackedVehicleIds: [], focusedMiniMapId: null };
     default: return state;
   }
 };

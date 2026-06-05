@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -12,11 +13,12 @@ import { useMapViewport } from '@/hooks/use-map-viewport';
 
 interface MapControlProps {
   side?: 'ida' | 'vuelta';
-  trackedVehicleIds?: number[];
+  miniMapId?: string;
+  manualVehicleIds?: number[];
   isMainMap?: boolean;
 }
 
-export function MapControl({ side, trackedVehicleIds, isMainMap }: MapControlProps) {
+export function MapControl({ side, miniMapId, manualVehicleIds, isMainMap }: MapControlProps) {
   const map = useMap();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -30,7 +32,7 @@ export function MapControl({ side, trackedVehicleIds, isMainMap }: MapControlPro
     historyVehicle,
   } = state;
 
-  // Initialize Libraries
+  // Load Maps libraries
   useEffect(() => {
     if (!map) return;
     
@@ -41,7 +43,7 @@ export function MapControl({ side, trackedVehicleIds, isMainMap }: MapControlPro
           google.maps.importLibrary('marker')
         ]);
       } catch (e) {
-        console.warn('Google Maps libraries failed to load (possibly due to billing).', e);
+        console.warn('Google Maps libraries failed to load.', e);
       }
     };
     
@@ -55,10 +57,15 @@ export function MapControl({ side, trackedVehicleIds, isMainMap }: MapControlPro
     dispatch,
     isMainMap,
     side,
-    trackedVehicleIds
+    miniMapId,
+    manualVehicleIds
   });
 
-  const mapVehicles = useMemo(() => selectMapVehicles(state, trackedVehicleIds, isMainMap), [state, trackedVehicleIds, isMainMap]);
+  // Calculate units specifically for this map instance
+  const mapVehicles = useMemo(
+    () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
+    [state, miniMapId, manualVehicleIds, isMainMap]
+  );
 
   const halfIndex = Math.ceil(routeGroups.length / 2);
   const displayGroups = side === 'ida' 

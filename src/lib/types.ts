@@ -151,7 +151,7 @@ export interface FleetState {
   visibleVehicleIds: Set<number>;
   miniMaps: MiniMapGroup[];
   visibleMiniMapIds: string[]; // Track which groups are actually shown on map
-  trackedVehicleIds: number[]; // Explicitly track which ones are in any minimap
+  allTrackedVehicleIds: number[]; // All IDs present in ANY radar group (used to hide from main map)
   focusedMiniMapId: string | null; // The ID of the minimap currently promoted to main view
   isMapDark: boolean;
   mapViewport: MapViewport;

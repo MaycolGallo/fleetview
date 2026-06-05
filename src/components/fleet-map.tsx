@@ -1,3 +1,4 @@
+
 "use client";
 
 import { APIProvider, Map, ColorScheme } from '@vis.gl/react-google-maps';
@@ -5,26 +6,28 @@ import { useFleetState } from '@/context/fleet-context';
 import { LIGHT_MAP_ID, DARK_MAP_ID } from '@/lib/map-styles';
 import { MapControl } from './map-control';
 import { useSearchParams } from 'next/navigation';
-import type { Vehicle } from '@/lib/types';
 
 interface FleetMapProps {
   apiKey: string;
   side?: 'ida' | 'vuelta';
-  trackedVehicleIds?: number[];
+  miniMapId?: string;
+  manualVehicleIds?: number[];
   isMainMap?: boolean;
 }
 
-export function FleetMap({ apiKey, side, trackedVehicleIds, isMainMap }: FleetMapProps) {
+export function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, isMainMap }: FleetMapProps) {
   const { state } = useFleetState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
   const { isMapDark, vehicles, focusedMiniMapId, miniMaps } = state;
 
+  // Derive display context
   const isFocusMode = isMainMap && focusedMiniMapId;
   const focusedGroup = isFocusMode ? miniMaps.find(m => m.id === focusedMiniMapId) : null;
-
-  const trackedVehicles = trackedVehicleIds?.map(id => vehicles.find(v => v.id_vehiculo === id)).filter(Boolean) as Vehicle[] || [];
-  const isTrackingView = trackedVehicles.length > 0;
+  const radarGroup = miniMapId ? miniMaps.find(m => m.id === miniMapId) : null;
+  
+  const unitCount = manualVehicleIds?.length || radarGroup?.vehicleIds.length || 0;
+  const isTrackingView = unitCount > 0;
 
   if (isDemoMode || apiKey === 'MOCK_KEY') {
     return (
@@ -37,7 +40,7 @@ export function FleetMap({ apiKey, side, trackedVehicleIds, isMainMap }: FleetMa
         />
         <div className="text-center z-10 px-6">
           <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground mb-1">
-            {isTrackingView ? `${trackedVehicles.length} Units Radar Lock` : side ? `Visor de Flota: ${side}` : isFocusMode ? `Enfocado: ${focusedGroup?.name}` : 'Visor de Flota Principal'}
+            {isTrackingView ? `${unitCount} Units Radar Lock` : side ? `Visor de Flota: ${side}` : isFocusMode ? `Enfocado: ${focusedGroup?.name}` : 'Visor de Flota Principal'}
           </p>
           <p className="text-xs text-muted-foreground/60 italic">
             [Modo Demo: Mapa Real Desactivado]
@@ -52,7 +55,7 @@ export function FleetMap({ apiKey, side, trackedVehicleIds, isMainMap }: FleetMa
             )}
             {isTrackingView && (
               <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
-                FOCUS: {trackedVehicles.length} units
+                FOCUS: {unitCount} units
               </div>
             )}
             {isFocusMode && (
@@ -77,7 +80,12 @@ export function FleetMap({ apiKey, side, trackedVehicleIds, isMainMap }: FleetMa
             mapId={isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID}
             colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
         >
-          <MapControl side={side} trackedVehicleIds={trackedVehicleIds} isMainMap={isMainMap} />
+          <MapControl 
+            side={side} 
+            miniMapId={miniMapId} 
+            manualVehicleIds={manualVehicleIds}
+            isMainMap={isMainMap} 
+          />
         </Map>
         {(side || isTrackingView || isFocusMode) && (
           <div className="absolute top-4 right-4 z-10 flex gap-2">
@@ -88,7 +96,7 @@ export function FleetMap({ apiKey, side, trackedVehicleIds, isMainMap }: FleetMa
             )}
             {isTrackingView && (
               <div className="bg-primary/90 backdrop-blur-md px-3 py-1.5 rounded-full border shadow-lg text-xs font-bold uppercase tracking-widest text-white">
-                RADAR: {trackedVehicles.length}
+                RADAR: {unitCount}
               </div>
             )}
             {isFocusMode && (

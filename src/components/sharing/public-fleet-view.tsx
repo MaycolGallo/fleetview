@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useMemo } from 'react';
@@ -27,7 +28,6 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
   const { state } = useFleetState();
   const { vehicles } = state;
 
-  // Use synchronous rendering logic for token decoding
   const { payload, isExpired } = useMemo(() => {
     try {
       const decoded = JSON.parse(atob(token)) as SharePayload;
@@ -55,7 +55,7 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
           </div>
           <h1 className="text-xl font-bold">Enlace Expirado</h1>
           <p className="text-muted-foreground text-sm">
-            Este enlace de rastreo ha expirado o no es válido. Por favor, solicita uno nuevo al administrador de la flota.
+            Este enlace de rastreo ha expirado o no es válido.
           </p>
         </div>
       </div>
@@ -69,7 +69,7 @@ export function PublicFleetView({ apiKey, token }: PublicFleetViewProps) {
       <main className="absolute inset-0 z-0">
         <FleetMap 
           apiKey={apiKey} 
-          trackedVehicleIds={payload.ids} 
+          manualVehicleIds={payload.ids} 
           isMainMap={false} 
         />
       </main>

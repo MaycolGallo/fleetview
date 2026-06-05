@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -21,9 +22,6 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
 
   const showOverviewAsMini = !!focusedMiniMapId;
   const activeMiniMaps = miniMaps.filter(m => visibleMiniMapIds.includes(m.id) && m.id !== focusedMiniMapId);
-
-  // We keep the container mounted so AnimatePresence can handle the exit of the LAST item.
-  // The grid direction flex-col-reverse with flex-wrap-reverse ensures we fill from bottom-right up to 4 per column.
 
   return (
     <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-4 pointer-events-none h-[80vh] overflow-visible">
@@ -76,7 +74,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
             }}
             className="pointer-events-auto relative flex-grow shrink-0 min-h-[calc(20vh-16px)] max-h-[calc(40vh-16px)] w-96 border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/10"
           >
-            <FleetMap apiKey={apiKey} trackedVehicleIds={map.vehicleIds} isMainMap={false} />
+            <FleetMap apiKey={apiKey} miniMapId={map.id} isMainMap={false} />
             
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
               <div className="bg-primary px-1.5 py-0.5 rounded shadow-sm text-[8px] font-bold text-white uppercase flex items-center gap-1">

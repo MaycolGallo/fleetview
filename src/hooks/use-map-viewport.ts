@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useEffect } from 'react';
-import type { MapViewport, FleetState } from '@/lib/types';
+import type { FleetState } from '@/lib/types';
 import type { FleetAction } from '@/context/fleet-reducer';
 
 interface UseMapViewportProps {
@@ -10,12 +11,13 @@ interface UseMapViewportProps {
   dispatch: React.Dispatch<FleetAction>;
   isMainMap?: boolean;
   side?: 'ida' | 'vuelta';
-  trackedVehicleIds?: number[];
+  miniMapId?: string;
+  manualVehicleIds?: number[];
 }
 
 /**
  * Custom hook to handle map viewport synchronization (pan, zoom, fitBounds).
- * Encapsulates complex logic for Focus Mode, Split View, and Route Tracking.
+ * Encapsulates logic for Focus Mode, Split View, and Radar Tracking.
  */
 export function useMapViewport({
   map,
@@ -23,7 +25,8 @@ export function useMapViewport({
   dispatch,
   isMainMap,
   side,
-  trackedVehicleIds
+  miniMapId,
+  manualVehicleIds
 }: UseMapViewportProps) {
   const {
     mapViewport,
@@ -39,29 +42,35 @@ export function useMapViewport({
   useEffect(() => {
     if (!map) return;
 
-    // 1. Radar Group Focus or Tracking logic
-    const isFocusMain = isMainMap && focusedMiniMapId;
-    const trackingIds = isFocusMain 
-      ? miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds 
-      : trackedVehicleIds;
+    // 1. Determine the set of vehicles this map instance is tracking
+    let targetVehicleIds: number[] = [];
+    
+    if (manualVehicleIds) {
+      targetVehicleIds = manualVehicleIds;
+    } else if (miniMapId) {
+      targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
+    } else if (isMainMap && focusedMiniMapId) {
+      targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
+    }
 
-    if (trackingIds && trackingIds.length > 0) {
-      const trackedVehicles = vehicles.filter(v => trackingIds.includes(v.id_vehiculo));
-      if (trackedVehicles.length === 1) {
-        const v = trackedVehicles[0];
+    // 2. If tracking specific units, keep them in view
+    if (targetVehicleIds.length > 0) {
+      const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
+      if (trackedUnits.length === 1) {
+        const v = trackedUnits[0];
         map.panTo({ lat: v.lat, lng: v.lng });
         if (map.getZoom()! < 16) map.setZoom(16);
-      } else if (trackedVehicles.length > 1) {
+      } else if (trackedUnits.length > 1) {
         const bounds = new google.maps.LatLngBounds();
-        trackedVehicles.forEach(v => bounds.extend({ lat: v.lat, lng: v.lng }));
+        trackedUnits.forEach(v => bounds.extend({ lat: v.lat, lng: v.lng }));
         map.fitBounds(bounds, 50);
       }
       return;
     }
 
-    // 2. Default Initial / Idle Viewports
+    // 3. Handle default Viewport Actions (State-driven)
     if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
-      // Special case: Fit bounds to Master Route in Split View
+      // Fit bounds to Master Route in Split View
       if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && masterRoute.length > 0) {
         try {
           const halfIndex = Math.ceil(masterRoute.length / 2);
@@ -76,7 +85,7 @@ export function useMapViewport({
       return;
     }
 
-    // 3. Explicit Viewport Actions (State-driven)
+    // 4. Explicit Viewport Mutations
     try {
       switch (mapViewport.type) {
         case 'pan_to_vehicle': {
@@ -93,9 +102,7 @@ export function useMapViewport({
           if (points && points.length > 0) {
             if (points.length === 1) {
               map.panTo(points[0]);
-              if (map.getZoom()! < 15) {
-                  map.setZoom(15);
-              }
+              if (map.getZoom()! < 15) map.setZoom(15);
             } else {
               const bounds = new google.maps.LatLngBounds();
               points.forEach(point => bounds.extend(point));
@@ -106,10 +113,9 @@ export function useMapViewport({
         }
       }
     } catch (e) {
-      console.warn('Map interaction failed', e);
+      console.warn('Map viewport update failed', e);
     }
     
-    // Reset viewport state to 'idle'
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
 
   }, [
@@ -121,7 +127,8 @@ export function useMapViewport({
     isIncidenciasSheetOpen, 
     masterRoute, 
     side, 
-    trackedVehicleIds, 
+    miniMapId,
+    manualVehicleIds,
     vehicles, 
     focusedMiniMapId, 
     isMainMap, 
