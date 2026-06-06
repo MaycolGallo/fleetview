@@ -9,7 +9,6 @@ import L from 'leaflet';
 
 /**
  * Unified Map Instance Type
- * Represents the native instances provided by our three tactical engines.
  */
 type MapInstance = google.maps.Map | L.Map | MapRef | null | undefined;
 
@@ -22,10 +21,6 @@ interface UseMapViewportProps {
   manualVehicleIds?: number[];
 }
 
-/**
- * Unified custom hook to handle map viewport synchronization (pan, zoom, fitBounds).
- * Consumes FleetContext directly to manage tactical movement across Google, Leaflet, and Mapbox.
- */
 export function useMapViewport({
   map,
   provider,
@@ -45,10 +40,10 @@ export function useMapViewport({
     isSplitView,
     historyVehicle,
     isIncidenciasSheetOpen,
-    despachoBaseRoute
+    despachoBaseRoute,
+    selectedVehicle
   } = state;
 
-  // Determine which vehicles belong to THIS map instance context
   const mapVehicles = useMemo(
     () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
     [state, miniMapId, manualVehicleIds, isMainMap]
@@ -57,63 +52,70 @@ export function useMapViewport({
   useEffect(() => {
     if (!map) return;
 
-    // 1. Determine high-priority targets for this instance (Radar Lock / Focus Mode)
+    // 1. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.) - HIGHEST TACTICAL PRIORITY
+    // This allows manual intervention even when a radar lock is active.
+    if (mapViewport.type !== 'idle' && mapViewport.type !== 'initial') {
+      switch (mapViewport.type) {
+        case 'pan_to_vehicle':
+          const isIncident = mapViewport.vehicleId === -1;
+          const isVehicleRelevant = mapVehicles.some(v => v.id_vehiculo === mapViewport.vehicleId);
+
+          if ((isIncident && isMainMap) || isVehicleRelevant) {
+              performPan(map, provider, mapViewport.payload, 16);
+          }
+          break;
+        case 'fit_bounds':
+        case 'fit_route':
+          if (mapViewport.payload.length > 0) {
+            performFitBounds(map, provider, mapViewport.payload, 100);
+          }
+          break;
+      }
+      dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
+      return; 
+    }
+
+    // 2. Identify active tracking targets for this instance
     let targetVehicleIds: number[] = [];
     if (manualVehicleIds) targetVehicleIds = manualVehicleIds;
     else if (miniMapId) targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
     else if (isMainMap && focusedMiniMapId) targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
 
-    // 2. Continuous Tracking Logic (for small radar windows or focus modes)
+    // 3. Continuous Tracking Logic (Radar Lock / Focus Mode framing)
     if (targetVehicleIds.length > 0 && !isIncidenciasSheetOpen && !historyVehicle) {
       const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
       const points = trackedUnits.map(v => ({ lat: v.lat, lng: v.lng }));
       
-      if (trackedUnits.length === 1) {
+      // PRIORITY FOCUS: If one of the tracked units is specifically selected, "Sticky Pan" to it.
+      // Otherwise, frame the whole group.
+      const selectedTrackedUnit = selectedVehicle && targetVehicleIds.includes(selectedVehicle.id_vehiculo) 
+        ? vehicles.find(v => v.id_vehiculo === selectedVehicle.id_vehiculo)
+        : null;
+
+      if (selectedTrackedUnit) {
+        performPan(map, provider, { lat: selectedTrackedUnit.lat, lng: selectedTrackedUnit.lng }, 16);
+      } else if (points.length === 1) {
         performPan(map, provider, points[0], 16);
-      } else if (trackedUnits.length > 1) {
+      } else if (points.length > 1) {
         performFitBounds(map, provider, points, 50);
       }
       return;
     }
 
-    // 3. Handle Default Viewport Actions (State-driven initial framing)
+    // 4. Default Viewport Framing (Split View / Operational Baselines)
     if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
       if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && despachoBaseRoute.length > 0) {
         const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
         const points = side === 'ida' ? despachoBaseRoute.slice(0, halfIndex) : despachoBaseRoute.slice(halfIndex - 1);
         performFitBounds(map, provider, points, 50);
       }
-      return;
     }
 
-    // 4. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.)
-    switch (mapViewport.type) {
-      case 'pan_to_vehicle':
-        // TACTICAL LOGIC: 
-        // - Allow panning if this is an incident (-1) and we are on the main map.
-        // - Allow panning if the vehicle is currently relevant to this map's specific view list.
-        const isIncident = mapViewport.vehicleId === -1;
-        const isVehicleRelevant = mapVehicles.some(v => v.id_vehiculo === mapViewport.vehicleId);
-
-        if ((isIncident && isMainMap) || isVehicleRelevant) {
-            performPan(map, provider, mapViewport.payload, 15);
-        }
-        break;
-      case 'fit_bounds':
-      case 'fit_route':
-        if (mapViewport.payload.length > 0) {
-          performFitBounds(map, provider, mapViewport.payload, 100);
-        }
-        break;
-    }
-
-    dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
-
-  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds, mapVehicles]);
+  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds, mapVehicles, selectedVehicle]);
 }
 
 /**
- * Native Panning Wrappers with Type Guarding
+ * Native Panning Wrappers
  */
 function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number) {
   if (!map) return;
@@ -124,12 +126,12 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
   } else if (provider === 'leaflet' && 'setView' in map) {
     (map as L.Map).setView([point.lat, point.lng], zoom, { animate: true });
   } else if (provider === 'mapbox' && 'flyTo' in map) {
-    (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 1000 });
+    (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 800 });
   }
 }
 
 /**
- * Native FitBounds Wrappers with Type Guarding
+ * Native FitBounds Wrappers
  */
 function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat: number, lng: number }[], padding: number) {
   if (!map || points.length === 0) return;
@@ -144,8 +146,6 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
   } else if (provider === 'mapbox' && 'fitBounds' in map) {
     const initialLng = points[0].lng;
     const initialLat = points[0].lat;
-    
-    // Explicit tuple casting for LngLatBoundsLike compatibility
     const bounds: [[number, number], [number, number]] = points.reduce((acc, p) => {
       return [
         [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],

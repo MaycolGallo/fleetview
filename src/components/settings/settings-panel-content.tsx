@@ -1,10 +1,10 @@
 
 'use client';
 
-import React from 'react';
+import React, { useTransition } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
-import { Layers, Columns2, Rows2, Sun, Moon, Trash2, Map as MapIcon, Globe, Navigation, Satellite, Route } from 'lucide-react';
+import { Layers, Columns2, Rows2, Sun, Moon, Trash2, Map as MapIcon, Globe, Navigation, Satellite, Route, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
@@ -18,17 +18,22 @@ export function SettingsPanelContent() {
   const dispatch = useFleetDispatch();
   const { isSplitView, splitDirection, isMapDark, miniMaps, mapProvider, mapType, showTraffic } = state;
   
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const handleProviderChange = (val: string) => {
     const provider = val as MapProvider;
-    dispatch({ type: 'SET_MAP_PROVIDER', payload: provider });
     
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('map', provider);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    // Wrap heavy map context switching in a transition to keep UI responsive
+    startTransition(() => {
+      dispatch({ type: 'SET_MAP_PROVIDER', payload: provider });
+      
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('map', provider);
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    });
   };
 
   const toggleDarkMode = () => {
@@ -45,21 +50,24 @@ export function SettingsPanelContent() {
     <div className="p-4 flex flex-col gap-6 animate-in fade-in duration-300">
       {/* Map Provider Selection */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary/10 rounded-lg">
-                <Globe className="w-5 h-5 text-primary" />
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                    <Globe className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Proveedor de Mapas</h3>
             </div>
-            <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Proveedor de Mapas</h3>
+            {isPending && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
         </div>
         <Tabs value={mapProvider} onValueChange={handleProviderChange}>
             <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="google" className="gap-2 text-[10px]">
+                <TabsTrigger value="google" className="gap-2 text-[10px]" disabled={isPending}>
                     <MapIcon className="w-3 h-3" /> Google
                 </TabsTrigger>
-                <TabsTrigger value="leaflet" className="gap-2 text-[10px]">
+                <TabsTrigger value="leaflet" className="gap-2 text-[10px]" disabled={isPending}>
                     <Layers className="w-3 h-3" /> Leaflet
                 </TabsTrigger>
-                <TabsTrigger value="mapbox" className="gap-2 text-[10px]">
+                <TabsTrigger value="mapbox" className="gap-2 text-[10px]" disabled={isPending}>
                     <Navigation className="w-3 h-3" /> Mapbox
                 </TabsTrigger>
             </TabsList>
