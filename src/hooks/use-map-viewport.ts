@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useEffect, useMemo, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import type { MapProvider } from '@/lib/types';
 import type { MapRef } from 'react-map-gl';
@@ -22,7 +23,7 @@ interface UseMapViewportProps {
 
 /**
  * Unified Viewport Hook: Handles framing, panning, and tactical resize logic.
- * Optimized to prevent "grey area" flickers by decoupling layout triggers from telemetry data.
+ * Optimized to handle Framer Motion transitions by triggering staggered resize events.
  */
 export function useMapViewport({
   map,
@@ -34,7 +35,6 @@ export function useMapViewport({
 }: UseMapViewportProps) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const lastViewportType = useRef<string | null>(null);
 
   const {
     mapViewport,
@@ -45,13 +45,12 @@ export function useMapViewport({
     splitDirection,
     historyVehicle,
     isIncidenciasSheetOpen,
-    despachoBaseRoute,
-    selectedVehicle
+    despachoBaseRoute
   } = state;
 
   /**
    * Tactical Resize Management.
-   * Ensures tiles are loaded and layout is recalculated when container visibility toggles.
+   * Forces recalculation during and after motion transitions.
    */
   const triggerResize = useCallback(() => {
     if (!map) return;
@@ -77,17 +76,17 @@ export function useMapViewport({
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
   }, [map, mapViewport.type, provider, isMainMap, dispatch]);
 
-  // Handle Tactical Layout Changes (Split View, Mini-maps, History)
-  // Decoupled from live 'vehicles' array to prevent constant re-rendering
+  // Handle Tactical Layout Changes (Split View, Orientation, Scaling)
   useEffect(() => {
     if (!map) return;
 
-    // Execute resize cycles to capture layout changes
+    // staggered resize bursts to capture various stages of CSS/Motion layout shifts
     triggerResize();
-    const t1 = setTimeout(triggerResize, 100);
-    const t2 = setTimeout(triggerResize, 600);
+    const t1 = setTimeout(triggerResize, 50);
+    const t2 = setTimeout(triggerResize, 300); // mid-animation
+    const t3 = setTimeout(triggerResize, 600); // end-animation
 
-    // Mini-Map / Radar Lock Framing
+    // Framing Logic
     let targetVehicleIds: number[] = [];
     if (manualVehicleIds) targetVehicleIds = manualVehicleIds;
     else if (miniMapId) targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
@@ -103,14 +102,17 @@ export function useMapViewport({
         performFitBounds(map, provider, points, 50);
       }
     } 
-    // Default Operational Framing (Split View / Baselines)
     else if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && despachoBaseRoute.length > 0) {
       const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
       const points = side === 'ida' ? despachoBaseRoute.slice(0, halfIndex) : despachoBaseRoute.slice(halfIndex - 1);
       performFitBounds(map, provider, points, 50);
     }
 
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    return () => { 
+        clearTimeout(t1); 
+        clearTimeout(t2); 
+        clearTimeout(t3);
+    };
   }, [
     map, 
     provider, 
@@ -123,7 +125,6 @@ export function useMapViewport({
     !!historyVehicle, 
     isIncidenciasSheetOpen,
     triggerResize
-    // Note: We deliberately exclude 'vehicles' and 'state' to prevent data-driven flickering
   ]);
 }
 
@@ -147,9 +148,7 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
     map.fitBounds(bounds, padding);
   } else if (provider === 'leaflet' && 'fitBounds' in map) {
     const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
-    if ((map as L.Map).getContainer().clientWidth > 0) {
-      (map as L.Map).fitBounds(bounds, { padding: [padding, padding] });
-    }
+    (map as L.Map).fitBounds(bounds, { padding: [padding, padding] });
   } else if (provider === 'mapbox' && 'fitBounds' in map) {
     const initialLng = points[0].lng;
     const initialLat = points[0].lat;

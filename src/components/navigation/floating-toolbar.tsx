@@ -16,7 +16,6 @@ export function FloatingToolbar() {
   const { activePanel } = state;
 
   const togglePanel = (panel: PanelType) => {
-    // UI toggles are high-priority: we avoid useTransition here to ensure instant feedback
     dispatch({ type: 'SET_ACTIVE_PANEL', payload: activePanel === panel ? null : panel });
   };
 

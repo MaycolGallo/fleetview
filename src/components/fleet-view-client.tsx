@@ -32,18 +32,20 @@ const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid'
 
 /**
  * Tactical Map Wrapper: Memoized to prevent unmounting and tile cache loss.
- * We use opacity/z-index instead of visibility:hidden to keep the WebGL engine "hot".
+ * Uses Framer Motion for cross-fade transitions while keeping engines "hot".
  */
 const TacticalMapLayer = memo(({ 
     provider, 
     apiKey, 
     side, 
-    isMainMap = true 
+    isMainMap = true,
+    isVisible = true
 }: { 
     provider: string, 
     apiKey: string, 
     side?: 'ida' | 'vuelta', 
-    isMainMap?: boolean 
+    isMainMap?: boolean,
+    isVisible?: boolean
 }) => {
     let mapInstance;
     if (provider === 'leaflet') {
@@ -55,27 +57,47 @@ const TacticalMapLayer = memo(({
     }
 
     return (
-      <div className="relative w-full h-full overflow-hidden bg-muted/10">
-        {mapInstance}
-        {side && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[20] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-700">
-             <div className={cn(
-                "px-6 py-2 rounded-xl border shadow-2xl backdrop-blur-md flex items-center gap-3 transition-all",
-                side === 'ida' 
-                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400" 
-                  : "bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400"
-              )}>
-                <div className={cn(
-                  "w-2 h-2 rounded-full animate-pulse",
-                  side === 'ida' ? "bg-emerald-500" : "bg-sky-500"
-                )} />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] font-sans" style={{ fontFeatureSettings: '"cv11", "ss01"' }}>
-                  Trayecto: {side}
-                </span>
-             </div>
-          </div>
+      <motion.div 
+        initial={false}
+        animate={{ 
+            opacity: isVisible ? 1 : 0,
+            scale: isVisible ? 1 : 1.05,
+            zIndex: isVisible ? 10 : 0
+        }}
+        transition={{ duration: 0.5, ease: "easeInOut" }}
+        className={cn(
+            "absolute inset-0 w-full h-full overflow-hidden bg-background",
+            !isVisible && "pointer-events-none"
         )}
-      </div>
+      >
+        {mapInstance}
+        
+        <AnimatePresence>
+            {isVisible && side && (
+              <motion.div 
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: -20, opacity: 0 }}
+                className="absolute top-4 left-1/2 -translate-x-1/2 z-[20] pointer-events-none"
+              >
+                 <div className={cn(
+                    "px-6 py-2 rounded-xl border shadow-2xl backdrop-blur-md flex items-center gap-3 transition-all",
+                    side === 'ida' 
+                      ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400" 
+                      : "bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400"
+                  )}>
+                    <div className={cn(
+                      "w-2 h-2 rounded-full animate-pulse",
+                      side === 'ida' ? "bg-emerald-500" : "bg-sky-500"
+                    )} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] font-sans" style={{ fontFeatureSettings: '"cv11", "ss01"' }}>
+                      Trayecto: {side}
+                    </span>
+                 </div>
+              </motion.div>
+            )}
+        </AnimatePresence>
+      </motion.div>
     );
 });
 TacticalMapLayer.displayName = 'TacticalMapLayer';
@@ -112,39 +134,47 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
     dispatch({ type: 'SET_ACTIVE_PANEL', payload: null });
   };
 
+  // Determine which layer is active to drive animations
+  const showSplitWorkspace = isSplitView && !isDetailView && !isMobile;
+
   return (
     <APIProvider apiKey={apiKey}>
         <div className="relative h-screen w-screen overflow-hidden bg-background">
         <main className="absolute inset-0 z-0">
             <div className="h-full w-full relative">
-                {/* Persistent Layer 1: Standard Workspace (History/Incidents/Fleet) */}
-                <div 
-                    className={cn(
-                        "absolute inset-0 transition-opacity duration-500",
-                        (isSplitView && !isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
-                    )}
-                >
-                    <TacticalMapLayer provider={mapProvider} apiKey={apiKey} isMainMap={true} />
-                </div>
+                {/* Layer 1: Standard Workspace (History/Incidents/Fleet) */}
+                <TacticalMapLayer 
+                    provider={mapProvider} 
+                    apiKey={apiKey} 
+                    isMainMap={true} 
+                    isVisible={!showSplitWorkspace} 
+                />
 
-                {/* Persistent Layer 2: Tactical Split Workspace (Always "Hot" in background) */}
+                {/* Layer 2: Tactical Split Workspace (IDA/VUELTA) */}
                 {!isMobile && (
-                    <div 
+                    <motion.div 
+                        initial={false}
+                        animate={{ 
+                            opacity: showSplitWorkspace ? 1 : 0,
+                            scale: showSplitWorkspace ? 1 : 0.98,
+                            zIndex: showSplitWorkspace ? 15 : 0
+                        }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
                         className={cn(
-                            "absolute inset-0 transition-opacity duration-500",
-                            (!isSplitView || isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
+                            "absolute inset-0 w-full h-full",
+                            !showSplitWorkspace && "pointer-events-none"
                         )}
                     >
                         <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
-                            <ResizablePanel defaultSize={50}>
-                                <TacticalMapLayer provider={mapProvider} apiKey={apiKey} side="ida" isMainMap={true} />
+                            <ResizablePanel defaultSize={50} className="relative">
+                                <TacticalMapLayer provider={mapProvider} apiKey={apiKey} side="ida" isMainMap={true} isVisible={showSplitWorkspace} />
                             </ResizablePanel>
-                            <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-                            <ResizablePanel defaultSize={50}>
-                                <TacticalMapLayer provider={mapProvider} apiKey={apiKey} side="vuelta" isMainMap={true} />
+                            <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors z-50" />
+                            <ResizablePanel defaultSize={50} className="relative">
+                                <TacticalMapLayer provider={mapProvider} apiKey={apiKey} side="vuelta" isMainMap={true} isVisible={showSplitWorkspace} />
                             </ResizablePanel>
                         </ResizablePanelGroup>
-                    </div>
+                    </motion.div>
                 )}
             </div>
         </main>
@@ -188,7 +218,6 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
             >
             <DrawerContent className="h-[85vh]">
                 <DrawerHandle />
-                {/* Accessibility: Visual headers for screen readers */}
                 <div className="sr-only">
                     <DrawerHeader>
                         <DrawerTitle>Panel de Control Mobile</DrawerTitle>
