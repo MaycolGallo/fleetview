@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useTransition } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Radar, Plus, Trash2, X, Car, Eye, EyeOff, Lock } from 'lucide-react';
+import { Radar, Plus, Trash2, X, Car, Eye, EyeOff, Lock, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -17,6 +17,7 @@ export function MiniMapManagementContent() {
   const { miniMaps, vehicles, visibleMiniMapIds } = state;
 
   const [newMapName, setNewMapName] = useState('');
+  const [isPending, startTransition] = useTransition();
 
   const vehicleOptions = useMemo(() => {
     return vehicles.map(v => ({
@@ -28,39 +29,56 @@ export function MiniMapManagementContent() {
 
   const handleCreateMap = () => {
     if (!newMapName.trim()) return;
-    dispatch({ 
-        type: 'CREATE_MINIMAP_MANUAL', 
-        payload: { name: newMapName.trim() } 
+    startTransition(() => {
+        dispatch({ 
+            type: 'CREATE_MINIMAP_MANUAL', 
+            payload: { name: newMapName.trim() } 
+        });
     });
     setNewMapName('');
   };
 
   const handleUpdateVehicles = (mapId: string, vehicleIds: string[]) => {
-    dispatch({
-        type: 'UPDATE_MINIMAP_VEHICLES',
-        payload: { miniMapId: mapId, vehicleIds: vehicleIds.map(Number) }
+    startTransition(() => {
+        dispatch({
+            type: 'UPDATE_MINIMAP_VEHICLES',
+            payload: { miniMapId: mapId, vehicleIds: vehicleIds.map(Number) }
+        });
     });
   };
 
   const handleRemoveMap = (id: string) => {
-    dispatch({ type: 'REMOVE_MINIMAP', payload: id });
+    startTransition(() => {
+        dispatch({ type: 'REMOVE_MINIMAP', payload: id });
+    });
   };
 
   const handleToggleVisibility = (id: string) => {
-    dispatch({ type: 'TOGGLE_MINIMAP_VISIBILITY', payload: id });
+    startTransition(() => {
+        dispatch({ type: 'TOGGLE_MINIMAP_VISIBILITY', payload: id });
+    });
+  };
+
+  const handleClearAll = () => {
+    startTransition(() => {
+        dispatch({ type: 'CLEAR_ALL_MINIMAPS' });
+    });
   };
 
   return (
     <div className="h-full flex flex-col animate-in fade-in duration-300">
       <div className="p-4 border-b space-y-4 bg-muted/20">
-        <div className="flex items-center gap-2">
-            <Radar className="w-5 h-5 text-primary" />
-            <div>
-                <h2 className="text-lg font-bold leading-tight">Radar Groups</h2>
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
-                    {miniMaps.length} Grupos Disponibles / {visibleMiniMapIds.length} Activos
-                </p>
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+                <Radar className="w-5 h-5 text-primary" />
+                <div>
+                    <h2 className="text-lg font-bold leading-tight">Radar Groups</h2>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">
+                        {miniMaps.length} Grupos Disponibles / {visibleMiniMapIds.length} Activos
+                    </p>
+                </div>
             </div>
+            {isPending && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
         </div>
 
         <div className="flex gap-2">
@@ -70,8 +88,9 @@ export function MiniMapManagementContent() {
                 onChange={(e) => setNewMapName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleCreateMap()}
                 className="h-10 text-sm"
+                disabled={isPending}
             />
-            <Button size="icon" onClick={handleCreateMap} disabled={!newMapName.trim()}>
+            <Button size="icon" onClick={handleCreateMap} disabled={!newMapName.trim() || isPending}>
                 <Plus className="w-4 h-4" />
             </Button>
         </div>
@@ -127,6 +146,7 @@ export function MiniMapManagementContent() {
                                                         isVisible ? "text-primary bg-primary/10" : "text-muted-foreground"
                                                     )}
                                                     onClick={() => handleToggleVisibility(map.id)}
+                                                    disabled={isPending}
                                                 >
                                                     {isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                                                 </Button>
@@ -141,6 +161,7 @@ export function MiniMapManagementContent() {
                                                     size="icon" 
                                                     className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
                                                     onClick={() => handleRemoveMap(map.id)}
+                                                    disabled={isPending}
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
@@ -163,6 +184,7 @@ export function MiniMapManagementContent() {
                                         placeholder="Seleccionar vehículos..."
                                         className="bg-background shadow-none"
                                         maxCount={2}
+                                        disabled={isPending}
                                     />
                                 ) : (
                                     <div className="flex flex-wrap gap-1 mt-1 p-2 bg-muted/30 rounded-lg border border-dashed">
@@ -198,6 +220,7 @@ export function MiniMapManagementContent() {
                                                         const nextIds = map.vehicleIds.filter(vid => vid !== id);
                                                         handleUpdateVehicles(map.id, nextIds.map(String));
                                                     }}
+                                                    disabled={isPending}
                                                 >
                                                     <X className="w-2 h-2" />
                                                 </Button>
@@ -218,7 +241,8 @@ export function MiniMapManagementContent() {
               <Button 
                 variant="outline" 
                 className="w-full h-10 text-xs font-bold gap-2 text-destructive border-destructive/20 hover:bg-destructive/5"
-                onClick={() => dispatch({ type: 'CLEAR_ALL_MINIMAPS' })}
+                onClick={handleClearAll}
+                disabled={isPending}
               >
                   <Trash2 className="w-4 h-4" />
                   LIMPIAR TODO

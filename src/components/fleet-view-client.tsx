@@ -1,13 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useTransition } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Drawer, DrawerContent, DrawerHandle } from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { FloatingToolbar } from './navigation/floating-toolbar';
 import { DetailHeader } from './navigation/detail-header';
@@ -47,6 +47,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   const dispatch = useFleetDispatch();
   const isMobile = useIsMobile();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const { 
     isSplitView, 
@@ -83,6 +84,12 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
        return <FleetMapboxMap {...props} />;
     }
     return <FleetMap apiKey={apiKey} {...props} />;
+  };
+
+  const closeMobilePanel = () => {
+    startTransition(() => {
+        dispatch({ type: 'SET_ACTIVE_PANEL', payload: null });
+    });
   };
 
   /**
@@ -168,11 +175,26 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
       {isDetailView && <DetailHeader apiKey={apiKey} />}
 
       {isMobile && !isDetailView && activePanel && (
-        <Drawer open={!!activePanel} onOpenChange={(open) => !open && dispatch({ type: 'SET_ACTIVE_PANEL', payload: null })} modal={false}>
+        <Drawer 
+            open={!!activePanel} 
+            onOpenChange={(open) => !open && closeMobilePanel()} 
+            modal={false}
+        >
           <DrawerContent className="h-[85vh]">
             <DrawerHandle />
+            {/* Visual Hidden Title/Description for Accessibility (Radix-UI Requirement) */}
+            <div className="sr-only">
+                <DrawerHeader>
+                    <DrawerTitle>Panel de Control Mobile</DrawerTitle>
+                    <DrawerDescription>
+                        {activePanel === 'vehicles' ? 'Lista de Unidades' : 
+                         activePanel === 'minimaps' ? 'Gestión de Radares' : 
+                         activePanel === 'stats' ? 'Inteligencia de Flota' : 'Configuración de Compartir'}
+                    </DrawerDescription>
+                </DrawerHeader>
+            </div>
             <div className="flex-1 overflow-hidden">
-              {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => dispatch({ type: 'SET_ACTIVE_PANEL', payload: null })} />}
+              {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => closeMobilePanel()} />}
               {activePanel === 'minimaps' && <MiniMapManagementContent />}
               {activePanel === 'stats' && <FleetAnalyticsContent />}
               {activePanel === 'share' && <SharePanelContent />}

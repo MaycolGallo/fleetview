@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useTransition } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
-import { Radar, X, ArrowLeftRight, RefreshCw } from 'lucide-react';
+import { Radar, X, ArrowLeftRight, RefreshCw, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '../ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
@@ -28,6 +28,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
   const { miniMaps, visibleMiniMapIds, focusedMiniMapId, mapProvider } = state;
+  const [isPending, startTransition] = useTransition();
 
   const showOverviewAsMini = !!focusedMiniMapId;
   const activeMiniMaps = miniMaps.filter(m => visibleMiniMapIds.includes(m.id) && m.id !== focusedMiniMapId);
@@ -40,6 +41,24 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
       return <FleetMapboxMap {...props} />;
     }
     return <FleetMap apiKey={apiKey} {...props} />;
+  };
+
+  const handleUnfocus = () => {
+    startTransition(() => {
+        dispatch({ type: 'UNFOCUS_MINIMAP' });
+    });
+  };
+
+  const handleFocus = (id: string) => {
+    startTransition(() => {
+        dispatch({ type: 'FOCUS_MINIMAP', payload: id });
+    });
+  };
+
+  const handleToggle = (id: string) => {
+    startTransition(() => {
+        dispatch({ type: 'TOGGLE_MINIMAP_VISIBILITY', payload: id });
+    });
   };
 
   return (
@@ -68,9 +87,10 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                     variant="secondary" 
                     size="icon" 
                     className="absolute top-2 right-2 h-7 w-7 z-20 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
-                    onClick={() => dispatch({ type: 'UNFOCUS_MINIMAP' })}
+                    onClick={handleUnfocus}
+                    disabled={isPending}
                     >
-                    <RefreshCw className="h-4 w-4 text-primary" />
+                    {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-4 w-4 text-primary" />}
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left">Restaurar General</TooltipContent>
@@ -113,9 +133,10 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                         variant="secondary" 
                         size="icon" 
                         className="h-7 w-7 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
-                        onClick={() => dispatch({ type: 'FOCUS_MINIMAP', payload: map.id })}
+                        onClick={() => handleFocus(map.id)}
+                        disabled={isPending}
                     >
-                        <ArrowLeftRight className="h-4 w-4 text-primary" />
+                        {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowLeftRight className="h-4 w-4 text-primary" />}
                     </Button>
                     </TooltipTrigger>
                     <TooltipContent side="left">Intercambiar con Mapa Principal</TooltipContent>
@@ -127,7 +148,8 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                         variant="secondary" 
                         size="icon" 
                         className="h-7 w-7 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
-                        onClick={() => dispatch({ type: 'TOGGLE_MINIMAP_VISIBILITY', payload: map.id })}
+                        onClick={() => handleToggle(map.id)}
+                        disabled={isPending}
                     >
                         <X className="h-4 w-4" />
                     </Button>

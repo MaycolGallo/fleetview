@@ -4,9 +4,9 @@ import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerD
 import { useIsMobile } from '@/hooks/use-is-mobile';
 import { useFleetState, useFleetDispatch, selectRouteSummary } from '@/context/fleet-context';
 import { RouteHistoryContent } from './route-history-content';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Clock, Milestone, ParkingSquare, Pause, Play, Truck, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, Milestone, ParkingSquare, Pause, Play, Truck, RefreshCw, Loader2 } from 'lucide-react';
 import { Card, CardHeader } from '@/components/ui/card';
 import type { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
@@ -35,6 +35,8 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   const { isRouteSheetOpen, routeGroups, historyVehicle, by_estado, selectedSegmentIndex, lastUpdatedRoute } = state;
   const { totalDistance, totalDuration } = useMemo(() => selectRouteSummary(state), [state]);
   
+  const [isPending, startTransition] = useTransition();
+
   // Custom hook for route playback logic
   const { isRoutePlaying } = useRoutePlayback();
 
@@ -56,26 +58,32 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
   }, [state.routeGroups]);
 
   const handleOpenChange = useCallback((isOpen: boolean) => {
-    if (!isOpen) {
-        dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' }); 
-        dispatch({ type: 'BACK_TO_FLEET' });
-    }
+    startTransition(() => {
+        if (!isOpen) {
+            dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' }); 
+            dispatch({ type: 'BACK_TO_FLEET' });
+        }
+    });
   }, [dispatch]);
 
    const handlePlayPause = useCallback(() => {
-    if (isRoutePlaying) dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
-    else dispatch({ type: 'START_ROUTE_PLAYBACK' });
+    startTransition(() => {
+        if (isRoutePlaying) dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
+        else dispatch({ type: 'START_ROUTE_PLAYBACK' });
+    });
   }, [dispatch, isRoutePlaying]);
 
   const handleSegmentNav = (dir: 'next' | 'prev') => {
-    const maxIndex = routeGroups.length - 1;
-    if (dir === 'next') {
-      const next = selectedSegmentIndex === null ? 0 : Math.min(maxIndex, selectedSegmentIndex + 1);
-      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: next });
-    } else {
-      const prev = selectedSegmentIndex === null ? maxIndex : Math.max(0, selectedSegmentIndex - 1);
-      dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: prev });
-    }
+    startTransition(() => {
+        const maxIndex = routeGroups.length - 1;
+        if (dir === 'next') {
+          const next = selectedSegmentIndex === null ? 0 : Math.min(maxIndex, selectedSegmentIndex + 1);
+          dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: next });
+        } else {
+          const prev = selectedSegmentIndex === null ? maxIndex : Math.max(0, selectedSegmentIndex - 1);
+          dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: prev });
+        }
+    });
   };
   
   if (isMobile) {
@@ -109,9 +117,32 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                             </DrawerDescription>
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
-                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleSegmentNav('prev')} disabled={selectedSegmentIndex === 0}><ChevronLeft className="w-5 h-5" /></Button>
-                            <Button size="icon" onClick={handlePlayPause} className="h-10 w-10"><Play className="w-5 h-5" /></Button>
-                            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => handleSegmentNav('next')} disabled={selectedSegmentIndex === routeGroups.length - 1}><ChevronRight className="w-5 h-5" /></Button>
+                            <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-9 w-9" 
+                                onClick={() => handleSegmentNav('prev')} 
+                                disabled={selectedSegmentIndex === 0 || isPending}
+                            >
+                                <ChevronLeft className="w-5 h-5" />
+                            </Button>
+                            <Button 
+                                size="icon" 
+                                onClick={handlePlayPause} 
+                                className="h-10 w-10"
+                                disabled={isPending}
+                            >
+                                {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-9 w-9" 
+                                onClick={() => handleSegmentNav('next')} 
+                                disabled={selectedSegmentIndex === routeGroups.length - 1 || isPending}
+                            >
+                                <ChevronRight className="w-5 h-5" />
+                            </Button>
                         </div>
                     </div>
                 </DrawerHeader>
@@ -154,8 +185,13 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                                 <p className='text-xl font-semibold text-primary'>{totalDistance.toFixed(2)}km</p>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Button size="icon" onClick={handlePlayPause} className="flex-shrink-0 shadow-md h-12 w-12 rounded-full">
-                                    {isRoutePlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                                <Button 
+                                    size="icon" 
+                                    onClick={handlePlayPause} 
+                                    className="flex-shrink-0 shadow-md h-12 w-12 rounded-full"
+                                    disabled={isPending}
+                                >
+                                    {isPending ? <Loader2 className="w-6 h-6 animate-spin" /> : (isRoutePlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />)}
                                 </Button>
                             </div>
                         </div>
