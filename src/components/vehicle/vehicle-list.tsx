@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Vehicle } from "@/lib/types";
@@ -16,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface VehicleListProps {
     onVehicleSelect: () => void;
@@ -44,9 +46,13 @@ const VehicleListItem = React.memo(({
     };
 
     return (
-        <div
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
             className={cn(
-                "p-3 rounded-lg border text-left transition-all duration-300 cursor-pointer flex gap-3 animate-in fade-in slide-in-from-bottom-2 relative",
+                "p-3 rounded-lg border text-left transition-all duration-300 cursor-pointer flex gap-3 relative",
                 isSelected ? "bg-accent border-primary ring-2 ring-primary/20 scale-[1.01] z-10" : "bg-card hover:bg-accent border-border hover:border-primary/50"
             )}
             onClick={() => onSelect(vehicle)}
@@ -151,7 +157,7 @@ const VehicleListItem = React.memo(({
                     </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     )
 });
 VehicleListItem.displayName = 'VehicleListItem';
@@ -178,16 +184,17 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
     
     return (
         <ScrollArea className="h-full">
-            <div className="flex flex-col gap-2 p-3">
-                {listVehicles.map((vehicle, index) => (
-                    <div key={vehicle.id_vehiculo} style={{ animationDelay: `${index * 30}ms` }}>
+            <div className="flex flex-col gap-2 p-3 overflow-hidden">
+                <AnimatePresence mode="popLayout" initial={false}>
+                    {listVehicles.map((vehicle) => (
                         <VehicleListItem
+                            key={vehicle.id_vehiculo}
                             vehicle={vehicle}
                             onSelect={handleSelect}
                             isPending={isPending}
                         />
-                    </div>
-                ))}
+                    ))}
+                </AnimatePresence>
             </div>
         </ScrollArea>
     )
