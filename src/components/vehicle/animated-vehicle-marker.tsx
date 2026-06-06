@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Vehicle } from '@/lib/types';
@@ -105,7 +104,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false 
             position={animatedPosition}
             onCloseClick={() => dispatch({ type: 'PAN_TO_VEHICLE', payload: null })}
             headerDisabled={true}
-            pixelOffset={{ width: 0, height: -80 } as google.maps.Size}
+            pixelOffset={{ width: 0, height: -100 } as google.maps.Size}
         >
             <VehicleMapPopupContent vehicle={vehicle} />
         </InfoWindow>

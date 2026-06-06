@@ -95,8 +95,8 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   /**
    * Tactical Strategy: Persistent Map Layers
    * We render both the single map and the split map structures but control their visibility.
-   * This "caches" the map instances in the DOM, preventing heavy re-initialization 
-   * when switching between History mode, Split view, and standard Dashboard view.
+   * Removing 'invisible' ensures the map engines (Leaflet/Google) don't pause tile rendering,
+   * which prevents the "grey grid" issue when switching back to a hidden layer.
    */
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
@@ -113,8 +113,8 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
             {/* Layer 1: Standard / Detail Workspace (History, Incidents, Single Map) */}
             <div 
               className={cn(
-                "absolute inset-0 transition-opacity duration-500",
-                (isSplitView && !isDetailView) ? "opacity-0 pointer-events-none invisible" : "opacity-100 z-10"
+                "absolute inset-0 transition-all duration-500",
+                (isSplitView && !isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
               )}
             >
               {renderMapInstance({ isMainMap: true })}
@@ -124,8 +124,8 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
             {!isMobile && (
               <div 
                 className={cn(
-                  "absolute inset-0 transition-opacity duration-500",
-                  (!isSplitView || isDetailView) ? "opacity-0 pointer-events-none invisible" : "opacity-100 z-10"
+                  "absolute inset-0 transition-all duration-500",
+                  (!isSplitView || isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
                 )}
               >
                 <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
@@ -182,7 +182,6 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
         >
           <DrawerContent className="h-[85vh]">
             <DrawerHandle />
-            {/* Visual Hidden Title/Description for Accessibility (Radix-UI Requirement) */}
             <div className="sr-only">
                 <DrawerHeader>
                     <DrawerTitle>Panel de Control Mobile</DrawerTitle>

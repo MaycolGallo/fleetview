@@ -1,13 +1,12 @@
-
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useTransition } from 'react';
 import { useFleetState } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Share2, Clock, Car, Copy, Check, Globe } from 'lucide-react';
+import { Share2, Clock, Car, Copy, Check, Globe, Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +27,7 @@ export function SharePanelContent() {
   const [expiration, setExpiration] = useState(EXPIRATION_OPTIONS[0].value);
   const [generatedLink, setGeneratedLink] = useState('');
   const [hasCopied, setHasCopied] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const vehicleOptions = useMemo(() => {
     return vehicles.map(v => ({
@@ -43,15 +43,17 @@ export function SharePanelContent() {
       return;
     }
 
-    const payload = {
-      ids: selectedIds.map(Number),
-      exp: Date.now() + Number(expiration)
-    };
+    startTransition(() => {
+        const payload = {
+          ids: selectedIds.map(Number),
+          exp: Date.now() + Number(expiration)
+        };
 
-    const token = btoa(JSON.stringify(payload));
-    const url = `${window.location.origin}/?s=${token}`;
-    setGeneratedLink(url);
-    setHasCopied(false);
+        const token = btoa(JSON.stringify(payload));
+        const url = `${window.location.origin}/?s=${token}`;
+        setGeneratedLink(url);
+        setHasCopied(false);
+    });
   };
 
   const copyToClipboard = () => {
@@ -87,6 +89,7 @@ export function SharePanelContent() {
               defaultValue={selectedIds}
               placeholder="Elegir vehículos..."
               className="bg-background"
+              disabled={isPending}
             />
           </div>
 
@@ -94,7 +97,7 @@ export function SharePanelContent() {
             <label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
               <Clock className="w-3 h-3" /> Tiempo de Expiración
             </label>
-            <Select value={expiration} onValueChange={setExpiration}>
+            <Select value={expiration} onValueChange={setExpiration} disabled={isPending}>
               <SelectTrigger className="bg-background">
                 <SelectValue placeholder="Seleccionar tiempo" />
               </SelectTrigger>
@@ -108,8 +111,8 @@ export function SharePanelContent() {
             </Select>
           </div>
 
-          <Button onClick={handleGenerateLink} className="w-full h-12 font-bold gap-2">
-            <Globe className="w-4 h-4" />
+          <Button onClick={handleGenerateLink} className="w-full h-12 font-bold gap-2" disabled={isPending}>
+            {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
             GENERAR ENLACE PÚBLICO
           </Button>
 
