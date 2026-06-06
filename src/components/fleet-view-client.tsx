@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -21,6 +20,7 @@ import { PublicFleetView } from './sharing/public-fleet-view';
 import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 // Robust dynamic imports using default exports for stability
 const FleetMap = dynamic(() => import('./fleet-map'), {
@@ -85,32 +85,53 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
     return <FleetMap apiKey={apiKey} {...props} />;
   };
 
-  const renderMaps = () => {
-    if (!isDetailView && isSplitView) {
-      return (
-        <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
-          <ResizablePanel defaultSize={50}>{renderMapInstance({ side: 'ida', isMainMap: true })}</ResizablePanel>
-          <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-          <ResizablePanel defaultSize={50}>{renderMapInstance({ side: 'vuelta', isMainMap: true })}</ResizablePanel>
-        </ResizablePanelGroup>
-      );
-    }
-    return renderMapInstance({ isMainMap: true });
-  };
-
+  /**
+   * Tactical Strategy: Persistent Map Layers
+   * We render both the single map and the split map structures but control their visibility.
+   * This "caches" the map instances in the DOM, preventing heavy re-initialization 
+   * when switching between History mode, Split view, and standard Dashboard view.
+   */
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
       <main className="absolute inset-0 z-0">
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${mapProvider}-${isSplitView}-${splitDirection}-${isDetailView}`}
+            key={mapProvider}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4, ease: "easeInOut" }}
-            className="h-full w-full"
+            className="h-full w-full relative"
           >
-            {renderMaps()}
+            {/* Layer 1: Standard / Detail Workspace (History, Incidents, Single Map) */}
+            <div 
+              className={cn(
+                "absolute inset-0 transition-opacity duration-500",
+                (isSplitView && !isDetailView) ? "opacity-0 pointer-events-none invisible" : "opacity-100 z-10"
+              )}
+            >
+              {renderMapInstance({ isMainMap: true })}
+            </div>
+
+            {/* Layer 2: Tactical Split Workspace (Ida/Vuelta) */}
+            {!isMobile && (
+              <div 
+                className={cn(
+                  "absolute inset-0 transition-opacity duration-500",
+                  (!isSplitView || isDetailView) ? "opacity-0 pointer-events-none invisible" : "opacity-100 z-10"
+                )}
+              >
+                <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
+                  <ResizablePanel defaultSize={50}>
+                    {renderMapInstance({ side: 'ida', isMainMap: true })}
+                  </ResizablePanel>
+                  <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
+                  <ResizablePanel defaultSize={50}>
+                    {renderMapInstance({ side: 'vuelta', isMainMap: true })}
+                  </ResizablePanel>
+                </ResizablePanelGroup>
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
       </main>
