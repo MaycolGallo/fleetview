@@ -48,7 +48,7 @@ export function useMapViewport({
     despachoBaseRoute
   } = state;
 
-  // Determine which vehicles belong to THIS map instance
+  // Determine which vehicles belong to THIS map instance context
   const mapVehicles = useMemo(
     () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
     [state, miniMapId, manualVehicleIds, isMainMap]
@@ -63,8 +63,8 @@ export function useMapViewport({
     else if (miniMapId) targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
     else if (isMainMap && focusedMiniMapId) targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
 
-    // 2. Continuous Tracking Logic
-    if (targetVehicleIds.length > 0) {
+    // 2. Continuous Tracking Logic (for small radar windows or focus modes)
+    if (targetVehicleIds.length > 0 && !isIncidenciasSheetOpen && !historyVehicle) {
       const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
       const points = trackedUnits.map(v => ({ lat: v.lat, lng: v.lng }));
       
@@ -89,10 +89,13 @@ export function useMapViewport({
     // 4. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.)
     switch (mapViewport.type) {
       case 'pan_to_vehicle':
-        // TACTICAL FIX: Only pan this map instance if the vehicle is relevant to this context.
-        // This prevents the main map from jumping when a mini-map marker is clicked.
-        const isVehicleInThisMap = mapVehicles.some(v => v.id_vehiculo === mapViewport.vehicleId);
-        if (isVehicleInThisMap) {
+        // TACTICAL LOGIC: 
+        // - Allow panning if this is an incident (-1) and we are on the main map.
+        // - Allow panning if the vehicle is currently relevant to this map's specific view list.
+        const isIncident = mapViewport.vehicleId === -1;
+        const isVehicleRelevant = mapVehicles.some(v => v.id_vehiculo === mapViewport.vehicleId);
+
+        if ((isIncident && isMainMap) || isVehicleRelevant) {
             performPan(map, provider, mapViewport.payload, 15);
         }
         break;
