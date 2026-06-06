@@ -37,6 +37,7 @@ export function useMapViewport({
     miniMaps,
     vehicles,
     isSplitView,
+    splitDirection,
     historyVehicle,
     isIncidenciasSheetOpen,
     despachoBaseRoute,
@@ -51,7 +52,20 @@ export function useMapViewport({
   useEffect(() => {
     if (!map) return;
 
-    // 1. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.) - HIGHEST TACTICAL PRIORITY
+    // 1. Tactical Resize Management
+    // When orientation or split mode changes, map engines often need to recalculate internal layouts
+    // to prevent grey spaces (especially Leaflet in horizontal split mode).
+    const resizeTimer = setTimeout(() => {
+      if (provider === 'leaflet' && 'invalidateSize' in map) {
+        (map as L.Map).invalidateSize({ animate: true });
+      } else if (provider === 'mapbox' && 'resize' in map) {
+        (map as MapRef).resize();
+      } else if (provider === 'google') {
+        google.maps.event.trigger(map, 'resize');
+      }
+    }, 450); // Settlement time for CSS transitions
+
+    // 2. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.) - HIGHEST TACTICAL PRIORITY
     if (mapViewport.type !== 'idle' && mapViewport.type !== 'initial') {
       switch (mapViewport.type) {
         case 'pan_to_vehicle':
@@ -72,16 +86,16 @@ export function useMapViewport({
           break;
       }
       dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
-      return; 
+      return () => clearTimeout(resizeTimer); 
     }
 
-    // 2. Identify active tracking targets for this instance
+    // 3. Identify active tracking targets for this instance
     let targetVehicleIds: number[] = [];
     if (manualVehicleIds) targetVehicleIds = manualVehicleIds;
     else if (miniMapId) targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
     else if (isMainMap && focusedMiniMapId) targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
 
-    // 3. Continuous Tracking Logic (Radar Lock / Focus Mode framing)
+    // 4. Continuous Tracking Logic (Radar Lock / Focus Mode framing)
     if (targetVehicleIds.length > 0 && !isIncidenciasSheetOpen && !historyVehicle) {
       const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
       const points = trackedUnits.map(v => ({ lat: v.lat, lng: v.lng }));
@@ -99,10 +113,10 @@ export function useMapViewport({
       } else if (points.length > 1) {
         performFitBounds(map, provider, points, 50);
       }
-      return;
+      return () => clearTimeout(resizeTimer);
     }
 
-    // 4. Default Viewport Framing (Split View / Operational Baselines)
+    // 5. Default Viewport Framing (Split View / Operational Baselines)
     if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
       if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && despachoBaseRoute.length > 0) {
         const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
@@ -111,7 +125,8 @@ export function useMapViewport({
       }
     }
 
-  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds, mapVehicles, selectedVehicle]);
+    return () => clearTimeout(resizeTimer);
+  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds, mapVehicles, selectedVehicle, isSplitView, splitDirection]);
 }
 
 /**
