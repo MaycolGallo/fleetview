@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Drawer,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/drawer';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ArrowLeft, Move, Gauge, Tag, Rss, Clock, Wind, Wifi, BatteryFull } from 'lucide-react';
+import { ArrowLeft, Move, Gauge, Tag, Rss, Clock, Wind, Wifi, BatteryFull, Loader2 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { format, fromUnixTime } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -36,26 +36,32 @@ function VehicleDetailsInternal() {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
   const { selectedVehicle } = state;
+  const [isPending, startTransition] = useTransition();
 
   const handleBack = useCallback(() => {
-    dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
+    startTransition(() => {
+        dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
+    });
   }, [dispatch]);
   
   const handleSimulateMove = useCallback(() => {
     if (!selectedVehicle) return;
-    const updateAction = () => {
-        dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: selectedVehicle.id_vehiculo });
-      };
+    
+    startTransition(() => {
+        const updateAction = () => {
+            dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: selectedVehicle.id_vehiculo });
+        };
 
-      // @ts-ignore
-      if (document.startViewTransition) {
         // @ts-ignore
-        document.startViewTransition(() => {
-          updateAction();
-        });
-      } else {
-        updateAction();
-      }
+        if (document.startViewTransition) {
+            // @ts-ignore
+            document.startViewTransition(() => {
+                updateAction();
+            });
+        } else {
+            updateAction();
+        }
+    });
   }, [dispatch, selectedVehicle]);
 
   if (!selectedVehicle) {
@@ -65,11 +71,14 @@ function VehicleDetailsInternal() {
   return (
     <div className="h-full flex flex-col">
         <div className="p-4 border-b flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBack}>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleBack} disabled={isPending}>
                 <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div>
-                <h2 className="text-lg font-semibold">{selectedVehicle.placa}</h2>
+            <div className="flex-1">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                    {selectedVehicle.placa}
+                    {isPending && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
+                </h2>
                 <div className="text-sm text-muted-foreground">
                     <Badge
                         className="capitalize text-white"
@@ -118,8 +127,9 @@ function VehicleDetailsInternal() {
             </Card>
         </div>
         <div className='p-4 border-t'>
-            <Button onClick={handleSimulateMove} className="w-full">
-                <Move className="mr-2 h-4 w-4" /> Simular Movimiento
+            <Button onClick={handleSimulateMove} className="w-full" disabled={isPending}>
+                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Move className="mr-2 h-4 w-4" />}
+                Simular Movimiento
             </Button>
         </div>
     </div>

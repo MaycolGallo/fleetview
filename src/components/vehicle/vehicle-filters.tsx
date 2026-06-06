@@ -1,10 +1,11 @@
 
 "use client";
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useTransition } from 'react';
 import { useFleetState, useFleetDispatch } from "@/context/fleet-context";
 import type { VehicleStatus } from "@/lib/types";
 import { MultiSelect } from '@/components/ui/multi-select';
+import { Loader2 } from 'lucide-react';
 
 interface VehicleFiltersProps {}
 
@@ -13,8 +14,12 @@ function VehicleFiltersInternal(props: VehicleFiltersProps) {
   const dispatch = useFleetDispatch();
   const { statusFilter, vehicles } = state;
   
+  const [isPending, startTransition] = useTransition();
+
   const onFilterChange = useCallback((filters: string[]) => {
-    dispatch({ type: 'SET_STATUS_FILTER', payload: filters as VehicleStatus[] });
+    startTransition(() => {
+        dispatch({ type: 'SET_STATUS_FILTER', payload: filters as VehicleStatus[] });
+    });
   }, [dispatch]);
 
   const options = useMemo(() => {
@@ -36,14 +41,20 @@ function VehicleFiltersInternal(props: VehicleFiltersProps) {
 
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-2 relative">
       <MultiSelect
         options={options}
         onValueChange={onFilterChange}
         defaultValue={statusFilter}
-        placeholder="Filter by status..."
+        placeholder="Filtrar por estado..."
         className="w-full"
+        disabled={isPending}
       />
+      {isPending && (
+        <div className="absolute right-10 top-1/2 -translate-y-1/2">
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
+        </div>
+      )}
     </div>
   );
 }
