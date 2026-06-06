@@ -1,11 +1,12 @@
+
 'use client';
 
 import type { Vehicle } from '@/lib/types';
-import { AdvancedMarker } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
 import { VehiclePin } from '@/components/vehicle/vehicle-pin';
 import React from 'react';
 import { Gauge } from 'lucide-react';
-import { useFleetState } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { useAnimatedPosition } from '@/hooks/use-animated-position';
 import { VehicleContextMenu } from '@/components/vehicle/vehicle-context-menu';
 import { VehicleMobileContextMenu } from '@/components/vehicle/vehicle-mobile-context-menu';
@@ -13,9 +14,17 @@ import { useVehicleMarkerInteraction } from '@/hooks/use-vehicle-marker-interact
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { VehicleMapPopupContent } from './vehicle-map-popup-content';
 
-function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehicle; index?: number }) {
+interface AnimatedVehicleMarkerProps {
+    vehicle: Vehicle;
+    index?: number;
+    showPopup?: boolean;
+}
+
+function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false }: AnimatedVehicleMarkerProps) {
   const { state } = useFleetState();
+  const dispatch = useFleetDispatch();
   const { selectedVehicle, isRoutePlaying, historyVehicle, playbackAnimationDuration } = state;
   const isSelected = selectedVehicle?.id_vehiculo === vehicle.id_vehiculo;
   const isMobile = useIsMobile();
@@ -52,7 +61,6 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
         onClick={handleLeftClick}
         zIndex={zIndex}
       >
-        {/* motion.div must be internal to the AdvancedMarker so it doesn't break coordinate transforms */}
         <motion.div
             initial={{ y: -40, opacity: 0, scale: 0.5 }}
             animate={{ 
@@ -91,6 +99,16 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0 }: { vehicle: Vehic
           />
         </motion.div>
       </AdvancedMarker>
+
+      {showPopup && isSelected && !historyVehicle && !isMobile && (
+        <InfoWindow
+            position={animatedPosition}
+            onCloseClick={() => dispatch({ type: 'PAN_TO_VEHICLE', payload: null })}
+            headerDisabled={true}
+        >
+            <VehicleMapPopupContent vehicle={vehicle} />
+        </InfoWindow>
+      )}
 
        {contextMenuOpen && !isMobile && (
         <VehicleContextMenu

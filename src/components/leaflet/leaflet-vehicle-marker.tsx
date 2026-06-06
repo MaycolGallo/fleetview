@@ -1,7 +1,8 @@
+
 'use client';
 
 import React, { useMemo, useRef, useEffect } from 'react';
-import { Marker, Tooltip } from 'react-leaflet';
+import { Marker, Tooltip, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import type { Vehicle } from '@/lib/types';
 import { useAnimatedPosition } from '@/hooks/use-animated-position';
@@ -13,13 +14,15 @@ import { useVehicleMarkerInteraction } from '@/hooks/use-vehicle-marker-interact
 import { useIsMobile } from '@/hooks/use-mobile';
 import { VehicleContextMenu } from '@/components/vehicle/vehicle-context-menu';
 import { VehicleMobileContextMenu } from '@/components/vehicle/vehicle-mobile-context-menu';
+import { VehicleMapPopupContent } from '../vehicle/vehicle-map-popup-content';
 
 interface LeafletVehicleMarkerProps {
   vehicle: Vehicle;
   index?: number;
+  showPopup?: boolean;
 }
 
-export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarkerProps) {
+export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: LeafletVehicleMarkerProps) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
   const markerRef = useRef<L.Marker>(null);
@@ -133,6 +136,12 @@ export function LeafletVehicleMarker({ vehicle, index = 0 }: LeafletVehicleMarke
         <Tooltip direction="top" offset={[0, -40]} opacity={0.9}>
           <div className="font-bold text-xs uppercase tracking-wider">{vehicle.placa}</div>
         </Tooltip>
+        
+        {showPopup && isSelected && !historyVehicle && !isMobile && (
+          <Popup offset={[0, -50]} closeButton={false}>
+            <VehicleMapPopupContent vehicle={vehicle} />
+          </Popup>
+        )}
       </Marker>
 
       {/* Render Context Menus based on interaction state */}

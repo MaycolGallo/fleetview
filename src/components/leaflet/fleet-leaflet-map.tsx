@@ -66,7 +66,12 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
         <LeafletRoutePolylines side={side} />
 
         {mapVehicles.map((vehicle, idx) => (
-          <LeafletVehicleMarker key={vehicle.id_vehiculo} vehicle={vehicle} index={idx} />
+          <LeafletVehicleMarker 
+            key={vehicle.id_vehiculo} 
+            vehicle={vehicle} 
+            index={idx} 
+            showPopup={isMainMap && !miniMapId}
+          />
         ))}
       </MapContainer>
     </div>

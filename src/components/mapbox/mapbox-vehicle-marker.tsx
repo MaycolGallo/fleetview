@@ -2,10 +2,10 @@
 'use client';
 
 import React from 'react';
-import { Marker } from 'react-map-gl';
+import { Marker, Popup } from 'react-map-gl';
 import type { Vehicle } from '@/lib/types';
 import { useAnimatedPosition } from '@/hooks/use-animated-position';
-import { useFleetState } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { VehiclePin } from '@/components/vehicle/vehicle-pin';
 import { Gauge } from 'lucide-react';
 import { useVehicleMarkerInteraction } from '@/hooks/use-vehicle-marker-interaction';
@@ -13,14 +13,17 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { VehicleContextMenu } from '@/components/vehicle/vehicle-context-menu';
 import { VehicleMobileContextMenu } from '@/components/vehicle/vehicle-mobile-context-menu';
 import { motion } from 'framer-motion';
+import { VehicleMapPopupContent } from '../vehicle/vehicle-map-popup-content';
 
 interface MapboxVehicleMarkerProps {
   vehicle: Vehicle;
   index?: number;
+  showPopup?: boolean;
 }
 
-export function MapboxVehicleMarker({ vehicle, index = 0 }: MapboxVehicleMarkerProps) {
+export function MapboxVehicleMarker({ vehicle, index = 0, showPopup = false }: MapboxVehicleMarkerProps) {
   const { state } = useFleetState();
+  const dispatch = useFleetDispatch();
   const isMobile = useIsMobile();
   
   const { selectedVehicle, isRoutePlaying, historyVehicle, playbackAnimationDuration } = state;
@@ -91,6 +94,21 @@ export function MapboxVehicleMarker({ vehicle, index = 0 }: MapboxVehicleMarkerP
           />
         </motion.div>
       </Marker>
+
+      {showPopup && isSelected && !historyVehicle && !isMobile && (
+        <Popup
+            latitude={animatedPosition.lat}
+            longitude={animatedPosition.lng}
+            offset={isSelected ? 40 : 25}
+            closeButton={false}
+            onClose={() => dispatch({ type: 'PAN_TO_VEHICLE', payload: null })}
+            anchor="bottom"
+            maxWidth="300px"
+            className="z-[1001] shadow-2xl"
+        >
+            <VehicleMapPopupContent vehicle={vehicle} />
+        </Popup>
+      )}
 
       {contextMenuOpen && !isMobile && (
         <VehicleContextMenu

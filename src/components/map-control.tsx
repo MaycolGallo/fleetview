@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -82,6 +83,7 @@ export function MapControl(props: MapControlProps) {
           key={vehicle.id_vehiculo}
           vehicle={vehicle}
           index={index}
+          showPopup={isMainMap && !miniMapId}
         />
       ))}
 

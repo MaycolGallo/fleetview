@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useRef, useCallback } from 'react';
-import Map, { MapRef, Source, Layer, MapLayerMouseEvent } from 'react-map-gl';
+import Map, { MapRef, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useFleetState, selectMapVehicles } from '@/context/fleet-context';
 import { MapboxVehicleMarker } from './mapbox-vehicle-marker';
@@ -104,7 +104,12 @@ export default function FleetMapboxMap(props: FleetMapboxMapProps) {
         )}
 
         {mapVehicles.map((v, i) => (
-          <MapboxVehicleMarker key={v.id_vehiculo} vehicle={v} index={i} />
+          <MapboxVehicleMarker 
+            key={v.id_vehiculo} 
+            vehicle={v} 
+            index={i} 
+            showPopup={isMainMap && !miniMapId}
+          />
         ))}
       </Map>
     </div>
