@@ -1,7 +1,6 @@
-
 'use client';
 
-import React from 'react';
+import React, { useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw, X, LayoutGrid, Loader2 } from 'lucide-react';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
@@ -12,31 +11,36 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
   const { isIncidenciasSheetOpen, isLoadingRoute, isLoadingIncidencias, focusedMiniMapId, miniMaps, historyVehicle } = state;
+  const [isPending, startTransition] = useTransition();
 
   const handleBack = () => {
-    if (isIncidenciasSheetOpen) {
-      dispatch({ type: 'CLOSE_INCIDENCIAS' });
-    } else if (focusedMiniMapId) {
-      dispatch({ type: 'UNFOCUS_MINIMAP' });
-    } else {
-      dispatch({ type: 'BACK_TO_FLEET' });
-    }
+    startTransition(() => {
+        if (isIncidenciasSheetOpen) {
+          dispatch({ type: 'CLOSE_INCIDENCIAS' });
+        } else if (focusedMiniMapId) {
+          dispatch({ type: 'UNFOCUS_MINIMAP' });
+        } else {
+          dispatch({ type: 'BACK_TO_FLEET' });
+        }
+    });
   };
 
   const handleRefresh = () => {
     if (historyVehicle) {
-      if (isIncidenciasSheetOpen) {
-        dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: historyVehicle });
-      } else {
-        dispatch({
-          type: 'START_ROUTE_LOADING',
-          payload: historyVehicle,
-        });
-      }
+      startTransition(() => {
+          if (isIncidenciasSheetOpen) {
+            dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: historyVehicle });
+          } else {
+            dispatch({
+              type: 'START_ROUTE_LOADING',
+              payload: historyVehicle,
+            });
+          }
+      });
     }
   };
 
-  const isBusy = isLoadingRoute || isLoadingIncidencias;
+  const isBusy = isLoadingRoute || isLoadingIncidencias || isPending;
   const focusedGroup = focusedMiniMapId ? miniMaps.find(m => m.id === focusedMiniMapId) : null;
 
   return (

@@ -3,9 +3,9 @@
 import type { Vehicle } from "@/lib/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useTransition } from "react";
 import { useFleetState, useFleetDispatch } from "@/context/fleet-context";
-import { Car, Clock, Wifi, Battery, Radar, Plus, X } from "lucide-react";
+import { Car, Clock, Wifi, Battery, Radar, Plus, X, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { fromUnixTime, formatDistanceToNow } from 'date-fns';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -24,9 +24,11 @@ interface VehicleListProps {
 const VehicleListItem = React.memo(({
     vehicle,
     onSelect,
+    isPending,
 }: {
     vehicle: Vehicle;
     onSelect: (vehicle: Vehicle) => void;
+    isPending?: boolean;
 }) => {
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
@@ -44,11 +46,17 @@ const VehicleListItem = React.memo(({
     return (
         <div
             className={cn(
-                "p-3 rounded-lg border text-left transition-all duration-300 cursor-pointer flex gap-3 animate-in fade-in slide-in-from-bottom-2",
+                "p-3 rounded-lg border text-left transition-all duration-300 cursor-pointer flex gap-3 animate-in fade-in slide-in-from-bottom-2 relative",
                 isSelected ? "bg-accent border-primary ring-2 ring-primary/20 scale-[1.01] z-10" : "bg-card hover:bg-accent border-border hover:border-primary/50"
             )}
             onClick={() => onSelect(vehicle)}
         >
+            {isSelected && isPending && (
+                <div className="absolute top-2 right-2">
+                    <Loader2 className="w-3 h-3 animate-spin text-primary" />
+                </div>
+            )}
+
             <div className="flex flex-col gap-3 pt-1" onClick={(e) => e.stopPropagation()}>
                 <Checkbox 
                     checked={isVisible} 
@@ -152,10 +160,13 @@ VehicleListItem.displayName = 'VehicleListItem';
 export function VehicleList({ onVehicleSelect }: VehicleListProps) {
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
+    const [isPending, startTransition] = useTransition();
 
     const handleSelect = useCallback((vehicle: Vehicle) => {
-        dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
-        onVehicleSelect();
+        startTransition(() => {
+            dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
+            onVehicleSelect();
+        });
     }, [dispatch, onVehicleSelect]);
 
     const listVehicles = useMemo(() => {
@@ -173,6 +184,7 @@ export function VehicleList({ onVehicleSelect }: VehicleListProps) {
                         <VehicleListItem
                             vehicle={vehicle}
                             onSelect={handleSelect}
+                            isPending={isPending}
                         />
                     </div>
                 ))}
