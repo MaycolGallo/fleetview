@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMap } from '@vis.gl/react-google-maps';
@@ -10,12 +9,9 @@ function catmullRomSpline(
     points: { lat: number; lng: number }[],
     pointsPerSegment: number = 10
 ): { lat: number; lng: number }[] {
-    if (points.length < 2) {
-        return points;
-    }
+    if (points.length < 2) return points;
 
     const result: { lat: number; lng: number }[] = [];
-
     result.push(points[0]);
 
     for (let i = 0; i < points.length - 1; i++) {
@@ -57,16 +53,16 @@ interface RouteSegmentsProps {
 
 /**
  * RouteSegments: Tactical layer for Google Maps.
- * Manages Historical paths, the Despacho Operational baseline, and Incident timelines.
+ * Optimized scenario drawing logic using early returns.
  */
-export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
+export function RouteSegments({ side }: RouteSegmentsProps) {
     const map = useMap();
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
     const { routeGroups, selectedSegmentIndex, incidencias, isIncidenciasSheetOpen, despachoBaseRoute, historyVehicle } = state;
     const polylinesRef = useRef<google.maps.Polyline[]>([]);
   
-    // Determine the segments to display based on whether we are in history or fleet mode
+    // Identify segment context
     const halfIndex = Math.ceil(routeGroups.length / 2);
     const displayGroups = side === 'ida' 
       ? routeGroups.slice(0, halfIndex) 
@@ -74,26 +70,22 @@ export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
         ? routeGroups.slice(halfIndex) 
         : routeGroups;
 
-    // Despacho Base Route logic:
-    // This is the "Planned Tactical Baseline". It only shows in Split View (when side is defined)
-    // to provide a visual reference for outbound vs inbound operational paths.
+    // SCENARIO Logic:
     const despachoRoutePoints = useMemo(() => {
-        if (!side || historyVehicle || isIncidenciasSheetOpen) return null;
-        if (!despachoBaseRoute || despachoBaseRoute.length === 0) return null;
-        
-        const halfMaster = Math.ceil(despachoBaseRoute.length / 2);
-        if (side === 'ida') return despachoBaseRoute.slice(0, halfMaster);
-        if (side === 'vuelta') return despachoBaseRoute.slice(halfMaster - 1);
-        return null;
+        if (!side || historyVehicle || isIncidenciasSheetOpen || !despachoBaseRoute.length) return null;
+        const half = Math.ceil(despachoBaseRoute.length / 2);
+        return side === 'ida' ? despachoBaseRoute.slice(0, half) : despachoBaseRoute.slice(half - 1);
     }, [despachoBaseRoute, historyVehicle, isIncidenciasSheetOpen, side]);
 
     const incidenciasPath = useMemo(() => {
         if (!isIncidenciasSheetOpen || incidencias.length < 2) return null;
-        const sortedIncidencias = [...incidencias].sort((a, b) => a.timestamp - b.timestamp);
-        return sortedIncidencias.map(inc => ({ lat: inc.lat, lng: inc.lng }));
+        return [...incidencias]
+            .sort((a, b) => a.timestamp - b.timestamp)
+            .map(inc => ({ lat: inc.lat, lng: inc.lng }));
     }, [incidencias, isIncidenciasSheetOpen]);
 
     useEffect(() => {
+        // Cleanup existing layers
         polylinesRef.current.forEach(p => {
             google.maps.event.clearInstanceListeners(p);
             p.setMap(null);
@@ -101,77 +93,10 @@ export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
         polylinesRef.current = [];
 
         if (!map) return;
-
         const newPolylines: google.maps.Polyline[] = [];
 
-        // Scenario 1: Draw route groups from Route History
-        if (historyVehicle && !isIncidenciasSheetOpen) {
-            displayGroups.forEach((group, index) => {
-                if (group.id_estado === 6) {
-                    const isSelected = selectedSegmentIndex === index;
-                    const rawPath = group.records.map(r => ({ lat: r.lat, lng: r.lng }));
-                    const path = catmullRomSpline(rawPath);
-                    
-                    const handleSegmentClick = () => {
-                        dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index });
-                    };
-
-                    const polylineColor = isSelected ? '#f59e0b' : group.color;
-
-                    const polyline = new google.maps.Polyline({
-                        path: path,
-                        strokeColor: polylineColor,
-                        strokeOpacity: 0.8,
-                        strokeWeight: isSelected ? 8 : 6,
-                        map: map,
-                        zIndex: isSelected ? 4 : 2,
-                        clickable: true,
-                        icons: [{
-                            icon: {
-                                path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                                scale: 3,
-                                strokeColor: polylineColor,
-                                fillColor: polylineColor,
-                                fillOpacity: 1,
-                            },
-                            offset: '0',
-                            repeat: '75px'
-                        }],
-                    });
-                    
-                    polyline.addListener('click', handleSegmentClick);
-                    newPolylines.push(polyline);
-                }
-            });
-        } 
-        // Scenario 2: Draw Despacho Base Route (Baseline for Split View)
-        else if (despachoRoutePoints) {
-            const path = catmullRomSpline(despachoRoutePoints, 15);
-            const color = side === 'vuelta' ? '#3B82F6' : '#22C55E'; // Blue for return, Green for outbound
-            
-            const polyline = new google.maps.Polyline({
-                path: path,
-                strokeColor: color,
-                strokeOpacity: 0.4,
-                strokeWeight: 5,
-                map: map,
-                zIndex: 1,
-                icons: [{
-                    icon: {
-                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                        scale: 2,
-                        strokeColor: color,
-                        fillColor: color,
-                        fillOpacity: 1,
-                    },
-                    offset: '0',
-                    repeat: '100px'
-                }],
-            });
-            newPolylines.push(polyline);
-        }
-        // Scenario 3: Draw simple path through Incidencias
-        else if (incidenciasPath) {
+        // SCENARIO 1: Incidencias Timeline (Red path)
+        if (incidenciasPath) {
             const polyline = new google.maps.Polyline({
                 path: incidenciasPath,
                 strokeColor: '#EF4444',
@@ -180,21 +105,65 @@ export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
                 map: map,
                 zIndex: 2,
                 icons: [{
-                    icon: {
-                        path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                        scale: 2,
-                        strokeColor: '#EF4444',
-                        fillColor: '#EF4444',
-                        fillOpacity: 1,
-                    },
-                    offset: '0',
-                    repeat: '50px'
+                    icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 2, strokeColor: '#EF4444', fillColor: '#EF4444', fillOpacity: 1 },
+                    offset: '0', repeat: '50px'
                 }],
             });
             newPolylines.push(polyline);
+            polylinesRef.current = newPolylines;
+            return;
         }
 
-        polylinesRef.current = newPolylines;
+        // SCENARIO 2: Historical Path Investigation
+        if (historyVehicle && !isIncidenciasSheetOpen) {
+            displayGroups.forEach((group, index) => {
+                if (group.id_estado !== 6) return;
+                
+                const isSelected = selectedSegmentIndex === index;
+                const path = catmullRomSpline(group.records.map(r => ({ lat: r.lat, lng: r.lng })));
+                const color = isSelected ? '#f59e0b' : group.color;
+
+                const polyline = new google.maps.Polyline({
+                    path,
+                    strokeColor: color,
+                    strokeOpacity: 0.8,
+                    strokeWeight: isSelected ? 8 : 6,
+                    map: map,
+                    zIndex: isSelected ? 4 : 2,
+                    clickable: true,
+                    icons: [{
+                        icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 3, strokeColor: color, fillColor: color, fillOpacity: 1 },
+                        offset: '0', repeat: '75px'
+                    }],
+                });
+                
+                polyline.addListener('click', () => dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index }));
+                newPolylines.push(polyline);
+            });
+            polylinesRef.current = newPolylines;
+            return;
+        } 
+
+        // SCENARIO 3: Despacho Operational Baseline (Standard Reference)
+        if (despachoRoutePoints) {
+            const path = catmullRomSpline(despachoRoutePoints, 15);
+            const color = side === 'vuelta' ? '#3B82F6' : '#22C55E';
+            
+            const polyline = new google.maps.Polyline({
+                path,
+                strokeColor: color,
+                strokeOpacity: 0.4,
+                strokeWeight: 5,
+                map: map,
+                zIndex: 1,
+                icons: [{
+                    icon: { path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 2, strokeColor: color, fillColor: color, fillOpacity: 1 },
+                    offset: '0', repeat: '100px'
+                }],
+            });
+            newPolylines.push(polyline);
+            polylinesRef.current = newPolylines;
+        }
   
         return () => {
             newPolylines.forEach(p => {
@@ -207,21 +176,18 @@ export function RouteSegments({ side, isMainMap }: RouteSegmentsProps) {
     return (
         <>
             {historyVehicle && !isIncidenciasSheetOpen && displayGroups.map((group, index) => {
-                if ((group.id_estado === 4 || group.id_estado === 5) && selectedSegmentIndex === null) {
-                    const firstRecord = group.records[0];
-                    if (!firstRecord) return null;
-                    
-                    return (
-                        <EventMarker
-                            key={`event-${index}`}
-                            position={{ lat: firstRecord.lat, lng: firstRecord.lng }}
-                            duration={group.total_time_seconds / 60}
-                            status={group.id_estado}
-                            color={group.color}
-                        />
-                    );
-                }
-                return null;
+                const isStop = group.id_estado === 4 || group.id_estado === 5;
+                if (!isStop || selectedSegmentIndex !== null || !group.records[0]) return null;
+                
+                return (
+                    <EventMarker
+                        key={`event-${index}`}
+                        position={{ lat: group.records[0].lat, lng: group.records[0].lng }}
+                        duration={group.total_time_seconds / 60}
+                        status={group.id_estado}
+                        color={group.color}
+                    />
+                );
             })}
         </>
     );

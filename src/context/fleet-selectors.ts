@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Vehicle, FleetState } from '@/lib/types';
@@ -14,8 +13,8 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
 };
 
 /**
- * Main logic to determine which vehicles appear on a specific map instance.
- * Handles four distinct tactical scenarios:
+ * Tactical Marker Selection Engine.
+ * Optimized with early returns to handle distinct display scenarios.
  */
 export const selectMapVehicles = (
   state: FleetState, 
@@ -24,17 +23,15 @@ export const selectMapVehicles = (
   isMainMap?: boolean
 ): Vehicle[] => {
   // SCENARIO 1: History Mode
-  // If we are investigating a specific vehicle's past, only that unit (at its historical position) exists.
+  // If investigating a past path, prioritize only the historical marker.
   if (state.historyVehicle) return [state.historyVehicle];
 
-  // SCENARIO 2: Manual Override (Public Shared Links)
-  // If a list of IDs is passed directly (e.g. from a decoded URL token), show exactly those units.
+  // SCENARIO 2: Manual Override (Public Sharing)
   if (manualVehicleIds && manualVehicleIds.length > 0) {
     return state.vehicles.filter(v => manualVehicleIds.includes(v.id_vehiculo));
   }
 
-  // SCENARIO 3: Mini-map / Radar Window
-  // This instance is a small tactical window. It only shows vehicles belonging to its assigned group.
+  // SCENARIO 3: Mini-map / Radar isolation
   if (miniMapId) {
     const group = state.miniMaps.find(m => m.id === miniMapId);
     if (!group) return [];
@@ -42,18 +39,14 @@ export const selectMapVehicles = (
   }
 
   // SCENARIO 4: Main Command Map
-  // This is the big background map. It has two sub-behaviors:
   if (isMainMap) {
-    // 4a. Promotion/Focus Mode: 
-    // If a mini-map group has been "promoted" to the main view, show ONLY that group.
+    // Sub-Scenario A: Focus Mode
     if (state.focusedMiniMapId) {
       const group = state.miniMaps.find(m => m.id === state.focusedMiniMapId);
       return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
     }
     
-    // 4b. General Fleet Overview:
-    // Show the rest of the fleet (respecting filters), but HIDE units already being 
-    // tracked in small radar windows to reduce clutter and avoid marker duplication.
+    // Sub-Scenario B: General Overview (Hide units locked in small windows)
     const filtered = selectFilteredVehicles(state);
     const allTrackedIds = state.allTrackedVehicleIds || [];
     return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
@@ -64,20 +57,19 @@ export const selectMapVehicles = (
 
 export const selectRouteSummary = (state: FleetState) => {
   const { routeGroups } = state;
-  if (!routeGroups || routeGroups.length === 0) {
-    return { totalDistance: 0, totalDuration: 0, totalStops: 0, totalStopTime: 0 };
-  }
+  const initial = { totalDistance: 0, totalDuration: 0, totalStops: 0, totalStopTime: 0 };
+  
+  if (!routeGroups || routeGroups.length === 0) return initial;
 
-  return routeGroups.reduce(
-    (summary, group) => {
+  return routeGroups.reduce((summary, group) => {
       summary.totalDistance += group.total_distance_km;
       summary.totalDuration += group.total_time_seconds / 60;
+      
       if (group.id_estado === 5) {
         summary.totalStops += 1;
         summary.totalStopTime += group.total_time_seconds / 60;
       }
+      
       return summary;
-    },
-    { totalDistance: 0, totalDuration: 0, totalStops: 0, totalStopTime: 0 }
-  );
+    }, initial);
 };

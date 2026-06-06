@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useTransition } from 'react';
@@ -32,30 +31,32 @@ export function VehicleMobileContextMenu({
     const isTracked = state.trackedVehicleIds?.includes(vehicle.id_vehiculo) || false;
     const [isPending, startTransition] = useTransition();
 
+    const handleViewTransition = (callback: () => void) => {
+        // @ts-ignore
+        if (typeof document !== 'undefined' && document.startViewTransition) {
+            // @ts-ignore
+            document.startViewTransition(callback);
+            return;
+        }
+        callback();
+    };
+
     const handleAction = (action: VehicleAction) => {
         startTransition(() => {
-            if (action === 'show-route-history') {
-                if (typeof document !== 'undefined' && (document as any).startViewTransition) {
-                    (document as any).startViewTransition(() => {
-                        dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
-                    });
-                } else {
-                    dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
-                }
-            } else if (action === 'list-incidencias') {
-                 if (typeof document !== 'undefined' && (document as any).startViewTransition) {
-                    (document as any).startViewTransition(() => {
-                        dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: vehicle });
-                    });
-                } else {
-                    dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: vehicle });
-                }
-            } else if (action === 'track-vehicle') {
-                dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: vehicle.id_vehiculo });
-            } else if (action === 'show-details') {
-                dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
-            } else if (action === 'center-map') {
-              dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
+            switch (action) {
+                case 'show-route-history':
+                    handleViewTransition(() => dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle }));
+                    break;
+                case 'list-incidencias':
+                    handleViewTransition(() => dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: vehicle }));
+                    break;
+                case 'track-vehicle':
+                    dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: vehicle.id_vehiculo });
+                    break;
+                case 'show-details':
+                case 'center-map':
+                    dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
+                    break;
             }
         });
         

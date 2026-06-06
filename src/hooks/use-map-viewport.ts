@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useCallback } from 'react';
@@ -23,7 +22,7 @@ interface UseMapViewportProps {
 
 /**
  * Unified Viewport Hook: Handles framing, panning, and tactical resize logic.
- * Optimized to handle Framer Motion transitions by triggering staggered resize events.
+ * Optimized with early returns and clear priority rules.
  */
 export function useMapViewport({
   map,
@@ -42,7 +41,6 @@ export function useMapViewport({
     miniMaps,
     vehicles,
     isSplitView,
-    splitDirection,
     historyVehicle,
     isIncidenciasSheetOpen,
     despachoBaseRoute,
@@ -51,15 +49,21 @@ export function useMapViewport({
 
   /**
    * Tactical Resize Management.
-   * Forces recalculation during and after motion transitions.
    */
   const triggerResize = useCallback(() => {
     if (!map) return;
+    
     if (provider === 'leaflet' && 'invalidateSize' in map) {
       (map as L.Map).invalidateSize({ animate: false, noMove: true });
-    } else if (provider === 'mapbox' && 'resize' in map) {
+      return;
+    } 
+    
+    if (provider === 'mapbox' && 'resize' in map) {
       (map as MapRef).resize();
-    } else if (provider === 'google' && typeof google !== 'undefined' && map instanceof google.maps.Map) {
+      return;
+    } 
+    
+    if (provider === 'google' && typeof google !== 'undefined' && map instanceof google.maps.Map) {
       google.maps.event.trigger(map, 'resize');
     }
   }, [map, provider]);
@@ -77,17 +81,22 @@ export function useMapViewport({
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
   }, [map, mapViewport.type, provider, isMainMap, dispatch]);
 
-  // Handle Tactical Layout Changes (Split View, Orientation, Scaling)
+  // Handle Tactical Layout Framing
   useEffect(() => {
     if (!map) return;
 
-    // staggered resize bursts to capture various stages of CSS/Motion layout shifts
+    // Trigger staggered resize bursts for motion transitions
     triggerResize();
     const t1 = setTimeout(triggerResize, 50);
-    const t2 = setTimeout(triggerResize, 300); // mid-animation
-    const t3 = setTimeout(triggerResize, 600); // end-animation
+    const t2 = setTimeout(triggerResize, 300);
+    const t3 = setTimeout(triggerResize, 600);
 
-    // Framing Logic
+    // PRIORITY 1: Active Investigations (History / Incidents) - Do not auto-refit base layers
+    if (isIncidenciasSheetOpen || historyVehicle) {
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }
+
+    // PRIORITY 2: Identify Targets (Manual > MiniMap > Focus Mode)
     let targetVehicleIds: number[] = [];
     
     if (manualVehicleIds) {
@@ -95,11 +104,11 @@ export function useMapViewport({
     } else if (miniMapId) {
       targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
     } else if (isMainMap && focusedMiniMapId && !selectedVehicle) {
-      // Prioritize focus group bounds ONLY when no specific vehicle is selected
       targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
     }
 
-    if (targetVehicleIds.length > 0 && !isIncidenciasSheetOpen && !historyVehicle) {
+    // PRIORITY 3: Framing Targets
+    if (targetVehicleIds.length > 0) {
       const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
       const points = trackedUnits.map(v => ({ lat: v.lat, lng: v.lng }));
       
@@ -108,10 +117,17 @@ export function useMapViewport({
       } else if (points.length > 1) {
         performFitBounds(map, provider, points, 50);
       }
+      
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
     } 
-    else if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && !selectedVehicle && despachoBaseRoute.length > 0) {
+
+    // PRIORITY 4: Tactical Baseline (Split View IDA/VUELTA)
+    if (isSplitView && !selectedVehicle && despachoBaseRoute.length > 0) {
       const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
-      const points = side === 'ida' ? despachoBaseRoute.slice(0, halfIndex) : despachoBaseRoute.slice(halfIndex - 1);
+      const points = side === 'ida' 
+        ? despachoBaseRoute.slice(0, halfIndex) 
+        : despachoBaseRoute.slice(halfIndex - 1);
+        
       performFitBounds(map, provider, points, 50);
     }
 
@@ -127,45 +143,66 @@ export function useMapViewport({
     side, 
     miniMapId, 
     isSplitView, 
-    splitDirection, 
     focusedMiniMapId, 
     !!historyVehicle, 
     isIncidenciasSheetOpen,
     triggerResize,
-    selectedVehicle // Added selectedVehicle as dependency to refit bounds when cleared
+    selectedVehicle
   ]);
 }
 
 function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number) {
   if (!map) return;
-  if (provider === 'google' && map instanceof google.maps.Map) {
-    map.panTo(point);
-    if (map.getZoom()! < zoom) map.setZoom(zoom);
-  } else if (provider === 'leaflet' && 'setView' in map) {
-    (map as L.Map).setView([point.lat, point.lng], zoom, { animate: true });
-  } else if (provider === 'mapbox' && 'flyTo' in map) {
-    (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 800 });
+  
+  switch (provider) {
+    case 'google':
+      if (map instanceof google.maps.Map) {
+        map.panTo(point);
+        if (map.getZoom()! < zoom) map.setZoom(zoom);
+      }
+      break;
+    case 'leaflet':
+      if ('setView' in map) {
+        (map as L.Map).setView([point.lat, point.lng], zoom, { animate: true });
+      }
+      break;
+    case 'mapbox':
+      if ('flyTo' in map) {
+        (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 800 });
+      }
+      break;
   }
 }
 
 function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat: number, lng: number }[], padding: number) {
   if (!map || points.length === 0) return;
-  if (provider === 'google' && map instanceof google.maps.Map) {
-    const bounds = new google.maps.LatLngBounds();
-    points.forEach(p => bounds.extend(p));
-    map.fitBounds(bounds, padding);
-  } else if (provider === 'leaflet' && 'fitBounds' in map) {
-    const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
-    (map as L.Map).fitBounds(bounds, { padding: [padding, padding] });
-  } else if (provider === 'mapbox' && 'fitBounds' in map) {
-    const initialLng = points[0].lng;
-    const initialLat = points[0].lat;
-    const bounds: [[number, number], [number, number]] = points.reduce((acc, p) => {
-      return [
-        [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],
-        [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
-      ] as [[number, number], [number, number]];
-    }, [[initialLng, initialLat], [initialLng, initialLat]] as [[number, number], [number, number]]);
-    (map as MapRef).fitBounds(bounds, { padding });
+
+  switch (provider) {
+    case 'google':
+      if (map instanceof google.maps.Map) {
+        const bounds = new google.maps.LatLngBounds();
+        points.forEach(p => bounds.extend(p));
+        map.fitBounds(bounds, padding);
+      }
+      break;
+    case 'leaflet':
+      if ('fitBounds' in map) {
+        const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
+        (map as L.Map).fitBounds(bounds, { padding: [padding, padding] });
+      }
+      break;
+    case 'mapbox':
+      if ('fitBounds' in map) {
+        const initialLng = points[0].lng;
+        const initialLat = points[0].lat;
+        const bounds: [[number, number], [number, number]] = points.reduce((acc, p) => {
+          return [
+            [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],
+            [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
+          ] as [[number, number], [number, number]];
+        }, [[initialLng, initialLat], [initialLng, initialLat]] as [[number, number], [number, number]]);
+        (map as MapRef).fitBounds(bounds, { padding });
+      }
+      break;
   }
 }

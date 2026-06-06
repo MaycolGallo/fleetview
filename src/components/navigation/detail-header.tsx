@@ -15,29 +15,34 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
 
   const handleBack = () => {
     startTransition(() => {
+        // PRIORITY 1: Close active incident sheet
         if (isIncidenciasSheetOpen) {
           dispatch({ type: 'CLOSE_INCIDENCIAS' });
-        } else if (focusedMiniMapId) {
+          return;
+        } 
+        
+        // PRIORITY 2: Restoration of general view from focus mode
+        if (focusedMiniMapId) {
           dispatch({ type: 'UNFOCUS_MINIMAP' });
-        } else {
-          dispatch({ type: 'BACK_TO_FLEET' });
-        }
+          return;
+        } 
+        
+        // PRIORITY 3: Return to fleet from history
+        dispatch({ type: 'BACK_TO_FLEET' });
     });
   };
 
   const handleRefresh = () => {
-    if (historyVehicle) {
-      startTransition(() => {
-          if (isIncidenciasSheetOpen) {
-            dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: historyVehicle });
-          } else {
-            dispatch({
-              type: 'START_ROUTE_LOADING',
-              payload: historyVehicle,
-            });
-          }
-      });
-    }
+    if (!historyVehicle) return;
+    
+    startTransition(() => {
+        if (isIncidenciasSheetOpen) {
+          dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: historyVehicle });
+          return;
+        } 
+        
+        dispatch({ type: 'START_ROUTE_LOADING', payload: historyVehicle });
+    });
   };
 
   const isBusy = isLoadingRoute || isLoadingIncidencias || isPending;

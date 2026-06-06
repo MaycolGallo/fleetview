@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
@@ -31,8 +30,8 @@ const FleetMapboxMap = dynamic(() => import('./mapbox/fleet-mapbox-map'), { ssr:
 const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid').then(mod => mod.MiniMapOverlayGrid), { ssr: false });
 
 /**
- * Tactical Map Wrapper: Memoized to prevent unmounting and tile cache loss.
- * Uses Framer Motion for cross-fade transitions while keeping engines "hot".
+ * Tactical Map Wrapper: Memoized to prevent unmounting.
+ * Uses hardware-accelerated switch logic.
  */
 const TacticalMapLayer = memo(({ 
     provider, 
@@ -47,14 +46,16 @@ const TacticalMapLayer = memo(({
     isMainMap?: boolean,
     isVisible?: boolean
 }) => {
-    let mapInstance;
-    if (provider === 'leaflet') {
-       mapInstance = <FleetLeafletMap side={side} isMainMap={isMainMap} />;
-    } else if (provider === 'mapbox') {
-       mapInstance = <FleetMapboxMap side={side} isMainMap={isMainMap} />;
-    } else {
-       mapInstance = <FleetMap apiKey={apiKey} side={side} isMainMap={isMainMap} />;
-    }
+    const mapInstance = useMemo(() => {
+        switch (provider) {
+            case 'leaflet':
+                return <FleetLeafletMap side={side} isMainMap={isMainMap} />;
+            case 'mapbox':
+                return <FleetMapboxMap side={side} isMainMap={isMainMap} />;
+            default:
+                return <FleetMap apiKey={apiKey} side={side} isMainMap={isMainMap} />;
+        }
+    }, [provider, side, isMainMap, apiKey]);
 
     return (
       <motion.div 
