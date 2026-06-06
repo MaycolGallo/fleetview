@@ -77,13 +77,39 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   }
 
   const renderMapInstance = (props: any) => {
+    let map;
     if (mapProvider === 'leaflet') {
-       return <FleetLeafletMap {...props} />;
+       map = <FleetLeafletMap {...props} />;
+    } else if (mapProvider === 'mapbox') {
+       map = <FleetMapboxMap {...props} />;
+    } else {
+       map = <FleetMap apiKey={apiKey} {...props} />;
     }
-    if (mapProvider === 'mapbox') {
-       return <FleetMapboxMap {...props} />;
-    }
-    return <FleetMap apiKey={apiKey} {...props} />;
+
+    // Tactical Overlay Labels for Split View
+    return (
+      <div className="relative w-full h-full overflow-hidden">
+        {map}
+        {props.side && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[20] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-700">
+             <div className={cn(
+                "px-6 py-2 rounded-xl border shadow-2xl backdrop-blur-md flex items-center gap-3 transition-all",
+                props.side === 'ida' 
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400" 
+                  : "bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400"
+              )}>
+                <div className={cn(
+                  "w-2 h-2 rounded-full animate-pulse",
+                  props.side === 'ida' ? "bg-emerald-500" : "bg-sky-500"
+                )} />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] font-sans" style={{ fontFeatureSettings: '"cv11", "ss01"' }}>
+                  Trayecto: {props.side}
+                </span>
+             </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const closeMobilePanel = () => {
