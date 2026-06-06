@@ -69,12 +69,10 @@ export function useMapViewport({
     if (mapViewport.type !== 'idle' && mapViewport.type !== 'initial') {
       switch (mapViewport.type) {
         case 'pan_to_vehicle':
-          const isIncident = mapViewport.vehicleId === -1;
-          const isVehicleRelevant = mapVehicles.some(v => v.id_vehiculo === mapViewport.vehicleId);
-
-          // TACTICAL RULE: Only the Main Map (Standard or Focused) responds to explicit pan clicks.
-          // This ensures overlay mini-maps remain as stable "Radar" observers.
-          if ((isIncident && isMainMap) || (isVehicleRelevant && isMainMap)) {
+          // TACTICAL RULE: The Main Map (Standard or Focused) responds to explicit pan clicks 
+          // for ANY vehicle in the fleet, even if it's currently being tracked in an overlay.
+          // This ensures that clicking a vehicle in the list ALWAYS pans the main view.
+          if (isMainMap) {
               performPan(map, provider, mapViewport.payload, 16);
           }
           break;
