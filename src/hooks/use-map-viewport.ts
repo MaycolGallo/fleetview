@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import type { MapProvider } from '@/lib/types';
 import type { MapRef } from 'react-map-gl';
@@ -45,7 +45,8 @@ export function useMapViewport({
     splitDirection,
     historyVehicle,
     isIncidenciasSheetOpen,
-    despachoBaseRoute
+    despachoBaseRoute,
+    selectedVehicle
   } = state;
 
   /**
@@ -88,9 +89,15 @@ export function useMapViewport({
 
     // Framing Logic
     let targetVehicleIds: number[] = [];
-    if (manualVehicleIds) targetVehicleIds = manualVehicleIds;
-    else if (miniMapId) targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
-    else if (isMainMap && focusedMiniMapId) targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
+    
+    if (manualVehicleIds) {
+      targetVehicleIds = manualVehicleIds;
+    } else if (miniMapId) {
+      targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
+    } else if (isMainMap && focusedMiniMapId && !selectedVehicle) {
+      // Prioritize focus group bounds ONLY when no specific vehicle is selected
+      targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
+    }
 
     if (targetVehicleIds.length > 0 && !isIncidenciasSheetOpen && !historyVehicle) {
       const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
@@ -102,7 +109,7 @@ export function useMapViewport({
         performFitBounds(map, provider, points, 50);
       }
     } 
-    else if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && despachoBaseRoute.length > 0) {
+    else if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && !selectedVehicle && despachoBaseRoute.length > 0) {
       const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
       const points = side === 'ida' ? despachoBaseRoute.slice(0, halfIndex) : despachoBaseRoute.slice(halfIndex - 1);
       performFitBounds(map, provider, points, 50);
@@ -124,7 +131,8 @@ export function useMapViewport({
     focusedMiniMapId, 
     !!historyVehicle, 
     isIncidenciasSheetOpen,
-    triggerResize
+    triggerResize,
+    selectedVehicle // Added selectedVehicle as dependency to refit bounds when cleared
   ]);
 }
 

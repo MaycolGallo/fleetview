@@ -1,3 +1,4 @@
+
 'use client';
 
 /**
@@ -22,6 +23,7 @@ export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
   const handleResetBounds = (e: React.MouseEvent) => {
     e.stopPropagation();
     startTransition(() => {
+        // Reset selection which triggers the viewport hook to refit focused group bounds
         dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
     });
   };
