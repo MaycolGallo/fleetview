@@ -104,7 +104,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false 
             position={animatedPosition}
             onCloseClick={() => dispatch({ type: 'PAN_TO_VEHICLE', payload: null })}
             headerDisabled={true}
-            pixelOffset={{ width: 0, height: -45 } as google.maps.Size}
+            pixelOffset={{ width: 0, height: -60 } as google.maps.Size}
         >
             <VehicleMapPopupContent vehicle={vehicle} />
         </InfoWindow>

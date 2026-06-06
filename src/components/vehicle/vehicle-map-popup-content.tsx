@@ -26,7 +26,10 @@ export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
   };
 
   return (
-    <div className="p-1 min-w-[240px] space-y-3 antialiased relative font-sans">
+    <div 
+      className="p-1 min-w-[240px] space-y-3 antialiased relative font-sans"
+      style={{ fontFeatureSettings: '"cv11", "ss01"' }}
+    >
       {/* Tactical Reset Button: Only visible when investigating a unit in Focus Mode */}
       {focusedMiniMapId && (
         <Button 
