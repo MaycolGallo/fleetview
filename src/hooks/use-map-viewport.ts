@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useEffect } from 'react';
-import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
+import { useEffect, useMemo } from 'react';
+import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fleet-context';
 import type { MapProvider } from '@/lib/types';
 import type { MapRef } from 'react-map-gl';
 import L from 'leaflet';
@@ -48,16 +48,22 @@ export function useMapViewport({
     despachoBaseRoute
   } = state;
 
+  // Determine which vehicles belong to THIS map instance
+  const mapVehicles = useMemo(
+    () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
+    [state, miniMapId, manualVehicleIds, isMainMap]
+  );
+
   useEffect(() => {
     if (!map) return;
 
-    // 1. Determine targets for this instance
+    // 1. Determine high-priority targets for this instance (Radar Lock / Focus Mode)
     let targetVehicleIds: number[] = [];
     if (manualVehicleIds) targetVehicleIds = manualVehicleIds;
     else if (miniMapId) targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
     else if (isMainMap && focusedMiniMapId) targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
 
-    // 2. High-Priority Tracking (Radar Lock / Focus Mode)
+    // 2. Continuous Tracking Logic
     if (targetVehicleIds.length > 0) {
       const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
       const points = trackedUnits.map(v => ({ lat: v.lat, lng: v.lng }));
@@ -70,7 +76,7 @@ export function useMapViewport({
       return;
     }
 
-    // 3. Handle Default Viewport Actions (State-driven)
+    // 3. Handle Default Viewport Actions (State-driven initial framing)
     if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
       if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && despachoBaseRoute.length > 0) {
         const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
@@ -83,7 +89,12 @@ export function useMapViewport({
     // 4. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.)
     switch (mapViewport.type) {
       case 'pan_to_vehicle':
-        performPan(map, provider, mapViewport.payload, 15);
+        // TACTICAL FIX: Only pan this map instance if the vehicle is relevant to this context.
+        // This prevents the main map from jumping when a mini-map marker is clicked.
+        const isVehicleInThisMap = mapVehicles.some(v => v.id_vehiculo === mapViewport.vehicleId);
+        if (isVehicleInThisMap) {
+            performPan(map, provider, mapViewport.payload, 15);
+        }
         break;
       case 'fit_bounds':
       case 'fit_route':
@@ -95,7 +106,7 @@ export function useMapViewport({
 
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
 
-  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds]);
+  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds, mapVehicles]);
 }
 
 /**
@@ -131,7 +142,7 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
     const initialLng = points[0].lng;
     const initialLat = points[0].lat;
     
-    // Type-safe tuple for Mapbox fitBounds
+    // Explicit tuple casting for LngLatBoundsLike compatibility
     const bounds: [[number, number], [number, number]] = points.reduce((acc, p) => {
       return [
         [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],

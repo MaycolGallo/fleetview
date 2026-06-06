@@ -140,7 +140,6 @@ const handleVehicleActions = (state: FleetState, action: FleetAction): FleetStat
         return {
             ...state,
             selectedVehicle: action.payload,
-            // Explicitly do NOT change mapViewport here to avoid jumping main map when clicking markers
         };
     }
     case 'PAN_TO_VEHICLE': {
@@ -148,7 +147,11 @@ const handleVehicleActions = (state: FleetState, action: FleetAction): FleetStat
       return {
         ...state,
         selectedVehicle: action.payload,
-        mapViewport: { type: 'pan_to_vehicle', payload: { lat: action.payload.lat, lng: action.payload.lng } }
+        mapViewport: { 
+            type: 'pan_to_vehicle', 
+            payload: { lat: action.payload.lat, lng: action.payload.lng },
+            vehicleId: action.payload.id_vehiculo
+        }
       };
     }
     case 'TOGGLE_VEHICLE_VISIBILITY': {
@@ -203,7 +206,7 @@ const handleRouteActions = (state: FleetState, action: FleetAction): FleetState 
       const segmentToSelect = routeGroups[segmentIndex];
       if (!segmentToSelect?.records?.length) return state;
       const lastRecord = segmentToSelect.records[segmentToSelect.records.length - 1];
-      return { ...state, selectedSegmentIndex: segmentIndex, historyVehicle: { ...historyVehicle, lat: lastRecord.lat, lng: lastRecord.lng, id_estado: segmentToSelect.id_estado, velocidad: String(Math.round(segmentToSelect.avg_velocidad)), rumbo: lastRecord.rumbo || historyVehicle.rumbo, statusName: segmentToSelect.description, statusColor: segmentToSelect.color || historyVehicle.statusColor }, mapViewport: segmentToSelect.id_estado === 6 ? { type: 'fit_bounds', payload: segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng })) } : { type: 'pan_to_vehicle', payload: { lat: lastRecord.lat, lng: lastRecord.lng } } };
+      return { ...state, selectedSegmentIndex: segmentIndex, historyVehicle: { ...historyVehicle, lat: lastRecord.lat, lng: lastRecord.lng, id_estado: segmentToSelect.id_estado, velocidad: String(Math.round(segmentToSelect.avg_velocidad)), rumbo: lastRecord.rumbo || historyVehicle.rumbo, statusName: segmentToSelect.description, statusColor: segmentToSelect.color || historyVehicle.statusColor }, mapViewport: segmentToSelect.id_estado === 6 ? { type: 'fit_bounds', payload: segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng })) } : { type: 'pan_to_vehicle', payload: { lat: lastRecord.lat, lng: lastRecord.lng }, vehicleId: historyVehicle.id_vehiculo } };
     }
     case 'BACK_TO_FLEET': {
         const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
@@ -256,7 +259,7 @@ const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetStat
     }
     case 'ADD_VEHICLE_TO_MINIMAP': {
       if (!isUserGroup(action.payload.miniMapId)) return state;
-      const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleId])) } : m);
+      const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleIds])) } : m);
       return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
     case 'REMOVE_VEHICLE_FROM_MINIMAP': {
@@ -305,7 +308,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'SELECT_INCIDENCIA': {
       if (action.payload === null) return { ...state, selectedIncidenciaId: null };
       const inc = state.incidencias.find(i => i.id === action.payload);
-      return { ...state, selectedIncidenciaId: action.payload, mapViewport: inc ? { type: 'pan_to_vehicle', payload: { lat: inc.lat, lng: inc.lng } } : state.mapViewport };
+      return { ...state, selectedIncidenciaId: action.payload, mapViewport: inc ? { type: 'pan_to_vehicle', payload: { lat: inc.lat, lng: inc.lng }, vehicleId: -1 } : state.mapViewport };
     }
     case 'CLOSE_INCIDENCIAS': return { ...state, historyVehicle: null, incidencias: [], isIncidenciasSheetOpen: false, isLoadingIncidencias: false, isLoadingRoute: false, selectedIncidenciaId: null, isSplitView: state.wasSplitViewBeforeRoute, mapViewport: { type: 'fit_bounds', payload: state.vehicles.map(v => ({ lat: v.lat, lng: v.lng })) } };
     case 'ADD_NOTIFICATION': return { ...state, notifications: [action.payload, ...state.notifications].slice(0, 50) };

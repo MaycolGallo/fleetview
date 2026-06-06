@@ -127,7 +127,7 @@ export interface VHistorial {
 export type MapViewport =
   | { type: 'initial' }
   | { type: 'idle' }
-  | { type: 'pan_to_vehicle'; payload: { lat: number; lng: number } }
+  | { type: 'pan_to_vehicle'; payload: { lat: number; lng: number }; vehicleId: number }
   | { type: 'fit_bounds'; payload: { lat: number; lng: number }[] }
   | { type: 'fit_route'; payload: { lat: number; lng: number }[] };
 
