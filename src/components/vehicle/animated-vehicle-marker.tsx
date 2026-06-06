@@ -11,7 +11,6 @@ import { VehicleContextMenu } from '@/components/vehicle/vehicle-context-menu';
 import { VehicleMobileContextMenu } from '@/components/vehicle/vehicle-mobile-context-menu';
 import { useVehicleMarkerInteraction } from '@/hooks/use-vehicle-marker-interaction';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { VehicleMapPopupContent } from './vehicle-map-popup-content';
 
@@ -28,7 +27,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false 
   const isSelected = selectedVehicle?.id_vehiculo === vehicle.id_vehiculo;
   const isMobile = useIsMobile();
 
-  // Tactical Anchor Ref for InfoWindow alignment
+  // Unified Anchor Ref for InfoWindow alignment
   const [markerRef, marker] = useAdvancedMarkerRef();
 
   const {
@@ -103,12 +102,13 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false 
         </motion.div>
       </AdvancedMarker>
 
+      {/* InfoWindow: Native Anchor + High Offset to prevent overlap with pins/arrows */}
       {showPopup && isSelected && !historyVehicle && !isMobile && (
         <InfoWindow
             anchor={marker}
             onCloseClick={() => dispatch({ type: 'PAN_TO_VEHICLE', payload: null })}
             headerDisabled={true}
-            pixelOffset={[0, -10] as any} // Small tactical clearance above the anchor's height
+            pixelOffset={[0, -110] as any} 
         >
             <VehicleMapPopupContent vehicle={vehicle} />
         </InfoWindow>

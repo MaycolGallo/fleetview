@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useCallback } from 'react';
-import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fleet-context';
+import { useEffect, useMemo, useCallback, useRef } from 'react';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import type { MapProvider } from '@/lib/types';
 import type { MapRef } from 'react-map-gl';
 import L from 'leaflet';
@@ -20,6 +20,10 @@ interface UseMapViewportProps {
   manualVehicleIds?: number[];
 }
 
+/**
+ * Unified Viewport Hook: Handles framing, panning, and tactical resize logic.
+ * Optimized to prevent "grey area" flickers by decoupling layout triggers from telemetry data.
+ */
 export function useMapViewport({
   map,
   provider,
@@ -30,6 +34,7 @@ export function useMapViewport({
 }: UseMapViewportProps) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
+  const lastViewportType = useRef<string | null>(null);
 
   const {
     mapViewport,
@@ -41,14 +46,8 @@ export function useMapViewport({
     historyVehicle,
     isIncidenciasSheetOpen,
     despachoBaseRoute,
-    selectedVehicle,
-    activePanel
+    selectedVehicle
   } = state;
-
-  const mapVehicles = useMemo(
-    () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
-    [state, miniMapId, manualVehicleIds, isMainMap]
-  );
 
   /**
    * Tactical Resize Management.
@@ -60,40 +59,35 @@ export function useMapViewport({
       (map as L.Map).invalidateSize({ animate: false, noMove: true });
     } else if (provider === 'mapbox' && 'resize' in map) {
       (map as MapRef).resize();
-    } else if (provider === 'google' && typeof google !== 'undefined') {
+    } else if (provider === 'google' && typeof google !== 'undefined' && map instanceof google.maps.Map) {
       google.maps.event.trigger(map, 'resize');
     }
   }, [map, provider]);
 
+  // Handle Explicit Viewport Actions (Pan to Vehicle, Fit Route)
+  useEffect(() => {
+    if (!map || mapViewport.type === 'idle' || mapViewport.type === 'initial') return;
+
+    if (mapViewport.type === 'pan_to_vehicle' && isMainMap) {
+      performPan(map, provider, mapViewport.payload, 16);
+    } else if ((mapViewport.type === 'fit_bounds' || mapViewport.type === 'fit_route') && mapViewport.payload.length > 0) {
+      performFitBounds(map, provider, mapViewport.payload, 100);
+    }
+    
+    dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
+  }, [map, mapViewport.type, provider, isMainMap, dispatch]);
+
+  // Handle Tactical Layout Changes (Split View, Mini-maps, History)
+  // Decoupled from live 'vehicles' array to prevent constant re-rendering
   useEffect(() => {
     if (!map) return;
 
-    // Execute multiple resize cycles to capture settling animations/layout changes
+    // Execute resize cycles to capture layout changes
     triggerResize();
     const t1 = setTimeout(triggerResize, 100);
-    const t2 = setTimeout(triggerResize, 500);
+    const t2 = setTimeout(triggerResize, 600);
 
-    // 2. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.)
-    if (mapViewport.type !== 'idle' && mapViewport.type !== 'initial') {
-      switch (mapViewport.type) {
-        case 'pan_to_vehicle':
-          // The Main Map always honors explicit pans even if unit is isolated in mini-map
-          if (isMainMap) {
-              performPan(map, provider, mapViewport.payload, 16);
-          }
-          break;
-        case 'fit_bounds':
-        case 'fit_route':
-          if (mapViewport.payload.length > 0) {
-            performFitBounds(map, provider, mapViewport.payload, 100);
-          }
-          break;
-      }
-      dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
-      return () => { clearTimeout(t1); clearTimeout(t2); }; 
-    }
-
-    // 3. Mini-Map / Radar Lock Framing
+    // Mini-Map / Radar Lock Framing
     let targetVehicleIds: number[] = [];
     if (manualVehicleIds) targetVehicleIds = manualVehicleIds;
     else if (miniMapId) targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
@@ -103,42 +97,41 @@ export function useMapViewport({
       const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
       const points = trackedUnits.map(v => ({ lat: v.lat, lng: v.lng }));
       
-      const selectedTrackedUnit = selectedVehicle && targetVehicleIds.includes(selectedVehicle.id_vehiculo) 
-        ? vehicles.find(v => v.id_vehiculo === selectedVehicle.id_vehiculo)
-        : null;
-
-      if (selectedTrackedUnit && isMainMap) {
-        performPan(map, provider, { lat: selectedTrackedUnit.lat, lng: selectedTrackedUnit.lng }, 16);
-      } else if (points.length === 1) {
+      if (points.length === 1) {
         performPan(map, provider, points[0], 16);
       } else if (points.length > 1) {
         performFitBounds(map, provider, points, 50);
       }
-      return () => { clearTimeout(t1); clearTimeout(t2); };
-    }
-
-    // 4. Default Viewport Framing (Split View / Operational Baselines)
-    if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
-      if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && despachoBaseRoute.length > 0) {
-        const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
-        const points = side === 'ida' ? despachoBaseRoute.slice(0, halfIndex) : despachoBaseRoute.slice(halfIndex - 1);
-        performFitBounds(map, provider, points, 50);
-      }
+    } 
+    // Default Operational Framing (Split View / Baselines)
+    else if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && despachoBaseRoute.length > 0) {
+      const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
+      const points = side === 'ida' ? despachoBaseRoute.slice(0, halfIndex) : despachoBaseRoute.slice(halfIndex - 1);
+      performFitBounds(map, provider, points, 50);
     }
 
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds, mapVehicles, selectedVehicle, isSplitView, splitDirection, isIncidenciasSheetOpen, historyVehicle, activePanel, triggerResize]);
+  }, [
+    map, 
+    provider, 
+    isMainMap, 
+    side, 
+    miniMapId, 
+    isSplitView, 
+    splitDirection, 
+    focusedMiniMapId, 
+    !!historyVehicle, 
+    isIncidenciasSheetOpen,
+    triggerResize
+    // Note: We deliberately exclude 'vehicles' and 'state' to prevent data-driven flickering
+  ]);
 }
 
-/**
- * Native Panning Wrappers
- */
 function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number) {
   if (!map) return;
-
-  if (provider === 'google' && 'panTo' in map) {
-    (map as google.maps.Map).panTo(point);
-    if ((map as google.maps.Map).getZoom()! < zoom) (map as google.maps.Map).setZoom(zoom);
+  if (provider === 'google' && map instanceof google.maps.Map) {
+    map.panTo(point);
+    if (map.getZoom()! < zoom) map.setZoom(zoom);
   } else if (provider === 'leaflet' && 'setView' in map) {
     (map as L.Map).setView([point.lat, point.lng], zoom, { animate: true });
   } else if (provider === 'mapbox' && 'flyTo' in map) {
@@ -146,19 +139,14 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
   }
 }
 
-/**
- * Native FitBounds Wrappers
- */
 function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat: number, lng: number }[], padding: number) {
   if (!map || points.length === 0) return;
-
-  if (provider === 'google' && 'fitBounds' in map) {
+  if (provider === 'google' && map instanceof google.maps.Map) {
     const bounds = new google.maps.LatLngBounds();
     points.forEach(p => bounds.extend(p));
-    (map as google.maps.Map).fitBounds(bounds, padding);
+    map.fitBounds(bounds, padding);
   } else if (provider === 'leaflet' && 'fitBounds' in map) {
     const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
-    // Important: only fitBounds if container has size, otherwise Leaflet throws
     if ((map as L.Map).getContainer().clientWidth > 0) {
       (map as L.Map).fitBounds(bounds, { padding: [padding, padding] });
     }
@@ -171,7 +159,6 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
         [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
       ] as [[number, number], [number, number]];
     }, [[initialLng, initialLat], [initialLng, initialLat]] as [[number, number], [number, number]]);
-    
     (map as MapRef).fitBounds(bounds, { padding });
   }
 }

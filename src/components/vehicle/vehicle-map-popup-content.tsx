@@ -2,14 +2,14 @@
 
 /**
  * @fileOverview Shared tactical UI for vehicle information popups.
- * Used consistently across Google Maps, Leaflet, and Mapbox.
+ * Optimized with high-legibility Inter cv11 typography and tactical controls.
  */
 
-import React from 'react';
+import React, { useTransition } from 'react';
 import type { Vehicle } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { format, fromUnixTime } from 'date-fns';
-import { Gauge, Zap, Wifi, Clock, Navigation, X } from 'lucide-react';
+import { Gauge, Zap, Wifi, Clock, Navigation, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 
@@ -17,12 +17,13 @@ export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
   const { focusedMiniMapId } = state;
+  const [isPending, startTransition] = useTransition();
 
   const handleResetBounds = (e: React.MouseEvent) => {
-    // Prevent the click from propagating to the map/marker if necessary
     e.stopPropagation();
-    // Clearing selection triggers useMapViewport to return to group bounds
-    dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
+    startTransition(() => {
+        dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
+    });
   };
 
   return (
@@ -30,16 +31,17 @@ export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
       className="p-1 min-w-[240px] space-y-3 antialiased relative font-sans"
       style={{ fontFeatureSettings: '"cv11", "ss01"' }}
     >
-      {/* Tactical Reset Button: Only visible when investigating a unit in Focus Mode */}
+      {/* Tactical Reset Button: Restores group view in Focus Mode */}
       {focusedMiniMapId && (
         <Button 
           variant="ghost" 
           size="icon" 
           className="absolute -top-1 -right-1 h-6 w-6 rounded-full hover:bg-muted text-muted-foreground z-10 transition-colors"
           onClick={handleResetBounds}
+          disabled={isPending}
           title="Restaurar vista de grupo"
         >
-          <X className="w-3 h-3" />
+          {isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
         </Button>
       )}
 

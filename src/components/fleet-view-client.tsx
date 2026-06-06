@@ -23,29 +23,14 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { APIProvider } from '@vis.gl/react-google-maps';
 
-// Robust dynamic imports using default exports for stability
-const FleetMap = dynamic(() => import('./fleet-map'), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full" />,
-});
-
-const FleetLeafletMap = dynamic(() => import('./leaflet/fleet-leaflet-map'), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full" />,
-});
-
-const FleetMapboxMap = dynamic(() => import('./mapbox/fleet-mapbox-map'), {
-  ssr: false,
-  loading: () => <Skeleton className="h-full w-full" />,
-});
-
-const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid').then(mod => mod.MiniMapOverlayGrid), {
-  ssr: false,
-});
+// Stable Dynamic Imports
+const FleetMap = dynamic(() => import('./fleet-map'), { ssr: false, loading: () => <Skeleton className="h-full w-full" /> });
+const FleetLeafletMap = dynamic(() => import('./leaflet/fleet-leaflet-map'), { ssr: false, loading: () => <Skeleton className="h-full w-full" /> });
+const FleetMapboxMap = dynamic(() => import('./mapbox/fleet-mapbox-map'), { ssr: false, loading: () => <Skeleton className="h-full w-full" /> });
+const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid').then(mod => mod.MiniMapOverlayGrid), { ssr: false });
 
 /**
- * Tactical Map Wrapper to ensure instances stay "hot" in the DOM.
- * Memoized to prevent unmounting during heavy parent re-renders.
+ * Tactical Map Wrapper: Memoized to prevent unmounting and tile cache loss.
  */
 const TacticalMapLayer = memo(({ 
     provider, 
@@ -58,18 +43,18 @@ const TacticalMapLayer = memo(({
     side?: 'ida' | 'vuelta', 
     isMainMap?: boolean 
 }) => {
-    let map;
+    let mapInstance;
     if (provider === 'leaflet') {
-       map = <FleetLeafletMap side={side} isMainMap={isMainMap} />;
+       mapInstance = <FleetLeafletMap side={side} isMainMap={isMainMap} />;
     } else if (provider === 'mapbox') {
-       map = <FleetMapboxMap side={side} isMainMap={isMainMap} />;
+       mapInstance = <FleetMapboxMap side={side} isMainMap={isMainMap} />;
     } else {
-       map = <FleetMap apiKey={apiKey} side={side} isMainMap={isMainMap} />;
+       mapInstance = <FleetMap apiKey={apiKey} side={side} isMainMap={isMainMap} />;
     }
 
     return (
-      <div className="relative w-full h-full overflow-hidden">
-        {map}
+      <div className="relative w-full h-full overflow-hidden bg-muted/10">
+        {mapInstance}
         {side && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[20] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-700">
              <div className={cn(
@@ -116,15 +101,11 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
 
   const shareToken = searchParams.get('s');
   const isPublicView = !!shareToken;
-
   const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || focusedMiniMapId);
   const isInitialLoading = (isLoadingRoute && routeGroups.length === 0) || (isLoadingIncidencias && incidencias.length === 0);
 
   if (error) return <div className="flex items-center justify-center h-full text-destructive">Error: {error.message}</div>;
-
-  if (isPublicView) {
-    return <PublicFleetView apiKey={apiKey} token={shareToken} />;
-  }
+  if (isPublicView) return <PublicFleetView apiKey={apiKey} token={shareToken} />;
 
   const closeMobilePanel = () => {
     startTransition(() => {
@@ -142,10 +123,10 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
+                transition={{ duration: 0.4 }}
                 className="h-full w-full relative"
             >
-                {/* Layer 1: Standard / Detail Workspace (History, Incidents, Single Map) */}
+                {/* Persistent Layer 1: Standard Workspace (History/Incidents/Fleet) */}
                 <div 
                     className={cn(
                         "absolute inset-0 transition-all duration-500",
@@ -155,7 +136,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
                     <TacticalMapLayer provider={mapProvider} apiKey={apiKey} isMainMap={true} />
                 </div>
 
-                {/* Layer 2: Tactical Split Workspace (Ida/Vuelta) */}
+                {/* Persistent Layer 2: Tactical Split Workspace (Always "Hot" in background) */}
                 {!isMobile && (
                     <div 
                         className={cn(
@@ -217,21 +198,18 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
             >
             <DrawerContent className="h-[85vh]">
                 <DrawerHandle />
+                {/* Accessibility requirement: Visible or VisuallyHidden Drawer Header */}
                 <div className="sr-only">
                     <DrawerHeader>
                         <DrawerTitle>Panel de Control Mobile</DrawerTitle>
-                        <DrawerDescription>
-                            {activePanel === 'vehicles' ? 'Lista de Unidades' : 
-                            activePanel === 'minimaps' ? 'Gestión de Radares' : 
-                            activePanel === 'stats' ? 'Inteligencia de Flota' : 'Configuración de Compartir'}
-                        </DrawerDescription>
+                        <DrawerDescription>Gestión táctica de unidades y radares.</DrawerDescription>
                     </DrawerHeader>
                 </div>
                 <div className="flex-1 overflow-hidden">
-                {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => closeMobilePanel()} />}
-                {activePanel === 'minimaps' && <MiniMapManagementContent />}
-                {activePanel === 'stats' && <FleetAnalyticsContent />}
-                {activePanel === 'share' && <SharePanelContent />}
+                    {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => closeMobilePanel()} />}
+                    {activePanel === 'minimaps' && <MiniMapManagementContent />}
+                    {activePanel === 'stats' && <FleetAnalyticsContent />}
+                    {activePanel === 'share' && <SharePanelContent />}
                 </div>
             </DrawerContent>
             </Drawer>
@@ -242,12 +220,12 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
 
         {isInitialLoading && (
             <div className="absolute inset-0 z-[100] bg-background/80 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-300">
-            <div className="p-8 rounded-full bg-primary/10 border-2 border-primary/20 animate-pulse mb-6">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
-            </div>
-            <p className="text-sm font-bold uppercase tracking-widest text-primary animate-bounce">
-                Cargando Telemetría...
-            </p>
+                <div className="p-8 rounded-full bg-primary/10 border-2 border-primary/20 animate-pulse mb-6">
+                    <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                </div>
+                <p className="text-sm font-bold uppercase tracking-widest text-primary animate-bounce">
+                    Sincronizando Telemetría...
+                </p>
             </div>
         )}
         </div>
