@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useMemo } from 'react';
@@ -53,14 +52,15 @@ export function useMapViewport({
     if (!map) return;
 
     // 1. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.) - HIGHEST TACTICAL PRIORITY
-    // This allows manual intervention even when a radar lock is active.
     if (mapViewport.type !== 'idle' && mapViewport.type !== 'initial') {
       switch (mapViewport.type) {
         case 'pan_to_vehicle':
           const isIncident = mapViewport.vehicleId === -1;
           const isVehicleRelevant = mapVehicles.some(v => v.id_vehiculo === mapViewport.vehicleId);
 
-          if ((isIncident && isMainMap) || isVehicleRelevant) {
+          // TACTICAL RULE: Only the Main Map (Standard or Focused) responds to explicit pan clicks.
+          // This ensures overlay mini-maps remain as stable "Radar" observers.
+          if ((isIncident && isMainMap) || (isVehicleRelevant && isMainMap)) {
               performPan(map, provider, mapViewport.payload, 16);
           }
           break;
@@ -87,12 +87,12 @@ export function useMapViewport({
       const points = trackedUnits.map(v => ({ lat: v.lat, lng: v.lng }));
       
       // PRIORITY FOCUS: If one of the tracked units is specifically selected, "Sticky Pan" to it.
-      // Otherwise, frame the whole group.
+      // BUT: Only for the Main Map. Small overlay mini-maps ALWAYS show the whole group (Radar context).
       const selectedTrackedUnit = selectedVehicle && targetVehicleIds.includes(selectedVehicle.id_vehiculo) 
         ? vehicles.find(v => v.id_vehiculo === selectedVehicle.id_vehiculo)
         : null;
 
-      if (selectedTrackedUnit) {
+      if (selectedTrackedUnit && isMainMap) {
         performPan(map, provider, { lat: selectedTrackedUnit.lat, lng: selectedTrackedUnit.lng }, 16);
       } else if (points.length === 1) {
         performPan(map, provider, points[0], 16);
