@@ -7,6 +7,7 @@ import { DESPACHO_BASE_ROUTE, SIMULATION_ROUTE } from '@/services/fleet-api';
 export type FleetAction =
   | { type: 'SET_VEHICLES'; payload: any[] }
   | { type: 'UPDATE_VEHICLE_POSITIONS'; payload: { id: number, lat: number, lng: number, status?: any }[] }
+  | { type: 'SELECT_VEHICLE'; payload: any | null }
   | { type: 'PAN_TO_VEHICLE'; payload: any | null }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY'; payload: number }
   | { type: 'SET_ALL_VEHICLES_VISIBILITY'; payload: { ids: number[], visible: boolean } }
@@ -134,6 +135,13 @@ const handleVehicleActions = (state: FleetState, action: FleetAction): FleetStat
           return v;
         })
       };
+    }
+    case 'SELECT_VEHICLE': {
+        return {
+            ...state,
+            selectedVehicle: action.payload,
+            // Explicitly do NOT change mapViewport here to avoid jumping main map when clicking markers
+        };
     }
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) return { ...state, selectedVehicle: null };

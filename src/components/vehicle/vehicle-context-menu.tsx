@@ -48,8 +48,10 @@ export function VehicleContextMenu({
         } else if (action === 'track-vehicle') {
           dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: vehicle.id_vehiculo });
         } else if (action === 'show-details') {
+          // Selecting for details often implies focus
           dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
         } else if (action === 'center-map') {
+          // Center-map explicitly pans the viewport
           dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
         }
         onClose();

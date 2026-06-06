@@ -26,7 +26,8 @@ export function useVehicleMarkerInteraction({ vehicle }: UseVehicleMarkerInterac
     } else if ('stopPropagation' in e) {
       e.stopPropagation();
     }
-    dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
+    // Using SELECT_VEHICLE instead of PAN_TO_VEHICLE to prevent map jumping
+    dispatch({ type: 'SELECT_VEHICLE', payload: vehicle });
   }, [dispatch, vehicle]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
