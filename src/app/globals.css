@@ -54,7 +54,8 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased font-sans;
+    font-feature-settings: "cv11", "ss01";
   }
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -92,5 +93,11 @@
   
   .leaflet-marker-selected .vehicle-marker-inner {
     transform: scale(1.25);
+  }
+
+  /* Standardize Google Maps InfoWindow font */
+  .gm-style-iw {
+    font-family: inherit !important;
+    font-feature-settings: "cv11", "ss01" !important;
   }
 }

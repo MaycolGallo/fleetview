@@ -26,7 +26,7 @@ export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
   };
 
   return (
-    <div className="p-1 min-w-[220px] space-y-3 antialiased relative">
+    <div className="p-1 min-w-[240px] space-y-3 antialiased relative font-sans">
       {/* Tactical Reset Button: Only visible when investigating a unit in Focus Mode */}
       {focusedMiniMapId && (
         <Button 
@@ -43,7 +43,7 @@ export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
       <div className="flex justify-between items-center border-b border-border/50 pb-2 mb-1 pr-6">
         <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full animate-pulse shadow-sm" style={{ backgroundColor: vehicle.statusColor }} />
-            <span className="font-bold text-sm tracking-tight">{vehicle.placa}</span>
+            <span className="font-bold text-sm tracking-tight text-foreground">{vehicle.placa}</span>
         </div>
         <Badge variant="outline" className="text-[9px] px-1.5 h-5 font-bold uppercase tracking-wider bg-muted/50 border-primary/20">
           {vehicle.statusName}
@@ -55,7 +55,7 @@ export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
             <Gauge className="w-3.5 h-3.5 text-primary/70" />
             <span className="text-[10px] font-bold uppercase tracking-tighter">Velocidad</span>
         </div>
-        <div className="text-[11px] font-bold text-right">
+        <div className="text-[11px] font-bold text-right text-foreground">
             {parseFloat(vehicle.velocidad).toFixed(0)} <span className="text-[9px] font-normal text-muted-foreground">km/h</span>
         </div>
 
@@ -63,7 +63,7 @@ export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
             <Navigation className="w-3.5 h-3.5 text-primary/70" />
             <span className="text-[10px] font-bold uppercase tracking-tighter">Odómetro</span>
         </div>
-        <div className="text-[11px] font-bold text-right text-nowrap">
+        <div className="text-[11px] font-bold text-right text-nowrap text-foreground">
             {parseFloat(vehicle.odometro).toLocaleString()} <span className="text-[9px] font-normal text-muted-foreground">km</span>
         </div>
 
@@ -71,7 +71,7 @@ export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
             <Zap className="w-3.5 h-3.5 text-amber-500/80" />
             <span className="text-[10px] font-bold uppercase tracking-tighter">Batería</span>
         </div>
-        <div className="text-[11px] font-bold text-right">
+        <div className="text-[11px] font-bold text-right text-foreground">
             {vehicle.nivel_bateria_vehicular} <span className="text-[9px] font-normal text-muted-foreground">V</span>
         </div>
 
@@ -79,7 +79,7 @@ export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
             <Wifi className="w-3.5 h-3.5 text-primary/70" />
             <span className="text-[10px] font-bold uppercase tracking-tighter">Señal GSM</span>
         </div>
-        <div className="text-[11px] font-bold text-right">
+        <div className="text-[11px] font-bold text-right text-foreground">
             {vehicle.senal_gsm}
         </div>
       </div>
