@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Vehicle } from '@/lib/types';
@@ -27,7 +28,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false 
   const isSelected = selectedVehicle?.id_vehiculo === vehicle.id_vehiculo;
   const isMobile = useIsMobile();
 
-  // Unified Anchor Ref for InfoWindow alignment
+  // Anchor Ref for perfect InfoWindow positioning via native anchor
   const [markerRef, marker] = useAdvancedMarkerRef();
 
   const {
@@ -52,7 +53,6 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false 
   const color = vehicle.statusColor || '#9E9E9E';
   const speed = parseFloat(vehicle.velocidad) || 0;
   
-  // Elevate history and selected markers
   const zIndex = isPlaybackMarker ? 50 : (isSelected ? 1000 : 1 + index);
 
   return (
@@ -102,13 +102,13 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false 
         </motion.div>
       </AdvancedMarker>
 
-      {/* InfoWindow: Native Anchor + High Offset to prevent overlap with pins/arrows */}
+      {/* InfoWindow: Using native anchor + high clearance pixelOffset */}
       {showPopup && isSelected && !historyVehicle && !isMobile && (
         <InfoWindow
             anchor={marker}
             onCloseClick={() => dispatch({ type: 'PAN_TO_VEHICLE', payload: null })}
             headerDisabled={true}
-            pixelOffset={[0, -110] as any} 
+            pixelOffset={[0, -100] as any}
         >
             <VehicleMapPopupContent vehicle={vehicle} />
         </InfoWindow>

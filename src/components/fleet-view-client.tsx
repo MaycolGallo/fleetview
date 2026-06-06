@@ -1,6 +1,7 @@
+
 'use client';
 
-import React, { useTransition, memo } from 'react';
+import React, { memo } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
@@ -31,6 +32,7 @@ const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid'
 
 /**
  * Tactical Map Wrapper: Memoized to prevent unmounting and tile cache loss.
+ * We use opacity/z-index instead of visibility:hidden to keep the WebGL engine "hot".
  */
 const TacticalMapLayer = memo(({ 
     provider, 
@@ -83,7 +85,6 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   const dispatch = useFleetDispatch();
   const isMobile = useIsMobile();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
 
   const { 
     isSplitView, 
@@ -108,28 +109,18 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   if (isPublicView) return <PublicFleetView apiKey={apiKey} token={shareToken} />;
 
   const closeMobilePanel = () => {
-    startTransition(() => {
-        dispatch({ type: 'SET_ACTIVE_PANEL', payload: null });
-    });
+    dispatch({ type: 'SET_ACTIVE_PANEL', payload: null });
   };
 
   return (
     <APIProvider apiKey={apiKey}>
         <div className="relative h-screen w-screen overflow-hidden bg-background">
         <main className="absolute inset-0 z-0">
-            <AnimatePresence mode="wait">
-            <motion.div
-                key={mapProvider}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
-                className="h-full w-full relative"
-            >
+            <div className="h-full w-full relative">
                 {/* Persistent Layer 1: Standard Workspace (History/Incidents/Fleet) */}
                 <div 
                     className={cn(
-                        "absolute inset-0 transition-all duration-500",
+                        "absolute inset-0 transition-opacity duration-500",
                         (isSplitView && !isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
                     )}
                 >
@@ -140,7 +131,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
                 {!isMobile && (
                     <div 
                         className={cn(
-                            "absolute inset-0 transition-all duration-500",
+                            "absolute inset-0 transition-opacity duration-500",
                             (!isSplitView || isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
                         )}
                     >
@@ -155,8 +146,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
                         </ResizablePanelGroup>
                     </div>
                 )}
-            </motion.div>
-            </AnimatePresence>
+            </div>
         </main>
 
         {!isDetailView && (
@@ -198,7 +188,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
             >
             <DrawerContent className="h-[85vh]">
                 <DrawerHandle />
-                {/* Accessibility requirement: Visible or VisuallyHidden Drawer Header */}
+                {/* Accessibility: Visual headers for screen readers */}
                 <div className="sr-only">
                     <DrawerHeader>
                         <DrawerTitle>Panel de Control Mobile</DrawerTitle>

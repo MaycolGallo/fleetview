@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { useFleetState, selectMapVehicles } from '@/context/fleet-context';
 import { LeafletVehicleMarker } from './leaflet-vehicle-marker';
@@ -16,7 +16,8 @@ interface FleetLeafletMapProps {
 }
 
 /**
- * Internal Sync component to bridge Leaflet context with our unified hook
+ * Internal Sync component to bridge Leaflet context with our unified hook.
+ * Implements aggressive ResizeObserver to prevent "grey spaces" when toggling visibility.
  */
 function MapViewportSync(props: FleetLeafletMapProps) {
   const map = useMap();
@@ -26,6 +27,26 @@ function MapViewportSync(props: FleetLeafletMapProps) {
     provider: 'leaflet',
     ...props
   });
+
+  useEffect(() => {
+    if (!map) return;
+
+    // Tactical Resize Detection: Ensures tiles load instantly when opacity-0 is removed
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize({ animate: false });
+    });
+
+    const container = map.getContainer();
+    observer.observe(container);
+
+    // Initial stabilization cycle
+    const timer = setTimeout(() => map.invalidateSize({ animate: false }), 50);
+
+    return () => {
+      observer.disconnect();
+      clearTimeout(timer);
+    };
+  }, [map]);
 
   return null;
 }
@@ -58,7 +79,6 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
         className="w-full h-full"
         zoomControl={false}
       >
-        {/* Dynamic Key forces tile refresh on theme/provider/type switch */}
         <TileLayer key={`${tileUrl}-${isMapDark}`} url={tileUrl} attribution={attribution} />
         
         <MapViewportSync {...props} />
