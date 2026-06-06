@@ -1,7 +1,7 @@
 'use client';
 
 import type { Vehicle } from '@/lib/types';
-import { AdvancedMarker, InfoWindow } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, InfoWindow, useAdvancedMarkerRef } from '@vis.gl/react-google-maps';
 import { VehiclePin } from '@/components/vehicle/vehicle-pin';
 import React from 'react';
 import { Gauge } from 'lucide-react';
@@ -27,6 +27,9 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false 
   const { selectedVehicle, isRoutePlaying, historyVehicle, playbackAnimationDuration } = state;
   const isSelected = selectedVehicle?.id_vehiculo === vehicle.id_vehiculo;
   const isMobile = useIsMobile();
+
+  // Tactical Anchor Ref for InfoWindow alignment
+  const [markerRef, marker] = useAdvancedMarkerRef();
 
   const {
     contextMenuOpen,
@@ -56,6 +59,7 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false 
   return (
     <>
       <AdvancedMarker
+        ref={markerRef}
         position={animatedPosition}
         onClick={handleLeftClick}
         zIndex={zIndex}
@@ -101,10 +105,10 @@ function AnimatedVehicleMarkerComponent({ vehicle, index = 0, showPopup = false 
 
       {showPopup && isSelected && !historyVehicle && !isMobile && (
         <InfoWindow
-            position={animatedPosition}
+            anchor={marker}
             onCloseClick={() => dispatch({ type: 'PAN_TO_VEHICLE', payload: null })}
             headerDisabled={true}
-            pixelOffset={{ width: 0, height: -100 } as google.maps.Size}
+            pixelOffset={[0, -10] as any} // Small tactical clearance above the anchor's height
         >
             <VehicleMapPopupContent vehicle={vehicle} />
         </InfoWindow>
