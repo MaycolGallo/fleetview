@@ -31,7 +31,6 @@ export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: 
   const { selectedVehicle, isRoutePlaying, historyVehicle, playbackAnimationDuration } = state;
   const isSelected = selectedVehicle?.id_vehiculo === vehicle.id_vehiculo;
 
-  // Use the same shared interaction logic as Google Maps
   const {
     contextMenuOpen,
     contextMenuPosition,
@@ -82,7 +81,21 @@ export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: 
     });
   }, [vehicle.id_vehiculo, vehicle.rumbo, vehicle.statusColor, isPlaybackMarker, speed, color]);
 
-  // Handle standard Leaflet click vs our specialized interactions
+  // Handle selection lifecycle to ensure Popup opens on first click
+  useEffect(() => {
+    if (isSelected && markerRef.current && showPopup && !isMobile) {
+      const marker = markerRef.current;
+      // We use a tiny timeout to allow React-Leaflet to mount the Popup component
+      // into the Leaflet instance before calling the native openPopup method.
+      const timer = setTimeout(() => {
+        if (!marker.isPopupOpen()) {
+          marker.openPopup();
+        }
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isSelected, showPopup, isMobile]);
+
   const handleMarkerClick = (e: L.LeafletMouseEvent) => {
     L.DomEvent.stopPropagation(e);
     handleLeftClick(e.originalEvent);
@@ -93,7 +106,6 @@ export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: 
     handleContextMenu(e.originalEvent as any);
   };
 
-  // Lifecycle to handle manual DOM manipulations (Z-Index, Touch Events)
   useEffect(() => {
     const marker = markerRef.current;
     if (!marker) return;
@@ -101,7 +113,6 @@ export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: 
     const element = marker.getElement();
     if (!element) return;
 
-    // Selection styling and Priority
     if (isSelected) {
       element.classList.add('leaflet-marker-selected');
       marker.setZIndexOffset(1000);
@@ -110,7 +121,6 @@ export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: 
       marker.setZIndexOffset(index);
     }
 
-    // Attach touch listeners directly to marker DOM for long-press support
     element.addEventListener('touchstart', handleTouchStart as any, { passive: true });
     element.addEventListener('touchend', handleTouchEnd as any, { passive: true });
     element.addEventListener('touchmove', handleTouchMove as any, { passive: true });
@@ -144,7 +154,6 @@ export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: 
         )}
       </Marker>
 
-      {/* Render Context Menus based on interaction state */}
       {contextMenuOpen && !isMobile && (
         <VehicleContextMenu
           vehicle={vehicle}
