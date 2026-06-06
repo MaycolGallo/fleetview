@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useTransition } from 'react';
+import React, { useTransition, memo } from 'react';
 import dynamic from 'next/dynamic';
 import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
@@ -42,6 +42,55 @@ const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid'
   ssr: false,
 });
 
+/**
+ * Tactical Map Wrapper to ensure instances stay "hot" in the DOM
+ */
+const TacticalMapLayer = memo(({ 
+    provider, 
+    apiKey, 
+    side, 
+    isMainMap = true 
+}: { 
+    provider: string, 
+    apiKey: string, 
+    side?: 'ida' | 'vuelta', 
+    isMainMap?: boolean 
+}) => {
+    let map;
+    if (provider === 'leaflet') {
+       map = <FleetLeafletMap side={side} isMainMap={isMainMap} />;
+    } else if (provider === 'mapbox') {
+       map = <FleetMapboxMap side={side} isMainMap={isMainMap} />;
+    } else {
+       map = <FleetMap apiKey={apiKey} side={side} isMainMap={isMainMap} />;
+    }
+
+    return (
+      <div className="relative w-full h-full overflow-hidden">
+        {map}
+        {side && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[20] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-700">
+             <div className={cn(
+                "px-6 py-2 rounded-xl border shadow-2xl backdrop-blur-md flex items-center gap-3 transition-all",
+                side === 'ida' 
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400" 
+                  : "bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400"
+              )}>
+                <div className={cn(
+                  "w-2 h-2 rounded-full animate-pulse",
+                  side === 'ida' ? "bg-emerald-500" : "bg-sky-500"
+                )} />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] font-sans" style={{ fontFeatureSettings: '"cv11", "ss01"' }}>
+                  Trayecto: {side}
+                </span>
+             </div>
+          </div>
+        )}
+      </div>
+    );
+});
+TacticalMapLayer.displayName = 'TacticalMapLayer';
+
 export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   const { state, error } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -67,7 +116,6 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   const isPublicView = !!shareToken;
 
   const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || focusedMiniMapId);
-
   const isInitialLoading = (isLoadingRoute && routeGroups.length === 0) || (isLoadingIncidencias && incidencias.length === 0);
 
   if (error) return <div className="flex items-center justify-center h-full text-destructive">Error: {error.message}</div>;
@@ -76,54 +124,12 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
     return <PublicFleetView apiKey={apiKey} token={shareToken} />;
   }
 
-  const renderMapInstance = (props: any) => {
-    let map;
-    if (mapProvider === 'leaflet') {
-       map = <FleetLeafletMap {...props} />;
-    } else if (mapProvider === 'mapbox') {
-       map = <FleetMapboxMap {...props} />;
-    } else {
-       map = <FleetMap apiKey={apiKey} {...props} />;
-    }
-
-    // Tactical Overlay Labels for Split View
-    return (
-      <div className="relative w-full h-full overflow-hidden">
-        {map}
-        {props.side && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[20] pointer-events-none animate-in fade-in slide-in-from-top-4 duration-700">
-             <div className={cn(
-                "px-6 py-2 rounded-xl border shadow-2xl backdrop-blur-md flex items-center gap-3 transition-all",
-                props.side === 'ida' 
-                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400" 
-                  : "bg-sky-500/10 border-sky-500/20 text-sky-600 dark:text-sky-400"
-              )}>
-                <div className={cn(
-                  "w-2 h-2 rounded-full animate-pulse",
-                  props.side === 'ida' ? "bg-emerald-500" : "bg-sky-500"
-                )} />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] font-sans" style={{ fontFeatureSettings: '"cv11", "ss01"' }}>
-                  Trayecto: {props.side}
-                </span>
-             </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const closeMobilePanel = () => {
     startTransition(() => {
         dispatch({ type: 'SET_ACTIVE_PANEL', payload: null });
     });
   };
 
-  /**
-   * Tactical Strategy: Persistent Map Layers
-   * We render both the single map and the split map structures but control their visibility.
-   * Removing 'invisible' ensures the map engines (Leaflet/Google) don't pause tile rendering,
-   * which prevents the "grey grid" issue when switching back to a hidden layer.
-   */
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-background">
       <main className="absolute inset-0 z-0">
@@ -143,7 +149,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
                 (isSplitView && !isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
               )}
             >
-              {renderMapInstance({ isMainMap: true })}
+              <TacticalMapLayer provider={mapProvider} apiKey={apiKey} isMainMap={true} />
             </div>
 
             {/* Layer 2: Tactical Split Workspace (Ida/Vuelta) */}
@@ -156,11 +162,11 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
               >
                 <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
                   <ResizablePanel defaultSize={50}>
-                    {renderMapInstance({ side: 'ida', isMainMap: true })}
+                    <TacticalMapLayer provider={mapProvider} apiKey={apiKey} side="ida" isMainMap={true} />
                   </ResizablePanel>
                   <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
                   <ResizablePanel defaultSize={50}>
-                    {renderMapInstance({ side: 'vuelta', isMainMap: true })}
+                    <TacticalMapLayer provider={mapProvider} apiKey={apiKey} side="vuelta" isMainMap={true} />
                   </ResizablePanel>
                 </ResizablePanelGroup>
               </div>

@@ -53,25 +53,26 @@ export function useMapViewport({
     if (!map) return;
 
     // 1. Tactical Resize Management
-    // When orientation or split mode changes, map engines often need to recalculate internal layouts
-    // to prevent grey spaces (especially Leaflet in horizontal split mode).
-    const resizeTimer = setTimeout(() => {
+    // Forcing an immediate resize check and then a settled one after transitions.
+    // This is critical for Leaflet's tile engine when container visibility toggles.
+    const triggerResize = () => {
       if (provider === 'leaflet' && 'invalidateSize' in map) {
-        (map as L.Map).invalidateSize({ animate: true });
+        (map as L.Map).invalidateSize({ animate: false, noMove: true });
       } else if (provider === 'mapbox' && 'resize' in map) {
         (map as MapRef).resize();
       } else if (provider === 'google') {
         google.maps.event.trigger(map, 'resize');
       }
-    }, 450); // Settlement time for CSS transitions
+    };
 
-    // 2. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.) - HIGHEST TACTICAL PRIORITY
+    triggerResize(); // Immediate
+    const resizeTimer = setTimeout(triggerResize, 450); // Settlement
+
+    // 2. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.)
     if (mapViewport.type !== 'idle' && mapViewport.type !== 'initial') {
       switch (mapViewport.type) {
         case 'pan_to_vehicle':
-          // TACTICAL RULE: The Main Map (Standard or Focused) responds to explicit pan clicks 
-          // for ANY vehicle in the fleet, even if it's currently being tracked in an overlay.
-          // This ensures that clicking a vehicle in the list ALWAYS pans the main view.
+          // The Main Map always honors explicit pans even if unit is isolated in mini-map
           if (isMainMap) {
               performPan(map, provider, mapViewport.payload, 16);
           }
@@ -87,19 +88,16 @@ export function useMapViewport({
       return () => clearTimeout(resizeTimer); 
     }
 
-    // 3. Identify active tracking targets for this instance
+    // 3. Mini-Map / Radar Lock Framing
     let targetVehicleIds: number[] = [];
     if (manualVehicleIds) targetVehicleIds = manualVehicleIds;
     else if (miniMapId) targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
     else if (isMainMap && focusedMiniMapId) targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
 
-    // 4. Continuous Tracking Logic (Radar Lock / Focus Mode framing)
     if (targetVehicleIds.length > 0 && !isIncidenciasSheetOpen && !historyVehicle) {
       const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
       const points = trackedUnits.map(v => ({ lat: v.lat, lng: v.lng }));
       
-      // PRIORITY FOCUS: If one of the tracked units is specifically selected, "Sticky Pan" to it.
-      // BUT: Only for the Main Map. Small overlay mini-maps ALWAYS show the whole group (Radar context).
       const selectedTrackedUnit = selectedVehicle && targetVehicleIds.includes(selectedVehicle.id_vehiculo) 
         ? vehicles.find(v => v.id_vehiculo === selectedVehicle.id_vehiculo)
         : null;
@@ -114,7 +112,7 @@ export function useMapViewport({
       return () => clearTimeout(resizeTimer);
     }
 
-    // 5. Default Viewport Framing (Split View / Operational Baselines)
+    // 4. Default Viewport Framing (Split View / Operational Baselines)
     if (mapViewport.type === 'idle' || mapViewport.type === 'initial') {
       if (isSplitView && !historyVehicle && !isIncidenciasSheetOpen && despachoBaseRoute.length > 0) {
         const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
@@ -124,7 +122,7 @@ export function useMapViewport({
     }
 
     return () => clearTimeout(resizeTimer);
-  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds, mapVehicles, selectedVehicle, isSplitView, splitDirection]);
+  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds, mapVehicles, selectedVehicle, isSplitView, splitDirection, isIncidenciasSheetOpen, historyVehicle]);
 }
 
 /**
@@ -155,7 +153,10 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
     (map as google.maps.Map).fitBounds(bounds, padding);
   } else if (provider === 'leaflet' && 'fitBounds' in map) {
     const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
-    (map as L.Map).fitBounds(bounds, { padding: [padding, padding] });
+    // Important: only fitBounds if container has size, otherwise Leaflet throws
+    if ((map as L.Map).getContainer().clientWidth > 0) {
+      (map as L.Map).fitBounds(bounds, { padding: [padding, padding] });
+    }
   } else if (provider === 'mapbox' && 'fitBounds' in map) {
     const initialLng = points[0].lng;
     const initialLat = points[0].lat;
