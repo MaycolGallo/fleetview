@@ -10,12 +10,38 @@ import React from 'react';
 import type { Vehicle } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { format, fromUnixTime } from 'date-fns';
-import { Gauge, Zap, Wifi, Clock, Navigation } from 'lucide-react';
+import { Gauge, Zap, Wifi, Clock, Navigation, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 
 export function VehicleMapPopupContent({ vehicle }: { vehicle: Vehicle }) {
+  const { state } = useFleetState();
+  const dispatch = useFleetDispatch();
+  const { focusedMiniMapId } = state;
+
+  const handleResetBounds = (e: React.MouseEvent) => {
+    // Prevent the click from propagating to the map/marker if necessary
+    e.stopPropagation();
+    // Clearing selection triggers useMapViewport to return to group bounds
+    dispatch({ type: 'PAN_TO_VEHICLE', payload: null });
+  };
+
   return (
-    <div className="p-1 min-w-[220px] space-y-3 antialiased">
-      <div className="flex justify-between items-center border-b border-border/50 pb-2 mb-1">
+    <div className="p-1 min-w-[220px] space-y-3 antialiased relative">
+      {/* Tactical Reset Button: Only visible when investigating a unit in Focus Mode */}
+      {focusedMiniMapId && (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="absolute -top-1 -right-1 h-6 w-6 rounded-full hover:bg-muted text-muted-foreground z-10 transition-colors"
+          onClick={handleResetBounds}
+          title="Restaurar vista de grupo"
+        >
+          <X className="w-3 h-3" />
+        </Button>
+      )}
+
+      <div className="flex justify-between items-center border-b border-border/50 pb-2 mb-1 pr-6">
         <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full animate-pulse shadow-sm" style={{ backgroundColor: vehicle.statusColor }} />
             <span className="font-bold text-sm tracking-tight">{vehicle.placa}</span>
