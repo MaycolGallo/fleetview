@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { useFleetState, useFleetDispatch, selectMapVehicles } from '@/context/fleet-context';
 import type { MapProvider } from '@/lib/types';
 import type { MapRef } from 'react-map-gl';
@@ -41,7 +41,8 @@ export function useMapViewport({
     historyVehicle,
     isIncidenciasSheetOpen,
     despachoBaseRoute,
-    selectedVehicle
+    selectedVehicle,
+    activePanel
   } = state;
 
   const mapVehicles = useMemo(
@@ -49,24 +50,28 @@ export function useMapViewport({
     [state, miniMapId, manualVehicleIds, isMainMap]
   );
 
+  /**
+   * Tactical Resize Management.
+   * Ensures tiles are loaded and layout is recalculated when container visibility toggles.
+   */
+  const triggerResize = useCallback(() => {
+    if (!map) return;
+    if (provider === 'leaflet' && 'invalidateSize' in map) {
+      (map as L.Map).invalidateSize({ animate: false, noMove: true });
+    } else if (provider === 'mapbox' && 'resize' in map) {
+      (map as MapRef).resize();
+    } else if (provider === 'google' && typeof google !== 'undefined') {
+      google.maps.event.trigger(map, 'resize');
+    }
+  }, [map, provider]);
+
   useEffect(() => {
     if (!map) return;
 
-    // 1. Tactical Resize Management
-    // Forcing an immediate resize check and then a settled one after transitions.
-    // This is critical for Leaflet's tile engine when container visibility toggles.
-    const triggerResize = () => {
-      if (provider === 'leaflet' && 'invalidateSize' in map) {
-        (map as L.Map).invalidateSize({ animate: false, noMove: true });
-      } else if (provider === 'mapbox' && 'resize' in map) {
-        (map as MapRef).resize();
-      } else if (provider === 'google') {
-        google.maps.event.trigger(map, 'resize');
-      }
-    };
-
-    triggerResize(); // Immediate
-    const resizeTimer = setTimeout(triggerResize, 450); // Settlement
+    // Execute multiple resize cycles to capture settling animations/layout changes
+    triggerResize();
+    const t1 = setTimeout(triggerResize, 100);
+    const t2 = setTimeout(triggerResize, 500);
 
     // 2. Explicit Viewport Mutations (Pan to Vehicle, Fit Route, etc.)
     if (mapViewport.type !== 'idle' && mapViewport.type !== 'initial') {
@@ -85,7 +90,7 @@ export function useMapViewport({
           break;
       }
       dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
-      return () => clearTimeout(resizeTimer); 
+      return () => { clearTimeout(t1); clearTimeout(t2); }; 
     }
 
     // 3. Mini-Map / Radar Lock Framing
@@ -109,7 +114,7 @@ export function useMapViewport({
       } else if (points.length > 1) {
         performFitBounds(map, provider, points, 50);
       }
-      return () => clearTimeout(resizeTimer);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
 
     // 4. Default Viewport Framing (Split View / Operational Baselines)
@@ -121,8 +126,8 @@ export function useMapViewport({
       }
     }
 
-    return () => clearTimeout(resizeTimer);
-  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds, mapVehicles, selectedVehicle, isSplitView, splitDirection, isIncidenciasSheetOpen, historyVehicle]);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [map, mapViewport, provider, state, dispatch, isMainMap, side, miniMapId, manualVehicleIds, mapVehicles, selectedVehicle, isSplitView, splitDirection, isIncidenciasSheetOpen, historyVehicle, activePanel, triggerResize]);
 }
 
 /**

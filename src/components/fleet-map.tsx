@@ -1,7 +1,6 @@
-
 "use client";
 
-import { APIProvider, Map, ColorScheme, useMap } from '@vis.gl/react-google-maps';
+import { Map, ColorScheme, useMap } from '@vis.gl/react-google-maps';
 import { useFleetState } from '@/context/fleet-context';
 import { LIGHT_MAP_ID, DARK_MAP_ID } from '@/lib/map-styles';
 import { MapControl } from './map-control';
@@ -43,7 +42,7 @@ export default function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, is
   const { state } = useFleetState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
-  const { isMapDark, focusedMiniMapId, miniMaps, mapType, showTraffic } = state;
+  const { isMapDark, focusedMiniMapId, miniMaps, mapType } = state;
 
   // Derive display context
   const isFocusMode = isMainMap && focusedMiniMapId;
@@ -75,26 +74,24 @@ export default function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, is
   }
   
   return (
-    <APIProvider apiKey={apiKey}>
-      <div className="w-full h-full relative">
-        <Map 
-            defaultCenter={{ lat: -12.046374, lng: -77.042793 }}
-            defaultZoom={isTrackingView || isFocusMode ? 16 : 13}
-            gestureHandling={'greedy'}
-            disableDefaultUI={true}
-            mapId={mapType === 'satellite' ? undefined : (isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID)}
-            colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
-            mapTypeId={mapType === 'satellite' ? 'satellite' : 'roadmap'}
-        >
-          <MapControl 
-            side={side} 
-            miniMapId={miniMapId} 
-            manualVehicleIds={manualVehicleIds}
-            isMainMap={isMainMap} 
-          />
-          <TrafficLayer />
-        </Map>
-      </div>
-    </APIProvider>
+    <div className="w-full h-full relative">
+      <Map 
+          defaultCenter={{ lat: -12.046374, lng: -77.042793 }}
+          defaultZoom={isTrackingView || isFocusMode ? 16 : 13}
+          gestureHandling={'greedy'}
+          disableDefaultUI={true}
+          mapId={mapType === 'satellite' ? undefined : (isMapDark ? DARK_MAP_ID : LIGHT_MAP_ID)}
+          colorScheme={isMapDark ? ColorScheme.DARK : ColorScheme.LIGHT}
+          mapTypeId={mapType === 'satellite' ? 'satellite' : 'roadmap'}
+      >
+        <MapControl 
+          side={side} 
+          miniMapId={miniMapId} 
+          manualVehicleIds={manualVehicleIds}
+          isMainMap={isMainMap} 
+        />
+        <TrafficLayer />
+      </Map>
+    </div>
   );
 }

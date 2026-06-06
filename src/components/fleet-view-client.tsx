@@ -21,6 +21,7 @@ import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { APIProvider } from '@vis.gl/react-google-maps';
 
 // Robust dynamic imports using default exports for stability
 const FleetMap = dynamic(() => import('./fleet-map'), {
@@ -43,7 +44,8 @@ const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid'
 });
 
 /**
- * Tactical Map Wrapper to ensure instances stay "hot" in the DOM
+ * Tactical Map Wrapper to ensure instances stay "hot" in the DOM.
+ * Memoized to prevent unmounting during heavy parent re-renders.
  */
 const TacticalMapLayer = memo(({ 
     provider, 
@@ -131,122 +133,124 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   };
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden bg-background">
-      <main className="absolute inset-0 z-0">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={mapProvider}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: "easeInOut" }}
-            className="h-full w-full relative"
-          >
-            {/* Layer 1: Standard / Detail Workspace (History, Incidents, Single Map) */}
-            <div 
-              className={cn(
-                "absolute inset-0 transition-all duration-500",
-                (isSplitView && !isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
-              )}
+    <APIProvider apiKey={apiKey}>
+        <div className="relative h-screen w-screen overflow-hidden bg-background">
+        <main className="absolute inset-0 z-0">
+            <AnimatePresence mode="wait">
+            <motion.div
+                key={mapProvider}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="h-full w-full relative"
             >
-              <TacticalMapLayer provider={mapProvider} apiKey={apiKey} isMainMap={true} />
-            </div>
-
-            {/* Layer 2: Tactical Split Workspace (Ida/Vuelta) */}
-            {!isMobile && (
-              <div 
-                className={cn(
-                  "absolute inset-0 transition-all duration-500",
-                  (!isSplitView || isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
-                )}
-              >
-                <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
-                  <ResizablePanel defaultSize={50}>
-                    <TacticalMapLayer provider={mapProvider} apiKey={apiKey} side="ida" isMainMap={true} />
-                  </ResizablePanel>
-                  <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
-                  <ResizablePanel defaultSize={50}>
-                    <TacticalMapLayer provider={mapProvider} apiKey={apiKey} side="vuelta" isMainMap={true} />
-                  </ResizablePanel>
-                </ResizablePanelGroup>
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-
-      {!isDetailView && (
-        <>
-          <FloatingToolbar />
-          
-          <AnimatePresence mode="wait">
-            {!isMobile && activePanel && (
-              <motion.div 
-                key={activePanel}
-                initial={{ x: -100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: -100, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="absolute top-6 left-24 bottom-6 w-[420px] z-40"
-              >
-                <div className="h-full w-full bg-card/95 backdrop-blur-md rounded-2xl border shadow-2xl overflow-hidden flex flex-col">
-                  {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => {}} />}
-                  {activePanel === 'minimaps' && <MiniMapManagementContent />}
-                  {activePanel === 'settings' && <SettingsPanelContent />}
-                  {activePanel === 'share' && <SharePanelContent />}
-                  {activePanel === 'stats' && <FleetAnalyticsContent />}
+                {/* Layer 1: Standard / Detail Workspace (History, Incidents, Single Map) */}
+                <div 
+                    className={cn(
+                        "absolute inset-0 transition-all duration-500",
+                        (isSplitView && !isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
+                    )}
+                >
+                    <TacticalMapLayer provider={mapProvider} apiKey={apiKey} isMainMap={true} />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
-          <MiniMapOverlayGrid apiKey={apiKey} />
-        </>
-      )}
+                {/* Layer 2: Tactical Split Workspace (Ida/Vuelta) */}
+                {!isMobile && (
+                    <div 
+                        className={cn(
+                            "absolute inset-0 transition-all duration-500",
+                            (!isSplitView || isDetailView) ? "opacity-0 pointer-events-none z-0" : "opacity-100 z-10"
+                        )}
+                    >
+                        <ResizablePanelGroup direction={splitDirection} className="h-full w-full">
+                            <ResizablePanel defaultSize={50}>
+                                <TacticalMapLayer provider={mapProvider} apiKey={apiKey} side="ida" isMainMap={true} />
+                            </ResizablePanel>
+                            <ResizableHandle withHandle className="bg-primary/20 hover:bg-primary transition-colors" />
+                            <ResizablePanel defaultSize={50}>
+                                <TacticalMapLayer provider={mapProvider} apiKey={apiKey} side="vuelta" isMainMap={true} />
+                            </ResizablePanel>
+                        </ResizablePanelGroup>
+                    </div>
+                )}
+            </motion.div>
+            </AnimatePresence>
+        </main>
 
-      {isDetailView && <DetailHeader apiKey={apiKey} />}
+        {!isDetailView && (
+            <>
+            <FloatingToolbar />
+            
+            <AnimatePresence mode="wait">
+                {!isMobile && activePanel && (
+                <motion.div 
+                    key={activePanel}
+                    initial={{ x: -100, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -100, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="absolute top-6 left-24 bottom-6 w-[420px] z-40"
+                >
+                    <div className="h-full w-full bg-card/95 backdrop-blur-md rounded-2xl border shadow-2xl overflow-hidden flex flex-col">
+                    {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => {}} />}
+                    {activePanel === 'minimaps' && <MiniMapManagementContent />}
+                    {activePanel === 'settings' && <SettingsPanelContent />}
+                    {activePanel === 'share' && <SharePanelContent />}
+                    {activePanel === 'stats' && <FleetAnalyticsContent />}
+                    </div>
+                </motion.div>
+                )}
+            </AnimatePresence>
 
-      {isMobile && !isDetailView && activePanel && (
-        <Drawer 
-            open={!!activePanel} 
-            onOpenChange={(open) => !open && closeMobilePanel()} 
-            modal={false}
-        >
-          <DrawerContent className="h-[85vh]">
-            <DrawerHandle />
-            <div className="sr-only">
-                <DrawerHeader>
-                    <DrawerTitle>Panel de Control Mobile</DrawerTitle>
-                    <DrawerDescription>
-                        {activePanel === 'vehicles' ? 'Lista de Unidades' : 
-                         activePanel === 'minimaps' ? 'Gestión de Radares' : 
-                         activePanel === 'stats' ? 'Inteligencia de Flota' : 'Configuración de Compartir'}
-                    </DrawerDescription>
-                </DrawerHeader>
+            <MiniMapOverlayGrid apiKey={apiKey} />
+            </>
+        )}
+
+        {isDetailView && <DetailHeader apiKey={apiKey} />}
+
+        {isMobile && !isDetailView && activePanel && (
+            <Drawer 
+                open={!!activePanel} 
+                onOpenChange={(open) => !open && closeMobilePanel()} 
+                modal={false}
+            >
+            <DrawerContent className="h-[85vh]">
+                <DrawerHandle />
+                <div className="sr-only">
+                    <DrawerHeader>
+                        <DrawerTitle>Panel de Control Mobile</DrawerTitle>
+                        <DrawerDescription>
+                            {activePanel === 'vehicles' ? 'Lista de Unidades' : 
+                            activePanel === 'minimaps' ? 'Gestión de Radares' : 
+                            activePanel === 'stats' ? 'Inteligencia de Flota' : 'Configuración de Compartir'}
+                        </DrawerDescription>
+                    </DrawerHeader>
+                </div>
+                <div className="flex-1 overflow-hidden">
+                {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => closeMobilePanel()} />}
+                {activePanel === 'minimaps' && <MiniMapManagementContent />}
+                {activePanel === 'stats' && <FleetAnalyticsContent />}
+                {activePanel === 'share' && <SharePanelContent />}
+                </div>
+            </DrawerContent>
+            </Drawer>
+        )}
+
+        <RouteHistorySheet date={undefined} setDate={() => {}} onApply={() => {}} />
+        <IncidenciasSheet />
+
+        {isInitialLoading && (
+            <div className="absolute inset-0 z-[100] bg-background/80 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-300">
+            <div className="p-8 rounded-full bg-primary/10 border-2 border-primary/20 animate-pulse mb-6">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
             </div>
-            <div className="flex-1 overflow-hidden">
-              {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => closeMobilePanel()} />}
-              {activePanel === 'minimaps' && <MiniMapManagementContent />}
-              {activePanel === 'stats' && <FleetAnalyticsContent />}
-              {activePanel === 'share' && <SharePanelContent />}
+            <p className="text-sm font-bold uppercase tracking-widest text-primary animate-bounce">
+                Cargando Telemetría...
+            </p>
             </div>
-          </DrawerContent>
-        </Drawer>
-      )}
-
-      <RouteHistorySheet date={undefined} setDate={() => {}} onApply={() => {}} />
-      <IncidenciasSheet />
-
-      {isInitialLoading && (
-        <div className="absolute inset-0 z-[100] bg-background/80 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-300">
-           <div className="p-8 rounded-full bg-primary/10 border-2 border-primary/20 animate-pulse mb-6">
-              <Loader2 className="w-12 h-12 text-primary animate-spin" />
-           </div>
-           <p className="text-sm font-bold uppercase tracking-widest text-primary animate-bounce">
-              Cargando Telemetría...
-           </p>
+        )}
         </div>
-      )}
-    </div>
+    </APIProvider>
   );
 }
