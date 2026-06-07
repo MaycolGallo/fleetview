@@ -17,7 +17,7 @@ interface LeafletRoutePolylinesProps {
 
 /**
  * Renders all tactical polyline layers for Leaflet (History, Despacho Base Route, Incidents).
- * Optimized with high-visibility segment selection and click-to-inspect logic.
+ * Optimized with reactive selection patterns to ensure instant styling updates.
  */
 export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
   const { state } = useFleetState();
@@ -55,7 +55,7 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
              
              return (
               <Polyline 
-                key={`hist-line-${idx}-${isSelected}`} // Key includes selection to force Leaflet update
+                key={`hist-line-${idx}-${isSelected}`} // Selection is part of the key to force immediate Leaflet redraw
                 positions={points} 
                 color={color} 
                 weight={weight} 

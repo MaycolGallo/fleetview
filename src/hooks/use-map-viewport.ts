@@ -33,7 +33,7 @@ const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 
 
 /**
  * Unified Viewport Engine.
- * Optimized with switch statements and early returns for tactical clarity.
+ * Optimized with Cinematic Panning and Asymmetrical Padding.
  */
 export function useMapViewport({
   map,
@@ -172,14 +172,30 @@ export function useMapViewport({
   ]);
 }
 
+/**
+ * performPan: Implements cinematic multi-stage navigation for Google Maps.
+ */
 function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number) {
   if (!map) return;
   
   switch (provider) {
     case 'google':
       if (map instanceof google.maps.Map) {
-        map.panTo(point);
-        if (map.getZoom()! < zoom) map.setZoom(zoom);
+        const currentZoom = map.getZoom() || 13;
+        // Cinematic logic: Zoom out slightly to mid-level context, pan, then zoom back in
+        const intermediateZoom = Math.min(currentZoom, 10);
+        
+        map.setZoom(intermediateZoom);
+        
+        const zoomOutListener = map.addListener('idle', () => {
+          zoomOutListener.remove();
+          map.panTo(point);
+          
+          const panListener = map.addListener('idle', () => {
+            panListener.remove();
+            map.setZoom(zoom);
+          });
+        });
       }
       break;
     case 'leaflet':
@@ -204,7 +220,7 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
         const bounds = new google.maps.LatLngBounds();
         points.forEach(p => bounds.extend(p));
         map.fitBounds(bounds, padding);
-        // Prevent over-zooming on single points
+        
         if (points.length === 1) {
             const listener = google.maps.event.addListener(map, 'idle', () => {
                 if (map.getZoom()! > 16) map.setZoom(16);
