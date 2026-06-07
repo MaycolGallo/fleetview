@@ -20,9 +20,19 @@ interface UseMapViewportProps {
   manualVehicleIds?: number[];
 }
 
+interface ViewportPadding {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+}
+
+const PADDING_STANDARD: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 80 };
+const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 80 }; // Extra bottom clearance for tactical drawer
+
 /**
  * Unified Viewport Hook: Handles framing, panning, and tactical resize logic.
- * Optimized with early returns and clear priority rules.
+ * Optimized with early returns and switch-based priority rules.
  */
 export function useMapViewport({
   map,
@@ -53,18 +63,16 @@ export function useMapViewport({
   const triggerResize = useCallback(() => {
     if (!map) return;
     
-    if (provider === 'leaflet' && 'invalidateSize' in map) {
-      (map as L.Map).invalidateSize({ animate: false, noMove: true });
-      return;
-    } 
-    
-    if (provider === 'mapbox' && 'resize' in map) {
-      (map as MapRef).resize();
-      return;
-    } 
-    
-    if (provider === 'google' && typeof google !== 'undefined' && map instanceof google.maps.Map) {
-      google.maps.event.trigger(map, 'resize');
+    switch (provider) {
+      case 'leaflet':
+        if ('invalidateSize' in map) (map as L.Map).invalidateSize({ animate: false, noMove: true });
+        break;
+      case 'mapbox':
+        if ('resize' in map) (map as MapRef).resize();
+        break;
+      case 'google':
+        if (typeof google !== 'undefined' && map instanceof google.maps.Map) google.maps.event.trigger(map, 'resize');
+        break;
     }
   }, [map, provider]);
 
@@ -72,10 +80,18 @@ export function useMapViewport({
   useEffect(() => {
     if (!map || mapViewport.type === 'idle' || mapViewport.type === 'initial') return;
 
-    if (mapViewport.type === 'pan_to_vehicle' && isMainMap) {
-      performPan(map, provider, mapViewport.payload, 16);
-    } else if ((mapViewport.type === 'fit_bounds' || mapViewport.type === 'fit_route') && mapViewport.payload.length > 0) {
-      performFitBounds(map, provider, mapViewport.payload, 100);
+    const actionType = mapViewport.type;
+
+    switch (actionType) {
+      case 'pan_to_vehicle':
+        if (isMainMap) performPan(map, provider, mapViewport.payload, 16);
+        break;
+      case 'fit_bounds':
+        performFitBounds(map, provider, mapViewport.payload, PADDING_STANDARD);
+        break;
+      case 'fit_route':
+        performFitBounds(map, provider, mapViewport.payload, PADDING_ROUTE);
+        break;
     }
     
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
@@ -115,7 +131,7 @@ export function useMapViewport({
       if (points.length === 1) {
         performPan(map, provider, points[0], 16);
       } else if (points.length > 1) {
-        performFitBounds(map, provider, points, 50);
+        performFitBounds(map, provider, points, PADDING_STANDARD);
       }
       
       return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
@@ -128,7 +144,7 @@ export function useMapViewport({
         ? despachoBaseRoute.slice(0, halfIndex) 
         : despachoBaseRoute.slice(halfIndex - 1);
         
-      performFitBounds(map, provider, points, 50);
+      performFitBounds(map, provider, points, PADDING_STANDARD);
     }
 
     return () => { 
@@ -147,7 +163,10 @@ export function useMapViewport({
     !!historyVehicle, 
     isIncidenciasSheetOpen,
     triggerResize,
-    selectedVehicle
+    selectedVehicle,
+    vehicles,
+    miniMaps,
+    despachoBaseRoute
   ]);
 }
 
@@ -174,7 +193,7 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
   }
 }
 
-function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat: number, lng: number }[], padding: number) {
+function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat: number, lng: number }[], padding: ViewportPadding) {
   if (!map || points.length === 0) return;
 
   switch (provider) {
@@ -188,7 +207,10 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
     case 'leaflet':
       if ('fitBounds' in map) {
         const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
-        (map as L.Map).fitBounds(bounds, { padding: [padding, padding] });
+        (map as L.Map).fitBounds(bounds, { 
+            paddingTopLeft: [padding.left, padding.top], 
+            paddingBottomRight: [padding.right, padding.bottom] 
+        });
       }
       break;
     case 'mapbox':
