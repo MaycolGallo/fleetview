@@ -33,7 +33,7 @@ const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 
 
 /**
  * Unified Viewport Engine.
- * Optimized with Cinematic Panning and Asymmetrical Padding.
+ * Optimized with Targeted Navigation and Asymmetrical Padding.
  */
 export function useMapViewport({
   map,
@@ -50,6 +50,7 @@ export function useMapViewport({
     mapViewport,
     focusedMiniMapId,
     miniMaps,
+    visibleMiniMapIds,
     vehicles,
     isSplitView,
     historyVehicle,
@@ -84,9 +85,33 @@ export function useMapViewport({
     const action = mapViewport;
 
     switch (action.type) {
-      case 'pan_to_vehicle':
-        if (isMainMap) performPan(map, provider, action.payload, 16);
+      case 'pan_to_vehicle': {
+        const targetVehicleId = action.vehicleId;
+        let shouldRespond = false;
+
+        if (isMainMap) {
+          // Rule: Main map only pans if vehicle isn't locked in an active overlay minimap
+          const overlayVehicleIds = miniMaps
+            .filter(m => visibleMiniMapIds.includes(m.id))
+            .flatMap(m => m.vehicleIds);
+          
+          const isLockedInOverlay = overlayVehicleIds.includes(targetVehicleId);
+          
+          if (focusedMiniMapId) {
+            const group = miniMaps.find(m => m.id === focusedMiniMapId);
+            shouldRespond = group?.vehicleIds.includes(targetVehicleId) ?? false;
+          } else {
+            shouldRespond = !isLockedInOverlay;
+          }
+        } else if (miniMapId) {
+          // Rule: Minimap pans if the vehicle belongs to its radar lock group
+          const group = miniMaps.find(m => m.id === miniMapId);
+          shouldRespond = group?.vehicleIds.includes(targetVehicleId) ?? false;
+        }
+
+        if (shouldRespond) performPan(map, provider, action.payload, 16);
         break;
+      }
       case 'fit_bounds':
         performFitBounds(map, provider, action.payload, PADDING_STANDARD);
         break;
@@ -96,13 +121,12 @@ export function useMapViewport({
     }
     
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
-  }, [map, mapViewport.type, provider, isMainMap, dispatch]);
+  }, [map, mapViewport.type, provider, isMainMap, miniMapId, focusedMiniMapId, visibleMiniMapIds, miniMaps, dispatch]);
 
   // LAYOUT EFFECT: Handle persistent framing and container resizing
   useEffect(() => {
     if (!map) return;
 
-    // Trigger staggered resize bursts to capture final dimensions during transitions
     triggerResize();
     const t1 = setTimeout(triggerResize, 50);
     const t2 = setTimeout(triggerResize, 350);
@@ -114,7 +138,7 @@ export function useMapViewport({
         clearTimeout(t3);
     };
 
-    // PRIORITY 1: Manual Investigation Lock (Do not auto-refit if dispatcher is investigating)
+    // PRIORITY 1: Manual Investigation Lock
     if (isIncidenciasSheetOpen || historyVehicle) {
       return cleanup;
     }
@@ -173,7 +197,7 @@ export function useMapViewport({
 }
 
 /**
- * performPan: Implements cinematic multi-stage navigation for Google Maps.
+ * performPan: Standard high-precision navigation.
  */
 function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number) {
   if (!map) return;
@@ -181,21 +205,8 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
   switch (provider) {
     case 'google':
       if (map instanceof google.maps.Map) {
-        const currentZoom = map.getZoom() || 13;
-        // Cinematic logic: Zoom out slightly to mid-level context, pan, then zoom back in
-        const intermediateZoom = Math.min(currentZoom, 10);
-        
-        map.setZoom(intermediateZoom);
-        
-        const zoomOutListener = map.addListener('idle', () => {
-          zoomOutListener.remove();
-          map.panTo(point);
-          
-          const panListener = map.addListener('idle', () => {
-            panListener.remove();
-            map.setZoom(zoom);
-          });
-        });
+        map.panTo(point);
+        map.setZoom(zoom);
       }
       break;
     case 'leaflet':
@@ -220,13 +231,6 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
         const bounds = new google.maps.LatLngBounds();
         points.forEach(p => bounds.extend(p));
         map.fitBounds(bounds, padding);
-        
-        if (points.length === 1) {
-            const listener = google.maps.event.addListener(map, 'idle', () => {
-                if (map.getZoom()! > 16) map.setZoom(16);
-                google.maps.event.removeListener(listener);
-            });
-        }
       }
       break;
     case 'leaflet':
