@@ -89,24 +89,23 @@ export function useMapViewport({
         const targetVehicleId = action.vehicleId;
         let shouldRespond = false;
 
+        // TACTICAL RULE: Vehicles in minimap should ONLY pan when in focus (taking the main map slot)
         if (isMainMap) {
-          // Rule: Main map only pans if vehicle isn't locked in an active overlay minimap
-          const overlayVehicleIds = miniMaps
-            .filter(m => visibleMiniMapIds.includes(m.id))
-            .flatMap(m => m.vehicleIds);
-          
-          const isLockedInOverlay = overlayVehicleIds.includes(targetVehicleId);
-          
           if (focusedMiniMapId) {
+            // IF FOCUS MODE: Only respond to vehicles in the focused radar group
             const group = miniMaps.find(m => m.id === focusedMiniMapId);
             shouldRespond = group?.vehicleIds.includes(targetVehicleId) ?? false;
           } else {
-            shouldRespond = !isLockedInOverlay;
+            // IF STANDARD MODE: Only respond if vehicle is NOT locked in any visible overlay minimap
+            const overlayVehicleIds = miniMaps
+              .filter(m => visibleMiniMapIds.includes(m.id))
+              .flatMap(m => m.vehicleIds);
+            
+            shouldRespond = !overlayVehicleIds.includes(targetVehicleId);
           }
-        } else if (miniMapId) {
-          // Rule: Minimap pans if the vehicle belongs to its radar lock group
-          const group = miniMaps.find(m => m.id === miniMapId);
-          shouldRespond = group?.vehicleIds.includes(targetVehicleId) ?? false;
+        } else {
+          // IF OVERLAY MINIMAP: Never pan individually (stay focused on the group bounds)
+          shouldRespond = false;
         }
 
         if (shouldRespond) performPan(map, provider, action.payload, 16);
@@ -121,7 +120,7 @@ export function useMapViewport({
     }
     
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
-  }, [map, mapViewport.type, provider, isMainMap, miniMapId, focusedMiniMapId, visibleMiniMapIds, miniMaps, dispatch]);
+  }, [map, mapViewport, provider, isMainMap, miniMapId, focusedMiniMapId, visibleMiniMapIds, miniMaps, dispatch]);
 
   // LAYOUT EFFECT: Handle persistent framing and container resizing
   useEffect(() => {
@@ -138,7 +137,7 @@ export function useMapViewport({
         clearTimeout(t3);
     };
 
-    // PRIORITY 1: Manual Investigation Lock
+    // PRIORITY 1: Manual Investigation Lock (Route/Incidents)
     if (isIncidenciasSheetOpen || historyVehicle) {
       return cleanup;
     }
