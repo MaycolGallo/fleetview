@@ -1,9 +1,15 @@
 
 'use client';
 
+/**
+ * @fileOverview Tactical Polyline Engine for Leaflet.
+ * Manages Historical paths, Baseline references, and Incident timelines.
+ */
+
 import React, { useMemo } from 'react';
 import { Polyline, CircleMarker } from 'react-leaflet';
-import { useFleetState } from '@/context/fleet-context';
+import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
+import L from 'leaflet';
 
 interface LeafletRoutePolylinesProps {
   side?: 'ida' | 'vuelta';
@@ -11,52 +17,92 @@ interface LeafletRoutePolylinesProps {
 
 /**
  * Renders all tactical polyline layers for Leaflet (History, Despacho Base Route, Incidents).
+ * Optimized with high-visibility segment selection and click-to-inspect logic.
  */
 export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
   const { state } = useFleetState();
-  const { routeGroups, incidencias, isIncidenciasSheetOpen, historyVehicle, despachoBaseRoute } = state;
+  const dispatch = useFleetDispatch();
+  const { 
+    routeGroups, 
+    incidencias, 
+    isIncidenciasSheetOpen, 
+    historyVehicle, 
+    despachoBaseRoute,
+    selectedSegmentIndex 
+  } = state;
 
   const despachoRoutePoints = useMemo(() => {
       if (!side || historyVehicle || isIncidenciasSheetOpen) return null;
       if (!despachoBaseRoute || despachoBaseRoute.length === 0) return null;
       
       const halfMaster = Math.ceil(despachoBaseRoute.length / 2);
-      if (side === 'ida') return despachoBaseRoute.slice(0, halfMaster);
-      if (side === 'vuelta') return despachoBaseRoute.slice(halfMaster - 1);
-      return null;
+      return side === 'ida' ? despachoBaseRoute.slice(0, halfMaster) : despachoBaseRoute.slice(halfMaster - 1);
   }, [despachoBaseRoute, historyVehicle, isIncidenciasSheetOpen, side]);
 
   return (
     <>
         {/* Scenario 1: Historical Path & Stops */}
         {historyVehicle && !isIncidenciasSheetOpen && routeGroups.map((group, idx) => {
+           // 1. Moving Segments: Interactive Polylines
            if (group.id_estado === 6) {
              const points = group.records.map(r => [r.lat, r.lng] as [number, number]);
+             const isSelected = selectedSegmentIndex === idx;
+             
+             // Tactical Highlight: Amber for selection, Group Color for standard
+             const color = isSelected ? '#f59e0b' : group.color;
+             const weight = isSelected ? 10 : 6;
+             
              return (
               <Polyline 
                 key={`hist-${idx}`} 
                 positions={points} 
-                color={group.color} 
-                weight={6} 
-                opacity={0.8} 
+                color={color} 
+                weight={weight} 
+                opacity={0.9} 
+                eventHandlers={{
+                  click: (e) => {
+                    L.DomEvent.stopPropagation(e);
+                    dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: idx });
+                  }
+                }}
               />
             );
            }
-           if (group.id_estado === 4 || group.id_estado === 5) {
+
+           // 2. Stops/Idle Points: Interactive Markers
+           // Visibility Priority: Always show, but highlight if selected
+           const isStop = group.id_estado === 4 || group.id_estado === 5;
+           if (isStop) {
              const first = group.records[0];
+             if (!first) return null;
+
+             const isSelected = selectedSegmentIndex === idx;
+             
              return (
                 <CircleMarker 
                   key={`stop-${idx}`} 
                   center={[first.lat, first.lng]} 
-                  radius={8} 
-                  pathOptions={{ fillColor: group.color, color: 'white', weight: 2, fillOpacity: 1 }}
+                  radius={isSelected ? 10 : 8} 
+                  pathOptions={{ 
+                    fillColor: group.color, 
+                    color: isSelected ? '#f59e0b' : 'white', 
+                    weight: 3, 
+                    fillOpacity: 1 
+                  }}
+                  eventHandlers={{
+                    click: (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: idx });
+                    }
+                  }}
                 />
              );
            }
+           
            return null;
         })}
 
-        {/* Scenario 2: Despacho Base Route (Split View Reference) */}
+        {/* Scenario 2: Despacho Base Route Reference */}
         {despachoRoutePoints && (
           <Polyline 
             positions={despachoRoutePoints.map(p => [p.lat, p.lng] as [number, number])}
