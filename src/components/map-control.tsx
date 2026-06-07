@@ -16,10 +16,11 @@ interface MapControlProps {
   miniMapId?: string;
   manualVehicleIds?: number[];
   isMainMap?: boolean;
+  isVisible?: boolean;
 }
 
 export function MapControl(props: MapControlProps) {
-  const { side, miniMapId, manualVehicleIds, isMainMap } = props;
+  const { side, miniMapId, manualVehicleIds, isMainMap, isVisible = true } = props;
   const map = useMap();
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -55,7 +56,8 @@ export function MapControl(props: MapControlProps) {
   useMapViewport({
     map,
     provider: 'google',
-    ...props
+    ...props,
+    isVisible
   });
 
   const mapVehicles = useMemo(

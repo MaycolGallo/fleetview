@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Map, ColorScheme, useMap } from '@vis.gl/react-google-maps';
@@ -13,6 +14,7 @@ interface FleetMapProps {
   miniMapId?: string;
   manualVehicleIds?: number[];
   isMainMap?: boolean;
+  isVisible?: boolean;
 }
 
 /**
@@ -38,7 +40,7 @@ function TrafficLayer() {
   return null;
 }
 
-export default function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, isMainMap }: FleetMapProps) {
+export default function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, isMainMap, isVisible = true }: FleetMapProps) {
   const { state } = useFleetState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
@@ -89,6 +91,7 @@ export default function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, is
           miniMapId={miniMapId} 
           manualVehicleIds={manualVehicleIds}
           isMainMap={isMainMap} 
+          isVisible={isVisible}
         />
         <TrafficLayer />
       </Map>

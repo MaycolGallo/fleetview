@@ -16,10 +16,11 @@ interface FleetMapboxMapProps {
   miniMapId?: string;
   manualVehicleIds?: number[];
   isMainMap?: boolean;
+  isVisible?: boolean;
 }
 
 export default function FleetMapboxMap(props: FleetMapboxMapProps) {
-  const { side, miniMapId, manualVehicleIds, isMainMap } = props;
+  const { side, miniMapId, manualVehicleIds, isMainMap, isVisible = true } = props;
   const mapRef = useRef<MapRef>(null);
   const { state } = useFleetState();
   const { isMapDark, mapType, showTraffic } = state;
@@ -28,7 +29,8 @@ export default function FleetMapboxMap(props: FleetMapboxMapProps) {
   useMapViewport({
     map: mapRef.current,
     provider: 'mapbox',
-    ...props
+    ...props,
+    isVisible
   });
 
   const mapVehicles = useMemo(

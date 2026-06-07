@@ -13,11 +13,11 @@ interface FleetLeafletMapProps {
   miniMapId?: string;
   manualVehicleIds?: number[];
   isMainMap?: boolean;
+  isVisible?: boolean;
 }
 
 /**
  * Internal Sync component to bridge Leaflet context with our unified hook.
- * Implements aggressive ResizeObserver to prevent "grey spaces" when toggling visibility.
  */
 function MapViewportSync(props: FleetLeafletMapProps) {
   const map = useMap();
@@ -28,31 +28,11 @@ function MapViewportSync(props: FleetLeafletMapProps) {
     ...props
   });
 
-  useEffect(() => {
-    if (!map) return;
-
-    // Tactical Resize Detection: Ensures tiles load instantly when opacity-0 is removed
-    const observer = new ResizeObserver(() => {
-      map.invalidateSize({ animate: false });
-    });
-
-    const container = map.getContainer();
-    observer.observe(container);
-
-    // Initial stabilization cycle
-    const timer = setTimeout(() => map.invalidateSize({ animate: false }), 50);
-
-    return () => {
-      observer.disconnect();
-      clearTimeout(timer);
-    };
-  }, [map]);
-
   return null;
 }
 
 export default function FleetLeafletMap(props: FleetLeafletMapProps) {
-  const { miniMapId, manualVehicleIds, isMainMap, side } = props;
+  const { miniMapId, manualVehicleIds, isMainMap, side, isVisible = true } = props;
   const { state } = useFleetState();
   const { isMapDark, mapType } = state;
 
@@ -81,7 +61,7 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
       >
         <TileLayer key={`${tileUrl}-${isMapDark}`} url={tileUrl} attribution={attribution} />
         
-        <MapViewportSync {...props} />
+        <MapViewportSync {...props} isVisible={isVisible} />
 
         <LeafletRoutePolylines side={side} />
 

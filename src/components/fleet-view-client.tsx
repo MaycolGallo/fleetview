@@ -50,13 +50,13 @@ const TacticalMapLayer = memo(({
     const mapInstance = useMemo(() => {
         switch (provider) {
             case 'leaflet':
-                return <FleetLeafletMap side={side} isMainMap={isMainMap} />;
+                return <FleetLeafletMap side={side} isMainMap={isMainMap} isVisible={isVisible} />;
             case 'mapbox':
-                return <FleetMapboxMap side={side} isMainMap={isMainMap} />;
+                return <FleetMapboxMap side={side} isMainMap={isMainMap} isVisible={isVisible} />;
             default:
-                return <FleetMap apiKey={apiKey} side={side} isMainMap={isMainMap} />;
+                return <FleetMap apiKey={apiKey} side={side} isMainMap={isMainMap} isVisible={isVisible} />;
         }
-    }, [provider, side, isMainMap, apiKey]);
+    }, [provider, side, isMainMap, apiKey, isVisible]);
 
     return (
       <motion.div 

@@ -19,6 +19,7 @@ interface UseMapViewportProps {
   side?: 'ida' | 'vuelta';
   miniMapId?: string;
   manualVehicleIds?: number[];
+  isVisible?: boolean;
 }
 
 interface ViewportPadding {
@@ -41,7 +42,8 @@ export function useMapViewport({
   isMainMap,
   side,
   miniMapId,
-  manualVehicleIds
+  manualVehicleIds,
+  isVisible = true
 }: UseMapViewportProps) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
@@ -126,6 +128,7 @@ export function useMapViewport({
   useEffect(() => {
     if (!map) return;
 
+    // Aggressive resize sync when coming into view to prevent grey grids
     triggerResize();
     const t1 = setTimeout(triggerResize, 50);
     const t2 = setTimeout(triggerResize, 350);
@@ -136,6 +139,9 @@ export function useMapViewport({
         clearTimeout(t2);
         clearTimeout(t3);
     };
+
+    // Only process automated framing if map is visible
+    if (!isVisible) return cleanup;
 
     // PRIORITY 1: Manual Investigation Lock (Route/Incidents)
     if (isIncidenciasSheetOpen || historyVehicle) {
@@ -191,7 +197,8 @@ export function useMapViewport({
     selectedVehicle,
     vehicles,
     miniMaps,
-    despachoBaseRoute
+    despachoBaseRoute,
+    isVisible
   ]);
 }
 
