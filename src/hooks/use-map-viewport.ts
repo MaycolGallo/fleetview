@@ -204,16 +204,23 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
         const bounds = new google.maps.LatLngBounds();
         points.forEach(p => bounds.extend(p));
         map.fitBounds(bounds, padding);
+        // Prevent over-zooming on single points
+        if (points.length === 1) {
+            const listener = google.maps.event.addListener(map, 'idle', () => {
+                if (map.getZoom()! > 16) map.setZoom(16);
+                google.maps.event.removeListener(listener);
+            });
+        }
       }
       break;
     case 'leaflet':
       if ('fitBounds' in map) {
         const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
-        // Leaflet asymmetrical padding support
         (map as L.Map).fitBounds(bounds, { 
             paddingTopLeft: [padding.left, padding.top], 
             paddingBottomRight: [padding.right, padding.bottom],
-            animate: true
+            animate: true,
+            maxZoom: 16
         });
       }
       break;
@@ -225,7 +232,7 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
           [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
         ] as [[number, number], [number, number]], [[initial.lng, initial.lat], [initial.lng, initial.lat]] as [[number, number], [number, number]]);
         
-        (map as MapRef).fitBounds(bounds, { padding });
+        (map as MapRef).fitBounds(bounds, { padding, maxZoom: 16 });
       }
       break;
   }

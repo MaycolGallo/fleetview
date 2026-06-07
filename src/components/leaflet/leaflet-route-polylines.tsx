@@ -43,10 +43,11 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
     <>
         {/* Scenario 1: Historical Path & Stops */}
         {historyVehicle && !isIncidenciasSheetOpen && routeGroups.map((group, idx) => {
+           const isSelected = selectedSegmentIndex === idx;
+
            // 1. Moving Segments: Interactive Polylines
            if (group.id_estado === 6) {
              const points = group.records.map(r => [r.lat, r.lng] as [number, number]);
-             const isSelected = selectedSegmentIndex === idx;
              
              // Tactical Highlight: Amber for selection, Group Color for standard
              const color = isSelected ? '#f59e0b' : group.color;
@@ -54,7 +55,7 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
              
              return (
               <Polyline 
-                key={`hist-${idx}`} 
+                key={`hist-line-${idx}-${isSelected}`} // Key includes selection to force Leaflet update
                 positions={points} 
                 color={color} 
                 weight={weight} 
@@ -70,23 +71,20 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
            }
 
            // 2. Stops/Idle Points: Interactive Markers
-           // Visibility Priority: Always show, but highlight if selected
            const isStop = group.id_estado === 4 || group.id_estado === 5;
            if (isStop) {
              const first = group.records[0];
              if (!first) return null;
-
-             const isSelected = selectedSegmentIndex === idx;
              
              return (
                 <CircleMarker 
-                  key={`stop-${idx}`} 
+                  key={`hist-stop-${idx}-${isSelected}`}
                   center={[first.lat, first.lng]} 
                   radius={isSelected ? 10 : 8} 
                   pathOptions={{ 
-                    fillColor: group.color, 
-                    color: isSelected ? '#f59e0b' : 'white', 
-                    weight: 3, 
+                    fillColor: isSelected ? '#f59e0b' : group.color, 
+                    color: isSelected ? 'white' : 'white', 
+                    weight: isSelected ? 4 : 2, 
                     fillOpacity: 1 
                   }}
                   eventHandlers={{

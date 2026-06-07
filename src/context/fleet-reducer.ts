@@ -199,14 +199,38 @@ const handleRouteActions = (state: FleetState, action: FleetAction): FleetState 
       const segmentIndex = action.payload;
       const { selectedSegmentIndex, routeGroups, historyVehicle } = state;
       if (!historyVehicle) return state;
+      
       if (selectedSegmentIndex === segmentIndex) {
         const startOfRoute = routeGroups?.[0]?.records?.[0];
         return { ...state, selectedSegmentIndex: null, historyVehicle: startOfRoute ? { ...historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng } : historyVehicle, mapViewport: { type: 'fit_route', payload: state.routePath?.flat() || [] } };
       }
+      
       const segmentToSelect = routeGroups[segmentIndex];
       if (!segmentToSelect?.records?.length) return state;
+      
       const lastRecord = segmentToSelect.records[segmentToSelect.records.length - 1];
-      return { ...state, selectedSegmentIndex: segmentIndex, historyVehicle: { ...historyVehicle, lat: lastRecord.lat, lng: lastRecord.lng, id_estado: segmentToSelect.id_estado, velocidad: String(Math.round(segmentToSelect.avg_velocidad)), rumbo: lastRecord.rumbo || historyVehicle.rumbo, statusName: segmentToSelect.description, statusColor: segmentToSelect.color || historyVehicle.statusColor }, mapViewport: segmentToSelect.id_estado === 6 ? { type: 'fit_bounds', payload: segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng })) } : { type: 'pan_to_vehicle', payload: { lat: lastRecord.lat, lng: lastRecord.lng }, vehicleId: historyVehicle.id_vehiculo } };
+      const updatedHistory = { 
+        ...historyVehicle, 
+        lat: lastRecord.lat, 
+        lng: lastRecord.lng, 
+        id_estado: segmentToSelect.id_estado, 
+        velocidad: String(Math.round(segmentToSelect.avg_velocidad)), 
+        rumbo: lastRecord.rumbo || historyVehicle.rumbo, 
+        statusName: segmentToSelect.description, 
+        statusColor: segmentToSelect.color || historyVehicle.statusColor 
+      };
+
+      // Tactical framing: Use fit_route for ALL segments (even stops) to ensure padding clearance
+      const viewportPoints = segmentToSelect.id_estado === 6 
+        ? segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng }))
+        : [{ lat: lastRecord.lat, lng: lastRecord.lng }];
+
+      return { 
+        ...state, 
+        selectedSegmentIndex: segmentIndex, 
+        historyVehicle: updatedHistory, 
+        mapViewport: { type: 'fit_route', payload: viewportPoints } 
+      };
     }
     case 'BACK_TO_FLEET': {
         const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
