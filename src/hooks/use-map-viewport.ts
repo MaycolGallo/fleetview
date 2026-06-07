@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useCallback } from 'react';
@@ -28,11 +29,11 @@ interface ViewportPadding {
 }
 
 const PADDING_STANDARD: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 80 };
-const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 80 }; // Extra bottom clearance for tactical drawer
+const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 80 }; // Tactical clearance for bottom drawer
 
 /**
- * Unified Viewport Hook: Handles framing, panning, and tactical resize logic.
- * Optimized with early returns and switch-based priority rules.
+ * Unified Viewport Engine.
+ * Optimized with switch statements and early returns for tactical clarity.
  */
 export function useMapViewport({
   map,
@@ -58,7 +59,7 @@ export function useMapViewport({
   } = state;
 
   /**
-   * Tactical Resize Management.
+   * Tactical Resize Burst Management.
    */
   const triggerResize = useCallback(() => {
     if (!map) return;
@@ -76,82 +77,83 @@ export function useMapViewport({
     }
   }, [map, provider]);
 
-  // Handle Explicit Viewport Actions (Pan to Vehicle, Fit Route)
+  // ACTION EFFECT: Handle explicit navigation commands (Pan/Fit)
   useEffect(() => {
     if (!map || mapViewport.type === 'idle' || mapViewport.type === 'initial') return;
 
-    const actionType = mapViewport.type;
+    const action = mapViewport;
 
-    switch (actionType) {
+    switch (action.type) {
       case 'pan_to_vehicle':
-        if (isMainMap) performPan(map, provider, mapViewport.payload, 16);
+        if (isMainMap) performPan(map, provider, action.payload, 16);
         break;
       case 'fit_bounds':
-        performFitBounds(map, provider, mapViewport.payload, PADDING_STANDARD);
+        performFitBounds(map, provider, action.payload, PADDING_STANDARD);
         break;
       case 'fit_route':
-        performFitBounds(map, provider, mapViewport.payload, PADDING_ROUTE);
+        performFitBounds(map, provider, action.payload, PADDING_ROUTE);
         break;
     }
     
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
   }, [map, mapViewport.type, provider, isMainMap, dispatch]);
 
-  // Handle Tactical Layout Framing
+  // LAYOUT EFFECT: Handle persistent framing and container resizing
   useEffect(() => {
     if (!map) return;
 
-    // Trigger staggered resize bursts for motion transitions
+    // Trigger staggered resize bursts to capture final dimensions during transitions
     triggerResize();
     const t1 = setTimeout(triggerResize, 50);
-    const t2 = setTimeout(triggerResize, 300);
-    const t3 = setTimeout(triggerResize, 600);
+    const t2 = setTimeout(triggerResize, 350);
+    const t3 = setTimeout(triggerResize, 750);
 
-    // PRIORITY 1: Active Investigations (History / Incidents) - Do not auto-refit base layers
-    if (isIncidenciasSheetOpen || historyVehicle) {
-      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-    }
-
-    // PRIORITY 2: Identify Targets (Manual > MiniMap > Focus Mode)
-    let targetVehicleIds: number[] = [];
-    
-    if (manualVehicleIds) {
-      targetVehicleIds = manualVehicleIds;
-    } else if (miniMapId) {
-      targetVehicleIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
-    } else if (isMainMap && focusedMiniMapId && !selectedVehicle) {
-      targetVehicleIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
-    }
-
-    // PRIORITY 3: Framing Targets
-    if (targetVehicleIds.length > 0) {
-      const trackedUnits = vehicles.filter(v => targetVehicleIds.includes(v.id_vehiculo));
-      const points = trackedUnits.map(v => ({ lat: v.lat, lng: v.lng }));
-      
-      if (points.length === 1) {
-        performPan(map, provider, points[0], 16);
-      } else if (points.length > 1) {
-        performFitBounds(map, provider, points, PADDING_STANDARD);
-      }
-      
-      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-    } 
-
-    // PRIORITY 4: Tactical Baseline (Split View IDA/VUELTA)
-    if (isSplitView && !selectedVehicle && despachoBaseRoute.length > 0) {
-      const halfIndex = Math.ceil(despachoBaseRoute.length / 2);
-      const points = side === 'ida' 
-        ? despachoBaseRoute.slice(0, halfIndex) 
-        : despachoBaseRoute.slice(halfIndex - 1);
-        
-      performFitBounds(map, provider, points, PADDING_STANDARD);
-    }
-
-    return () => { 
-        clearTimeout(t1); 
-        clearTimeout(t2); 
+    const cleanup = () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
         clearTimeout(t3);
     };
+
+    // PRIORITY 1: Manual Investigation Lock (Do not auto-refit if dispatcher is investigating)
+    if (isIncidenciasSheetOpen || historyVehicle) {
+      return cleanup;
+    }
+
+    // PRIORITY 2: Targeted Framing (Manual > Specific MiniMap > Focus Mode)
+    let targetIds: number[] = [];
+    
+    if (manualVehicleIds) {
+      targetIds = manualVehicleIds;
+    } else if (miniMapId) {
+      targetIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
+    } else if (isMainMap && focusedMiniMapId && !selectedVehicle) {
+      targetIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
+    }
+
+    if (targetIds.length > 0) {
+      const targetPoints = vehicles
+        .filter(v => targetIds.includes(v.id_vehiculo))
+        .map(v => ({ lat: v.lat, lng: v.lng }));
+      
+      if (targetPoints.length === 1) {
+        performPan(map, provider, targetPoints[0], 16);
+      } else if (targetPoints.length > 1) {
+        performFitBounds(map, provider, targetPoints, PADDING_STANDARD);
+      }
+      return cleanup;
+    } 
+
+    // PRIORITY 3: Tactical Baseline (Split View IDA/VUELTA)
+    if (isSplitView && !selectedVehicle && despachoBaseRoute.length > 0) {
+      const half = Math.ceil(despachoBaseRoute.length / 2);
+      const baselinePoints = side === 'ida' 
+        ? despachoBaseRoute.slice(0, half) 
+        : despachoBaseRoute.slice(half - 1);
+        
+      performFitBounds(map, provider, baselinePoints, PADDING_STANDARD);
+    }
+
+    return cleanup;
   }, [
     map, 
     provider, 
@@ -207,22 +209,22 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
     case 'leaflet':
       if ('fitBounds' in map) {
         const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
+        // Leaflet asymmetrical padding support
         (map as L.Map).fitBounds(bounds, { 
             paddingTopLeft: [padding.left, padding.top], 
-            paddingBottomRight: [padding.right, padding.bottom] 
+            paddingBottomRight: [padding.right, padding.bottom],
+            animate: true
         });
       }
       break;
     case 'mapbox':
       if ('fitBounds' in map) {
-        const initialLng = points[0].lng;
-        const initialLat = points[0].lat;
-        const bounds: [[number, number], [number, number]] = points.reduce((acc, p) => {
-          return [
-            [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],
-            [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
-          ] as [[number, number], [number, number]];
-        }, [[initialLng, initialLat], [initialLng, initialLat]] as [[number, number], [number, number]]);
+        const initial = points[0];
+        const bounds: [[number, number], [number, number]] = points.reduce((acc, p) => [
+          [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],
+          [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
+        ] as [[number, number], [number, number]], [[initial.lng, initial.lat], [initial.lng, initial.lat]] as [[number, number], [number, number]]);
+        
         (map as MapRef).fitBounds(bounds, { padding });
       }
       break;
