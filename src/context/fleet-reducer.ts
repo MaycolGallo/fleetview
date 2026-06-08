@@ -95,7 +95,7 @@ const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
   return Array.from(ids);
 };
 
-const handleVehicleActions = (state: FleetState, action: FleetAction): FleetState => {
+export const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
       const newVisibleIds = state.vehicles.length === 0 
@@ -116,29 +116,6 @@ const handleVehicleActions = (state: FleetState, action: FleetAction): FleetStat
           : state.mapViewport,
        };
     }
-    case 'UPDATE_VEHICLE_POSITIONS': {
-      return {
-        ...state,
-        vehicles: state.vehicles.map(v => {
-          const update = action.payload.find(u => u.id === v.id_vehiculo);
-          if (update) {
-            return { 
-              ...v, 
-              lat: update.lat, 
-              lng: update.lng, 
-              statusName: update.status || v.statusName 
-            };
-          }
-          return v;
-        })
-      };
-    }
-    case 'SELECT_VEHICLE': {
-        return {
-            ...state,
-            selectedVehicle: action.payload,
-        };
-    }
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) return { ...state, selectedVehicle: null };
       return {
@@ -151,35 +128,6 @@ const handleVehicleActions = (state: FleetState, action: FleetAction): FleetStat
         }
       };
     }
-    case 'TOGGLE_VEHICLE_VISIBILITY': {
-        const newVisibleIds = new Set(state.visibleVehicleIds);
-        if (newVisibleIds.has(action.payload)) newVisibleIds.delete(action.payload);
-        else newVisibleIds.add(action.payload);
-        return { ...state, visibleVehicleIds: newVisibleIds };
-    }
-    case 'SET_ALL_VEHICLES_VISIBILITY': {
-        const newVisibleIds = new Set(state.visibleVehicleIds);
-        if (action.payload.visible) action.payload.ids.forEach(id => newVisibleIds.add(id));
-        else action.payload.ids.forEach(id => newVisibleIds.delete(id));
-        return { ...state, visibleVehicleIds: newVisibleIds };
-    }
-    case 'SIMULATE_VEHICLE_MOVE': {
-      const vehicleId = action.payload;
-      const currentStep = state.simulationStep[vehicleId] || 0;
-      const nextStep = (currentStep + 1) % SIMULATION_ROUTE.length;
-      const newCoords = SIMULATION_ROUTE[nextStep];
-      return {
-        ...state,
-        vehicles: state.vehicles.map(v => v.id_vehiculo === vehicleId ? { ...v, lat: newCoords.lat, lng: newCoords.lng } : v),
-        simulationStep: { ...state.simulationStep, [vehicleId]: nextStep }
-      };
-    }
-    default: return state;
-  }
-};
-
-const handleRouteActions = (state: FleetState, action: FleetAction): FleetState => {
-  switch (action.type) {
     case 'START_ROUTE_LOADING': {
       const isRefreshing = state.historyVehicle?.id_vehiculo === action.payload.id_vehiculo;
       return { ...state, selectedVehicle: null, isLoadingRoute: true, historyVehicle: isRefreshing ? state.historyVehicle : action.payload, isIncidenciasSheetOpen: false, isRouteSheetOpen: isRefreshing ? state.isRouteSheetOpen : false, wasSplitViewBeforeRoute: state.isSplitView, isSplitView: false };
@@ -190,7 +138,7 @@ const handleRouteActions = (state: FleetState, action: FleetAction): FleetState 
         const routePoints = filteredGroups.filter(g => g.id_estado === 6).map(g => g.records.map(r => ({ lat: r.lat, lng: r.lng })));
         const startOfRoute = filteredGroups?.[0]?.records?.[0];
         const updatedHistoryVehicle = state.historyVehicle && startOfRoute ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng, rumbo: startOfRoute?.rumbo || 0, velocidad: "0" } : state.historyVehicle;
-        return { ...state, isLoadingRoute: false, routePath: routePoints, routeGroups: filteredGroups, by_estado: historyData.by_estado, isRouteSheetOpen: true, historyVehicle: updatedHistoryVehicle, isRoutePlaying: false, lastUpdatedRoute: Date.now(), mapViewport: state.isIncidenciasSheetOpen ? state.mapViewport : { type: 'fit_route', payload: routePoints.flat() } };
+        return { ...state, isLoadingRoute: false, routePath: routePoints, routeGroups: filteredGroups, by_estado: historyData.by_estado, isRouteSheetOpen: true, historyVehicle: updatedHistoryVehicle, isRoutePlaying: false, lastUpdatedRoute: Date.now(), mapViewport: { type: 'fit_route', payload: routePoints.flat() } };
     }
     case 'SELECT_ROUTE_SEGMENT': {
       const segmentIndex = action.payload;
@@ -206,63 +154,10 @@ const handleRouteActions = (state: FleetState, action: FleetAction): FleetState 
       if (!segmentToSelect?.records?.length) return state;
       
       const lastRecord = segmentToSelect.records[segmentToSelect.records.length - 1];
-      const updatedHistory = { 
-        ...historyVehicle, 
-        lat: lastRecord.lat, 
-        lng: lastRecord.lng, 
-        id_estado: segmentToSelect.id_estado, 
-        velocidad: String(Math.round(segmentToSelect.avg_velocidad)), 
-        rumbo: lastRecord.rumbo || historyVehicle.rumbo, 
-        statusName: segmentToSelect.description, 
-        statusColor: segmentToSelect.color || historyVehicle.statusColor 
-      };
+      const updatedHistory = { ...historyVehicle, lat: lastRecord.lat, lng: lastRecord.lng, id_estado: segmentToSelect.id_estado, velocidad: String(Math.round(segmentToSelect.avg_velocidad)), rumbo: lastRecord.rumbo || historyVehicle.rumbo, statusName: segmentToSelect.description, statusColor: segmentToSelect.color || historyVehicle.statusColor };
+      const viewportPoints = segmentToSelect.id_estado === 6 ? segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng })) : [{ lat: lastRecord.lat, lng: lastRecord.lng }];
 
-      const viewportPoints = segmentToSelect.id_estado === 6 
-        ? segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng }))
-        : [{ lat: lastRecord.lat, lng: lastRecord.lng }];
-
-      return { 
-        ...state, 
-        selectedSegmentIndex: segmentIndex, 
-        historyVehicle: updatedHistory, 
-        mapViewport: { type: 'fit_route', payload: viewportPoints } 
-      };
-    }
-    case 'BACK_TO_FLEET': {
-        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
-        const newBounds = visibleVehicles.length > 0 ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng })) : [];
-        return { ...state, historyVehicle: null, routePath: null, routeGroups: [], by_estado: {}, selectedVehicle: null, isRouteSheetOpen: false, selectedSegmentIndex: null, isLoadingRoute: false, isRoutePlaying: false, isSplitView: state.wasSplitViewBeforeRoute, wasSplitViewBeforeRoute: false, focusedMiniMapId: null, mapViewport: { type: 'fit_bounds', payload: newBounds } };
-    }
-    case 'START_ROUTE_PLAYBACK': return { ...state, isRoutePlaying: true, historyVehicle: state.historyVehicle ? { ...state.historyVehicle, id_estado: 6 } : state.historyVehicle };
-    case 'PAUSE_ROUTE_PLAYBACK': return { ...state, isRoutePlaying: false };
-    case 'UPDATE_HISTORY_VEHICLE_POSITION': {
-        if (!state.historyVehicle) return state;
-        const { lat, lng, rumbo, velocidad, animationDuration } = action.payload;
-        return { ...state, historyVehicle: { ...state.historyVehicle, lat, lng, rumbo, velocidad: String(velocidad), id_estado: 6, statusName: 'Transitando', statusColor: '#00CC33' }, playbackAnimationDuration: animationDuration };
-    }
-    default: return state;
-  }
-};
-
-const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetState => {
-  switch (action.type) {
-    case 'SET_MINIMAPS': {
-        const existingIds = new Set(state.miniMaps.map(m => m.id));
-        const newMiniMaps = [...state.miniMaps];
-        action.payload.forEach(fetchedMap => { if (!existingIds.has(fetchedMap.id)) newMiniMaps.push(fetchedMap); });
-        return { ...state, miniMaps: newMiniMaps, allTrackedVehicleIds: getTrackedIds(newMiniMaps) };
-    }
-    case 'TOGGLE_MINIMAP_VISIBILITY': {
-      const isVisible = state.visibleMiniMapIds.includes(action.payload);
-      return { ...state, visibleMiniMapIds: isVisible
-         ? state.visibleMiniMapIds.filter(id => id !== action.payload) 
-         : [...state.visibleMiniMapIds, action.payload] };
-    }
-    case 'CREATE_MINIMAP': {
-      const newId = `map-${Date.now()}`;
-      const newMap: MiniMapGroup = { id: newId, name: `Radar Lock ${state.miniMaps.length + 1}`, vehicleIds: [action.payload.vehicleId] };
-      const newMaps = [...state.miniMaps, newMap];
-      return { ...state, miniMaps: newMaps, visibleMiniMapIds: [...state.visibleMiniMapIds, newId], allTrackedVehicleIds: getTrackedIds(newMaps) };
+      return { ...state, selectedSegmentIndex: segmentIndex, historyVehicle: updatedHistory, mapViewport: { type: 'fit_route', payload: viewportPoints } };
     }
     case 'CREATE_MINIMAP_MANUAL': {
         const newId = `map-${Date.now()}`;
@@ -274,17 +169,14 @@ const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetStat
         const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: action.payload.vehicleIds } : m);
         return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
-    case 'REMOVE_MINIMAP': {
-      const newMaps = state.miniMaps.filter(m => m.id !== action.payload);
-      return { ...state, miniMaps: newMaps, visibleMiniMapIds: state.visibleMiniMapIds.filter(id => id !== action.payload), allTrackedVehicleIds: getTrackedIds(newMaps), focusedMiniMapId: state.focusedMiniMapId === action.payload ? null : state.focusedMiniMapId };
+    case 'BACK_TO_FLEET': {
+        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
+        const newBounds = visibleVehicles.length > 0 ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng })) : [];
+        return { ...state, historyVehicle: null, routePath: null, routeGroups: [], by_estado: {}, selectedVehicle: null, isRouteSheetOpen: false, selectedSegmentIndex: null, isLoadingRoute: false, isRoutePlaying: false, isSplitView: state.wasSplitViewBeforeRoute, wasSplitViewBeforeRoute: false, focusedMiniMapId: null, mapViewport: { type: 'fit_bounds', payload: newBounds } };
     }
-    case 'ADD_VEHICLE_TO_MINIMAP': {
-      const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleId])) } : m);
-      return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
-    }
-    case 'REMOVE_VEHICLE_FROM_MINIMAP': {
-      const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: m.vehicleIds.filter(id => id !== action.payload.vehicleId) } : m);
-      return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
+    case 'TOGGLE_MINIMAP_VISIBILITY': {
+      const isVisible = state.visibleMiniMapIds.includes(action.payload);
+      return { ...state, visibleMiniMapIds: isVisible ? state.visibleMiniMapIds.filter(id => id !== action.payload) : [...state.visibleMiniMapIds, action.payload] };
     }
     case 'FOCUS_MINIMAP': {
       const group = state.miniMaps.find(m => m.id === action.payload);
@@ -296,43 +188,14 @@ const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetStat
       const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
       return { ...state, focusedMiniMapId: null, mapViewport: { type: 'fit_bounds', payload: visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng })) } };
     }
-    default: return state;
-  }
-};
-
-export const fleetReducer = (state: FleetState, action: FleetAction): FleetState => {
-  if (action.type.includes('VEHICLE')) return handleVehicleActions(state, action);
-  if (action.type.includes('ROUTE') || action.type.includes('HISTORY') || action.type === 'BACK_TO_FLEET') return handleRouteActions(state, action);
-  if (action.type.includes('MINIMAP')) return handleMiniMapActions(state, action);
-
-  switch (action.type) {
-    case 'INIT_PERSISTED_STATE': return { ...state, miniMaps: action.payload.miniMaps, visibleMiniMapIds: action.payload.visibleIds, allTrackedVehicleIds: getTrackedIds(action.payload.miniMaps) };
-    case 'SET_STATUS_FILTER': return { ...state, statusFilter: action.payload };
     case 'SET_ACTIVE_PANEL': return { ...state, activePanel: action.payload };
-    case 'SET_AI_INSIGHT': return { ...state, aiFleetInsight: action.payload };
-    case 'SET_AI_INSIGHT_LOADING': return { ...state, isLoadingAiInsight: action.payload };
-    case 'SET_AI_PATROL_LOADING': return { ...state, isSimulatingAiPatrol: action.payload };
-    case 'SET_MAP_DARK_MODE': return { ...state, isMapDark: action.payload };
     case 'SET_MAP_PROVIDER': return { ...state, mapProvider: action.payload };
-    case 'SET_MAP_TYPE': return { ...state, mapType: action.payload };
-    case 'TOGGLE_TRAFFIC': return { ...state, showTraffic: !state.showTraffic };
     case 'TOGGLE_SPLIT_VIEW': return { ...state, isSplitView: !state.isSplitView };
-    case 'TOGGLE_SPLIT_DIRECTION': return { ...state, splitDirection: state.splitDirection === 'horizontal' ? 'vertical' : 'horizontal' };
     case 'VIEWPORT_ACTION_COMPLETE': return { ...state, mapViewport: { type: 'idle' } };
-    case 'START_INCIDENCIAS_LOADING': {
-      const isRefreshing = state.historyVehicle?.id_vehiculo === action.payload.id_vehiculo;
-      return { ...state, selectedVehicle: null, isLoadingIncidencias: true, isLoadingRoute: false, historyVehicle: isRefreshing ? state.historyVehicle : action.payload, isRouteSheetOpen: false, isIncidenciasSheetOpen: isRefreshing ? state.isIncidenciasSheetOpen : false, wasSplitViewBeforeRoute: state.isSplitView, isSplitView: false };
+    case 'REMOVE_MINIMAP': {
+      const newMaps = state.miniMaps.filter(m => m.id !== action.payload);
+      return { ...state, miniMaps: newMaps, visibleMiniMapIds: state.visibleMiniMapIds.filter(id => id !== action.payload), allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
-    case 'SET_INCIDENCIAS': return { ...state, isLoadingIncidencias: false, incidencias: action.payload, isIncidenciasSheetOpen: true, lastUpdatedIncidencias: Date.now(), mapViewport: { type: 'fit_bounds', payload: action.payload.map(i => ({ lat: i.lat, lng: i.lng })) } };
-    case 'SELECT_INCIDENCIA': {
-      if (action.payload === null) return { ...state, selectedIncidenciaId: null };
-      const inc = state.incidencias.find(i => i.id === action.payload);
-      return { ...state, selectedIncidenciaId: action.payload, mapViewport: inc ? { type: 'pan_to_vehicle', payload: { lat: inc.lat, lng: inc.lng }, vehicleId: -1 } : state.mapViewport };
-    }
-    case 'CLOSE_INCIDENCIAS': return { ...state, historyVehicle: null, incidencias: [], isIncidenciasSheetOpen: false, isLoadingIncidencias: false, isLoadingRoute: false, selectedIncidenciaId: null, isSplitView: state.wasSplitViewBeforeRoute, mapViewport: { type: 'fit_bounds', payload: state.vehicles.map(v => ({ lat: v.lat, lng: v.lng })) } };
-    case 'ADD_NOTIFICATION': return { ...state, notifications: [action.payload, ...state.notifications].slice(0, 50) };
-    case 'MARK_NOTIFICATION_READ': return { ...state, notifications: state.notifications.map(n => n.id === action.payload ? { ...n, isRead: true } : n) };
-    case 'CLEAR_NOTIFICATIONS': return { ...state, notifications: [] };
     case 'CLEAR_ALL_MINIMAPS': return { ...state, miniMaps: [], visibleMiniMapIds: [], allTrackedVehicleIds: [], focusedMiniMapId: null };
     default: return state;
   }
