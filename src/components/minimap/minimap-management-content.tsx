@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Radar, Plus, Trash2, X, Car, Eye, EyeOff } from 'lucide-react';
+import { Radar, Plus, Trash2, X, Car, Eye, EyeOff, Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -79,6 +79,7 @@ export function MiniMapManagementContent() {
             ) : (
                 miniMaps.map((map) => {
                     const isVisible = visibleMiniMapIds.includes(map.id);
+                    const isPredefined = map.id.startsWith('group-');
                     
                     return (
                         <div key={map.id} className={cn(
@@ -93,8 +94,14 @@ export function MiniMapManagementContent() {
                                     )}>
                                         <Radar className={cn("w-4 h-4", isVisible ? "text-primary" : "text-muted-foreground")} />
                                     </div>
-                                    <span className="font-bold text-sm">{map.name}</span>
-                                    <Badge variant="secondary" className="text-[10px] h-4">
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-sm flex items-center gap-1.5">
+                                            {map.name}
+                                            {isPredefined && <Lock className="w-2.5 h-2.5 text-muted-foreground opacity-50" />}
+                                        </span>
+                                        {isPredefined && <span className="text-[8px] text-muted-foreground uppercase font-bold tracking-tighter">Grupo Predeterminado</span>}
+                                    </div>
+                                    <Badge variant="secondary" className="text-[10px] h-4 ml-auto">
                                         {map.vehicleIds.length}
                                     </Badge>
                                 </div>
@@ -117,19 +124,21 @@ export function MiniMapManagementContent() {
                                             <TooltipContent>{isVisible ? 'Ocultar' : 'Mostrar'}</TooltipContent>
                                         </Tooltip>
 
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button 
-                                                    variant="ghost" 
-                                                    size="icon" 
-                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                    onClick={() => dispatch({ type: 'REMOVE_MINIMAP', payload: map.id })}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>Eliminar</TooltipContent>
-                                        </Tooltip>
+                                        {!isPredefined && (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                        onClick={() => dispatch({ type: 'REMOVE_MINIMAP', payload: map.id })}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>Eliminar</TooltipContent>
+                                            </Tooltip>
+                                        )}
                                     </TooltipProvider>
                                 </div>
                             </div>
@@ -140,8 +149,9 @@ export function MiniMapManagementContent() {
                                     options={vehicleOptions}
                                     onValueChange={(val) => handleUpdateVehicles(map.id, val)}
                                     defaultValue={map.vehicleIds.map(String)}
-                                    placeholder="Añadir vehículos..."
+                                    placeholder={isPredefined ? "Grupo fijo" : "Añadir vehículos..."}
                                     className="bg-background"
+                                    disabled={isPredefined}
                                 />
                             </div>
                         </div>

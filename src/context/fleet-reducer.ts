@@ -141,18 +141,11 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
       };
     }
 
-    case 'INIT_PERSISTED_STATE': {
-      const { miniMaps, visibleIds } = action.payload;
-      return {
-        ...state,
-        miniMaps: miniMaps.length > 0 ? miniMaps : state.miniMaps,
-        visibleMiniMapIds: visibleIds,
-        allTrackedVehicleIds: getTrackedIds(miniMaps.length > 0 ? miniMaps : state.miniMaps)
-      };
-    }
-
     case 'UPDATE_MINIMAP_VEHICLES': {
         const { miniMapId, vehicleIds } = action.payload;
+        // Early return/skip if predefined
+        if (miniMapId.startsWith('group-')) return state;
+        
         const newMaps = state.miniMaps.map(m => m.id === miniMapId ? { ...m, vehicleIds } : m);
         return { 
           ...state, 
