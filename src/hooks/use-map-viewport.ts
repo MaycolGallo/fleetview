@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useCallback } from 'react';
@@ -31,6 +30,7 @@ interface ViewportPadding {
 
 const PADDING_STANDARD: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 80 };
 const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 80 }; // Tactical clearance for bottom drawer
+const PADDING_WITH_GRID: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 440 }; // Tactical clearance for radar grid
 
 /**
  * Unified Viewport Engine.
@@ -85,20 +85,19 @@ export function useMapViewport({
     if (!map || mapViewport.type === 'idle' || mapViewport.type === 'initial') return;
 
     const action = mapViewport;
+    const isGridVisible = isMainMap && visibleMiniMapIds.length > 0;
+    const currentPadding = isGridVisible ? PADDING_WITH_GRID : PADDING_STANDARD;
 
     switch (action.type) {
       case 'pan_to_vehicle': {
         const targetVehicleId = action.vehicleId;
         let shouldRespond = false;
 
-        // TACTICAL RULE: Vehicles in minimap should ONLY pan when in focus (taking the main map slot)
         if (isMainMap) {
           if (focusedMiniMapId) {
-            // IF FOCUS MODE: Only respond to vehicles in the focused radar group
             const group = miniMaps.find(m => m.id === focusedMiniMapId);
             shouldRespond = group?.vehicleIds.includes(targetVehicleId) ?? false;
           } else {
-            // IF STANDARD MODE: Only respond if vehicle is NOT locked in any visible overlay minimap
             const overlayVehicleIds = miniMaps
               .filter(m => visibleMiniMapIds.includes(m.id))
               .flatMap(m => m.vehicleIds);
@@ -106,15 +105,14 @@ export function useMapViewport({
             shouldRespond = !overlayVehicleIds.includes(targetVehicleId);
           }
         } else {
-          // IF OVERLAY MINIMAP: Never pan individually (stay focused on the group bounds)
           shouldRespond = false;
         }
 
-        if (shouldRespond) performPan(map, provider, action.payload, 16);
+        if (shouldRespond) performPan(map, provider, action.payload, 16, currentPadding);
         break;
       }
       case 'fit_bounds':
-        performFitBounds(map, provider, action.payload, PADDING_STANDARD);
+        performFitBounds(map, provider, action.payload, currentPadding);
         break;
       case 'fit_route':
         performFitBounds(map, provider, action.payload, PADDING_ROUTE);
@@ -128,7 +126,6 @@ export function useMapViewport({
   useEffect(() => {
     if (!map) return;
 
-    // Aggressive resize sync when coming into view to prevent grey grids
     triggerResize();
     const t1 = setTimeout(triggerResize, 50);
     const t2 = setTimeout(triggerResize, 350);
@@ -140,16 +137,15 @@ export function useMapViewport({
         clearTimeout(t3);
     };
 
-    // Only process automated framing if map is visible
     if (!isVisible) return cleanup;
 
-    // PRIORITY 1: Manual Investigation Lock (Route/Incidents)
     if (isIncidenciasSheetOpen || historyVehicle) {
       return cleanup;
     }
 
-    // PRIORITY 2: Targeted Framing (Manual > Specific MiniMap > Focus Mode)
     let targetIds: number[] = [];
+    const isGridVisible = isMainMap && visibleMiniMapIds.length > 0;
+    const currentPadding = isGridVisible ? PADDING_WITH_GRID : PADDING_STANDARD;
     
     if (manualVehicleIds) {
       targetIds = manualVehicleIds;
@@ -165,14 +161,13 @@ export function useMapViewport({
         .map(v => ({ lat: v.lat, lng: v.lng }));
       
       if (targetPoints.length === 1) {
-        performPan(map, provider, targetPoints[0], 16);
+        performPan(map, provider, targetPoints[0], 16, currentPadding);
       } else if (targetPoints.length > 1) {
-        performFitBounds(map, provider, targetPoints, PADDING_STANDARD);
+        performFitBounds(map, provider, targetPoints, currentPadding);
       }
       return cleanup;
     } 
 
-    // PRIORITY 3: Tactical Baseline (Split View IDA/VUELTA)
     if (isSplitView && !selectedVehicle && despachoBaseRoute.length > 0) {
       const half = Math.ceil(despachoBaseRoute.length / 2);
       const baselinePoints = side === 'ida' 
@@ -197,6 +192,7 @@ export function useMapViewport({
     selectedVehicle,
     vehicles,
     miniMaps,
+    visibleMiniMapIds,
     despachoBaseRoute,
     isVisible
   ]);
@@ -205,14 +201,18 @@ export function useMapViewport({
 /**
  * performPan: Standard high-precision navigation.
  */
-function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number) {
+function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number, padding: ViewportPadding) {
   if (!map) return;
   
   switch (provider) {
     case 'google':
       if (map instanceof google.maps.Map) {
+        // Apply lateral shift for Google if right padding is active
         map.panTo(point);
         map.setZoom(zoom);
+        if (padding.right > 80) {
+           map.panBy((padding.right - 80) / 2, 0);
+        }
       }
       break;
     case 'leaflet':
@@ -222,7 +222,7 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
       break;
     case 'mapbox':
       if ('flyTo' in map) {
-        (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 800 });
+        (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 800, padding });
       }
       break;
   }

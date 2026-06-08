@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { FleetState, MiniMapGroup, MapProvider, PanelType, MapType } from '@/lib/types';
@@ -220,7 +219,6 @@ const handleRouteActions = (state: FleetState, action: FleetAction): FleetState 
         statusColor: segmentToSelect.color || historyVehicle.statusColor 
       };
 
-      // Tactical framing: Use fit_route for ALL segments (even stops) to ensure padding clearance
       const viewportPoints = segmentToSelect.id_estado === 6 
         ? segmentToSelect.records.map(r => ({ lat: r.lat, lng: r.lng }))
         : [{ lat: lastRecord.lat, lng: lastRecord.lng }];
@@ -258,7 +256,9 @@ const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetStat
     }
     case 'TOGGLE_MINIMAP_VISIBILITY': {
       const isVisible = state.visibleMiniMapIds.includes(action.payload);
-      return { ...state, visibleMiniMapIds: isVisible ? state.visibleMiniMapIds.filter(id => id !== action.payload) : [...state.visibleMiniMapIds, action.payload] };
+      return { ...state, visibleMiniMapIds: isVisible
+         ? state.visibleMiniMapIds.filter(id => id !== action.payload) 
+         : [...state.visibleMiniMapIds, action.payload] };
     }
     case 'CREATE_MINIMAP': {
       const newId = `map-${Date.now()}`;
@@ -283,7 +283,7 @@ const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetStat
     }
     case 'ADD_VEHICLE_TO_MINIMAP': {
       if (!isUserGroup(action.payload.miniMapId)) return state;
-      const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleIds])) } : m);
+      const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleId])) } : m);
       return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
     case 'REMOVE_VEHICLE_FROM_MINIMAP': {

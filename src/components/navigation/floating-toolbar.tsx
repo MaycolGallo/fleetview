@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -87,7 +86,9 @@ function ToolbarButton({
           <Icon className="h-6 w-6" />
         </Button>
       </TooltipTrigger>
-      <TooltipContent side="right">{label}</TooltipContent>
+      <TooltipContent side="right">
+        {label}
+      </TooltipContent>
     </Tooltip>
   );
 }
