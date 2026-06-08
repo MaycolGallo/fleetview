@@ -57,9 +57,17 @@ export function useMapViewport({
   const triggerResize = useCallback(() => {
     if (!map) return;
     switch (provider) {
-      case 'leaflet': if ('invalidateSize' in map) (map as L.Map).invalidateSize({ animate: false, noMove: true }); break;
-      case 'mapbox': if ('resize' in map) (map as MapRef).resize(); break;
-      case 'google': if (typeof google !== 'undefined' && map instanceof google.maps.Map) google.maps.event.trigger(map, 'resize'); break;
+      case 'leaflet': 
+        if ('invalidateSize' in map) (map as L.Map).invalidateSize({ animate: false, noMove: true }); 
+        break;
+      case 'mapbox': 
+        if ('resize' in map) (map as MapRef).resize(); 
+        break;
+      case 'google': 
+        if (typeof google !== 'undefined' && map instanceof google.maps.Map) {
+          google.maps.event.trigger(map, 'resize');
+        }
+        break;
     }
   }, [map, provider]);
 
@@ -75,6 +83,10 @@ export function useMapViewport({
         const targetId = action.vehicleId;
         let shouldPerform = false;
 
+        // Command Rules: 
+        // 1. If Main Map and in Focus mode, only pan if vehicle belongs to focused group.
+        // 2. If Main Map and not focused, only pan if vehicle is NOT locked in any mini-map.
+        // 3. If Mini Map, only pan if vehicle belongs to this mini-map group.
         if (isMainMap) {
           if (focusedMiniMapId) {
             shouldPerform = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds.includes(targetId) ?? false;
@@ -86,11 +98,17 @@ export function useMapViewport({
           shouldPerform = miniMapId ? (miniMaps.find(m => m.id === miniMapId)?.vehicleIds.includes(targetId) ?? false) : false;
         }
 
-        if (shouldPerform) performPan(map, provider, action.payload, 16, currentPadding);
+        if (shouldPerform) {
+          performPan(map, provider, action.payload, 16, currentPadding);
+        }
         break;
       }
-      case 'fit_bounds': performFitBounds(map, provider, action.payload, currentPadding); break;
-      case 'fit_route': performFitBounds(map, provider, action.payload, PADDING_ROUTE); break;
+      case 'fit_bounds': 
+        performFitBounds(map, provider, action.payload, currentPadding); 
+        break;
+      case 'fit_route': 
+        performFitBounds(map, provider, action.payload, PADDING_ROUTE); 
+        break;
     }
     
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
@@ -98,18 +116,24 @@ export function useMapViewport({
 
   useEffect(() => {
     if (!map) return;
+    
     triggerResize();
     const t = setTimeout(triggerResize, 350);
 
+    // Skip auto-viewport updates during investigations
     if (!isVisible || isIncidenciasSheetOpen || historyVehicle) return () => clearTimeout(t);
 
     const isGridActive = isMainMap && visibleMiniMapIds.length > 0;
     const currentPadding = isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD;
     
     let targetIds: number[] = [];
-    if (manualVehicleIds) targetIds = manualVehicleIds;
-    else if (miniMapId) targetIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
-    else if (isMainMap && focusedMiniMapId && !selectedVehicle) targetIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
+    if (manualVehicleIds) {
+      targetIds = manualVehicleIds;
+    } else if (miniMapId) {
+      targetIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
+    } else if (isMainMap && focusedMiniMapId && !selectedVehicle) {
+      targetIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
+    }
 
     if (targetIds.length > 0) {
       const points = vehicles.filter(v => targetIds.includes(v.id_vehiculo)).map(v => ({ lat: v.lat, lng: v.lng }));
@@ -135,11 +159,16 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
       if (map instanceof google.maps.Map) {
         map.setZoom(zoom);
         map.panTo(point);
+        // Tactical offset if radar grid is active
         if (padding.right > 80) map.panBy((padding.right - 80) / 2, 0);
       }
       break;
-    case 'leaflet': if ('setView' in map) (map as L.Map).setView([point.lat, point.lng], zoom, { animate: true }); break;
-    case 'mapbox': if ('flyTo' in map) (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 800, padding }); break;
+    case 'leaflet': 
+      if ('setView' in map) (map as L.Map).setView([point.lat, point.lng], zoom, { animate: true }); 
+      break;
+    case 'mapbox': 
+      if ('flyTo' in map) (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 800, padding }); 
+      break;
   }
 }
 
@@ -157,13 +186,24 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
     case 'leaflet':
       if ('fitBounds' in map) {
         const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
-        (map as L.Map).fitBounds(bounds, { paddingTopLeft: [padding.left, padding.top], paddingBottomRight: [padding.right, padding.bottom], animate: true, maxZoom: 16 });
+        (map as L.Map).fitBounds(bounds, { 
+          paddingTopLeft: [padding.left, padding.top], 
+          paddingBottomRight: [padding.right, padding.bottom], 
+          animate: true, 
+          maxZoom: 16 
+        });
       }
       break;
     case 'mapbox':
       if ('fitBounds' in map) {
         const initial = points[0];
-        const bounds: [[number, number], [number, number]] = points.reduce((acc, p) => [[Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)], [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]] as [[number, number], [number, number]], [[initial.lng, initial.lat], [initial.lng, initial.lat]] as [[number, number], [number, number]]);
+        const bounds: [[number, number], [number, number]] = points.reduce(
+          (acc, p) => [
+            [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],
+            [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
+          ] as [[number, number], [number, number]], 
+          [[initial.lng, initial.lat], [initial.lng, initial.lat]] as [[number, number], [number, number]]
+        );
         (map as MapRef).fitBounds(bounds, { padding, maxZoom: 16 });
       }
       break;

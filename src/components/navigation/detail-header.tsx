@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useTransition } from 'react';
@@ -16,19 +15,17 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
 
   const handleBack = () => {
     startTransition(() => {
-        // PRIORITY 1: Close active incident sheet
+        // Priority sequence using early returns
         if (isIncidenciasSheetOpen) {
           dispatch({ type: 'CLOSE_INCIDENCIAS' });
           return;
         } 
         
-        // PRIORITY 2: Restoration of general view from focus mode
         if (focusedMiniMapId) {
           dispatch({ type: 'UNFOCUS_MINIMAP' });
           return;
         } 
         
-        // PRIORITY 3: Return to fleet from history
         dispatch({ type: 'BACK_TO_FLEET' });
     });
   };

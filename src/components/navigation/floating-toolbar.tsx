@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Radar, Car, Settings2, Share2, BarChart3 } from 'lucide-react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
 import { cn } from '@/lib/utils';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
@@ -25,36 +25,38 @@ export function FloatingToolbar() {
           <Radar className="w-6 h-6 text-primary" />
         </div>
 
-        <ToolbarButton 
-          icon={Car} 
-          label="Unidades" 
-          isActive={activePanel === 'vehicles'} 
-          onClick={() => togglePanel('vehicles')} 
-        />
-        <ToolbarButton 
-          icon={Radar} 
-          label="Gestión Radar" 
-          isActive={activePanel === 'minimaps'} 
-          onClick={() => togglePanel('minimaps')} 
-        />
-        <ToolbarButton 
-          icon={BarChart3} 
-          label="Estadísticas" 
-          isActive={activePanel === 'stats'} 
-          onClick={() => togglePanel('stats')} 
-        />
-        <ToolbarButton 
-          icon={Share2} 
-          label="Compartir" 
-          isActive={activePanel === 'share'} 
-          onClick={() => togglePanel('share')} 
-        />
-        <ToolbarButton 
-          icon={Settings2} 
-          label="Vistas" 
-          isActive={activePanel === 'settings'} 
-          onClick={() => togglePanel('settings')} 
-        />
+        <TooltipProvider>
+          <ToolbarButton 
+            icon={Car} 
+            label="Unidades" 
+            isActive={activePanel === 'vehicles'} 
+            onClick={() => togglePanel('vehicles')} 
+          />
+          <ToolbarButton 
+            icon={Radar} 
+            label="Gestión Radar" 
+            isActive={activePanel === 'minimaps'} 
+            onClick={() => togglePanel('minimaps')} 
+          />
+          <ToolbarButton 
+            icon={BarChart3} 
+            label="Estadísticas" 
+            isActive={activePanel === 'stats'} 
+            onClick={() => togglePanel('stats')} 
+          />
+          <ToolbarButton 
+            icon={Share2} 
+            label="Compartir" 
+            isActive={activePanel === 'share'} 
+            onClick={() => togglePanel('share')} 
+          />
+          <ToolbarButton 
+            icon={Settings2} 
+            label="Vistas" 
+            isActive={activePanel === 'settings'} 
+            onClick={() => togglePanel('settings')} 
+          />
+        </TooltipProvider>
 
         <div className="w-full h-px bg-border my-1" />
         <NotificationsDropdown apiKey="MOCK" />
