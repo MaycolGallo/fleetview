@@ -29,45 +29,34 @@ export function VehicleMobileContextMenu({
 }) {
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
-    const isTracked = state.trackedVehicleIds?.includes(vehicle.id_vehiculo) || false;
     const [isPending, startTransition] = useTransition();
-
-    const handleViewTransition = (callback: () => void) => {
-        // @ts-ignore
-        if (typeof document !== 'undefined' && document.startViewTransition) {
-            // @ts-ignore
-            document.startViewTransition(callback);
-            return;
-        }
-        callback();
-    };
 
     const handleAction = (action: VehicleAction) => {
         startTransition(() => {
             switch (action) {
                 case 'show-route-history':
-                    handleViewTransition(() => dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle }));
+                    dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
                     break;
                 case 'list-incidencias':
-                    handleViewTransition(() => dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: vehicle }));
+                    dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: vehicle });
                     break;
                 case 'track-vehicle':
-                    dispatch({ type: 'TOGGLE_TRACK_VEHICLE', payload: vehicle.id_vehiculo });
+                    dispatch({ type: 'CREATE_MINIMAP', payload: { vehicleId: vehicle.id_vehiculo } });
                     break;
-                case 'show-details':
                 case 'center-map':
+                case 'show-details':
                     dispatch({ type: 'PAN_TO_VEHICLE', payload: vehicle });
                     break;
             }
         });
         
-        if (!isPending) onOpenChange(false);
+        onOpenChange(false);
     };
 
     const contextMenuItems = [
       { action: 'show-route-history' as VehicleAction, label: 'Historial de Ruta', icon: History },
       { action: 'list-incidencias' as VehicleAction, label: 'Lista de Incidencias', icon: Bell },
-      { action: 'track-vehicle' as VehicleAction, label: isTracked ? 'Quitar del Dashboard' : 'Seguir en Dashboard', icon: Radar, destructive: isTracked },
+      { action: 'track-vehicle' as VehicleAction, label: 'Crear Radar Lock', icon: Radar },
       { action: 'center-map' as VehicleAction, label: 'Centrar en Mapa', icon: MapPin },
       { action: 'show-details' as VehicleAction, label: 'Detalles del Vehículo', icon: Info },
     ];
@@ -92,7 +81,7 @@ export function VehicleMobileContextMenu({
                                         variant="ghost"
                                         size="lg"
                                         disabled={isPending}
-                                        className={`w-full justify-start text-base py-6 ${item.destructive ? 'text-destructive' : ''}`}
+                                        className="w-full justify-start text-base py-6"
                                         onClick={() => handleAction(item.action)}
                                     >
                                         <Icon className="mr-4 h-5 w-5" />

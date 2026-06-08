@@ -89,13 +89,13 @@ export function useMapViewport({
           if (focusedMiniMapId) {
             shouldPerform = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds.includes(targetId) ?? false;
           } else {
-            // Main map only pans to free units not locked in active radar windows
+            // Main map only pans to units visible in the main workspace
             const radarIds = miniMaps.filter(m => visibleMiniMapIds.includes(m.id)).flatMap(m => m.vehicleIds);
             shouldPerform = !radarIds.includes(targetId);
           }
         } else {
-          // Minimaps in grid only pan if they are focused
-          shouldPerform = false;
+          // Individual radar maps only pan if they are the target of the specific radar ID
+          shouldPerform = miniMapId ? (miniMaps.find(m => m.id === miniMapId)?.vehicleIds.includes(targetId) ?? false) : false;
         }
 
         if (shouldPerform) {
@@ -137,8 +137,12 @@ export function useMapViewport({
 
     if (targetIds.length > 0) {
       const points = vehicles.filter(v => targetIds.includes(v.id_vehiculo)).map(v => ({ lat: v.lat, lng: v.lng }));
-      if (points.length === 1) performPan(map, provider, points[0], 16, currentPadding);
-      else if (points.length > 1) performFitBounds(map, provider, points, currentPadding);
+      if (points.length === 1) {
+        // Shifting individual unit to follow padding
+        performPan(map, provider, points[0], 16, currentPadding);
+      } else if (points.length > 1) {
+        performFitBounds(map, provider, points, currentPadding);
+      }
       return () => clearTimeout(t);
     } 
 
@@ -157,8 +161,13 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
   switch (provider) {
     case 'google':
       if (map instanceof google.maps.Map) {
-        map.setZoom(zoom);
-        map.panTo(point);
+        // Using fitBounds on a tiny box to respect padding during "pan"
+        const offset = 0.0001;
+        const bounds = new google.maps.LatLngBounds(
+          { lat: point.lat - offset, lng: point.lng - offset },
+          { lat: point.lat + offset, lng: point.lng + offset }
+        );
+        map.fitBounds(bounds, padding);
       }
       break;
     case 'leaflet': 

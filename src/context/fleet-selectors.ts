@@ -16,7 +16,7 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
 /**
  * Tactical Marker Selection Engine.
  * Optimized with early returns to handle distinct display scenarios.
- * Rule: Any vehicle assigned to a mini-map group is hidden from the main map.
+ * Rule: A vehicle is hidden from the main map ONLY if it belongs to a minimap that is CURRENTLY VISIBLE.
  */
 export const selectMapVehicles = (
   state: FleetState, 
@@ -25,7 +25,6 @@ export const selectMapVehicles = (
   isMainMap?: boolean
 ): Vehicle[] => {
   // SCENARIO 1: History Mode
-  // If investigating a past path, prioritize only the historical marker.
   if (state.historyVehicle) {
     return [state.historyVehicle];
   }
@@ -50,10 +49,16 @@ export const selectMapVehicles = (
       return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
     }
     
-    // Sub-Scenario B: General Overview (Hide ALL units assigned to radar windows)
+    // Sub-Scenario B: General Overview
     const filtered = selectFilteredVehicles(state);
-    const allTrackedIds = state.miniMaps.flatMap(m => m.vehicleIds);
-    return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
+    
+    // Identify vehicles that belong to ACTIVE/VISIBLE minimaps
+    const visibleRadarVehicleIds = state.miniMaps
+      .filter(m => state.visibleMiniMapIds.includes(m.id))
+      .flatMap(m => m.vehicleIds);
+
+    // Hide only those that are currently locked in visible radar windows
+    return filtered.filter(v => !visibleRadarVehicleIds.includes(v.id_vehiculo));
   }
 
   return [];

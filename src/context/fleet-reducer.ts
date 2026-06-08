@@ -133,17 +133,6 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
       };
     }
 
-    case 'SET_MINIMAPS': {
-      const existingIds = new Set(state.miniMaps.map(m => m.id));
-      const newFromApi = action.payload.filter(m => !existingIds.has(m.id));
-      const merged = [...state.miniMaps, ...newFromApi];
-      return {
-        ...state,
-        miniMaps: merged,
-        allTrackedVehicleIds: getTrackedIds(merged)
-      };
-    }
-
     case 'UPDATE_MINIMAP_VEHICLES': {
         const { miniMapId, vehicleIds } = action.payload;
         // Predefined groups are read-only
@@ -159,15 +148,69 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
         };
     }
 
-    case 'CREATE_MINIMAP_MANUAL': {
-        const newId = `map-${Date.now()}`;
-        const newMap: MiniMapGroup = { id: newId, name: action.payload.name, vehicleIds: [] };
-        const newMaps = [...state.miniMaps, newMap];
+    case 'START_ROUTE_LOADING': {
+      const isRefreshing = state.historyVehicle?.id_vehiculo === action.payload.id_vehiculo;
+      return { 
+        ...state, 
+        selectedVehicle: null, 
+        isLoadingRoute: true, 
+        historyVehicle: isRefreshing ? state.historyVehicle : action.payload, 
+        isIncidenciasSheetOpen: false, 
+        isRouteSheetOpen: isRefreshing ? state.isRouteSheetOpen : false, 
+        wasSplitViewBeforeRoute: state.isSplitView, 
+        isSplitView: false 
+      };
+    }
+
+    case 'SET_ROUTE_HISTORY': {
+        const historyData = action.payload;
+        const filteredGroups = historyData.groups.filter((group: any) => group.total_time_seconds > 60);
+        const routePoints = filteredGroups.filter((g: any) => g.id_estado === 6).map((g: any) => g.records.map((r: any) => ({ lat: r.lat, lng: r.lng })));
+        const startOfRoute = filteredGroups?.[0]?.records?.[0];
+        const updatedHistoryVehicle = state.historyVehicle && startOfRoute ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng, rumbo: startOfRoute?.rumbo || 0, velocidad: "0" } : state.historyVehicle;
         return { 
           ...state, 
-          miniMaps: newMaps, 
-          visibleMiniMapIds: [...state.visibleMiniMapIds, newId], 
-          allTrackedVehicleIds: getTrackedIds(newMaps) 
+          isLoadingRoute: false, 
+          routePath: routePoints, 
+          routeGroups: filteredGroups, 
+          by_estado: historyData.by_estado, 
+          isRouteSheetOpen: true, 
+          historyVehicle: updatedHistoryVehicle, 
+          isRoutePlaying: false, 
+          lastUpdatedRoute: Date.now(), 
+          mapViewport: { type: 'fit_route', payload: routePoints.flat().length > 0 ? routePoints.flat() : (startOfRoute ? [{lat: startOfRoute.lat, lng: startOfRoute.lng}] : []) } 
+        };
+    }
+
+    case 'SELECT_ROUTE_SEGMENT': {
+        const group = state.routeGroups[action.payload];
+        if (!group || group.records.length === 0) return { ...state, selectedSegmentIndex: action.payload };
+        
+        return { 
+          ...state, 
+          selectedSegmentIndex: action.payload, 
+          mapViewport: { type: 'fit_route', payload: group.records.map(r => ({ lat: r.lat, lng: r.lng })) } 
+        };
+    }
+
+    case 'BACK_TO_FLEET': {
+        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
+        const newBounds = visibleVehicles.length > 0 ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng })) : [];
+        return { 
+          ...state, 
+          historyVehicle: null, 
+          routePath: null, 
+          routeGroups: [], 
+          by_estado: {}, 
+          selectedVehicle: null, 
+          isRouteSheetOpen: false, 
+          selectedSegmentIndex: null, 
+          isLoadingRoute: false, 
+          isRoutePlaying: false, 
+          isSplitView: state.wasSplitViewBeforeRoute, 
+          wasSplitViewBeforeRoute: false, 
+          focusedMiniMapId: null, 
+          mapViewport: { type: 'fit_bounds', payload: newBounds } 
         };
     }
 
@@ -204,61 +247,18 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
       };
     }
 
-    case 'START_ROUTE_LOADING': {
-      const isRefreshing = state.historyVehicle?.id_vehiculo === action.payload.id_vehiculo;
-      return { 
-        ...state, 
-        selectedVehicle: null, 
-        isLoadingRoute: true, 
-        historyVehicle: isRefreshing ? state.historyVehicle : action.payload, 
-        isIncidenciasSheetOpen: false, 
-        isRouteSheetOpen: isRefreshing ? state.isRouteSheetOpen : false, 
-        wasSplitViewBeforeRoute: state.isSplitView, 
-        isSplitView: false 
+    case 'SET_MINIMAPS': {
+      const existingIds = new Set(state.miniMaps.map(m => m.id));
+      const newFromApi = action.payload.filter(m => !existingIds.has(m.id));
+      const merged = [...state.miniMaps, ...newFromApi];
+      return {
+        ...state,
+        miniMaps: merged,
+        allTrackedVehicleIds: getTrackedIds(merged)
       };
     }
 
-    case 'SET_ROUTE_HISTORY': {
-        const historyData = action.payload;
-        const filteredGroups = historyData.groups.filter((group: any) => group.total_time_seconds > 60);
-        const routePoints = filteredGroups.filter((g: any) => g.id_estado === 6).map((g: any) => g.records.map((r: any) => ({ lat: r.lat, lng: r.lng })));
-        const startOfRoute = filteredGroups?.[0]?.records?.[0];
-        const updatedHistoryVehicle = state.historyVehicle && startOfRoute ? { ...state.historyVehicle, lat: startOfRoute.lat, lng: startOfRoute.lng, rumbo: startOfRoute?.rumbo || 0, velocidad: "0" } : state.historyVehicle;
-        return { 
-          ...state, 
-          isLoadingRoute: false, 
-          routePath: routePoints, 
-          routeGroups: filteredGroups, 
-          by_estado: historyData.by_estado, 
-          isRouteSheetOpen: true, 
-          historyVehicle: updatedHistoryVehicle, 
-          isRoutePlaying: false, 
-          lastUpdatedRoute: Date.now(), 
-          mapViewport: { type: 'fit_route', payload: routePoints.flat() } 
-        };
-    }
-
-    case 'BACK_TO_FLEET': {
-        const visibleVehicles = state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
-        const newBounds = visibleVehicles.length > 0 ? visibleVehicles.map(v => ({ lat: v.lat, lng: v.lng })) : [];
-        return { 
-          ...state, 
-          historyVehicle: null, 
-          routePath: null, 
-          routeGroups: [], 
-          by_estado: {}, 
-          selectedVehicle: null, 
-          isRouteSheetOpen: false, 
-          selectedSegmentIndex: null, 
-          isLoadingRoute: false, 
-          isRoutePlaying: false, 
-          isSplitView: state.wasSplitViewBeforeRoute, 
-          wasSplitViewBeforeRoute: false, 
-          focusedMiniMapId: null, 
-          mapViewport: { type: 'fit_bounds', payload: newBounds } 
-        };
-    }
-
+    case 'INIT_PERSISTED_STATE': return { ...state, miniMaps: action.payload.miniMaps, visibleMiniMapIds: action.payload.visibleIds, allTrackedVehicleIds: getTrackedIds(action.payload.miniMaps) };
     case 'SET_MAP_PROVIDER': return { ...state, mapProvider: action.payload };
     case 'SET_MAP_TYPE': return { ...state, mapType: action.payload };
     case 'SET_MAP_DARK_MODE': return { ...state, isMapDark: action.payload };
