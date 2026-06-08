@@ -133,9 +133,48 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
       };
     }
 
+    case 'CREATE_MINIMAP': {
+      const { vehicleId } = action.payload;
+      const vehicle = state.vehicles.find(v => v.id_vehiculo === vehicleId);
+      if (!vehicle) return state;
+
+      const newId = `radar-${vehicle.placa}-${Date.now()}`;
+      const newMap: MiniMapGroup = {
+        id: newId,
+        name: `Radar: ${vehicle.placa}`,
+        vehicleIds: [vehicleId]
+      };
+
+      const updatedMaps = [...state.miniMaps, newMap];
+      return {
+        ...state,
+        miniMaps: updatedMaps,
+        visibleMiniMapIds: [...state.visibleMiniMapIds, newId],
+        allTrackedVehicleIds: getTrackedIds(updatedMaps)
+      };
+    }
+
+    case 'CREATE_MINIMAP_MANUAL': {
+      const { name } = action.payload;
+      const newId = `custom-${Date.now()}`;
+      const newMap: MiniMapGroup = {
+        id: newId,
+        name: name.trim(),
+        vehicleIds: []
+      };
+      
+      const updatedMaps = [...state.miniMaps, newMap];
+      return {
+        ...state,
+        miniMaps: updatedMaps,
+        visibleMiniMapIds: [...state.visibleMiniMapIds, newId],
+        allTrackedVehicleIds: getTrackedIds(updatedMaps)
+      };
+    }
+
     case 'UPDATE_MINIMAP_VEHICLES': {
         const { miniMapId, vehicleIds } = action.payload;
-        // Predefined groups are read-only
+        // Predefined groups are read-only per instruction
         if (miniMapId.startsWith('group-')) {
           return state;
         }

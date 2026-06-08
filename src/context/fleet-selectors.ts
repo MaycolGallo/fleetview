@@ -15,8 +15,7 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
 
 /**
  * Tactical Marker Selection Engine.
- * Optimized with early returns to handle distinct display scenarios.
- * Rule: A vehicle is hidden from the main map ONLY if it belongs to a minimap that is CURRENTLY VISIBLE.
+ * Rule: A vehicle is hidden from the main map ONLY if it belongs to a minimap that is CURRENTLY VISIBLE in the grid.
  */
 export const selectMapVehicles = (
   state: FleetState, 
@@ -24,40 +23,40 @@ export const selectMapVehicles = (
   manualVehicleIds?: number[],
   isMainMap?: boolean
 ): Vehicle[] => {
-  // SCENARIO 1: History Mode
+  // Priority 1: Route History Investigation
   if (state.historyVehicle) {
     return [state.historyVehicle];
   }
 
-  // SCENARIO 2: Manual Override (Public Sharing)
+  // Priority 2: Manual Public Sharing Overlay
   if (manualVehicleIds && manualVehicleIds.length > 0) {
     return state.vehicles.filter(v => manualVehicleIds.includes(v.id_vehiculo));
   }
 
-  // SCENARIO 3: Mini-map / Radar isolation
+  // Priority 3: Minimap/Radar Grid Isolation
   if (miniMapId) {
     const group = state.miniMaps.find(m => m.id === miniMapId);
     if (!group) return [];
     return state.vehicles.filter(v => group.vehicleIds.includes(v.id_vehiculo));
   }
 
-  // SCENARIO 4: Main Command Map
+  // Priority 4: Main Command Console
   if (isMainMap) {
-    // Sub-Scenario A: Focus Mode
+    // Sub-Rule A: Focus Mode Locks the view to a specific group
     if (state.focusedMiniMapId) {
       const group = state.miniMaps.find(m => m.id === state.focusedMiniMapId);
       return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
     }
     
-    // Sub-Scenario B: General Overview
+    // Sub-Rule B: General Fleet Overview
     const filtered = selectFilteredVehicles(state);
     
-    // Identify vehicles that belong to ACTIVE/VISIBLE minimaps
+    // Sub-Rule C: Dynamic Unit De-cluttering
+    // Vehicles disappear from main map only if their radar window is currently visible/active.
     const visibleRadarVehicleIds = state.miniMaps
       .filter(m => state.visibleMiniMapIds.includes(m.id))
       .flatMap(m => m.vehicleIds);
 
-    // Hide only those that are currently locked in visible radar windows
     return filtered.filter(v => !visibleRadarVehicleIds.includes(v.id_vehiculo));
   }
 
@@ -68,9 +67,7 @@ export const selectRouteSummary = (state: FleetState) => {
   const { routeGroups } = state;
   const initial = { totalDistance: 0, totalDuration: 0, totalStops: 0, totalStopTime: 0 };
   
-  if (!routeGroups || routeGroups.length === 0) {
-    return initial;
-  }
+  if (!routeGroups || routeGroups.length === 0) return initial;
 
   return routeGroups.reduce((summary, group) => {
       summary.totalDistance += group.total_distance_km;

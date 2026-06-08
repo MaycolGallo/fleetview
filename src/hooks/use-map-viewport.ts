@@ -26,6 +26,7 @@ interface ViewportPadding {
   right: number;
 }
 
+// Tactical Padding Constants
 const PADDING_STANDARD: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 80 };
 const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 80 };
 const PADDING_WITH_GRID: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 440 };
@@ -72,6 +73,7 @@ export function useMapViewport({
     }
   }, [map, provider]);
 
+  // Reactive Logic for Specific Viewport Actions
   useEffect(() => {
     if (!map || mapViewport.type === 'idle' || mapViewport.type === 'initial') return;
 
@@ -114,13 +116,14 @@ export function useMapViewport({
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
   }, [map, mapViewport, provider, isMainMap, miniMapId, focusedMiniMapId, visibleMiniMapIds, miniMaps, dispatch]);
 
+  // Auto-Sync Logic for State Transitions
   useEffect(() => {
     if (!map) return;
     
     triggerResize();
     const t = setTimeout(triggerResize, 350);
 
-    // Skip auto-viewport updates during investigations
+    // Early Return: Do not disturb investigator focus during investigations
     if (!isVisible || isIncidenciasSheetOpen || historyVehicle) return () => clearTimeout(t);
 
     const isGridActive = isMainMap && visibleMiniMapIds.length > 0;
@@ -138,7 +141,6 @@ export function useMapViewport({
     if (targetIds.length > 0) {
       const points = vehicles.filter(v => targetIds.includes(v.id_vehiculo)).map(v => ({ lat: v.lat, lng: v.lng }));
       if (points.length === 1) {
-        // Shifting individual unit to follow padding
         performPan(map, provider, points[0], 16, currentPadding);
       } else if (points.length > 1) {
         performFitBounds(map, provider, points, currentPadding);
@@ -161,7 +163,7 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
   switch (provider) {
     case 'google':
       if (map instanceof google.maps.Map) {
-        // Using fitBounds on a tiny box to respect padding during "pan"
+        // Using fitBounds on a tiny box to respect lateral padding during "pan"
         const offset = 0.0001;
         const bounds = new google.maps.LatLngBounds(
           { lat: point.lat - offset, lng: point.lng - offset },
