@@ -207,10 +207,11 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
   switch (provider) {
     case 'google':
       if (map instanceof google.maps.Map) {
-        // Apply lateral shift for Google if right padding is active
-        map.panTo(point);
         map.setZoom(zoom);
+        map.panTo(point);
+        // Apply lateral shift for Google if high right padding (radar grid) is active
         if (padding.right > 80) {
+           // pans the map content to the right, effectively moving the center point to the left half of the screen
            map.panBy((padding.right - 80) / 2, 0);
         }
       }

@@ -95,8 +95,6 @@ const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
   return Array.from(ids);
 };
 
-const isUserGroup = (id: string) => id.startsWith('map-');
-
 const handleVehicleActions = (state: FleetState, action: FleetAction): FleetState => {
   switch (action.type) {
     case 'SET_VEHICLES': {
@@ -273,7 +271,6 @@ const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetStat
         return { ...state, miniMaps: newMaps, visibleMiniMapIds: [...state.visibleMiniMapIds, newId], allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
     case 'UPDATE_MINIMAP_VEHICLES': {
-        if (!isUserGroup(action.payload.miniMapId)) return state;
         const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: action.payload.vehicleIds } : m);
         return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
@@ -282,12 +279,10 @@ const handleMiniMapActions = (state: FleetState, action: FleetAction): FleetStat
       return { ...state, miniMaps: newMaps, visibleMiniMapIds: state.visibleMiniMapIds.filter(id => id !== action.payload), allTrackedVehicleIds: getTrackedIds(newMaps), focusedMiniMapId: state.focusedMiniMapId === action.payload ? null : state.focusedMiniMapId };
     }
     case 'ADD_VEHICLE_TO_MINIMAP': {
-      if (!isUserGroup(action.payload.miniMapId)) return state;
       const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: Array.from(new Set([...m.vehicleIds, action.payload.vehicleId])) } : m);
       return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
     }
     case 'REMOVE_VEHICLE_FROM_MINIMAP': {
-      if (!isUserGroup(action.payload.miniMapId)) return state;
       const newMaps = state.miniMaps.map(m => m.id === action.payload.miniMapId ? { ...m, vehicleIds: m.vehicleIds.filter(id => id !== action.payload.vehicleId) } : m);
       return { ...state, miniMaps: newMaps, allTrackedVehicleIds: getTrackedIds(newMaps) };
     }

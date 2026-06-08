@@ -107,7 +107,7 @@ export function MiniMapManagementContent() {
             ) : (
                 miniMaps.map((map) => {
                     const isVisible = visibleMiniMapIds.includes(map.id);
-                    const isProtected = !map.id.startsWith('map-');
+                    const isCustomGroup = map.id.startsWith('map-');
                     
                     return (
                         <div key={map.id} className={cn(
@@ -124,9 +124,9 @@ export function MiniMapManagementContent() {
                                     </div>
                                     <div className='flex flex-col'>
                                         <span className="font-bold text-sm leading-tight">{map.name}</span>
-                                        {isProtected && (
+                                        {!isCustomGroup && (
                                             <span className='text-[9px] font-black uppercase text-primary tracking-tighter flex items-center gap-1'>
-                                                <Lock className='w-2 h-2' /> Grupo Protegido
+                                                <Lock className='w-2 h-2' /> Grupo Predefinido
                                             </span>
                                         )}
                                     </div>
@@ -174,37 +174,20 @@ export function MiniMapManagementContent() {
 
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold uppercase text-muted-foreground ml-1">
-                                    {isProtected ? 'Unidades Asignadas (Sólo Lectura)' : 'Asignar Unidades'}
+                                    Asignar Unidades
                                 </label>
-                                {!isProtected ? (
-                                    <MultiSelect
-                                        options={vehicleOptions}
-                                        onValueChange={(val) => handleUpdateVehicles(map.id, val)}
-                                        defaultValue={map.vehicleIds.map(String)}
-                                        placeholder="Seleccionar vehículos..."
-                                        className="bg-background shadow-none"
-                                        maxCount={2}
-                                        disabled={isPending}
-                                    />
-                                ) : (
-                                    <div className="flex flex-wrap gap-1 mt-1 p-2 bg-muted/30 rounded-lg border border-dashed">
-                                        {map.vehicleIds.length > 0 ? (
-                                            map.vehicleIds.map(id => {
-                                                const v = vehicles.find(v => v.id_vehiculo === id);
-                                                return (
-                                                    <Badge key={id} variant="secondary" className="text-[10px] bg-background">
-                                                        {v?.placa || `ID: ${id}`}
-                                                    </Badge>
-                                                );
-                                            })
-                                        ) : (
-                                            <span className='text-[10px] text-muted-foreground italic'>Sin unidades asignadas</span>
-                                        )}
-                                    </div>
-                                )}
+                                <MultiSelect
+                                    options={vehicleOptions}
+                                    onValueChange={(val) => handleUpdateVehicles(map.id, val)}
+                                    defaultValue={map.vehicleIds.map(String)}
+                                    placeholder="Seleccionar vehículos..."
+                                    className="bg-background shadow-none"
+                                    maxCount={2}
+                                    disabled={isPending}
+                                />
                             </div>
 
-                            {!isProtected && map.vehicleIds.length > 0 && (
+                            {map.vehicleIds.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mt-2">
                                     {map.vehicleIds.map(id => {
                                         const v = vehicles.find(v => v.id_vehiculo === id);
