@@ -34,7 +34,7 @@ const PADDING_WITH_GRID: ViewportPadding = { top: 80, bottom: 80, left: 80, righ
 
 /**
  * Unified Viewport Engine.
- * Optimized with Targeted Navigation and Asymmetrical Padding.
+ * Optimized with Targeted Navigation and Lateral Command Shifting.
  */
 export function useMapViewport({
   map,
@@ -105,7 +105,8 @@ export function useMapViewport({
             shouldRespond = !overlayVehicleIds.includes(targetVehicleId);
           }
         } else {
-          shouldRespond = false;
+          // Minimaps in grid only pan if they match their specific ID context
+          shouldRespond = miniMapId ? (miniMaps.find(m => m.id === miniMapId)?.vehicleIds.includes(targetVehicleId) ?? false) : false;
         }
 
         if (shouldRespond) performPan(map, provider, action.payload, 16, currentPadding);
@@ -200,6 +201,7 @@ export function useMapViewport({
 
 /**
  * performPan: Standard high-precision navigation.
+ * Includes Lateral Shifting logic to account for radar group overlays.
  */
 function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number, padding: ViewportPadding) {
   if (!map) return;
@@ -210,8 +212,8 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
         map.setZoom(zoom);
         map.panTo(point);
         // Apply lateral shift for Google if high right padding (radar grid) is active
+        // This moves the "effective center" to the left, clearing the radar panels
         if (padding.right > 80) {
-           // pans the map content to the right, effectively moving the center point to the left half of the screen
            map.panBy((padding.right - 80) / 2, 0);
         }
       }

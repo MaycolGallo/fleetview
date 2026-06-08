@@ -39,11 +39,10 @@ export function MiniMapManagementContent() {
   };
 
   const handleUpdateVehicles = (mapId: string, vehicleIds: string[]) => {
-    startTransition(() => {
-        dispatch({
-            type: 'UPDATE_MINIMAP_VEHICLES',
-            payload: { miniMapId: mapId, vehicleIds: vehicleIds.map(Number) }
-        });
+    // Direct dispatch for units assignment to ensure MultiSelect feels responsive
+    dispatch({
+        type: 'UPDATE_MINIMAP_VEHICLES',
+        payload: { miniMapId: mapId, vehicleIds: vehicleIds.map(Number) }
     });
   };
 
@@ -107,7 +106,6 @@ export function MiniMapManagementContent() {
             ) : (
                 miniMaps.map((map) => {
                     const isVisible = visibleMiniMapIds.includes(map.id);
-                    const isCustomGroup = map.id.startsWith('map-');
                     
                     return (
                         <div key={map.id} className={cn(
@@ -124,11 +122,6 @@ export function MiniMapManagementContent() {
                                     </div>
                                     <div className='flex flex-col'>
                                         <span className="font-bold text-sm leading-tight">{map.name}</span>
-                                        {!isCustomGroup && (
-                                            <span className='text-[9px] font-black uppercase text-primary tracking-tighter flex items-center gap-1'>
-                                                <Lock className='w-2 h-2' /> Grupo Predefinido
-                                            </span>
-                                        )}
                                     </div>
                                     <Badge variant="secondary" className="text-[10px] h-4">
                                         {map.vehicleIds.length}
@@ -183,7 +176,6 @@ export function MiniMapManagementContent() {
                                     placeholder="Seleccionar vehículos..."
                                     className="bg-background shadow-none"
                                     maxCount={2}
-                                    disabled={isPending}
                                 />
                             </div>
 
@@ -203,7 +195,6 @@ export function MiniMapManagementContent() {
                                                         const nextIds = map.vehicleIds.filter(vid => vid !== id);
                                                         handleUpdateVehicles(map.id, nextIds.map(String));
                                                     }}
-                                                    disabled={isPending}
                                                 >
                                                     <X className="w-2 h-2" />
                                                 </Button>
