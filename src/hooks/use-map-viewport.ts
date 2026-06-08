@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useCallback } from 'react';
@@ -83,19 +84,18 @@ export function useMapViewport({
         const targetId = action.vehicleId;
         let shouldPerform = false;
 
-        // Command Rules: 
-        // 1. If Main Map and in Focus mode, only pan if vehicle belongs to focused group.
-        // 2. If Main Map and not focused, only pan if vehicle is NOT locked in any mini-map.
-        // 3. If Mini Map, only pan if vehicle belongs to this mini-map group.
+        // Command Rules for targeted panning
         if (isMainMap) {
           if (focusedMiniMapId) {
             shouldPerform = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds.includes(targetId) ?? false;
           } else {
+            // Main map only pans to free units not locked in active radar windows
             const radarIds = miniMaps.filter(m => visibleMiniMapIds.includes(m.id)).flatMap(m => m.vehicleIds);
             shouldPerform = !radarIds.includes(targetId);
           }
         } else {
-          shouldPerform = miniMapId ? (miniMaps.find(m => m.id === miniMapId)?.vehicleIds.includes(targetId) ?? false) : false;
+          // Minimaps in grid only pan if they are focused
+          shouldPerform = false;
         }
 
         if (shouldPerform) {
@@ -159,8 +159,6 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
       if (map instanceof google.maps.Map) {
         map.setZoom(zoom);
         map.panTo(point);
-        // Tactical offset if radar grid is active
-        if (padding.right > 80) map.panBy((padding.right - 80) / 2, 0);
       }
       break;
     case 'leaflet': 
@@ -180,7 +178,6 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
         const bounds = new google.maps.LatLngBounds();
         points.forEach(p => bounds.extend(p));
         map.fitBounds(bounds, padding);
-        if (padding.right > 80) map.panBy((padding.right - 80) / 2, 0);
       }
       break;
     case 'leaflet':

@@ -16,6 +16,7 @@ export const selectFilteredVehicles = (state: FleetState): Vehicle[] => {
 /**
  * Tactical Marker Selection Engine.
  * Optimized with early returns to handle distinct display scenarios.
+ * Rule: Any vehicle assigned to a mini-map group is hidden from the main map.
  */
 export const selectMapVehicles = (
   state: FleetState, 
@@ -25,7 +26,9 @@ export const selectMapVehicles = (
 ): Vehicle[] => {
   // SCENARIO 1: History Mode
   // If investigating a past path, prioritize only the historical marker.
-  if (state.historyVehicle) return [state.historyVehicle];
+  if (state.historyVehicle) {
+    return [state.historyVehicle];
+  }
 
   // SCENARIO 2: Manual Override (Public Sharing)
   if (manualVehicleIds && manualVehicleIds.length > 0) {
@@ -47,9 +50,9 @@ export const selectMapVehicles = (
       return state.vehicles.filter(v => group?.vehicleIds.includes(v.id_vehiculo));
     }
     
-    // Sub-Scenario B: General Overview (Hide units locked in small windows)
+    // Sub-Scenario B: General Overview (Hide ALL units assigned to radar windows)
     const filtered = selectFilteredVehicles(state);
-    const allTrackedIds = state.allTrackedVehicleIds || [];
+    const allTrackedIds = state.miniMaps.flatMap(m => m.vehicleIds);
     return filtered.filter(v => !allTrackedIds.includes(v.id_vehiculo));
   }
 
@@ -60,7 +63,9 @@ export const selectRouteSummary = (state: FleetState) => {
   const { routeGroups } = state;
   const initial = { totalDistance: 0, totalDuration: 0, totalStops: 0, totalStopTime: 0 };
   
-  if (!routeGroups || routeGroups.length === 0) return initial;
+  if (!routeGroups || routeGroups.length === 0) {
+    return initial;
+  }
 
   return routeGroups.reduce((summary, group) => {
       summary.totalDistance += group.total_distance_km;

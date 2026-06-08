@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { FleetState, MiniMapGroup, MapProvider, PanelType, MapType } from '@/lib/types';
@@ -118,7 +119,9 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     }
 
     case 'PAN_TO_VEHICLE': {
-      if (action.payload === null) return { ...state, selectedVehicle: null };
+      if (action.payload === null) {
+        return { ...state, selectedVehicle: null };
+      }
       return {
         ...state,
         selectedVehicle: action.payload,
@@ -143,8 +146,10 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
 
     case 'UPDATE_MINIMAP_VEHICLES': {
         const { miniMapId, vehicleIds } = action.payload;
-        // Early return/skip if predefined
-        if (miniMapId.startsWith('group-')) return state;
+        // Predefined groups are read-only
+        if (miniMapId.startsWith('group-')) {
+          return state;
+        }
         
         const newMaps = state.miniMaps.map(m => m.id === miniMapId ? { ...m, vehicleIds } : m);
         return { 
