@@ -174,7 +174,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
 
     case 'UPDATE_MINIMAP_VEHICLES': {
         const { miniMapId, vehicleIds } = action.payload;
-        // Predefined groups are read-only per instruction
+        // Predefined groups are read-only per requirement
         if (miniMapId.startsWith('group-')) {
           return state;
         }

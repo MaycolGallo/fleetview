@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useTransition } from 'react';
@@ -37,12 +38,8 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   } = state;
   const [isPending, startTransition] = useTransition();
 
-  /**
-   * Tactical Visibility:
-   * The grid container only unmounts during heavy investigations (History/Incidents).
-   * In Focus Mode, we keep it active to show the Global Overview mini-map.
-   */
-  const isInvestigationView = !!(historyVehicle || isIncidenciasSheetOpen);
+  // We keep the container mounted so children can exit animate. 
+  // The actual hiding of the grid is handled in the parent FleetViewClient.
   
   const showOverviewAsMini = !!focusedMiniMapId;
   
@@ -76,11 +73,9 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
     });
   };
 
-  if (isInvestigationView) return null;
-
   return (
     <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-4 pointer-events-none h-[80vh] overflow-visible">
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="popLayout" initial={false}>
         {showOverviewAsMini && (
           <motion.div 
             key={`overview-mini-${mapProvider}`}
