@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useCallback } from 'react';
@@ -78,7 +77,8 @@ export function useMapViewport({
     if (!map || mapViewport.type === 'idle' || mapViewport.type === 'initial') return;
 
     const action = mapViewport;
-    const isGridActive = isMainMap && visibleMiniMapIds.length > 0;
+    // Main map is "Grid Active" if radar maps are visible OR if in Focus Mode (which shows Overview Mini)
+    const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
     const currentPadding = isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD;
 
     switch (action.type) {
@@ -89,14 +89,15 @@ export function useMapViewport({
         // Command Rules for targeted panning
         if (isMainMap) {
           if (focusedMiniMapId) {
+            // In Focus Mode, main map only pans to units inside the focused radar group
             shouldPerform = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds.includes(targetId) ?? false;
           } else {
-            // Main map only pans to units visible in the main workspace
+            // Main map only pans to units visible in the main workspace (free units)
             const radarIds = miniMaps.filter(m => visibleMiniMapIds.includes(m.id)).flatMap(m => m.vehicleIds);
             shouldPerform = !radarIds.includes(targetId);
           }
         } else {
-          // Individual radar maps only pan if they are the target of the specific radar ID
+          // Radar windows only pan to their own locked units
           shouldPerform = miniMapId ? (miniMaps.find(m => m.id === miniMapId)?.vehicleIds.includes(targetId) ?? false) : false;
         }
 
@@ -126,7 +127,7 @@ export function useMapViewport({
     // Early Return: Do not disturb investigator focus during investigations
     if (!isVisible || isIncidenciasSheetOpen || historyVehicle) return () => clearTimeout(t);
 
-    const isGridActive = isMainMap && visibleMiniMapIds.length > 0;
+    const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
     const currentPadding = isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD;
     
     let targetIds: number[] = [];

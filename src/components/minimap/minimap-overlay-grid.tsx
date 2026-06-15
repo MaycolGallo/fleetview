@@ -30,17 +30,27 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   const { miniMaps, visibleMiniMapIds, focusedMiniMapId, mapProvider } = state;
   const [isPending, startTransition] = useTransition();
 
+  /**
+   * Focus Mode Rule: 
+   * When a group is focused, the "Main Map" becomes the detail view for that group.
+   * We then render the "General Fleet Overview" as a mini-map in the grid.
+   */
   const showOverviewAsMini = !!focusedMiniMapId;
-  const activeMiniMaps = miniMaps.filter(m => visibleMiniMapIds.includes(m.id) && m.id !== focusedMiniMapId);
+  
+  /**
+   * Tactical Visibility:
+   * Hide other minimaps when in Focus Mode to reduce command clutter.
+   */
+  const activeMiniMaps = focusedMiniMapId 
+    ? [] 
+    : miniMaps.filter(m => visibleMiniMapIds.includes(m.id));
 
   const renderMapInstance = (props: any) => {
-    if (mapProvider === 'leaflet') {
-      return <FleetLeafletMap {...props} />;
+    switch (mapProvider) {
+        case 'leaflet': return <FleetLeafletMap {...props} />;
+        case 'mapbox': return <FleetMapboxMap {...props} />;
+        default: return <FleetMap apiKey={apiKey} {...props} />;
     }
-    if (mapProvider === 'mapbox') {
-      return <FleetMapboxMap {...props} />;
-    }
-    return <FleetMap apiKey={apiKey} {...props} />;
   };
 
   const handleUnfocus = () => {
