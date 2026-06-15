@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { memo, useMemo } from 'react';
@@ -126,7 +125,12 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
 
   const shareToken = searchParams.get('s');
   const isPublicView = !!shareToken;
-  const isDetailView = !!(historyVehicle || isIncidenciasSheetOpen || focusedMiniMapId);
+  
+  // Tactical State Context
+  const isInvestigationView = !!(historyVehicle || isIncidenciasSheetOpen);
+  const isFocusMode = !!focusedMiniMapId;
+  const isDetailView = isInvestigationView || isFocusMode;
+  
   const isInitialLoading = (isLoadingRoute && routeGroups.length === 0) || (isLoadingIncidencias && incidencias.length === 0);
 
   if (error) return <div className="flex items-center justify-center h-full text-destructive">Error: {error.message}</div>;
@@ -181,34 +185,57 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
             </div>
         </main>
 
-        {!isDetailView && (
-            <>
-            <FloatingToolbar />
-            
-            <AnimatePresence mode="wait">
-                {!isMobile && activePanel && (
-                <motion.div 
-                    key={activePanel}
-                    initial={{ x: -100, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -100, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    className="absolute top-6 left-24 bottom-6 w-[420px] z-40"
+        <AnimatePresence>
+            {!isInvestigationView && (
+                <motion.div
+                    key="tactical-overlays-container"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="contents"
                 >
-                    <div className="h-full w-full bg-card/95 backdrop-blur-md rounded-2xl border shadow-2xl overflow-hidden flex flex-col">
-                    {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => {}} />}
-                    {activePanel === 'minimaps' && <MiniMapManagementContent />}
-                    {activePanel === 'settings' && <SettingsPanelContent />}
-                    {activePanel === 'share' && <SharePanelContent />}
-                    {activePanel === 'stats' && <FleetAnalyticsContent />}
-                    </div>
-                </motion.div>
-                )}
-            </AnimatePresence>
+                    {/* Toolbar hides in Focus Mode but Grid stays to show Overview Mini */}
+                    <AnimatePresence>
+                        {!isFocusMode && (
+                            <motion.div
+                                key="toolbar-anim"
+                                initial={{ x: -40, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                exit={{ x: -40, opacity: 0 }}
+                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                className="contents"
+                            >
+                                <FloatingToolbar />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                    
+                    <AnimatePresence mode="wait">
+                        {!isMobile && activePanel && !isFocusMode && (
+                        <motion.div 
+                            key={activePanel}
+                            initial={{ x: -100, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: -100, opacity: 0 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                            className="absolute top-6 left-24 bottom-6 w-[420px] z-40"
+                        >
+                            <div className="h-full w-full bg-card/95 backdrop-blur-md rounded-2xl border shadow-2xl overflow-hidden flex flex-col">
+                            {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => {}} />}
+                            {activePanel === 'minimaps' && <MiniMapManagementContent />}
+                            {activePanel === 'settings' && <SettingsPanelContent />}
+                            {activePanel === 'share' && <SharePanelContent />}
+                            {activePanel === 'stats' && <FleetAnalyticsContent />}
+                            </div>
+                        </motion.div>
+                        )}
+                    </AnimatePresence>
 
-            <MiniMapOverlayGrid apiKey={apiKey} />
-            </>
-        )}
+                    <MiniMapOverlayGrid apiKey={apiKey} />
+                </motion.div>
+            )}
+        </AnimatePresence>
 
         {isDetailView && <DetailHeader apiKey={apiKey} />}
 

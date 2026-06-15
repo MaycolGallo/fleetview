@@ -27,20 +27,25 @@ const FleetMapboxMap = dynamic(() => import('../mapbox/fleet-mapbox-map'), {
 export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { miniMaps, visibleMiniMapIds, focusedMiniMapId, mapProvider } = state;
+  const { 
+    miniMaps, 
+    visibleMiniMapIds, 
+    focusedMiniMapId, 
+    mapProvider,
+    historyVehicle,
+    isIncidenciasSheetOpen 
+  } = state;
   const [isPending, startTransition] = useTransition();
 
   /**
-   * Focus Mode Rule: 
-   * When a group is focused, the "Main Map" becomes the detail view for that group.
-   * We then render the "General Fleet Overview" as a mini-map in the grid.
+   * Tactical Visibility:
+   * The grid container only unmounts during heavy investigations (History/Incidents).
+   * In Focus Mode, we keep it active to show the Global Overview mini-map.
    */
+  const isInvestigationView = !!(historyVehicle || isIncidenciasSheetOpen);
+  
   const showOverviewAsMini = !!focusedMiniMapId;
   
-  /**
-   * Tactical Visibility:
-   * Hide other minimaps when in Focus Mode to reduce command clutter.
-   */
   const activeMiniMaps = focusedMiniMapId 
     ? [] 
     : miniMaps.filter(m => visibleMiniMapIds.includes(m.id));
@@ -70,6 +75,8 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
         dispatch({ type: 'TOGGLE_MINIMAP_VISIBILITY', payload: id });
     });
   };
+
+  if (isInvestigationView) return null;
 
   return (
     <div className="absolute bottom-6 right-6 z-30 flex flex-col-reverse flex-wrap-reverse items-end justify-start gap-4 pointer-events-none h-[80vh] overflow-visible">
