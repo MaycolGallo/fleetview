@@ -1,6 +1,11 @@
 
 'use client';
 
+/**
+ * @fileOverview Tactical Mapbox GL Implementation.
+ * Features hardware-accelerated rendering and localized Spanish labels.
+ */
+
 import React, { useMemo, useRef, useCallback } from 'react';
 import Map, { MapRef, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -9,7 +14,8 @@ import { MapboxVehicleMarker } from './mapbox-vehicle-marker';
 import { useMapViewport } from '@/hooks/use-map-viewport';
 import { MapboxRoutePolylines } from './mapbox-route-polylines';
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibWF5dGVrIiwiYSI6ImNtZDBldWVvaDAyZ2cybG9oM2s2emlwMWIifQ.TwQvSriLHhcTdDnBYPB5KQ';
+// Use environment variable for the Mapbox token
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 interface FleetMapboxMapProps {
   side?: 'ida' | 'vuelta';
@@ -25,7 +31,7 @@ export default function FleetMapboxMap(props: FleetMapboxMapProps) {
   const { state } = useFleetState();
   const { isMapDark, mapType, showTraffic } = state;
 
-  // Utilize the unified viewport hook
+  // Utilize the unified viewport hook for consistent framing
   useMapViewport({
     map: mapRef.current,
     provider: 'mapbox',
@@ -39,12 +45,14 @@ export default function FleetMapboxMap(props: FleetMapboxMapProps) {
   );
 
   const mapStyle = useMemo(() => {
-    if (mapType === 'satellite') return 'mapbox://styles/mapbox/satellite-streets-v12';
-    return isMapDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
+    switch (mapType) {
+        case 'satellite': return 'mapbox://styles/mapbox/satellite-streets-v12';
+        default: return isMapDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12';
+    }
   }, [mapType, isMapDark]);
 
   /**
-   * Tactical Localization: Forces labels to Spanish (es)
+   * Tactical Localization: Forces labels to Spanish (es) using Mapbox GL expressions.
    */
   const handleMapLoad = useCallback((evt: any) => {
     const map = evt.target;
@@ -52,9 +60,7 @@ export default function FleetMapboxMap(props: FleetMapboxMapProps) {
     
     if (layers) {
       layers.forEach((layer: any) => {
-        // Find layers that render text (symbol types with text-field)
         if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
-          // Use Mapbox GL expression to prefer Spanish names
           map.setLayoutProperty(layer.id, 'text-field', [
             'coalesce',
             ['get', 'name_es'],
@@ -64,6 +70,14 @@ export default function FleetMapboxMap(props: FleetMapboxMapProps) {
       });
     }
   }, []);
+
+  if (!MAPBOX_TOKEN) {
+      return (
+          <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground text-xs font-bold uppercase tracking-widest">
+              Mapbox Token Missing
+          </div>
+      );
+  }
 
   return (
     <div className="w-full h-full relative overflow-hidden">
@@ -81,7 +95,6 @@ export default function FleetMapboxMap(props: FleetMapboxMapProps) {
       >
         <MapboxRoutePolylines side={side} />
 
-        {/* Traffic Layer Support for Mapbox */}
         {showTraffic && (
           <Source id="mapbox-traffic" type="vector" url="mapbox://mapbox.mapbox-traffic-v1">
             <Layer

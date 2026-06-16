@@ -1,6 +1,11 @@
 
 'use client';
 
+/**
+ * @fileOverview MiniMap Overlay Grid.
+ * Orchestrates the secondary tactical displays and swaps focus between detail and overview.
+ */
+
 import React, { useTransition } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
@@ -33,14 +38,12 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
     visibleMiniMapIds, 
     focusedMiniMapId, 
     mapProvider,
-    historyVehicle,
-    isIncidenciasSheetOpen 
   } = state;
+  
   const [isPending, startTransition] = useTransition();
 
-  // We keep the container mounted so children can exit animate. 
-  // The actual hiding of the grid is handled in the parent FleetViewClient.
-  
+  // Tactical Role Reversal:
+  // When focused, secondary radars hide and the General Overview enters as a mini.
   const showOverviewAsMini = !!focusedMiniMapId;
   
   const activeMiniMaps = focusedMiniMapId 
