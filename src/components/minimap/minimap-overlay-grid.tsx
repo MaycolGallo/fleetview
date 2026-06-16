@@ -38,13 +38,15 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
     visibleMiniMapIds, 
     focusedMiniMapId, 
     mapProvider,
+    isRouteSheetOpen,
   } = state;
   
   const [isPending, startTransition] = useTransition();
 
   // Tactical Role Reversal:
   // When focused, secondary radars hide and the General Overview enters as a mini.
-  const showOverviewAsMini = !!focusedMiniMapId;
+  // Hide when route history is open
+  const showOverviewAsMini = !!focusedMiniMapId && !isRouteSheetOpen;
   
   const activeMiniMaps = focusedMiniMapId 
     ? [] 
