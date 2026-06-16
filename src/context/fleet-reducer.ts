@@ -197,8 +197,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
         isIncidenciasSheetOpen: false, 
         isRouteSheetOpen: isRefreshing ? state.isRouteSheetOpen : false, 
         wasSplitViewBeforeRoute: state.isSplitView, 
-        isSplitView: false,
-        focusedMiniMapId: null
+        isSplitView: false 
       };
     }
 
