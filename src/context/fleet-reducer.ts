@@ -68,7 +68,7 @@ export const getInitialState = (): FleetState => ({
   allTrackedVehicleIds: [],
   focusedMiniMapId: null,
   isMapDark: false,
-  mapProvider: 'google',
+  mapProvider: 'leaflet',
   mapType: 'standard',
   showTraffic: false,
   mapViewport: { type: 'initial' },
