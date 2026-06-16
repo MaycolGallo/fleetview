@@ -143,9 +143,9 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   // Determine which layer is active to drive animations
   const showSplitWorkspace = isSplitView && !isDetailView && !isMobile;
 
-  return (
-    <APIProvider apiKey={apiKey}>
-        <div className="relative h-screen w-screen overflow-hidden bg-background">
+  // Only wrap with APIProvider if using Google Maps
+  const mapContent = (
+    <div className="relative h-screen w-screen overflow-hidden bg-background">
         <main className="absolute inset-0 z-0">
             <div className="h-full w-full relative">
                 {/* Layer 1: Standard Workspace (History/Incidents/Fleet) */}
@@ -276,7 +276,13 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
                 </p>
             </div>
         )}
-        </div>
-    </APIProvider>
+    </div>
   );
+
+  // Only wrap with APIProvider if using Google Maps
+  if (mapProvider === 'google') {
+    return <APIProvider apiKey={apiKey}>{mapContent}</APIProvider>;
+  }
+
+  return mapContent;
 }

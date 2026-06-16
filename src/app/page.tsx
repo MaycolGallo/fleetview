@@ -1,5 +1,4 @@
 
-import { ApiKeyInstructions } from '@/components/api-key-instructions';
 import { Skeleton } from '@/components/ui/skeleton';
 import dynamic from 'next/dynamic';
 
@@ -19,10 +18,8 @@ export default async function Home({ searchParams }: PageProps) {
   const { demo } = await searchParams;
   const isDemoMode = demo === 'true';
 
-  // If no API key is provided and we aren't in demo mode, show instructions
-  if (!apiKey && !isDemoMode) {
-    return <ApiKeyInstructions />;
-  }
+  // No need to show API key instructions anymore - Leaflet is the default and works without an API key
+  // Only show the page if we can proceed (Leaflet doesn't require an API key)
 
   return (
     <div className="h-screen w-screen">
