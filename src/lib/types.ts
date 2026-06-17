@@ -142,6 +142,14 @@ export type MapType = 'standard' | 'satellite';
 
 export type PanelType = 'vehicles' | 'minimaps' | 'settings' | 'share' | 'stats' | null;
 
+export type MapFlags = {
+  isMainView: boolean;
+  isFocusedView: boolean;
+  isSplitView: boolean;
+  isRouteHistoryView: boolean;
+  isDetailView: boolean;
+};
+
 export interface FleetState {
   vehicles: Vehicle[];
   statusFilter: VehicleStatus[];

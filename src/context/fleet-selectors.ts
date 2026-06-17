@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Vehicle, FleetState } from '@/lib/types';
+import type { Vehicle, FleetState, MapFlags } from '@/lib/types';
 
 export const selectVisibleVehicles = (state: FleetState): Vehicle[] => {
   return state.vehicles.filter(v => state.visibleVehicleIds.has(v.id_vehiculo));
@@ -80,4 +80,19 @@ export const selectRouteSummary = (state: FleetState) => {
       
       return summary;
     }, initial);
+};
+
+export const getMapFlags = (state: FleetState): MapFlags => {
+  const isRouteHistoryView = state.isRouteSheetOpen;
+  const isFocusedView = !!state.focusedMiniMapId && !isRouteHistoryView;
+  const isDetailView = !!state.selectedVehicle && !isRouteHistoryView;
+  const isMainView = !isFocusedView && !isDetailView && !isRouteHistoryView;
+  
+  return {
+    isMainView,
+    isFocusedView,
+    isSplitView: state.isSplitView,
+    isRouteHistoryView,
+    isDetailView,
+  };
 };
