@@ -4,13 +4,15 @@ import React, { useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw, X, LayoutGrid, Loader2 } from 'lucide-react';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
+import { getMapFlags } from '@/context/fleet-selectors';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
 import { cn } from '@/lib/utils';
 
 export function DetailHeader({ apiKey }: { apiKey: string }) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
-  const { isIncidenciasSheetOpen, isLoadingRoute, isLoadingIncidencias, focusedMiniMapId, miniMaps, historyVehicle, isRouteSheetOpen } = state;
+  const { isIncidenciasSheetOpen, isLoadingRoute, isLoadingIncidencias, focusedMiniMapId, miniMaps, historyVehicle } = state;
+  const mapFlags = getMapFlags(state);
   const [isPending, startTransition] = useTransition();
 
   const handleBack = () => {
@@ -68,7 +70,7 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
               : 'Volver'}
           </Button>
 
-          {focusedGroup && !isRouteSheetOpen && (
+          {focusedGroup && mapFlags.isFocusedView && (
             <div className="bg-primary/10 backdrop-blur-sm border border-primary/20 px-4 h-10 rounded-lg flex items-center gap-2 shadow-sm text-sm font-bold animate-in slide-in-from-left-2">
               <LayoutGrid className="w-4 h-4 text-primary" />
               <span>

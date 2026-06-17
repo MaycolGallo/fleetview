@@ -8,6 +8,7 @@
 
 import React, { useTransition } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
+import { getMapFlags } from '@/context/fleet-selectors';
 import { Button } from '@/components/ui/button';
 import { Radar, X, ArrowLeftRight, RefreshCw, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -38,15 +39,15 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
     visibleMiniMapIds, 
     focusedMiniMapId, 
     mapProvider,
-    isRouteSheetOpen,
   } = state;
   
+  const mapFlags = getMapFlags(state);
   const [isPending, startTransition] = useTransition();
 
   // Tactical Role Reversal:
   // When focused, secondary radars hide and the General Overview enters as a mini.
   // Hide when route history is open
-  const showOverviewAsMini = !!focusedMiniMapId && !isRouteSheetOpen;
+  const showOverviewAsMini = mapFlags.isFocusedView;
   
   const activeMiniMaps = focusedMiniMapId 
     ? [] 
