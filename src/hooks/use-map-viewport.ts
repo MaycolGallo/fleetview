@@ -8,6 +8,13 @@ import L from 'leaflet';
 
 type MapInstance = google.maps.Map | L.Map | MapRef | null | undefined;
 
+// Helper: Check if a vehicle belongs to a minimap
+function isVehicleInMinimap(miniMapId: string | undefined, targetVehicleId: number, miniMaps: any[]): boolean {
+  if (!miniMapId) return true; // Overview mini shows all vehicles
+  const minimap = miniMaps.find(m => m.id === miniMapId);
+  return minimap?.vehicleIds.includes(targetVehicleId) ?? false;
+}
+
 interface UseMapViewportProps {
   map: MapInstance;
   provider: MapProvider;
@@ -30,6 +37,10 @@ const PADDING_STANDARD: ViewportPadding = { top: 80, bottom: 80, left: 80, right
 const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 80 };
 const PADDING_WITH_GRID: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 440 };
 const PADDING_MINIMAP: ViewportPadding = { top: 20, bottom: 20, left: 20, right: 20 };
+
+// Debounce timer for performPan to prevent rapid successive pans
+let lastPanTime = 0;
+const PAN_DEBOUNCE_MS = 300;
 
 export function useMapViewport({
   map,
@@ -99,14 +110,17 @@ export function useMapViewport({
             shouldPerform = !radarIds.includes(targetId);
           }
         } else {
-          // Radar windows: pan to their own locked units, or any unit if it's the overview mini (no miniMapId)
-          shouldPerform = miniMapId 
-            ? (miniMaps.find(m => m.id === miniMapId)?.vehicleIds.includes(targetId) ?? false)
-            : true; // Overview mini allows panning to any vehicle
+          // Radar windows: pan to their own locked units, or any unit if it's the overview mini
+          shouldPerform = isVehicleInMinimap(miniMapId, targetId, miniMaps);
         }
 
         if (shouldPerform) {
-          performPan(map, provider, action.payload, 16, currentPadding);
+          // Debounce rapid pan requests to prevent animation spam
+          const now = Date.now();
+          if (now - lastPanTime > PAN_DEBOUNCE_MS) {
+            lastPanTime = now;
+            performPan(map, provider, action.payload, 16, currentPadding);
+          }
         }
         break;
       }
