@@ -29,6 +29,7 @@ interface ViewportPadding {
 const PADDING_STANDARD: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 80 };
 const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 80 };
 const PADDING_WITH_GRID: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 440 };
+const PADDING_MINIMAP: ViewportPadding = { top: 20, bottom: 20, left: 20, right: 20 };
 
 export function useMapViewport({
   map,
@@ -79,7 +80,8 @@ export function useMapViewport({
     const action = mapViewport;
     // Main map is "Grid Active" if radar maps are visible OR if in Focus Mode (which shows Overview Mini)
     const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
-    const currentPadding = isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD;
+    // Use compact padding for minimaps, larger padding for main map
+    const currentPadding = !isMainMap ? PADDING_MINIMAP : (isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD);
 
     switch (action.type) {
       case 'pan_to_vehicle': {
@@ -128,7 +130,8 @@ export function useMapViewport({
     if (!isVisible || isIncidenciasSheetOpen || historyVehicle) return () => clearTimeout(t);
 
     const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
-    const currentPadding = isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD;
+    // Use compact padding for minimaps, larger padding for main map
+    const currentPadding = !isMainMap ? PADDING_MINIMAP : (isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD);
     
     let targetIds: number[] = [];
     if (manualVehicleIds) {
