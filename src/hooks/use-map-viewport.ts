@@ -99,8 +99,10 @@ export function useMapViewport({
             shouldPerform = !radarIds.includes(targetId);
           }
         } else {
-          // Radar windows only pan to their own locked units
-          shouldPerform = miniMapId ? (miniMaps.find(m => m.id === miniMapId)?.vehicleIds.includes(targetId) ?? false) : false;
+          // Radar windows: pan to their own locked units, or any unit if it's the overview mini (no miniMapId)
+          shouldPerform = miniMapId 
+            ? (miniMaps.find(m => m.id === miniMapId)?.vehicleIds.includes(targetId) ?? false)
+            : true; // Overview mini allows panning to any vehicle
         }
 
         if (shouldPerform) {
