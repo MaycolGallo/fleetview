@@ -8,6 +8,13 @@ import L from 'leaflet';
 
 type MapInstance = google.maps.Map | L.Map | MapRef | null | undefined;
 
+// Helper: Check if a vehicle belongs to a minimap
+function isVehicleInMinimap(miniMapId: string | undefined, targetVehicleId: number, miniMaps: any[]): boolean {
+  if (!miniMapId) return true; // Overview mini shows all vehicles
+  const minimap = miniMaps.find(m => m.id === miniMapId);
+  return minimap?.vehicleIds.includes(targetVehicleId) ?? false;
+}
+
 interface UseMapViewportProps {
   map: MapInstance;
   provider: MapProvider;
@@ -29,6 +36,11 @@ interface ViewportPadding {
 const PADDING_STANDARD: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 80 };
 const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 80 };
 const PADDING_WITH_GRID: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 440 };
+const PADDING_MINIMAP: ViewportPadding = { top: 20, bottom: 20, left: 20, right: 20 };
+
+// Debounce timer for performPan to prevent rapid successive pans
+let lastPanTime = 0;
+const PAN_DEBOUNCE_MS = 300;
 
 export function useMapViewport({
   map,
@@ -79,7 +91,8 @@ export function useMapViewport({
     const action = mapViewport;
     // Main map is "Grid Active" if radar maps are visible OR if in Focus Mode (which shows Overview Mini)
     const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
-    const currentPadding = isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD;
+    // Use compact padding for minimaps, larger padding for main map
+    const currentPadding = !isMainMap ? PADDING_MINIMAP : (isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD);
 
     switch (action.type) {
       case 'pan_to_vehicle': {
@@ -97,12 +110,17 @@ export function useMapViewport({
             shouldPerform = !radarIds.includes(targetId);
           }
         } else {
-          // Radar windows only pan to their own locked units
-          shouldPerform = miniMapId ? (miniMaps.find(m => m.id === miniMapId)?.vehicleIds.includes(targetId) ?? false) : false;
+          // Radar windows: pan to their own locked units, or any unit if it's the overview mini
+          shouldPerform = isVehicleInMinimap(miniMapId, targetId, miniMaps);
         }
 
         if (shouldPerform) {
-          performPan(map, provider, action.payload, 16, currentPadding);
+          // Debounce rapid pan requests to prevent animation spam
+          const now = Date.now();
+          if (now - lastPanTime > PAN_DEBOUNCE_MS) {
+            lastPanTime = now;
+            performPan(map, provider, action.payload, 16, currentPadding);
+          }
         }
         break;
       }
@@ -122,13 +140,19 @@ export function useMapViewport({
     if (!map) return;
     
     triggerResize();
-    const t = setTimeout(triggerResize, 350);
+    // More aggressive timing: resize immediately and again after container stabilizes
+    const t1 = setTimeout(triggerResize, 100);
+    const t2 = setTimeout(triggerResize, 350);
 
     // Early Return: Do not disturb investigator focus during investigations
-    if (!isVisible || isIncidenciasSheetOpen || historyVehicle) return () => clearTimeout(t);
+    if (!isVisible || isIncidenciasSheetOpen || historyVehicle) return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
 
     const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
-    const currentPadding = isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD;
+    // Use compact padding for minimaps, larger padding for main map
+    const currentPadding = !isMainMap ? PADDING_MINIMAP : (isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD);
     
     let targetIds: number[] = [];
     if (manualVehicleIds) {
@@ -145,8 +169,18 @@ export function useMapViewport({
         performPan(map, provider, points[0], 16, currentPadding);
       } else if (points.length > 1) {
         performFitBounds(map, provider, points, currentPadding);
+        // Re-fit bounds after container stabilizes to account for dynamic height
+        const t3 = setTimeout(() => performFitBounds(map, provider, points, currentPadding), 400);
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+          clearTimeout(t3);
+        };
       }
-      return () => clearTimeout(t);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     } 
 
     if (isSplitView && !selectedVehicle && despachoBaseRoute.length > 0) {
@@ -155,7 +189,10 @@ export function useMapViewport({
       performFitBounds(map, provider, points, PADDING_STANDARD);
     }
 
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [map, provider, isMainMap, side, miniMapId, isSplitView, focusedMiniMapId, !!historyVehicle, isIncidenciasSheetOpen, triggerResize, selectedVehicle, vehicles, miniMaps, visibleMiniMapIds, despachoBaseRoute, isVisible]);
 }
 

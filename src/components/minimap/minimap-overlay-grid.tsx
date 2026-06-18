@@ -8,6 +8,7 @@
 
 import React, { useTransition } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
+import { getMapFlags } from '@/context/fleet-selectors';
 import { Button } from '@/components/ui/button';
 import { Radar, X, ArrowLeftRight, RefreshCw, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -38,15 +39,19 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
     visibleMiniMapIds, 
     focusedMiniMapId, 
     mapProvider,
-    isRouteSheetOpen,
+    vehicles,
   } = state;
   
+  const mapFlags = getMapFlags(state);
   const [isPending, startTransition] = useTransition();
 
   // Tactical Role Reversal:
   // When focused, secondary radars hide and the General Overview enters as a mini.
   // Hide when route history is open
-  const showOverviewAsMini = !!focusedMiniMapId && !isRouteSheetOpen;
+  const showOverviewAsMini = mapFlags.isFocusedView;
+  
+  // For overview mini, show all vehicles
+  const allVehicleIds = vehicles.map(v => v.id_vehiculo);
   
   const activeMiniMaps = focusedMiniMapId 
     ? [] 
@@ -91,7 +96,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
             transition={{ type: "spring", stiffness: 350, damping: 30 }}
             className="pointer-events-auto relative flex-grow shrink-0 min-h-[calc(20vh-16px)] max-h-[calc(40vh-16px)] w-96 border-2 rounded-2xl overflow-hidden shadow-2xl bg-card ring-2 ring-primary/20"
           >
-            {renderMapInstance({ isMainMap: false })}
+            {renderMapInstance({ manualVehicleIds: allVehicleIds })}
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
               <div className="bg-muted px-1.5 py-0.5 rounded shadow-sm text-[8px] font-bold text-muted-foreground uppercase flex items-center gap-1">
                 Vista General

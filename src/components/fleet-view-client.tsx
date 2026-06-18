@@ -6,6 +6,7 @@ import { RouteHistorySheet } from './route/route-history-sheet';
 import { IncidenciasSheet } from './incidencias/incidencias-sheet';
 import { Skeleton } from './ui/skeleton';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
+import { getMapFlags } from '@/context/fleet-selectors';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Drawer, DrawerContent, DrawerHandle, DrawerHeader, DrawerTitle, DrawerDescription } from '@/components/ui/drawer';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -110,26 +111,24 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   const searchParams = useSearchParams();
 
   const { 
-    isSplitView, 
-    splitDirection, 
+    splitDirection,
     historyVehicle, 
     isIncidenciasSheetOpen, 
     isLoadingRoute, 
-    isLoadingIncidencias, 
-    focusedMiniMapId,
+    isLoadingIncidencias,
     routeGroups,
     incidencias,
     mapProvider,
     activePanel
   } = state;
 
+  const mapFlags = getMapFlags(state);
   const shareToken = searchParams.get('s');
   const isPublicView = !!shareToken;
   
-  // Tactical State Context
+  // Tactical State Context - derived from MapFlags
   const isInvestigationView = !!(historyVehicle || isIncidenciasSheetOpen);
-  const isFocusMode = !!focusedMiniMapId;
-  const isDetailView = isInvestigationView || isFocusMode;
+  const isDetailView = mapFlags.isDetailView || mapFlags.isFocusedView;
   
   const isInitialLoading = (isLoadingRoute && routeGroups.length === 0) || (isLoadingIncidencias && incidencias.length === 0);
 
@@ -141,7 +140,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   };
 
   // Determine which layer is active to drive animations
-  const showSplitWorkspace = isSplitView && !isDetailView && !isMobile;
+  const showSplitWorkspace = mapFlags.isSplitView && !isDetailView && !isMobile;
 
   // Only wrap with APIProvider if using Google Maps
   const mapContent = (
@@ -197,7 +196,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
                 >
                     {/* Toolbar hides in Focus Mode but Grid stays to show Overview Mini */}
                     <AnimatePresence>
-                        {!isFocusMode && (
+                        {!mapFlags.isFocusedView && (
                             <motion.div
                                 key="toolbar-anim"
                                 initial={{ x: -40, opacity: 0 }}
@@ -212,7 +211,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
                     </AnimatePresence>
                     
                     <AnimatePresence mode="wait">
-                        {!isMobile && activePanel && !isFocusMode && (
+                        {!isMobile && activePanel && !mapFlags.isFocusedView && (
                         <motion.div 
                             key={activePanel}
                             initial={{ x: -100, opacity: 0 }}
