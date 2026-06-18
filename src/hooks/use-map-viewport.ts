@@ -124,10 +124,15 @@ export function useMapViewport({
     if (!map) return;
     
     triggerResize();
-    const t = setTimeout(triggerResize, 350);
+    // More aggressive timing: resize immediately and again after container stabilizes
+    const t1 = setTimeout(triggerResize, 100);
+    const t2 = setTimeout(triggerResize, 350);
 
     // Early Return: Do not disturb investigator focus during investigations
-    if (!isVisible || isIncidenciasSheetOpen || historyVehicle) return () => clearTimeout(t);
+    if (!isVisible || isIncidenciasSheetOpen || historyVehicle) return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
 
     const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
     // Use compact padding for minimaps, larger padding for main map
@@ -148,8 +153,18 @@ export function useMapViewport({
         performPan(map, provider, points[0], 16, currentPadding);
       } else if (points.length > 1) {
         performFitBounds(map, provider, points, currentPadding);
+        // Re-fit bounds after container stabilizes to account for dynamic height
+        const t3 = setTimeout(() => performFitBounds(map, provider, points, currentPadding), 400);
+        return () => {
+          clearTimeout(t1);
+          clearTimeout(t2);
+          clearTimeout(t3);
+        };
       }
-      return () => clearTimeout(t);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     } 
 
     if (isSplitView && !selectedVehicle && despachoBaseRoute.length > 0) {
@@ -158,7 +173,10 @@ export function useMapViewport({
       performFitBounds(map, provider, points, PADDING_STANDARD);
     }
 
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [map, provider, isMainMap, side, miniMapId, isSplitView, focusedMiniMapId, !!historyVehicle, isIncidenciasSheetOpen, triggerResize, selectedVehicle, vehicles, miniMaps, visibleMiniMapIds, despachoBaseRoute, isVisible]);
 }
 
