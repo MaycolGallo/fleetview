@@ -49,7 +49,9 @@ export type FleetAction =
   | { type: 'CLEAR_NOTIFICATIONS' }
   | { type: 'SET_AI_INSIGHT'; payload: string }
   | { type: 'SET_AI_INSIGHT_LOADING'; payload: boolean }
-  | { type: 'SET_AI_PATROL_LOADING'; payload: boolean };
+  | { type: 'SET_AI_PATROL_LOADING'; payload: boolean }
+  | { type: 'TOGGLE_MARKER_CLUSTERING'; payload?: boolean }
+  | { type: 'SET_MAP_CONTROL_PADDING'; payload: { top: number, right: number, bottom: number, left: number } };
 
 export const getInitialState = (): FleetState => ({
   vehicles: [],
@@ -88,6 +90,8 @@ export const getInitialState = (): FleetState => ({
   despachoBaseRoute: DESPACHO_BASE_ROUTE,
   isLoadingAiInsight: false,
   isSimulatingAiPatrol: false,
+  enableMarkerClustering: true,
+  mapControlPadding: { top: 80, right: 440, bottom: 80, left: 80 },
 });
 
 const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
@@ -307,6 +311,8 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'SET_ACTIVE_PANEL': return { ...state, activePanel: action.payload };
     case 'VIEWPORT_ACTION_COMPLETE': return { ...state, mapViewport: { type: 'idle' } };
     case 'CLEAR_ALL_MINIMAPS': return { ...state, miniMaps: [], visibleMiniMapIds: [], allTrackedVehicleIds: [], focusedMiniMapId: null };
+    case 'TOGGLE_MARKER_CLUSTERING': return { ...state, enableMarkerClustering: action.payload ?? !state.enableMarkerClustering };
+    case 'SET_MAP_CONTROL_PADDING': return { ...state, mapControlPadding: action.payload };
     
     default: return state;
   }

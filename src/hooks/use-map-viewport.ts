@@ -64,7 +64,8 @@ export function useMapViewport({
     historyVehicle,
     isIncidenciasSheetOpen,
     despachoBaseRoute,
-    selectedVehicle
+    selectedVehicle,
+    mapControlPadding
   } = state;
 
   const triggerResize = useCallback(() => {
@@ -91,8 +92,8 @@ export function useMapViewport({
     const action = mapViewport;
     // Main map is "Grid Active" if radar maps are visible OR if in Focus Mode (which shows Overview Mini)
     const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
-    // Use compact padding for minimaps, larger padding for main map
-    const currentPadding = !isMainMap ? PADDING_MINIMAP : (isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD);
+    // Use compact padding for minimaps, configurable padding for main map
+    const currentPadding = !isMainMap ? PADDING_MINIMAP : (isGridActive ? mapControlPadding : PADDING_STANDARD);
 
     switch (action.type) {
       case 'pan_to_vehicle': {
@@ -151,8 +152,8 @@ export function useMapViewport({
     };
 
     const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
-    // Use compact padding for minimaps, larger padding for main map
-    const currentPadding = !isMainMap ? PADDING_MINIMAP : (isGridActive ? PADDING_WITH_GRID : PADDING_STANDARD);
+    // Use compact padding for minimaps, configurable padding for main map
+    const currentPadding = !isMainMap ? PADDING_MINIMAP : (isGridActive ? mapControlPadding : PADDING_STANDARD);
     
     let targetIds: number[] = [];
     if (manualVehicleIds) {

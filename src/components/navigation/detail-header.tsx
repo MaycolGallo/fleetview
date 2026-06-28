@@ -6,6 +6,7 @@ import { ArrowLeft, RefreshCw, X, LayoutGrid, Loader2 } from 'lucide-react';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 import { getMapFlags } from '@/context/fleet-selectors';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
+import { ClusteringToggle } from '@/components/map-controls/clustering-toggle';
 import { cn } from '@/lib/utils';
 
 export function DetailHeader({ apiKey }: { apiKey: string }) {
@@ -81,6 +82,7 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
         </div>
 
         <div className="flex gap-2 items-center pointer-events-auto">
+          <ClusteringToggle />
           {historyVehicle && (
             <Button
               variant="secondary"

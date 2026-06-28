@@ -195,4 +195,7 @@ export interface FleetState {
   // Data refresh tracking
   lastUpdatedRoute?: number;
   lastUpdatedIncidencias?: number;
+  // Map markers and controls
+  enableMarkerClustering: boolean;
+  mapControlPadding: { top: number; right: number; bottom: number; left: number };
 }

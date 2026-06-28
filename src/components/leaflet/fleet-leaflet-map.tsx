@@ -7,6 +7,7 @@ import { useFleetState, selectMapVehicles } from '@/context/fleet-context';
 import { LeafletVehicleMarker } from './leaflet-vehicle-marker';
 import { useMapViewport } from '@/hooks/use-map-viewport';
 import { LeafletRoutePolylines } from './leaflet-route-polylines';
+import { LeafletClustering } from './leaflet-clustering';
 
 interface FleetLeafletMapProps {
   side?: 'ida' | 'vuelta';
@@ -34,7 +35,7 @@ function MapViewportSync(props: FleetLeafletMapProps) {
 export default function FleetLeafletMap(props: FleetLeafletMapProps) {
   const { miniMapId, manualVehicleIds, isMainMap, side, isVisible = true } = props;
   const { state } = useFleetState();
-  const { isMapDark, mapType } = state;
+  const { isMapDark, mapType, enableMarkerClustering } = state;
 
   const mapVehicles = useMemo(
     () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
@@ -62,6 +63,8 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
         <TileLayer key={`${tileUrl}-${isMapDark}`} url={tileUrl} attribution={attribution} />
         
         <MapViewportSync {...props} isVisible={isVisible} />
+
+        <LeafletClustering enabled={enableMarkerClustering && isMainMap !== false} />
 
         <LeafletRoutePolylines side={side} />
 
