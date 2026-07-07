@@ -80,14 +80,21 @@ export function useRoutePlayback() {
             } 
         });
         
+        // Pan to vehicle during playback to keep it centered on screen
+        dispatch({ 
+            type: 'PAN_TO_VEHICLE', 
+            payload: { 
+                lat: currentPoint.lat, 
+                lng: currentPoint.lng 
+            } 
+        });
+        
         dispatch({ type: 'SET_PLAYBACK_INDEX', payload: nextIndex });
         playbackIndexRef.current = nextIndex;
-        if (nextIndex < movingPoints.length && isRoutePlaying) {
-            timeoutRef.current = setTimeout(playNextPoint, delay);
-        } else {
-             dispatch({ type: 'PAUSE_ROUTE_PLAYBACK' });
-             cleanup();
-        }
+        
+        // Schedule next point - continue even if technically beyond array since
+        // playNextPoint will check bounds and stop when needed
+        timeoutRef.current = setTimeout(playNextPoint, delay);
     };
 
     playNextPoint();

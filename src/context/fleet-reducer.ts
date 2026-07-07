@@ -252,6 +252,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
           selectedSegmentIndex: null, 
           isLoadingRoute: false, 
           isRoutePlaying: false, 
+          playbackIndex: 0,
           isSplitView: state.wasSplitViewBeforeRoute, 
           wasSplitViewBeforeRoute: false, 
           focusedMiniMapId: null, 

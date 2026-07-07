@@ -60,7 +60,7 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
     <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
       <div className="relative w-full h-12 flex justify-between items-center">
         <div className="flex gap-3 items-center pointer-events-auto">
-          {(isIncidenciasSheetOpen || focusedMiniMapId || mapFlags.isRouteHistoryView) && (
+          {(isIncidenciasSheetOpen || focusedMiniMapId || historyVehicle || mapFlags.isRouteHistoryView) && (
             <Button
               onClick={handleBack}
               variant="secondary"
