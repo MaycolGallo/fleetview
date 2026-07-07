@@ -91,8 +91,12 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
                 weight={weight} 
                 opacity={0.9} 
                 eventHandlers={{
-                  click: (e) => {
-                    L.DomEvent.stopPropagation(e);
+                  click: (e: any) => {
+                    try {
+                      L.DomEvent.stopPropagation(e);
+                    } catch (err) {
+                      // Leaflet event already handled
+                    }
                     dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: idx });
                   }
                 }}

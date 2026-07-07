@@ -34,15 +34,17 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
   };
 
   const handleRefresh = () => {
-    if (!historyVehicle) return;
+    if (!historyVehicle && !mapFlags.isRouteHistoryView) return;
     
     startTransition(() => {
-        if (isIncidenciasSheetOpen) {
+        if (isIncidenciasSheetOpen && historyVehicle) {
           dispatch({ type: 'START_INCIDENCIAS_LOADING', payload: historyVehicle });
           return;
         } 
         
-        dispatch({ type: 'START_ROUTE_LOADING', payload: historyVehicle });
+        if (historyVehicle) {
+          dispatch({ type: 'START_ROUTE_LOADING', payload: historyVehicle });
+        }
     });
   };
 
