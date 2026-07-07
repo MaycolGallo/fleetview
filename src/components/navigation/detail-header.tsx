@@ -27,7 +27,12 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
         if (focusedMiniMapId) {
           dispatch({ type: 'UNFOCUS_MINIMAP' });
           return;
-        } 
+        }
+        
+        if (mapFlags.isRouteHistoryView) {
+          dispatch({ type: 'BACK_TO_FLEET' });
+          return;
+        }
         
         dispatch({ type: 'BACK_TO_FLEET' });
     });

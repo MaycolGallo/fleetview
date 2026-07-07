@@ -132,7 +132,7 @@ export function RouteHistorySheet({ date, setDate, onApply }: RouteHistorySheetP
                                 className="h-10 w-10"
                                 disabled={isPending}
                             >
-                                {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
+                                {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : isRoutePlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
                             </Button>
                             <Button 
                                 variant="outline" 
