@@ -37,7 +37,8 @@ export function useRoutePlayback() {
         return;
     }
     
-    if (playbackIndexRef.current >= movingPoints.length - 1 || playbackIndexRef.current === 0) {
+    // Reset playback index when starting fresh or reaching the end
+    if (playbackIndexRef.current >= movingPoints.length - 1) {
         playbackIndexRef.current = 0;
     }
     

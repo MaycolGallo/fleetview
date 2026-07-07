@@ -23,6 +23,7 @@ import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { APIProvider } from '@vis.gl/react-google-maps';
+import { useRoutePlayback } from '@/hooks/use-route-playback';
 
 // Stable Dynamic Imports
 const FleetMap = dynamic(() => import('./fleet-map'), { ssr: false, loading: () => <Skeleton className="h-full w-full" /> });
@@ -109,6 +110,9 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
   const dispatch = useFleetDispatch();
   const isMobile = useIsMobile();
   const searchParams = useSearchParams();
+  
+  // Initialize route playback at top level
+  useRoutePlayback();
 
   const { 
     splitDirection,

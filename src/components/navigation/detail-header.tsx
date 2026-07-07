@@ -55,23 +55,25 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
     <div className="absolute top-0 left-0 p-4 w-full pointer-events-none z-40">
       <div className="relative w-full h-12 flex justify-between items-center">
         <div className="flex gap-3 items-center pointer-events-auto">
-          <Button
-            onClick={handleBack}
-            variant="secondary"
-            disabled={isBusy}
-            className="shadow-lg bg-card/90 backdrop-blur-sm font-bold border border-primary/20 h-10"
-          >
-            {isIncidenciasSheetOpen || focusedMiniMapId ? (
-              <X className="mr-2 h-4 w-4" />
-            ) : (
-              <ArrowLeft className="mr-2 h-4 w-4" />
-            )}
-            {isIncidenciasSheetOpen
-              ? 'Cerrar Incidencias'
-              : focusedMiniMapId
-              ? `Restaurar Vista General`
-              : 'Volver'}
-          </Button>
+          {(isIncidenciasSheetOpen || focusedMiniMapId || mapFlags.isRouteHistoryView) && (
+            <Button
+              onClick={handleBack}
+              variant="secondary"
+              disabled={isBusy}
+              className="shadow-lg bg-card/90 backdrop-blur-sm font-bold border border-primary/20 h-10"
+            >
+              {isIncidenciasSheetOpen || focusedMiniMapId ? (
+                <X className="mr-2 h-4 w-4" />
+              ) : (
+                <ArrowLeft className="mr-2 h-4 w-4" />
+              )}
+              {isIncidenciasSheetOpen
+                ? 'Cerrar Incidencias'
+                : focusedMiniMapId
+                ? `Restaurar Vista General`
+                : 'Volver'}
+            </Button>
+          )}
 
           {focusedGroup && mapFlags.isFocusedView && (
             <div className="bg-primary/10 backdrop-blur-sm border border-primary/20 px-4 h-10 rounded-lg flex items-center gap-2 shadow-sm text-sm font-bold animate-in slide-in-from-left-2">
