@@ -175,6 +175,7 @@ export interface FleetState {
   pinRotationMode: 'arrow' | 'pin';
   isRoutePlaying: boolean;
   playbackAnimationDuration: number;
+  playbackIndex: number;
   isSplitView: boolean;
   splitDirection: 'horizontal' | 'vertical';
   wasSplitViewBeforeRoute: boolean;

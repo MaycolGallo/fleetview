@@ -28,6 +28,7 @@ export type FleetAction =
   | { type: 'START_ROUTE_PLAYBACK' }
   | { type: 'PAUSE_ROUTE_PLAYBACK' }
   | { type: 'UPDATE_HISTORY_VEHICLE_POSITION'; payload: { lat: number, lng: number, rumbo: number, velocidad: number, animationDuration: number } }
+  | { type: 'SET_PLAYBACK_INDEX'; payload: number }
   | { type: 'INIT_PERSISTED_STATE'; payload: { miniMaps: MiniMapGroup[], visibleIds: string[] } }
   | { type: 'SET_MINIMAPS'; payload: MiniMapGroup[] }
   | { type: 'CREATE_MINIMAP'; payload: { vehicleId: number } }
@@ -78,6 +79,7 @@ export const getInitialState = (): FleetState => ({
   pinRotationMode: 'arrow',
   isRoutePlaying: false,
   playbackAnimationDuration: 1000,
+  playbackIndex: 0,
   isSplitView: false,
   splitDirection: 'horizontal',
   wasSplitViewBeforeRoute: false,
@@ -313,6 +315,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'CLEAR_ALL_MINIMAPS': return { ...state, miniMaps: [], visibleMiniMapIds: [], allTrackedVehicleIds: [], focusedMiniMapId: null };
     case 'TOGGLE_MARKER_CLUSTERING': return { ...state, enableMarkerClustering: action.payload ?? !state.enableMarkerClustering };
     case 'SET_MAP_CONTROL_PADDING': return { ...state, mapControlPadding: action.payload };
+    case 'SET_PLAYBACK_INDEX': return { ...state, playbackIndex: action.payload };
     
     default: return state;
   }

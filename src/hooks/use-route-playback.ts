@@ -79,6 +79,7 @@ export function useRoutePlayback() {
             } 
         });
         
+        dispatch({ type: 'SET_PLAYBACK_INDEX', payload: nextIndex });
         playbackIndexRef.current = nextIndex;
         if (nextIndex < movingPoints.length && isRoutePlaying) {
             timeoutRef.current = setTimeout(playNextPoint, delay);

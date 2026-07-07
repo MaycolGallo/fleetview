@@ -27,7 +27,9 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
     isIncidenciasSheetOpen, 
     historyVehicle, 
     despachoBaseRoute,
-    selectedSegmentIndex 
+    selectedSegmentIndex,
+    isRoutePlaying,
+    playbackIndex
   } = state;
 
   const despachoRoutePoints = useMemo(() => {
@@ -46,7 +48,36 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
 
            // 1. Moving Segments: Interactive Polylines
            if (group.id_estado === 6) {
-             const points = group.records.map(r => [r.lat, r.lng] as [number, number]);
+             let points = group.records.map(r => [r.lat, r.lng] as [number, number]);
+             
+             // When route is playing, only show polyline up to current playback position
+             if (isRoutePlaying && playbackIndex > 0) {
+               const totalMovingPoints = routeGroups
+                 .filter(g => g.id_estado === 6)
+                 .flatMap(g => g.records);
+               
+               if (playbackIndex < totalMovingPoints.length) {
+                 const currentPointIndex = playbackIndex;
+                 const recordsInThisGroup = group.records.length;
+                 const startIndexInGroup = routeGroups
+                   .slice(0, idx)
+                   .filter(g => g.id_estado === 6)
+                   .reduce((sum, g) => sum + g.records.length, 0);
+                 
+                 if (currentPointIndex >= startIndexInGroup) {
+                   const endIndexInGroup = Math.min(
+                     currentPointIndex - startIndexInGroup,
+                     recordsInThisGroup
+                   );
+                   points = points.slice(0, endIndexInGroup);
+                 } else {
+                   return null; // This group hasn't been reached yet
+                 }
+               }
+             }
+             
+             // Don't render empty polylines
+             if (points.length === 0) return null;
              
              // Tactical Highlight: Amber for selection, Group Color for standard
              const color = isSelected ? '#f59e0b' : group.color;
@@ -54,7 +85,7 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
              
              return (
               <Polyline 
-                key={`hist-line-${idx}-${isSelected}`} // Selection is part of the key to force immediate Leaflet redraw
+                key={`hist-line-${idx}-${isSelected}-${playbackIndex}`}
                 positions={points} 
                 color={color} 
                 weight={weight} 

@@ -83,23 +83,34 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
 
         <div className="flex gap-2 items-center pointer-events-auto">
           <ClusteringToggle />
-          {historyVehicle && (
-            <Button
-              variant="secondary"
-              size="icon"
-              disabled={isBusy}
-              className={cn(
-                'shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 h-10 w-10 transition-all duration-300',
-                isBusy ? 'cursor-not-allowed opacity-80' : 'hover:scale-110 active:rotate-180'
-              )}
-              onClick={handleRefresh}
-            >
-              {isBusy ? (
-                <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-            </Button>
+          {(historyVehicle || mapFlags.isRouteHistoryView) && (
+            <>
+              <Button
+                variant="secondary"
+                size="icon"
+                disabled={isBusy}
+                className={cn(
+                  'shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 h-10 w-10 transition-all duration-300',
+                  isBusy ? 'cursor-not-allowed opacity-80' : 'hover:scale-110 active:rotate-180'
+                )}
+                onClick={handleRefresh}
+              >
+                {isBusy ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                onClick={handleBack}
+                variant="secondary"
+                size="icon"
+                disabled={isBusy}
+                className="shadow-lg bg-card/90 backdrop-blur-sm border border-primary/20 h-10 w-10"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </>
           )}
           <NotificationsDropdown apiKey={apiKey} />
         </div>
