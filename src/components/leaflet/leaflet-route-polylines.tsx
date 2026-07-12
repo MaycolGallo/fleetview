@@ -51,28 +51,23 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
              let points = group.records.map(r => [r.lat, r.lng] as [number, number]);
              
              // When route is playing, only show polyline up to current playback position
-             if (isRoutePlaying && playbackIndex > 0) {
-               const totalMovingPoints = routeGroups
+             if (isRoutePlaying && playbackIndex >= 0) {
+               // Calculate which points to show based on playbackIndex
+               const startIndexInGroup = routeGroups
+                 .slice(0, idx)
                  .filter(g => g.id_estado === 6)
-                 .flatMap(g => g.records);
+                 .reduce((sum, g) => sum + g.records.length, 0);
                
-               if (playbackIndex < totalMovingPoints.length) {
-                 const currentPointIndex = playbackIndex;
-                 const recordsInThisGroup = group.records.length;
-                 const startIndexInGroup = routeGroups
-                   .slice(0, idx)
-                   .filter(g => g.id_estado === 6)
-                   .reduce((sum, g) => sum + g.records.length, 0);
-                 
-                 if (currentPointIndex >= startIndexInGroup) {
-                   const endIndexInGroup = Math.min(
-                     currentPointIndex - startIndexInGroup,
-                     recordsInThisGroup
-                   );
-                   points = points.slice(0, endIndexInGroup);
-                 } else {
-                   return null; // This group hasn't been reached yet
-                 }
+               const endIndexInGroup = Math.min(
+                 Math.max(0, playbackIndex + 1 - startIndexInGroup),
+                 group.records.length
+               );
+               
+               // Only show this group's polyline if we've reached it
+               if (endIndexInGroup > 0) {
+                 points = points.slice(0, endIndexInGroup);
+               } else {
+                 return null; // Haven't reached this group yet
                }
              }
              
