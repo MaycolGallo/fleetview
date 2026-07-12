@@ -89,7 +89,14 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
                 positions={points} 
                 color={color} 
                 weight={weight} 
-                opacity={0.9} 
+                opacity={0.9}
+                dashArray="8, 4"
+                lineCap="round"
+                lineJoin="round"
+                className="animate-polyline-draw"
+                style={{
+                  animation: `polylineDraw 0.6s ease-in-out forwards`
+                }}
                 eventHandlers={{
                   click: (e: any) => {
                     try {

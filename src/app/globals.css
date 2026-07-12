@@ -73,6 +73,12 @@
   }
   .animate-data-pulse { animation: data-pulse 1.5s ease-out forwards; }
 
+  @keyframes polylineDraw {
+    0% { stroke-dashoffset: 1000; opacity: 0.3; }
+    100% { stroke-dashoffset: 0; opacity: 0.9; }
+  }
+  .animate-polyline-draw { animation: polylineDraw 0.6s ease-in-out forwards; }
+
   /* High-fidelity Leaflet Dark Mode using requested filter */
   .dark .leaflet-layer,
   .dark .leaflet-control-zoom-in,

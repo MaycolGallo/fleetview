@@ -62,11 +62,11 @@ export function useRoutePlayback() {
         if (nextIndex < movingPoints.length) {
             const nextPoint = movingPoints[nextIndex];
             const timeDiffSeconds = nextPoint.fecha - currentPoint.fecha;
-            const PLAYBACK_SPEED_MULTIPLIER = 10;
+            const PLAYBACK_SPEED_MULTIPLIER = 3;
             delay = (timeDiffSeconds * 1000) / PLAYBACK_SPEED_MULTIPLIER;
-            delay = Math.max(50, Math.min(delay, 500));
+            delay = Math.max(300, Math.min(delay, 1500));
         } else {
-            delay = 500;
+            delay = 1000;
         }
 
         dispatch({ 
