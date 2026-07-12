@@ -40,10 +40,12 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
       return side === 'ida' ? despachoBaseRoute.slice(0, halfMaster) : despachoBaseRoute.slice(halfMaster - 1);
   }, [despachoBaseRoute, historyVehicle, isIncidenciasSheetOpen, side]);
 
+  console.log("[v0] LeafletRoutePolylines - historyVehicle:", !!historyVehicle, "routeGroups.length:", routeGroups.length, "isRoutePlaying:", isRoutePlaying, "playbackIndex:", playbackIndex);
+
   return (
     <>
         {/* Scenario 1: Historical Path & Stops */}
-        {historyVehicle && !isIncidenciasSheetOpen && routeGroups.map((group, idx) => {
+        {historyVehicle && !isIncidenciasSheetOpen && routeGroups && routeGroups.map((group, idx) => {
            const isSelected = selectedSegmentIndex === idx;
 
            // 1. Moving Segments: Interactive Polylines
