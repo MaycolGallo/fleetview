@@ -317,7 +317,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'TOGGLE_MARKER_CLUSTERING': return { ...state, enableMarkerClustering: action.payload ?? !state.enableMarkerClustering };
     case 'SET_MAP_CONTROL_PADDING': return { ...state, mapControlPadding: action.payload };
     case 'SET_PLAYBACK_INDEX': return { ...state, playbackIndex: action.payload };
-    case 'START_ROUTE_PLAYBACK': return { ...state, isRoutePlaying: true };
+    case 'START_ROUTE_PLAYBACK': return { ...state, isRoutePlaying: true, playbackIndex: 0 };
     case 'PAUSE_ROUTE_PLAYBACK': return { ...state, isRoutePlaying: false };
     case 'UPDATE_HISTORY_VEHICLE_POSITION': return {
       ...state,
