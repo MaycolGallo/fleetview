@@ -40,8 +40,6 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
       return side === 'ida' ? despachoBaseRoute.slice(0, halfMaster) : despachoBaseRoute.slice(halfMaster - 1);
   }, [despachoBaseRoute, historyVehicle, isIncidenciasSheetOpen, side]);
 
-  console.log("[v0] LeafletRoutePolylines - historyVehicle:", !!historyVehicle, "routeGroups.length:", routeGroups.length, "isRoutePlaying:", isRoutePlaying, "playbackIndex:", playbackIndex);
-
   return (
     <>
         {/* Scenario 1: Historical Path & Stops */}
@@ -53,7 +51,7 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
              let points = group.records.map(r => [r.lat, r.lng] as [number, number]);
              
              // When route is playing, only show polyline up to current playback position
-             if (isRoutePlaying && playbackIndex >= 0) {
+             if (isRoutePlaying) {
                // Calculate which points to show based on playbackIndex
                const startIndexInGroup = routeGroups
                  .slice(0, idx)
