@@ -2,13 +2,14 @@
 'use client';
 
 import { createPortal } from 'react-dom';
-import React, { useTransition } from 'react';
+import React, { useTransition, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { History, MapPin, Info, Bell, Radar, Loader2 } from 'lucide-react';
+import { History, MapPin, Info, Bell, Radar, Loader2, Zap } from 'lucide-react';
 import type { Vehicle } from '@/lib/types';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
+import { RemoteActionsModal } from './remote-actions-modal';
 
-type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'list-incidencias';
+type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'list-incidencias' | 'remote-actions';
 
 export function VehicleContextMenu({
   vehicle,
@@ -20,6 +21,7 @@ export function VehicleContextMenu({
   onClose: () => void;
 }) {
     const [portalNode, setPortalNode] = React.useState<HTMLElement | null>(null);
+    const [remoteActionsOpen, setRemoteActionsOpen] = useState(false);
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
     const isTracked = state.allTrackedVehicleIds?.includes(vehicle.id_vehiculo) || false;
@@ -30,6 +32,11 @@ export function VehicleContextMenu({
     }, []);
 
     const handleAction = (action: VehicleAction) => {
+        if (action === 'remote-actions') {
+            setRemoteActionsOpen(true);
+            return;
+        }
+
         startTransition(() => {
             switch (action) {
                 case 'show-route-history':
@@ -56,6 +63,7 @@ export function VehicleContextMenu({
     const contextMenuItems = [
       { action: 'show-route-history' as VehicleAction, label: 'Historial de Ruta', icon: History },
       { action: 'list-incidencias' as VehicleAction, label: 'Lista de Incidencias', icon: Bell },
+      { action: 'remote-actions' as VehicleAction, label: 'Ejecutar Acción Remota', icon: Zap },
       { action: 'track-vehicle' as VehicleAction, label: 'Crear Radar Lock', icon: Radar },
       { action: 'center-map' as VehicleAction, label: 'Centrar en Mapa', icon: MapPin },
       { action: 'show-details' as VehicleAction, label: 'Detalles del Vehículo', icon: Info },
@@ -63,6 +71,11 @@ export function VehicleContextMenu({
 
     return createPortal(
         <>
+            <RemoteActionsModal 
+              vehicle={vehicle} 
+              open={remoteActionsOpen} 
+              onOpenChange={setRemoteActionsOpen} 
+            />
             <div
                 className="fixed inset-0 z-[51]"
                 onClick={onClose}
