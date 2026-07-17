@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { FleetState, MiniMapGroup, MapProvider, PanelType, MapType } from '@/lib/types';
+import type { FleetState, MiniMapGroup, MapProvider, PanelType, MapType, RemoteActionRecord } from '@/lib/types';
 import { DESPACHO_BASE_ROUTE } from '@/services/fleet-api';
 
 export type FleetAction =
@@ -29,6 +29,8 @@ export type FleetAction =
   | { type: 'PAUSE_ROUTE_PLAYBACK' }
   | { type: 'UPDATE_HISTORY_VEHICLE_POSITION'; payload: { lat: number, lng: number, rumbo: number, velocidad: number, animationDuration: number } }
   | { type: 'SET_PLAYBACK_INDEX'; payload: number }
+  | { type: 'ADD_REMOTE_ACTION_RECORD'; payload: { vehicleId: number; record: RemoteActionRecord } }
+  | { type: 'SET_REMOTE_ACTIONS_FILTER'; payload: { inProgress: boolean; failed: boolean } }
   | { type: 'INIT_PERSISTED_STATE'; payload: { miniMaps: MiniMapGroup[], visibleIds: string[] } }
   | { type: 'SET_MINIMAPS'; payload: MiniMapGroup[] }
   | { type: 'CREATE_MINIMAP'; payload: { vehicleId: number } }
@@ -94,6 +96,9 @@ export const getInitialState = (): FleetState => ({
   isSimulatingAiPatrol: false,
   enableMarkerClustering: true,
   mapControlPadding: { top: 80, right: 440, bottom: 80, left: 80 },
+  remoteActionHistory: new Map(),
+  remoteActionsFilterInProgress: false,
+  remoteActionsFilterFailed: false,
 });
 
 const getTrackedIds = (miniMaps: MiniMapGroup[]) => {
@@ -328,6 +333,17 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
         rumbo: action.payload.rumbo,
         velocidad: action.payload.velocidad
       } : state.historyVehicle
+    };
+    case 'ADD_REMOTE_ACTION_RECORD': {
+      const newHistory = new Map(state.remoteActionHistory);
+      const vehicleActions = newHistory.get(action.payload.vehicleId) || [];
+      newHistory.set(action.payload.vehicleId, [action.payload.record, ...vehicleActions]);
+      return { ...state, remoteActionHistory: newHistory };
+    }
+    case 'SET_REMOTE_ACTIONS_FILTER': return {
+      ...state,
+      remoteActionsFilterInProgress: action.payload.inProgress,
+      remoteActionsFilterFailed: action.payload.failed,
     };
     
     default: return state;

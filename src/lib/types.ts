@@ -39,6 +39,18 @@ export interface Vehicle {
   statusColor: string;
 }
 
+export interface RemoteActionRecord {
+  id: string;
+  vehicleId: number;
+  action: string;
+  actionLabel: string;
+  status: 'success' | 'failed' | 'in_progress';
+  timestamp: number;
+  error?: string;
+  duration?: number;
+  isHighRisk?: boolean;
+}
+
 export type VehicleStatus = string;
 
 export interface Incidencia {
@@ -199,4 +211,8 @@ export interface FleetState {
   // Map markers and controls
   enableMarkerClustering: boolean;
   mapControlPadding: { top: number; right: number; bottom: number; left: number };
+  // Remote Actions
+  remoteActionHistory: Map<number, RemoteActionRecord[]>; // vehicleId -> actions
+  remoteActionsFilterInProgress: boolean;
+  remoteActionsFilterFailed: boolean;
 }
