@@ -10,11 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Vehicle, RemoteActionRecord } from '@/lib/types';
 
 type RemoteAction = 'engine_off' | 'panic' | 'doors' | 'immobilize' | 'horn' | 'fuel_cut' | 'ac' | 'idle';
+type IconName = 'Power' | 'AlertTriangle' | 'Lock' | 'Volume2' | 'Droplet' | 'Wind';
 
 interface ActionConfig {
   id: RemoteAction;
   label: string;
-  icon: React.ReactNode;
+  iconName: IconName;
   color: string;
   duration: number;
   isHighRisk?: boolean;
@@ -22,15 +23,26 @@ interface ActionConfig {
 }
 
 const REMOTE_ACTIONS: ActionConfig[] = [
-  { id: 'engine_off', label: 'Apagar Motor', icon: <Power className="w-5 h-5" />, color: 'bg-red-600 hover:bg-red-700', duration: 3000, isHighRisk: true, consequence: 'Apaga el motor del vehículo. El vehículo no podrá reiniciar sin intervención manual.' },
-  { id: 'panic', label: 'Pánico', icon: <AlertTriangle className="w-5 h-5" />, color: 'bg-orange-600 hover:bg-orange-700', duration: 2500, isHighRisk: true, consequence: 'Activa alarma de emergencia. Alerta a ocupantes y autoridades.' },
-  { id: 'doors', label: 'Cerrar Puertas', icon: <Lock className="w-5 h-5" />, color: 'bg-blue-600 hover:bg-blue-700', duration: 2000 },
-  { id: 'immobilize', label: 'Inmovilizar', icon: <Lock className="w-5 h-5" />, color: 'bg-purple-600 hover:bg-purple-700', duration: 3500, isHighRisk: true, consequence: 'Desactiva el sistema de encendido. El vehículo no podrá moverse.' },
-  { id: 'horn', label: 'Claxon', icon: <Volume2 className="w-5 h-5" />, color: 'bg-yellow-600 hover:bg-yellow-700', duration: 1500 },
-  { id: 'fuel_cut', label: 'Cortar Combustible', icon: <Droplet className="w-5 h-5" />, color: 'bg-red-700 hover:bg-red-800', duration: 3000, isHighRisk: true, consequence: 'Corta el suministro de combustible. El vehículo se detendrá inmediatamente.' },
-  { id: 'ac', label: 'Control de AC', icon: <Wind className="w-5 h-5" />, color: 'bg-cyan-600 hover:bg-cyan-700', duration: 2000 },
-  { id: 'idle', label: 'Marcha Idle', icon: <Power className="w-5 h-5" />, color: 'bg-gray-600 hover:bg-gray-700', duration: 2500 },
+  { id: 'engine_off', label: 'Apagar Motor', iconName: 'Power', color: 'bg-red-600 hover:bg-red-700', duration: 3000, isHighRisk: true, consequence: 'Apaga el motor del vehículo. El vehículo no podrá reiniciar sin intervención manual.' },
+  { id: 'panic', label: 'Pánico', iconName: 'AlertTriangle', color: 'bg-orange-600 hover:bg-orange-700', duration: 2500, isHighRisk: true, consequence: 'Activa alarma de emergencia. Alerta a ocupantes y autoridades.' },
+  { id: 'doors', label: 'Cerrar Puertas', iconName: 'Lock', color: 'bg-blue-600 hover:bg-blue-700', duration: 2000 },
+  { id: 'immobilize', label: 'Inmovilizar', iconName: 'Lock', color: 'bg-purple-600 hover:bg-purple-700', duration: 3500, isHighRisk: true, consequence: 'Desactiva el sistema de encendido. El vehículo no podrá moverse.' },
+  { id: 'horn', label: 'Claxon', iconName: 'Volume2', color: 'bg-yellow-600 hover:bg-yellow-700', duration: 1500 },
+  { id: 'fuel_cut', label: 'Cortar Combustible', iconName: 'Droplet', color: 'bg-red-700 hover:bg-red-800', duration: 3000, isHighRisk: true, consequence: 'Corta el suministro de combustible. El vehículo se detendrá inmediatamente.' },
+  { id: 'ac', label: 'Control de AC', iconName: 'Wind', color: 'bg-cyan-600 hover:bg-cyan-700', duration: 2000 },
+  { id: 'idle', label: 'Marcha Idle', iconName: 'Power', color: 'bg-gray-600 hover:bg-gray-700', duration: 2500 },
 ];
+
+const getIcon = (iconName: IconName) => {
+  switch (iconName) {
+    case 'Power': return <Power className="w-5 h-5" />;
+    case 'AlertTriangle': return <AlertTriangle className="w-5 h-5" />;
+    case 'Lock': return <Lock className="w-5 h-5" />;
+    case 'Volume2': return <Volume2 className="w-5 h-5" />;
+    case 'Droplet': return <Droplet className="w-5 h-5" />;
+    case 'Wind': return <Wind className="w-5 h-5" />;
+  }
+};
 
 export function RemoteActionsModal({
   vehicle,
@@ -175,7 +187,7 @@ export function RemoteActionsModal({
                           {isExecuting ? (
                             <Loader2 className="w-5 h-5 animate-spin" />
                           ) : (
-                            action.icon
+                            getIcon(action.iconName)
                           )}
                           <span className="text-sm">{action.label}</span>
                           {action.isHighRisk && <span className="text-xs opacity-75">⚠️ Alto Riesgo</span>}
