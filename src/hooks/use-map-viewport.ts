@@ -118,13 +118,17 @@ export function useMapViewport({
       performPan(map, provider, (mapViewport as any).payload, 16, currentPadding);
     };
 
-    // Early returns and handler delegation
-    if (mapViewport.type === 'pan_to_vehicle') {
-      handlePanToVehicle();
-    } else if (mapViewport.type === 'fit_bounds') {
-      performFitBounds(map, provider, (mapViewport as any).payload, currentPadding);
-    } else if (mapViewport.type === 'fit_route') {
-      performFitBounds(map, provider, (mapViewport as any).payload, PADDING_ROUTE);
+    // Handle viewport actions by type
+    switch (mapViewport.type) {
+      case 'pan_to_vehicle':
+        handlePanToVehicle();
+        break;
+      case 'fit_bounds':
+        performFitBounds(map, provider, (mapViewport as any).payload, currentPadding);
+        break;
+      case 'fit_route':
+        performFitBounds(map, provider, (mapViewport as any).payload, PADDING_ROUTE);
+        break;
     }
     
     dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
@@ -151,16 +155,25 @@ export function useMapViewport({
     const currentPadding = !isMainMap ? PADDING_MINIMAP : (isGridActive ? mapControlPadding : PADDING_STANDARD);
     
     // Determine target vehicles for this map instance
-    const targetIds = manualVehicleIds?.length 
-      ? manualVehicleIds 
-      : miniMapId 
-        ? miniMaps.find(m => m.id === miniMapId)?.vehicleIds || []
-        : (isMainMap && focusedMiniMapId && !selectedVehicle)
-          ? miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || []
-          : [];
+    let targetIds: number[] = [];
+    switch (true) {
+      case !!manualVehicleIds?.length:
+        targetIds = manualVehicleIds;
+        break;
+      case !!miniMapId:
+        targetIds = miniMaps.find(m => m.id === miniMapId)?.vehicleIds || [];
+        break;
+      case isMainMap && !!focusedMiniMapId && !selectedVehicle:
+        targetIds = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds || [];
+        break;
+      default:
+        targetIds = [];
+    }
 
     // Handle vehicle bounds fitting
-    if (targetIds.length > 0) {
+    if (targetIds.length === 0) {
+      // Continue to split view handling below
+    } else {
       const points = vehicles
         .filter(v => targetIds.includes(v.id_vehiculo))
         .map(v => ({ lat: v.lat, lng: v.lng }));
@@ -172,25 +185,35 @@ export function useMapViewport({
       }
       lastFittedBoundsRef.current = boundsKey;
 
-      if (points.length === 1) {
-        performPan(map, provider, points[0], 16, currentPadding);
-        return cleanup(t1, t2);
-      }
-
-      if (points.length > 1) {
-        performFitBounds(map, provider, points, currentPadding);
-        const t3 = setTimeout(() => performFitBounds(map, provider, points, currentPadding), 400);
-        return cleanup(t1, t2, t3);
+      switch (points.length) {
+        case 0:
+          return cleanup(t1, t2);
+        case 1:
+          performPan(map, provider, points[0], 16, currentPadding);
+          return cleanup(t1, t2);
+        default:
+          performFitBounds(map, provider, points, currentPadding);
+          const t3 = setTimeout(() => performFitBounds(map, provider, points, currentPadding), 400);
+          return cleanup(t1, t2, t3);
       }
     }
 
     // Handle split view route fitting
     if (isSplitView && !selectedVehicle && despachoBaseRoute.length > 0) {
       const half = Math.ceil(despachoBaseRoute.length / 2);
-      const points = side === 'ida' 
-        ? despachoBaseRoute.slice(0, half) 
-        : despachoBaseRoute.slice(half - 1);
-      performFitBounds(map, provider, points, PADDING_STANDARD);
+      const points = (() => {
+        switch (side) {
+          case 'ida':
+            return despachoBaseRoute.slice(0, half);
+          case 'vuelta':
+            return despachoBaseRoute.slice(half - 1);
+          default:
+            return [];
+        }
+      })();
+      if (points.length > 0) {
+        performFitBounds(map, provider, points, PADDING_STANDARD);
+      }
     }
 
     return cleanup(t1, t2);
