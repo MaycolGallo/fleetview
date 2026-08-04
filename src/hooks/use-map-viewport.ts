@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import type { MapProvider } from '@/lib/types';
 import type { MapRef } from 'react-map-gl';
@@ -53,6 +53,7 @@ export function useMapViewport({
 }: UseMapViewportProps) {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
+  const lastFittedBoundsRef = useRef<string>('');
 
   const {
     mapViewport,
@@ -166,9 +167,15 @@ export function useMapViewport({
 
     if (targetIds.length > 0) {
       const points = vehicles.filter(v => targetIds.includes(v.id_vehiculo)).map(v => ({ lat: v.lat, lng: v.lng }));
+      
+      // Only fit bounds if points have actually changed
+      const boundsKey = JSON.stringify(points.sort((a, b) => a.lat - b.lat || a.lng - b.lng));
+      const boundsChanged = lastFittedBoundsRef.current !== boundsKey;
+      lastFittedBoundsRef.current = boundsKey;
+      
       if (points.length === 1) {
         performPan(map, provider, points[0], 16, currentPadding);
-      } else if (points.length > 1) {
+      } else if (points.length > 1 && boundsChanged) {
         performFitBounds(map, provider, points, currentPadding);
         // Re-fit bounds after container stabilizes to account for dynamic height
         const t3 = setTimeout(() => performFitBounds(map, provider, points, currentPadding), 400);
