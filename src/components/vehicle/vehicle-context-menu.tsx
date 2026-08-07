@@ -40,6 +40,7 @@ export function VehicleContextMenu({
         }
 
         if (action === 'show-details') {
+            onClose();
             setVehicleDetailsOpen(true);
             return;
         }

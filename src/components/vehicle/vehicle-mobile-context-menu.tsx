@@ -70,6 +70,12 @@ export function VehicleMobileContextMenu({
     ];
 
     return (
+        <>
+        <VehicleDetailsDialog
+            vehicle={vehicle}
+            open={vehicleDetailsOpen}
+            onOpenChange={setVehicleDetailsOpen}
+        />
         <Drawer open={isOpen} onOpenChange={onOpenChange}>
              <DrawerPortal>
                 <DrawerOverlay />
@@ -102,5 +108,6 @@ export function VehicleMobileContextMenu({
                 </DrawerContent>
             </DrawerPortal>
         </Drawer>
+        </>
     )
 }

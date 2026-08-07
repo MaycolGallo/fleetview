@@ -20,13 +20,13 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
 import { Badge } from '@/components/ui/badge';
 import type { Vehicle } from '@/lib/types';
 
@@ -80,24 +80,24 @@ export function VehicleDetailsDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="z-[100] max-h-[92vh] max-w-4xl overflow-y-auto p-0">
-          <DialogHeader className="border-b px-6 py-5">
+      <Drawer open={open} onOpenChange={onOpenChange} direction="right">
+        <DrawerContent className="z-[100] inset-y-0 right-0 bottom-auto left-auto mt-0 h-full w-full max-w-xl rounded-l-2xl rounded-r-none border-l p-0">
+          <DrawerHeader className="border-b px-6 py-5 text-left">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <DialogTitle className="flex items-center gap-2 text-xl">
+                <DrawerTitle className="flex items-center gap-2 text-xl">
                   <CarFront className="h-5 w-5 text-primary" aria-hidden="true" />
                   {vehicle.placa}
-                </DialogTitle>
-                <DialogDescription className="mt-1">
+                </DrawerTitle>
+                <DrawerDescription className="mt-1">
                   Información general y estado del vehículo
-                </DialogDescription>
+                </DrawerDescription>
               </div>
               <Badge className="shrink-0 text-white" style={{ backgroundColor: vehicle.statusColor }}>
                 {vehicle.statusName}
               </Badge>
             </div>
-          </DialogHeader>
+          </DrawerHeader>
 
           <div className="space-y-6 p-6">
             <section aria-label="Imágenes del vehículo" className="space-y-3">
@@ -146,15 +146,15 @@ export function VehicleDetailsDialog({
               </div>
             </section>
           </div>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
 
-      <Dialog open={selectedImage !== null} onOpenChange={(nextOpen) => !nextOpen && setSelectedImage(null)}>
-        <DialogContent className="z-[110] max-w-6xl border-0 bg-background/95 p-2 sm:p-4">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Imagen ampliada del vehículo {vehicle.placa}</DialogTitle>
-            <DialogDescription>Vista completa de la imagen seleccionada</DialogDescription>
-          </DialogHeader>
+      <Drawer open={selectedImage !== null} onOpenChange={(nextOpen) => !nextOpen && setSelectedImage(null)} direction="right">
+        <DrawerContent className="z-[110] inset-y-0 right-0 bottom-auto left-auto mt-0 h-full w-full max-w-6xl rounded-l-2xl rounded-r-none border-l bg-background/95 p-2 sm:p-4">
+          <DrawerHeader className="sr-only">
+            <DrawerTitle>Imagen ampliada del vehículo {vehicle.placa}</DrawerTitle>
+            <DrawerDescription>Vista completa de la imagen seleccionada</DrawerDescription>
+          </DrawerHeader>
           <div className="relative flex min-h-[50vh] items-center justify-center overflow-hidden rounded-lg bg-muted">
             {selectedImage && (
               <Image
@@ -167,13 +167,13 @@ export function VehicleDetailsDialog({
               />
             )}
           </div>
-          <DialogClose asChild>
+          <DrawerClose asChild>
             <button type="button" className="absolute right-4 top-4 rounded-full bg-background/90 p-2 shadow" aria-label="Cerrar imagen">
               <X className="h-4 w-4" />
             </button>
-          </DialogClose>
-        </DialogContent>
-      </Dialog>
+          </DrawerClose>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }
