@@ -40,7 +40,6 @@ export function VehicleContextMenu({
         }
 
         if (action === 'show-details') {
-            onClose();
             setVehicleDetailsOpen(true);
             return;
         }
@@ -89,15 +88,18 @@ export function VehicleContextMenu({
               open={vehicleDetailsOpen}
               onOpenChange={setVehicleDetailsOpen}
             />
-            <div
+            {!vehicleDetailsOpen && !remoteActionsOpen && (
+              <div
                 className="fixed inset-0 z-[51]"
                 onClick={onClose}
                 onContextMenu={(e) => {
                     e.preventDefault();
                     onClose();
                 }}
-            />
+              />
+            )}
             <div
+                hidden={vehicleDetailsOpen || remoteActionsOpen}
                 className="fixed z-[52] bg-popover/95 backdrop-blur-md border border-border rounded-lg shadow-2xl p-1 min-w-[220px] animate-in fade-in zoom-in-95 duration-200"
                 style={{ top: position.y, left: position.x }}
             >
