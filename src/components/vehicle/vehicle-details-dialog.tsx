@@ -41,7 +41,7 @@ function formatValue(value: string | number | null | undefined, suffix = '') {
   return `${value}${suffix}`;
 }
 
-function VehicleMetric({
+function VehicleDetailRow({
   icon: Icon,
   label,
   value,
@@ -51,12 +51,12 @@ function VehicleMetric({
   value: React.ReactNode;
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 rounded-lg border bg-muted/30 p-3">
-      <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-      <div className="min-w-0">
-        <p className="truncate text-xs text-muted-foreground">{label}</p>
-        <p className="truncate text-sm font-semibold">{value}</p>
-      </div>
+    <div className="flex items-start justify-between gap-4 border-b border-border/60 py-3 last:border-b-0">
+      <dt className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
+        <Icon className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+        <span>{label}</span>
+      </dt>
+      <dd className="max-w-[58%] break-words text-right text-sm font-semibold text-foreground">{value}</dd>
     </div>
   );
 }
@@ -132,17 +132,32 @@ export function VehicleDetailsDialog({
               <p className="text-center text-xs text-muted-foreground">Selecciona una imagen para verla en tamaño completo</p>
             </section>
 
-            <section aria-label="Información del vehículo" className="space-y-3">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Información del vehículo</h3>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <VehicleMetric icon={ScanLine} label="ID vehículo" value={vehicle.id_vehiculo} />
-                <VehicleMetric icon={CarFront} label="Modelo" value={formatValue(model)} />
-                <VehicleMetric icon={CalendarDays} label="Año" value={formatValue(year)} />
-                <VehicleMetric icon={Palette} label="Color" value={formatValue(color)} />
-                <VehicleMetric icon={CircleGauge} label="Combustible" value={formatValue(fuel, fuel === undefined ? '' : '%')} />
-                <VehicleMetric icon={Gauge} label="Odómetro" value={formatValue(Number(vehicle.odometro).toLocaleString(), ' km')} />
-                <VehicleMetric icon={BatteryFull} label="Batería" value={formatValue(vehicle.nivel_bateria_vehicular, ' V')} />
-                <VehicleMetric icon={Gauge} label="Motor" value={formatValue(engine)} />
+            <section aria-label="Información del vehículo" className="space-y-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Ficha del vehículo</p>
+                <h3 className="mt-1 text-lg font-semibold text-foreground">Información del vehículo</h3>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <section className="rounded-xl border bg-muted/20 px-4" aria-labelledby="vehicle-identity-heading">
+                  <h4 id="vehicle-identity-heading" className="border-b border-border/60 py-3 text-sm font-semibold">Identificación</h4>
+                  <dl>
+                    <VehicleDetailRow icon={ScanLine} label="ID vehículo" value={vehicle.id_vehiculo} />
+                    <VehicleDetailRow icon={CarFront} label="Modelo" value={formatValue(model)} />
+                    <VehicleDetailRow icon={CalendarDays} label="Año" value={formatValue(year)} />
+                    <VehicleDetailRow icon={Palette} label="Color" value={formatValue(color)} />
+                  </dl>
+                </section>
+
+                <section className="rounded-xl border bg-muted/20 px-4" aria-labelledby="vehicle-status-heading">
+                  <h4 id="vehicle-status-heading" className="border-b border-border/60 py-3 text-sm font-semibold">Estado y operación</h4>
+                  <dl>
+                    <VehicleDetailRow icon={CircleGauge} label="Combustible" value={formatValue(fuel, fuel === undefined ? '' : '%')} />
+                    <VehicleDetailRow icon={Gauge} label="Odómetro" value={formatValue(Number(vehicle.odometro).toLocaleString(), ' km')} />
+                    <VehicleDetailRow icon={BatteryFull} label="Batería" value={formatValue(vehicle.nivel_bateria_vehicular, ' V')} />
+                    <VehicleDetailRow icon={Gauge} label="Motor" value={formatValue(engine)} />
+                  </dl>
+                </section>
               </div>
             </section>
           </div>
