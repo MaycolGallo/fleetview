@@ -8,6 +8,7 @@ import { History, MapPin, Info, Bell, Radar, Loader2, Zap } from 'lucide-react';
 import type { Vehicle } from '@/lib/types';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 import { RemoteActionsModal } from './remote-actions-modal';
+import { VehicleDetailsDialog } from './vehicle-details-dialog';
 
 type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'list-incidencias' | 'remote-actions';
 
@@ -22,6 +23,7 @@ export function VehicleContextMenu({
 }) {
     const [portalNode, setPortalNode] = React.useState<HTMLElement | null>(null);
     const [remoteActionsOpen, setRemoteActionsOpen] = useState(false);
+    const [vehicleDetailsOpen, setVehicleDetailsOpen] = useState(false);
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
     const isTracked = state.allTrackedVehicleIds?.includes(vehicle.id_vehiculo) || false;
@@ -34,6 +36,11 @@ export function VehicleContextMenu({
     const handleAction = (action: VehicleAction) => {
         if (action === 'remote-actions') {
             setRemoteActionsOpen(true);
+            return;
+        }
+
+        if (action === 'show-details') {
+            setVehicleDetailsOpen(true);
             return;
         }
 
@@ -75,6 +82,11 @@ export function VehicleContextMenu({
               vehicle={vehicle} 
               open={remoteActionsOpen} 
               onOpenChange={setRemoteActionsOpen} 
+            />
+            <VehicleDetailsDialog
+              vehicle={vehicle}
+              open={vehicleDetailsOpen}
+              onOpenChange={setVehicleDetailsOpen}
             />
             <div
                 className="fixed inset-0 z-[51]"

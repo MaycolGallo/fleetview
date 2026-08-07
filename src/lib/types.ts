@@ -37,6 +37,16 @@ export interface Vehicle {
   placa: string;
   statusName: string;
   statusColor: string;
+  imageUrls?: string[];
+  fuelLevel?: number | string;
+  engine?: string;
+  model?: string;
+  modelo?: string;
+  year?: number | string;
+  anio?: number | string;
+  color?: string;
+  motor?: string;
+  nivel_combustible?: number | string;
 }
 
 export interface RemoteActionRecord {

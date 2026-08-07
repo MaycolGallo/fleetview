@@ -15,6 +15,7 @@ import {
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 import { History, MapPin, Info, Bell, Radar, Loader2 } from 'lucide-react';
 import type { Vehicle } from "@/lib/types";
+import { VehicleDetailsDialog } from './vehicle-details-dialog';
 
 type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'list-incidencias';
 
@@ -29,9 +30,16 @@ export function VehicleMobileContextMenu({
 }) {
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
+    const [vehicleDetailsOpen, setVehicleDetailsOpen] = React.useState(false);
     const [isPending, startTransition] = useTransition();
 
     const handleAction = (action: VehicleAction) => {
+        if (action === 'show-details') {
+            setVehicleDetailsOpen(true);
+            onOpenChange(false);
+            return;
+        }
+
         startTransition(() => {
             switch (action) {
                 case 'show-route-history':
