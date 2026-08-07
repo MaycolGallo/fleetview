@@ -81,8 +81,8 @@ export function VehicleDetailsDialog({
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange} direction="right">
-        <DrawerContent className="z-[100] inset-y-0 right-0 bottom-auto left-auto mt-0 h-full w-full max-w-xl rounded-l-2xl rounded-r-none border-l p-0">
-          <DrawerHeader className="border-b px-6 py-5 text-left">
+        <DrawerContent className="z-[100] inset-y-0 right-0 bottom-auto left-auto mt-0 h-dvh w-full max-w-md rounded-l-2xl rounded-r-none border-l p-0">
+          <DrawerHeader className="shrink-0 border-b px-6 py-5 text-left">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <DrawerTitle className="flex items-center gap-2 text-xl">
@@ -99,7 +99,7 @@ export function VehicleDetailsDialog({
             </div>
           </DrawerHeader>
 
-          <div className="space-y-6 p-6">
+          <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-6">
             <section aria-label="Imágenes del vehículo" className="space-y-3">
               <Carousel opts={{ loop: true }} className="mx-auto w-full max-w-3xl">
                 <CarouselContent>
