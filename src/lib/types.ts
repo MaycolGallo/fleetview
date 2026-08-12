@@ -47,6 +47,22 @@ export interface Vehicle {
   color?: string;
   motor?: string;
   nivel_combustible?: number | string;
+  padron?: string | number;
+  unidad?: string | number;
+  nombre?: string;
+  descripcion?: string;
+  numero_chasis?: string;
+  numero_motor?: string;
+  serie?: string;
+  marca?: string;
+  tipo_vehiculo?: string;
+  tipo_combustible?: string;
+  cilindrada_litros?: number | string;
+  asientos?: number | string;
+  numero_puertas?: number | string;
+  numero_ruedas?: number | string;
+  capacidad_carga_util?: number | string;
+  flota?: string;
 }
 
 export interface RemoteActionRecord {

@@ -72,11 +72,34 @@ export function VehicleDetailsDialog({
 }) {
   const [selectedImage, setSelectedImage] = React.useState<string | null>(null);
   const images = vehicle.imageUrls?.length ? vehicle.imageUrls : FALLBACK_IMAGES;
-  const fuel = vehicle.fuelLevel ?? vehicle.nivel_combustible;
-  const engine = vehicle.engine ?? vehicle.motor;
-  const model = vehicle.model ?? vehicle.modelo;
-  const year = vehicle.year ?? vehicle.anio;
-  const color = vehicle.color;
+  // Demo fallbacks keep the detail view useful while these fields are not yet
+  // present in the live vehicle payload. Live values always take precedence.
+  const demo = {
+    padron: '99', unidad: '6', nombre: 'Car', marca: 'RENAULT', model: 'MASTER',
+    year: 2014, description: 'RENAULT Master con motor 2.3 de 125 CV de potencia',
+    chassis: '93YMEN4KEEJ224872', engineNumber: 'M9TA86C015113', color: 'Blanco Glaciar',
+    type: 'Minibus', fuelType: 'Diésel', displacement: '2.3 L', seats: 3, doors: 4,
+    wheels: 4, cargo: '1,500 kg', fleet: '30 DICIEMBRE', fuel: 68,
+  };
+  const fuel = vehicle.fuelLevel ?? vehicle.nivel_combustible ?? demo.fuel;
+  const engine = vehicle.engine ?? vehicle.motor ?? '2.3 L / 125 CV';
+  const model = vehicle.model ?? vehicle.modelo ?? demo.model;
+  const year = vehicle.year ?? vehicle.anio ?? demo.year;
+  const color = vehicle.color ?? demo.color;
+  const brand = vehicle.marca ?? demo.marca;
+  const description = vehicle.descripcion ?? demo.description;
+  const fuelType = vehicle.tipo_combustible ?? demo.fuelType;
+  const displacement = vehicle.cilindrada_litros ?? demo.displacement;
+  const padron = vehicle.padron ?? demo.padron;
+  const unidad = vehicle.unidad ?? demo.unidad;
+  const type = vehicle.tipo_vehiculo ?? demo.type;
+  const chassis = vehicle.numero_chasis ?? demo.chassis;
+  const engineNumber = vehicle.numero_motor ?? demo.engineNumber;
+  const fleet = vehicle.flota ?? demo.fleet;
+  const seats = vehicle.asientos ?? demo.seats;
+  const doors = vehicle.numero_puertas || demo.doors;
+  const wheels = vehicle.numero_ruedas ?? demo.wheels;
+  const cargo = vehicle.capacidad_carga_util ?? demo.cargo;
 
   return (
     <>
@@ -138,25 +161,45 @@ export function VehicleDetailsDialog({
                 <h3 className="mt-1 text-lg font-semibold text-foreground">Información del vehículo</h3>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-4">
                 <section className="rounded-xl border bg-muted/20 px-4" aria-labelledby="vehicle-identity-heading">
                   <h4 id="vehicle-identity-heading" className="border-b border-border/60 py-3 text-sm font-semibold">Identificación</h4>
                   <dl>
                     <VehicleDetailRow icon={ScanLine} label="ID vehículo" value={vehicle.id_vehiculo} />
-                    <VehicleDetailRow icon={CarFront} label="Modelo" value={formatValue(model)} />
+                    <VehicleDetailRow icon={CarFront} label="Marca y modelo" value={`${brand} ${model}`} />
                     <VehicleDetailRow icon={CalendarDays} label="Año" value={formatValue(year)} />
                     <VehicleDetailRow icon={Palette} label="Color" value={formatValue(color)} />
+                    <VehicleDetailRow icon={ScanLine} label="Padrón / unidad" value={`${padron} / ${unidad}`} />
+                    <VehicleDetailRow icon={ScanLine} label="Tipo" value={type} />
                   </dl>
                 </section>
 
-                <section className="rounded-xl border bg-muted/20 px-4" aria-labelledby="vehicle-status-heading">
-                  <h4 id="vehicle-status-heading" className="border-b border-border/60 py-3 text-sm font-semibold">Estado y operación</h4>
+                <section className="rounded-xl border bg-muted/20 px-4" aria-labelledby="vehicle-technical-heading">
+                  <h4 id="vehicle-technical-heading" className="border-b border-border/60 py-3 text-sm font-semibold">Ficha técnica</h4>
                   <dl>
-                    <VehicleDetailRow icon={CircleGauge} label="Combustible" value={formatValue(fuel, fuel === undefined ? '' : '%')} />
-                    <VehicleDetailRow icon={Gauge} label="Odómetro" value={formatValue(Number(vehicle.odometro).toLocaleString(), ' km')} />
-                    <VehicleDetailRow icon={BatteryFull} label="Batería" value={formatValue(vehicle.nivel_bateria_vehicular, ' V')} />
-                    <VehicleDetailRow icon={Gauge} label="Motor" value={formatValue(engine)} />
+                    <VehicleDetailRow icon={Gauge} label="Motor" value={engine} />
+                    <VehicleDetailRow icon={Gauge} label="Cilindrada" value={displacement} />
+                    <VehicleDetailRow icon={ScanLine} label="N.º de motor" value={engineNumber} />
+                    <VehicleDetailRow icon={ScanLine} label="Chasis / serie" value={chassis} />
+                    <VehicleDetailRow icon={CarFront} label="Asientos / puertas" value={`${seats} / ${doors}`} />
+                    <VehicleDetailRow icon={CarFront} label="Ruedas" value={wheels} />
                   </dl>
+                </section>
+
+                <section className="rounded-xl border bg-muted/20 px-4" aria-labelledby="vehicle-operation-heading">
+                  <h4 id="vehicle-operation-heading" className="border-b border-border/60 py-3 text-sm font-semibold">Operación</h4>
+                  <dl>
+                    <VehicleDetailRow icon={CircleGauge} label="Combustible" value={`${fuelType} · ${fuel}%`} />
+                    <VehicleDetailRow icon={Gauge} label="Odómetro" value={formatValue(Number(vehicle.odometro || 124555).toLocaleString(), ' km')} />
+                    <VehicleDetailRow icon={BatteryFull} label="Batería" value={formatValue(vehicle.nivel_bateria_vehicular ?? '12.6', ' V')} />
+                    <VehicleDetailRow icon={ScanLine} label="Carga útil" value={cargo} />
+                    <VehicleDetailRow icon={ScanLine} label="Flota" value={fleet} />
+                  </dl>
+                </section>
+
+                <section className="rounded-xl border bg-muted/20 px-4 py-4" aria-labelledby="vehicle-description-heading">
+                  <h4 id="vehicle-description-heading" className="mb-2 text-sm font-semibold">Descripción</h4>
+                  <p className="text-sm leading-6 text-muted-foreground">{description}</p>
                 </section>
               </div>
             </section>
