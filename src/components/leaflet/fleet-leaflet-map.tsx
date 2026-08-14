@@ -33,7 +33,7 @@ function MapViewportSync(props: FleetLeafletMapProps) {
 
 const ONE_METER_LATITUDE = 1 / 111_320;
 const ONE_METER_LONGITUDE_AT_LIMA = 1 / (111_320 * Math.cos((-12.046374 * Math.PI) / 180));
-const CLOSE_VEHICLE_RADIUS_METERS = 1;
+const CLOSE_VEHICLE_RADIUS_METERS = 1.25;
 
 function distanceInMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
   const latMeters = (a.lat - b.lat) / ONE_METER_LATITUDE;

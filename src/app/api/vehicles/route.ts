@@ -9,8 +9,25 @@ const LIMA_BOUNDS = {
   lng: { min: -77.15, max: -76.90 },
 };
 
-function getRandomCoordinate(min: number, max: number) {
-  return Math.random() * (max - min) + min;
+const TEST_CLUSTER_CENTER = { lat: -12.046374, lng: -77.042793 };
+const METERS_PER_DEGREE = 111_320;
+
+function getStableCoordinate(index: number) {
+  // The first ten vehicles are intentionally clustered about one meter apart
+  // so the map decluttering behavior can be tested from the vehicle list.
+  if (index < 10) {
+    return {
+      lat: TEST_CLUSTER_CENTER.lat + (index * 1.1) / METERS_PER_DEGREE,
+      lng: TEST_CLUSTER_CENTER.lng,
+    };
+  }
+
+  const column = (index - 10) % 8;
+  const row = Math.floor((index - 10) / 8);
+  return {
+    lat: -12.20 + row * 0.018,
+    lng: -77.12 + column * 0.025,
+  };
 }
 
 const STATUS_DEFINITIONS = [
@@ -34,29 +51,28 @@ const samplePlacas = [
 ];
 
 function generateVehicle(index: number): RawVehicle {
-  const statusDef = STATUS_DEFINITIONS[Math.floor(Math.random() * STATUS_DEFINITIONS.length)];
+  const statusDef = STATUS_DEFINITIONS[index % STATUS_DEFINITIONS.length];
   
   let speed = 0;
-  if (statusDef.id === 6) { // Transitando
-    speed = Math.floor(Math.random() * 60) + 20; // 20-79 km/h
-  } else if (statusDef.id === 3) { // Exceso de velocidad
-    speed = Math.floor(Math.random() * 40) + 80; // 80-119 km/h
+  if (statusDef.id === 6) {
+    speed = 20 + (index * 7) % 60;
+  } else if (statusDef.id === 3) {
+    speed = 80 + (index * 11) % 40;
   }
 
-  const lat = getRandomCoordinate(LIMA_BOUNDS.lat.min, LIMA_BOUNDS.lat.max);
-  const lng = getRandomCoordinate(LIMA_BOUNDS.lng.min, LIMA_BOUNDS.lng.max);
+  const { lat, lng } = getStableCoordinate(index);
 
   return {
     id_ubicacion: 10000 + index,
     id_vehiculo: 1000 + index,
     coordenadas: `${lat.toFixed(6)},${lng.toFixed(6)}`,
     id_estado: statusDef.id,
-    fecha: Math.floor(Date.now() / 1000) - Math.floor(Math.random() * 3600), // Within the last hour
+    fecha: 1_722_000_000 + index * 60,
     velocidad: speed.toFixed(2),
-    rumbo: Math.floor(Math.random() * 360),
-    odometro: (Math.random() * 100000).toFixed(2),
-    senal_gsm: Math.floor(Math.random() * 32),
-    nivel_bateria_vehicular: (Math.random() * (13.8 - 12.0) + 12.0).toFixed(2),
+    rumbo: (index * 23) % 360,
+    odometro: (45_000 + index * 1_250).toFixed(2),
+    senal_gsm: 20 + (index % 12),
+    nivel_bateria_vehicular: (12.2 + (index % 16) / 10).toFixed(2),
     vehiculo: {
       vehiculo_placa: samplePlacas[index % samplePlacas.length],
     },
