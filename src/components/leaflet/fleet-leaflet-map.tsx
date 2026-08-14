@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { useFleetState, selectMapVehicles } from '@/context/fleet-context';
 import { LeafletVehicleMarker } from './leaflet-vehicle-marker';
@@ -31,14 +31,51 @@ function MapViewportSync(props: FleetLeafletMapProps) {
   return null;
 }
 
+const ONE_METER_LATITUDE = 1 / 111_320;
+const ONE_METER_LONGITUDE_AT_LIMA = 1 / (111_320 * Math.cos((-12.046374 * Math.PI) / 180));
+const CLOSE_VEHICLE_RADIUS_METERS = 1;
+
+function distanceInMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const latMeters = (a.lat - b.lat) / ONE_METER_LATITUDE;
+  const lngMeters = (a.lng - b.lng) / ONE_METER_LONGITUDE_AT_LIMA;
+  return Math.hypot(latMeters, lngMeters);
+}
+
 export default function FleetLeafletMap(props: FleetLeafletMapProps) {
   const { miniMapId, manualVehicleIds, isMainMap, side, isVisible = true } = props;
   const { state } = useFleetState();
-  const { isMapDark, mapType } = state;
+  const { isMapDark, mapType, selectedVehicle } = state;
+  const [temporarilyHiddenVehicleIds, setTemporarilyHiddenVehicleIds] = useState<Set<number>>(new Set());
 
   const mapVehicles = useMemo(
-    () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap), 
+    () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap),
     [state, miniMapId, manualVehicleIds, isMainMap]
+  );
+
+  // This is intentionally local to this map. Selecting a vehicle hides only its
+  // nearby neighbors; FleetState and the shared vehicle list remain untouched.
+  useEffect(() => {
+    if (!isMainMap || !selectedVehicle) {
+      setTemporarilyHiddenVehicleIds(new Set());
+      return;
+    }
+
+    const nearbyVehicles = mapVehicles.filter((vehicle) =>
+      vehicle.id_vehiculo !== selectedVehicle.id_vehiculo &&
+      distanceInMeters(vehicle, selectedVehicle) <= CLOSE_VEHICLE_RADIUS_METERS
+    );
+
+    if (nearbyVehicles.length < 2) {
+      setTemporarilyHiddenVehicleIds(new Set());
+      return;
+    }
+
+    setTemporarilyHiddenVehicleIds(new Set(nearbyVehicles.map((vehicle) => vehicle.id_vehiculo)));
+  }, [isMainMap, mapVehicles, selectedVehicle]);
+
+  const visibleMapVehicles = useMemo(
+    () => mapVehicles.filter((vehicle) => !temporarilyHiddenVehicleIds.has(vehicle.id_vehiculo)),
+    [mapVehicles, temporarilyHiddenVehicleIds]
   );
 
   // Tile sources
@@ -65,7 +102,7 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
 
         <LeafletRoutePolylines side={side} />
 
-        {mapVehicles.map((vehicle, idx) => (
+        {visibleMapVehicles.map((vehicle, idx) => (
           <LeafletVehicleMarker 
             key={vehicle.id_vehiculo} 
             vehicle={vehicle} 
