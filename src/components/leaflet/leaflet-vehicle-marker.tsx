@@ -71,7 +71,7 @@ export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: 
           )}
           <VehiclePin
               vehicle={vehicle}
-              isSelected={false} 
+              isSelected={isSelected} 
               isHistory={isPlaybackMarker}
           />
         </div>

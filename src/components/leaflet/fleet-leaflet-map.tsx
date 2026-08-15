@@ -5,6 +5,8 @@ import React, { useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { useFleetState, selectMapVehicles } from '@/context/fleet-context';
 import { LeafletVehicleMarker } from './leaflet-vehicle-marker';
 import { useMapViewport } from '@/hooks/use-map-viewport';
@@ -89,6 +91,7 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
         <LeafletRoutePolylines side={side} />
 
         <MarkerClusterGroup
+          key={`vehicle-clusters-${selectedMapVehicle?.id_vehiculo ?? 'none'}-${clusterVehicles.length}`}
           chunkedLoading
           maxClusterRadius={44}
           showCoverageOnHover={false}

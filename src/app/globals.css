@@ -16,8 +16,10 @@
     box-shadow: 0 4px 14px hsl(var(--foreground) / 0.28);
     color: hsl(var(--primary-foreground));
     display: flex;
-    font-size: 0.875rem;
-    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
     height: 44px;
     justify-content: center;
     width: 44px;
