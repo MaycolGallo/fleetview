@@ -1,8 +1,10 @@
 
 'use client';
 
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
+import L from 'leaflet';
 import { useFleetState, selectMapVehicles } from '@/context/fleet-context';
 import { LeafletVehicleMarker } from './leaflet-vehicle-marker';
 import { useMapViewport } from '@/hooks/use-map-viewport';
@@ -31,52 +33,36 @@ function MapViewportSync(props: FleetLeafletMapProps) {
   return null;
 }
 
-const ONE_METER_LATITUDE = 1 / 111_320;
-const ONE_METER_LONGITUDE_AT_LIMA = 1 / (111_320 * Math.cos((-12.046374 * Math.PI) / 180));
-const CLOSE_VEHICLE_RADIUS_METERS = 1.25;
-
-function distanceInMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
-  const latMeters = (a.lat - b.lat) / ONE_METER_LATITUDE;
-  const lngMeters = (a.lng - b.lng) / ONE_METER_LONGITUDE_AT_LIMA;
-  return Math.hypot(latMeters, lngMeters);
-}
-
 export default function FleetLeafletMap(props: FleetLeafletMapProps) {
   const { miniMapId, manualVehicleIds, isMainMap, side, isVisible = true } = props;
   const { state } = useFleetState();
   const { isMapDark, mapType, selectedVehicle } = state;
-  const [temporarilyHiddenVehicleIds, setTemporarilyHiddenVehicleIds] = useState<Set<number>>(new Set());
 
   const mapVehicles = useMemo(
     () => selectMapVehicles(state, miniMapId, manualVehicleIds, isMainMap),
     [state, miniMapId, manualVehicleIds, isMainMap]
   );
 
-  // This is intentionally local to this map. Selecting a vehicle hides only its
-  // nearby neighbors; FleetState and the shared vehicle list remain untouched.
-  useEffect(() => {
-    if (!isMainMap || !selectedVehicle) {
-      setTemporarilyHiddenVehicleIds(new Set());
-      return;
-    }
+  const selectedMapVehicle = selectedVehicle && mapVehicles.some(
+    (vehicle) => vehicle.id_vehiculo === selectedVehicle.id_vehiculo
+  ) ? selectedVehicle : null;
 
-    const nearbyVehicles = mapVehicles.filter((vehicle) =>
-      vehicle.id_vehiculo !== selectedVehicle.id_vehiculo &&
-      distanceInMeters(vehicle, selectedVehicle) <= CLOSE_VEHICLE_RADIUS_METERS
-    );
-
-    if (nearbyVehicles.length < 2) {
-      setTemporarilyHiddenVehicleIds(new Set());
-      return;
-    }
-
-    setTemporarilyHiddenVehicleIds(new Set(nearbyVehicles.map((vehicle) => vehicle.id_vehiculo)));
-  }, [isMainMap, mapVehicles, selectedVehicle]);
-
-  const visibleMapVehicles = useMemo(
-    () => mapVehicles.filter((vehicle) => !temporarilyHiddenVehicleIds.has(vehicle.id_vehiculo)),
-    [mapVehicles, temporarilyHiddenVehicleIds]
+  const clusterVehicles = useMemo(
+    () => mapVehicles.filter(
+      (vehicle) => vehicle.id_vehiculo !== selectedMapVehicle?.id_vehiculo
+    ),
+    [mapVehicles, selectedMapVehicle?.id_vehiculo]
   );
+
+  const clusterIcon = useMemo(() => (cluster: L.MarkerCluster) => {
+    const count = cluster.getChildCount();
+    return L.divIcon({
+      html: `<div class="fleet-marker-cluster"><span>${count}</span></div>`,
+      className: 'fleet-marker-cluster-wrapper',
+      iconSize: L.point(44, 44),
+      iconAnchor: L.point(22, 22),
+    });
+  }, []);
 
   // Tile sources
   const standardTile = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -102,14 +88,32 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
 
         <LeafletRoutePolylines side={side} />
 
-        {visibleMapVehicles.map((vehicle, idx) => (
-          <LeafletVehicleMarker 
-            key={vehicle.id_vehiculo} 
-            vehicle={vehicle} 
-            index={idx} 
+        <MarkerClusterGroup
+          chunkedLoading
+          maxClusterRadius={44}
+          showCoverageOnHover={false}
+          spiderfyOnMaxZoom
+          zoomToBoundsOnClick
+          iconCreateFunction={clusterIcon}
+        >
+          {clusterVehicles.map((vehicle, idx) => (
+            <LeafletVehicleMarker
+              key={vehicle.id_vehiculo}
+              vehicle={vehicle}
+              index={idx}
+              showPopup={isMainMap && !miniMapId}
+            />
+          ))}
+        </MarkerClusterGroup>
+
+        {selectedMapVehicle && (
+          <LeafletVehicleMarker
+            key={`selected-${selectedMapVehicle.id_vehiculo}`}
+            vehicle={selectedMapVehicle}
+            index={10_000}
             showPopup={isMainMap && !miniMapId}
           />
-        ))}
+        )}
       </MapContainer>
     </div>
   );
