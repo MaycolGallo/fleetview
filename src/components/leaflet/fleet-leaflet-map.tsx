@@ -36,6 +36,66 @@ function MapViewportSync(props: FleetLeafletMapProps) {
   return null;
 }
 
+interface VehicleLayerProps {
+  vehicles: ReturnType<typeof selectMapVehicles>;
+  selectedVehicleId: number | null;
+  isMainMap?: boolean;
+  miniMapId?: string;
+}
+
+function VehicleLayer({ vehicles, selectedVehicleId, isMainMap, miniMapId }: VehicleLayerProps) {
+  const selectedVehicle = vehicles.find((vehicle) => vehicle.id_vehiculo === selectedVehicleId) ?? null;
+  const deoverlappedVehicles = useDeoverlappedPositions(vehicles, selectedVehicle?.id_vehiculo ?? null);
+  const clusterVehicles = useMemo(
+    () => deoverlappedVehicles.filter((vehicle) => vehicle.id_vehiculo !== selectedVehicle?.id_vehiculo),
+    [deoverlappedVehicles, selectedVehicle?.id_vehiculo],
+  );
+  const deoverlappedSelectedVehicle = deoverlappedVehicles.find(
+    (vehicle) => vehicle.id_vehiculo === selectedVehicle?.id_vehiculo,
+  );
+  const clusterIcon = useMemo(() => (cluster: L.MarkerCluster) => {
+    const count = cluster.getChildCount();
+    return L.divIcon({
+      html: `<div class=\"fleet-marker-cluster\"><span>${count}</span></div>`,
+      className: 'fleet-marker-cluster-wrapper',
+      iconSize: L.point(44, 44),
+      iconAnchor: L.point(22, 22),
+    });
+  }, []);
+
+  return (
+    <>
+      <MarkerClusterGroup
+        key={`vehicle-clusters-${selectedVehicle?.id_vehiculo ?? 'none'}-${clusterVehicles.length}`}
+        chunkedLoading
+        maxClusterRadius={44}
+        showCoverageOnHover={false}
+        spiderfyOnMaxZoom
+        zoomToBoundsOnClick
+        iconCreateFunction={clusterIcon}
+      >
+        {clusterVehicles.map((vehicle, idx) => (
+          <LeafletVehicleMarker
+            key={vehicle.id_vehiculo}
+            vehicle={vehicle}
+            index={idx}
+            showPopup={isMainMap && !miniMapId}
+          />
+        ))}
+      </MarkerClusterGroup>
+
+      {deoverlappedSelectedVehicle && (
+        <LeafletVehicleMarker
+          key={`selected-${deoverlappedSelectedVehicle.id_vehiculo}`}
+          vehicle={deoverlappedSelectedVehicle}
+          index={10_000}
+          showPopup={isMainMap && !miniMapId}
+        />
+      )}
+    </>
+  );
+}
+
 export default function FleetLeafletMap(props: FleetLeafletMapProps) {
   const { miniMapId, manualVehicleIds, isMainMap, side, isVisible = true } = props;
   const { state } = useFleetState();
@@ -46,35 +106,6 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
     [state, miniMapId, manualVehicleIds, isMainMap]
   );
 
-  const selectedMapVehicle = selectedVehicle && mapVehicles.some(
-    (vehicle) => vehicle.id_vehiculo === selectedVehicle.id_vehiculo
-  ) ? selectedVehicle : null;
-
-  const deoverlappedVehicles = useDeoverlappedPositions(
-    mapVehicles,
-    selectedMapVehicle?.id_vehiculo ?? null,
-  );
-
-  const clusterVehicles = useMemo(
-    () => deoverlappedVehicles.filter(
-      (vehicle) => vehicle.id_vehiculo !== selectedMapVehicle?.id_vehiculo
-    ),
-    [deoverlappedVehicles, selectedMapVehicle?.id_vehiculo]
-  );
-
-  const deoverlappedSelectedVehicle = deoverlappedVehicles.find(
-    (vehicle) => vehicle.id_vehiculo === selectedMapVehicle?.id_vehiculo
-  );
-
-  const clusterIcon = useMemo(() => (cluster: L.MarkerCluster) => {
-    const count = cluster.getChildCount();
-    return L.divIcon({
-      html: `<div class="fleet-marker-cluster"><span>${count}</span></div>`,
-      className: 'fleet-marker-cluster-wrapper',
-      iconSize: L.point(44, 44),
-      iconAnchor: L.point(22, 22),
-    });
-  }, []);
 
   // Tile sources
   const standardTile = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -100,33 +131,12 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
 
         <LeafletRoutePolylines side={side} />
 
-        <MarkerClusterGroup
-          key={`vehicle-clusters-${selectedMapVehicle?.id_vehiculo ?? 'none'}-${clusterVehicles.length}`}
-          chunkedLoading
-          maxClusterRadius={44}
-          showCoverageOnHover={false}
-          spiderfyOnMaxZoom
-          zoomToBoundsOnClick
-          iconCreateFunction={clusterIcon}
-        >
-          {clusterVehicles.map((vehicle, idx) => (
-            <LeafletVehicleMarker
-              key={vehicle.id_vehiculo}
-              vehicle={vehicle}
-              index={idx}
-              showPopup={isMainMap && !miniMapId}
-            />
-          ))}
-        </MarkerClusterGroup>
-
-        {deoverlappedSelectedVehicle && (
-          <LeafletVehicleMarker
-            key={`selected-${deoverlappedSelectedVehicle.id_vehiculo}`}
-            vehicle={deoverlappedSelectedVehicle}
-            index={10_000}
-            showPopup={isMainMap && !miniMapId}
-          />
-        )}
+        <VehicleLayer
+          vehicles={mapVehicles}
+          selectedVehicleId={selectedVehicle?.id_vehiculo ?? null}
+          isMainMap={isMainMap}
+          miniMapId={miniMapId}
+        />
       </MapContainer>
     </div>
   );
