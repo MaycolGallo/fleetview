@@ -11,6 +11,7 @@ import { useFleetState, selectMapVehicles } from '@/context/fleet-context';
 import { LeafletVehicleMarker } from './leaflet-vehicle-marker';
 import { useMapViewport } from '@/hooks/use-map-viewport';
 import { LeafletRoutePolylines } from './leaflet-route-polylines';
+import { useDeoverlappedPositions } from '@/hooks/use-deoverlapped-positions';
 
 interface FleetLeafletMapProps {
   side?: 'ida' | 'vuelta';
@@ -49,11 +50,20 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
     (vehicle) => vehicle.id_vehiculo === selectedVehicle.id_vehiculo
   ) ? selectedVehicle : null;
 
+  const deoverlappedVehicles = useDeoverlappedPositions(
+    mapVehicles,
+    selectedMapVehicle?.id_vehiculo ?? null,
+  );
+
   const clusterVehicles = useMemo(
-    () => mapVehicles.filter(
+    () => deoverlappedVehicles.filter(
       (vehicle) => vehicle.id_vehiculo !== selectedMapVehicle?.id_vehiculo
     ),
-    [mapVehicles, selectedMapVehicle?.id_vehiculo]
+    [deoverlappedVehicles, selectedMapVehicle?.id_vehiculo]
+  );
+
+  const deoverlappedSelectedVehicle = deoverlappedVehicles.find(
+    (vehicle) => vehicle.id_vehiculo === selectedMapVehicle?.id_vehiculo
   );
 
   const clusterIcon = useMemo(() => (cluster: L.MarkerCluster) => {
@@ -109,10 +119,10 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
           ))}
         </MarkerClusterGroup>
 
-        {selectedMapVehicle && (
+        {deoverlappedSelectedVehicle && (
           <LeafletVehicleMarker
-            key={`selected-${selectedMapVehicle.id_vehiculo}`}
-            vehicle={selectedMapVehicle}
+            key={`selected-${deoverlappedSelectedVehicle.id_vehiculo}`}
+            vehicle={deoverlappedSelectedVehicle}
             index={10_000}
             showPopup={isMainMap && !miniMapId}
           />
