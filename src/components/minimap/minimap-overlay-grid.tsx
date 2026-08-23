@@ -66,9 +66,9 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   };
 
   const handleUnfocus = () => {
-    startTransition(() => {
-        dispatch({ type: 'UNFOCUS_MINIMAP' });
-    });
+    // This is a small, user-blocking interaction. Dispatch synchronously so
+    // the overview returns immediately instead of waiting in a transition lane.
+    dispatch({ type: 'UNFOCUS_MINIMAP' });
   };
 
   const handleFocus = (id: string) => {
