@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useReducer, useEffect, type Dispatch, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useSyncExternalStore, type Dispatch } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import type { Vehicle, FleetState, MiniMapGroup, Notification, MapProvider } from '@/lib/types';
@@ -12,16 +12,45 @@ import { fetchVehicles, fetchRouteHistory, fetchIncidencias, fetchMiniMaps } fro
 const STORAGE_KEY = 'fleet_minimaps_state_v2';
 
 interface FleetStateContextValue {
-    state: FleetState;
+    store: FleetStore;
     isLoadingVehicles: boolean;
     error: Error | null;
 }
 
-const FleetStateContext = createContext<FleetStateContextValue | undefined>(undefined);
+interface FleetStore {
+    getState: () => FleetState;
+    subscribe: (listener: () => void) => () => void;
+    dispatch: Dispatch<FleetAction>;
+}
+
+const FleetStateContext = createContext<FleetStore | undefined>(undefined);
 const FleetDispatchContext = createContext<Dispatch<FleetAction> | undefined>(undefined);
 
+function createFleetStore(): FleetStore {
+    let state = getInitialState();
+    const listeners = new Set<() => void>();
+
+    return {
+        getState: () => state,
+        subscribe: (listener) => {
+            listeners.add(listener);
+            return () => listeners.delete(listener);
+        },
+        dispatch: (action) => {
+            const nextState = fleetReducer(state, action);
+            if (Object.is(nextState, state)) return;
+            state = nextState;
+            listeners.forEach((listener) => listener());
+        },
+    };
+}
+
 export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
-    const [state, dispatch] = useReducer(fleetReducer, getInitialState());
+    const storeRef = useRef<FleetStore | null>(null);
+    if (!storeRef.current) storeRef.current = createFleetStore();
+    const store = storeRef.current;
+    const state = useSyncExternalStore(store.subscribe, store.getState, getInitialState);
+    const dispatch = store.dispatch;
     const searchParams = useSearchParams();
 
     // 1. Sync Theme (Dark Mode) to Document Root
@@ -152,14 +181,12 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       return () => clearInterval(timer);
     }, [state.vehicles]);
 
-    const stateContextValue = useMemo(() => ({
-        state,
-        isLoadingVehicles: isLoadingVehicles && state.vehicles.length === 0,
-        error,
-    }), [state, isLoadingVehicles, error]);
-
     return (
-        <FleetStateContext.Provider value={stateContextValue}>
+        <FleetStateContext.Provider value={{
+            store,
+            isLoadingVehicles: isLoadingVehicles && state.vehicles.length === 0,
+            error: error ?? null,
+        }}>
             <FleetDispatchContext.Provider value={dispatch}>
                 {children}
             </FleetDispatchContext.Provider>
@@ -170,7 +197,18 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
 export const useFleetState = () => {
     const context = useContext(FleetStateContext);
     if (!context) throw new Error('useFleetState must be used within a FleetProvider');
-    return context;
+
+    const state = useSyncExternalStore(
+        context.store.subscribe,
+        context.store.getState,
+        getInitialState,
+    );
+
+    return {
+        state,
+        isLoadingVehicles: context.isLoadingVehicles,
+        error: context.error,
+    };
 };
 
 export const useFleetDispatch = () => {
