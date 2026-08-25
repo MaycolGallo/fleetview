@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useSyncExternalStore } from 'react';
 
 /**
  * A custom hook for managing horizontal scroll containers with navigation buttons.
@@ -9,42 +9,30 @@ import { useState, useRef, useCallback, useEffect } from 'react';
  */
 export function useHorizontalScroll() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const checkScroll = useCallback(() => {
+  const getScrollSnapshot = useCallback(() => {
     const el = scrollContainerRef.current;
-    if (el) {
-      // Use a small buffer (1px) for floating point precision issues
-      const isAtStart = el.scrollLeft <= 1;
-      const isAtEnd = el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
-      
-      setCanScrollLeft(!isAtStart);
-      setCanScrollRight(!isAtEnd && el.scrollWidth > el.clientWidth);
-    }
+    if (!el) return '0:0';
+    const canScrollLeft = el.scrollLeft > 1;
+    const canScrollRight = el.scrollLeft < el.scrollWidth - el.clientWidth - 1 && el.scrollWidth > el.clientWidth;
+    return `${canScrollLeft ? 1 : 0}:${canScrollRight ? 1 : 0}`;
   }, []);
 
-  useEffect(() => {
-    const el = scrollContainerRef.current;
-    if (!el) return;
-
-    el.addEventListener('scroll', checkScroll, { passive: true });
-    window.addEventListener('resize', checkScroll);
-    
-    // Initial check after mount/render
-    const timeout = setTimeout(checkScroll, 100);
-
+  const subscribeToScroll = useCallback((onStoreChange: () => void) => {
+    document.addEventListener('scroll', onStoreChange, { passive: true, capture: true });
+    window.addEventListener('resize', onStoreChange);
     return () => {
-      el.removeEventListener('scroll', checkScroll);
-      window.removeEventListener('resize', checkScroll);
-      clearTimeout(timeout);
+      document.removeEventListener('scroll', onStoreChange, true);
+      window.removeEventListener('resize', onStoreChange);
     };
-  }, [checkScroll]);
+  }, []);
 
-  // Re-check when content might have changed externally
+  const scrollSnapshot = useSyncExternalStore(subscribeToScroll, getScrollSnapshot, () => '0:0');
+  const [canScrollLeft, canScrollRight] = scrollSnapshot.split(':').map(Boolean);
+
   const refresh = useCallback(() => {
-    checkScroll();
-  }, [checkScroll]);
+    // Kept for API compatibility. Scroll/resize events update the external snapshot.
+  }, []);
 
   const scroll = useCallback((direction: 'left' | 'right', distance: number = 400) => {
     scrollContainerRef.current?.scrollBy({
