@@ -129,6 +129,23 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
        };
     }
 
+    case 'SIMULATE_VEHICLE_MOVE': {
+      const step = action.payload;
+      return {
+        ...state,
+        vehicles: state.vehicles.map((vehicle, index) => {
+          const angle = ((vehicle.rumbo ?? index * 37) * Math.PI) / 180;
+          const distance = (0.00001 + (index % 3) * 0.000003) * step;
+          return {
+            ...vehicle,
+            lat: vehicle.lat + Math.cos(angle) * distance,
+            lng: vehicle.lng + Math.sin(angle) * distance,
+            rumbo: (vehicle.rumbo + (index % 2 === 0 ? 2 : -2) + 360) % 360,
+          };
+        }),
+      };
+    }
+
     case 'PAN_TO_VEHICLE': {
       if (action.payload === null) {
         return { ...state, selectedVehicle: null };
