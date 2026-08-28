@@ -63,6 +63,11 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
                     )}
                   >
                   <defs>
+                    <linearGradient id={`pin-gradient-${vehicle.id_vehiculo}`} x1="0" y1="0" x2="0.8" y2="1">
+                      <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.32" />
+                      <stop offset="38%" stopColor={color} stopOpacity="1" />
+                      <stop offset="100%" stopColor={color} stopOpacity="0.72" />
+                    </linearGradient>
                     <filter id={`glow-${vehicle.id_vehiculo}`}>
                       <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
                       <feMerge>
@@ -71,12 +76,14 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
                       </feMerge>
                     </filter>
                   </defs>
-                  <path 
-                      fill={color}
+                  <path
+                      fill={`url(#pin-gradient-${vehicle.id_vehiculo})`}
                       stroke="#FFFFFF"
                       strokeWidth="2"
+                      strokeLinejoin="round"
+                      strokeLinecap="round"
                       filter={isSelected ? `url(#glow-${vehicle.id_vehiculo})` : undefined}
-                      d="M19 0C8.5 0 0 8.5 0 19.1C0 32.9 19 54 19 54S38 32.9 38 19.1C38 8.5 29.5 0 19 0Z" 
+                      d="M19 0C8.5 0 0 8.5 0 19.1C0 32.9 15.7 50.7 18.4 53.5C18.7 53.8 19.3 53.8 19.6 53.5C22.3 50.7 38 32.9 38 19.1C38 8.5 29.5 0 19 0Z"
                   />
                 </svg>
               </div>
