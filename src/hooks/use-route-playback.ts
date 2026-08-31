@@ -12,7 +12,9 @@ export function useRoutePlayback() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const movingPoints = useMemo(() => {
-    if (!isRouteSheetOpen) return [];
+    // Route playback can be controlled from the test dialog even when the
+    // historical bottom sheet is intentionally hidden.
+    if (!isRouteSheetOpen && !routeGroups.length) return [];
     return routeGroups
         .filter(seg => seg.id_estado === 6)
         .flatMap(seg => seg.records.map(r => ({

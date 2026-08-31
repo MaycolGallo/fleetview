@@ -15,6 +15,7 @@ export type FleetAction =
   | { type: 'SET_ACTIVE_PANEL'; payload: PanelType }
   | { type: 'START_ROUTE_LOADING'; payload: any }
   | { type: 'SET_ROUTE_HISTORY'; payload: any }
+  | { type: 'HIDE_ROUTE_SHEET' }
   | { type: 'SELECT_ROUTE_SEGMENT'; payload: number }
   | { type: 'BACK_TO_FLEET' }
   | { type: 'SET_MAP_DARK_MODE'; payload: boolean }
@@ -248,6 +249,9 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
           mapViewport: { type: 'fit_route', payload: routePoints.flat().length > 0 ? routePoints.flat() : (startOfRoute ? [{lat: startOfRoute.lat, lng: startOfRoute.lng}] : []) } 
         };
     }
+
+    case 'HIDE_ROUTE_SHEET':
+      return { ...state, isRouteSheetOpen: false };
 
     case 'SELECT_ROUTE_SEGMENT': {
         const group = state.routeGroups[action.payload];

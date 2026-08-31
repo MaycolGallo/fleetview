@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, Route } from 'lucide-react';
+import { Loader2, Route, Pause, Play } from 'lucide-react';
+import { useFleetState } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +19,7 @@ function normalizeVehicleLongitude(longitude: number) {
 
 export function TestRouteMovementDialog({ vehicle, open, onOpenChange }: { vehicle: Vehicle; open: boolean; onOpenChange: (open: boolean) => void }) {
   const dispatch = useFleetDispatch();
+  const { state } = useFleetState();
   const [start, setStart] = useState({ lat: String(vehicle.lat), lng: String(normalizeVehicleLongitude(Number(vehicle.lng))) });
   const [end, setEnd] = useState({ lat: '', lng: '' });
   const [loading, setLoading] = useState(false);
@@ -38,8 +40,8 @@ export function TestRouteMovementDialog({ vehicle, open, onOpenChange }: { vehic
       points.forEach((point: any, index: number) => { point.fecha += index * interval; });
       dispatch({ type: 'START_ROUTE_LOADING', payload: vehicle });
       dispatch({ type: 'SET_ROUTE_HISTORY', payload: { groups: [{ id_estado: 6, total_time_seconds: Math.max(61, points.length * interval + 1), records: points }], by_estado: {} } });
+      dispatch({ type: 'HIDE_ROUTE_SHEET' });
       dispatch({ type: 'START_ROUTE_PLAYBACK' });
-      onOpenChange(false);
     } catch (caught) { setError(caught instanceof Error ? caught.message : 'Error inesperado'); }
     finally { setLoading(false); }
   }
@@ -50,7 +52,15 @@ export function TestRouteMovementDialog({ vehicle, open, onOpenChange }: { vehic
       <div className="grid grid-cols-2 gap-3"><div className="grid gap-2"><Label htmlFor="start-lat">Inicio latitud</Label><Input id="start-lat" value={start.lat} onChange={(e) => setStart({ ...start, lat: e.target.value })} required /></div><div className="grid gap-2"><Label htmlFor="start-lng">Inicio longitud</Label><Input id="start-lng" value={start.lng} onChange={(e) => setStart({ ...start, lng: e.target.value })} required /></div></div>
       <div className="grid grid-cols-2 gap-3"><div className="grid gap-2"><Label htmlFor="end-lat">Destino latitud</Label><Input id="end-lat" value={end.lat} onChange={(e) => setEnd({ ...end, lat: e.target.value })} required /></div><div className="grid gap-2"><Label htmlFor="end-lng">Destino longitud</Label><Input id="end-lng" value={end.lng} onChange={(e) => setEnd({ ...end, lng: e.target.value })} required /></div></div>
       {error && <p className="text-sm text-destructive" role="alert">{error}</p>}
-      <DialogFooter><Button type="submit" disabled={loading}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Route className="mr-2 h-4 w-4" />}Calculate and play</Button></DialogFooter>
+      <DialogFooter className="gap-2 sm:justify-between">
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" onClick={() => dispatch({ type: state.isRoutePlaying ? 'PAUSE_ROUTE_PLAYBACK' : 'START_ROUTE_PLAYBACK' })} disabled={!state.routeGroups.length}>
+            {state.isRoutePlaying ? <Pause className="mr-2 h-4 w-4" /> : <Play className="mr-2 h-4 w-4" />}
+            {state.isRoutePlaying ? 'Pausar' : 'Continuar'}
+          </Button>
+        </div>
+        <Button type="submit" disabled={loading}>{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Route className="mr-2 h-4 w-4" />}Calcular y reproducir</Button>
+      </DialogFooter>
     </form>
   </DialogContent></Dialog>;
 }
