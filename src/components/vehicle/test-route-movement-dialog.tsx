@@ -9,9 +9,16 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import type { Vehicle } from '@/lib/types';
 import { useFleetDispatch } from '@/context/fleet-context';
 
+function normalizeVehicleLongitude(longitude: number) {
+  // Demo vehicle payloads may contain a positive Lima longitude from the mock
+  // coordinate adapter. Keep user-entered values untouched, but make the
+  // prefilled vehicle start point routable in Peru.
+  return longitude > 0 && longitude < 90 ? -longitude : longitude;
+}
+
 export function TestRouteMovementDialog({ vehicle, open, onOpenChange }: { vehicle: Vehicle; open: boolean; onOpenChange: (open: boolean) => void }) {
   const dispatch = useFleetDispatch();
-  const [start, setStart] = useState({ lat: String(vehicle.lat), lng: String(vehicle.lng) });
+  const [start, setStart] = useState({ lat: String(vehicle.lat), lng: String(normalizeVehicleLongitude(Number(vehicle.lng))) });
   const [end, setEnd] = useState({ lat: '', lng: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
