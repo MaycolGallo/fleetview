@@ -49,7 +49,8 @@ export function VehicleContextMenu({
         }
 
         if (action === 'test-route-movement') {
-            onClose();
+            // Keep this component mounted: onClose unmounts the context menu,
+            // which would also destroy the dialog before it can open.
             setTestRouteOpen(true);
             return;
         }
