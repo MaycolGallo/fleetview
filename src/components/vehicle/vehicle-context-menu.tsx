@@ -4,13 +4,14 @@
 import { createPortal } from 'react-dom';
 import React, { useTransition, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { History, MapPin, Info, Bell, Radar, Loader2, Zap } from 'lucide-react';
+import { History, MapPin, Info, Bell, Radar, Loader2, Zap, Route } from 'lucide-react';
+import { TestRouteMovementDialog } from './test-route-movement-dialog';
 import type { Vehicle } from '@/lib/types';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 import { RemoteActionsModal } from './remote-actions-modal';
 import { VehicleDetailsDialog } from './vehicle-details-dialog';
 
-type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'list-incidencias' | 'remote-actions';
+type VehicleAction = 'show-route-history' | 'center-map' | 'show-details' | 'track-vehicle' | 'list-incidencias' | 'remote-actions' | 'test-route-movement';
 
 export function VehicleContextMenu({
   vehicle,
@@ -24,6 +25,7 @@ export function VehicleContextMenu({
     const [portalNode, setPortalNode] = React.useState<HTMLElement | null>(null);
     const [remoteActionsOpen, setRemoteActionsOpen] = useState(false);
     const [vehicleDetailsOpen, setVehicleDetailsOpen] = useState(false);
+    const [testRouteOpen, setTestRouteOpen] = useState(false);
     const { state } = useFleetState();
     const dispatch = useFleetDispatch();
     const isTracked = state.allTrackedVehicleIds?.includes(vehicle.id_vehiculo) || false;
@@ -41,6 +43,11 @@ export function VehicleContextMenu({
 
         if (action === 'show-details') {
             setVehicleDetailsOpen(true);
+            return;
+        }
+
+        if (action === 'test-route-movement') {
+            setTestRouteOpen(true);
             return;
         }
 
@@ -68,6 +75,7 @@ export function VehicleContextMenu({
     if (!portalNode) return null;
 
     const contextMenuItems = [
+      { action: 'test-route-movement' as VehicleAction, label: 'Test route movement', icon: Route },
       { action: 'show-route-history' as VehicleAction, label: 'Historial de Ruta', icon: History },
       { action: 'list-incidencias' as VehicleAction, label: 'Lista de Incidencias', icon: Bell },
       { action: 'remote-actions' as VehicleAction, label: 'Ejecutar Acción Remota', icon: Zap },
@@ -88,7 +96,12 @@ export function VehicleContextMenu({
               open={vehicleDetailsOpen}
               onOpenChange={setVehicleDetailsOpen}
             />
-            {!vehicleDetailsOpen && !remoteActionsOpen && (
+            <TestRouteMovementDialog
+              vehicle={vehicle}
+              open={testRouteOpen}
+              onOpenChange={setTestRouteOpen}
+            />
+            {!vehicleDetailsOpen && !remoteActionsOpen && !testRouteOpen && (
               <div
                 className="fixed inset-0 z-[51]"
                 onClick={onClose}
