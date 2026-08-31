@@ -37,16 +37,19 @@ export function VehicleContextMenu({
 
     const handleAction = (action: VehicleAction) => {
         if (action === 'remote-actions') {
+            onClose();
             setRemoteActionsOpen(true);
             return;
         }
 
         if (action === 'show-details') {
+            onClose();
             setVehicleDetailsOpen(true);
             return;
         }
 
         if (action === 'test-route-movement') {
+            onClose();
             setTestRouteOpen(true);
             return;
         }
@@ -112,7 +115,7 @@ export function VehicleContextMenu({
               />
             )}
             <div
-                hidden={vehicleDetailsOpen || remoteActionsOpen}
+                hidden={vehicleDetailsOpen || remoteActionsOpen || testRouteOpen}
                 className="fixed z-[52] bg-popover/95 backdrop-blur-md border border-border rounded-lg shadow-2xl p-1 min-w-[220px] animate-in fade-in zoom-in-95 duration-200"
                 style={{ top: position.y, left: position.x }}
             >
