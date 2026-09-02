@@ -104,36 +104,34 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
               </div>
           </div>
 
-           {/* Flat, ground-facing heading indicator inspired by map navigation pins */}
+          {/* Flat ground-facing heading wedge, kept subtle so the vehicle pin stays primary. */}
           <div
-            className="pointer-events-none absolute left-1/2 top-[42px] z-[-1] h-8 w-11 -translate-x-1/2"
-            style={{ perspective: '80px' }}
+            className="pointer-events-none absolute left-1/2 top-[41px] z-[-1] h-7 w-4 -translate-x-1/2 transition-transform duration-300 ease-out"
+            style={{
+              transform: `translateX(-50%) rotate(${vehicle.rumbo}deg) rotateX(58deg)`,
+              transformOrigin: '50% 0%',
+              perspective: '90px',
+              filter: isSelected
+                ? 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))'
+                : 'drop-shadow(0 1px 1px rgba(0,0,0,0.2))',
+            }}
             aria-hidden="true"
           >
-            <div
-              className="vehicle-pin-arrow relative h-full w-full transition-transform duration-300 ease-out"
-              style={{
-                transform: `rotate(${vehicle.rumbo}deg) rotateX(62deg)`,
-                transformOrigin: 'center center',
-                filter: isSelected
-                  ? 'drop-shadow(0 2px 2px rgba(0,0,0,0.35))'
-                  : 'drop-shadow(0 1px 1px rgba(0,0,0,0.22))',
-              }}
-            >
-              <svg viewBox="0 0 44 32" className="h-full w-full overflow-visible">
-                <path
-                  d="M22 2 L39 25 C40 27 38 29 36 28 L22 23 L8 28 C6 29 4 27 5 25 Z"
-                  fill="rgba(71, 85, 105, 0.78)"
-                  stroke="rgba(255, 255, 255, 0.88)"
-                  strokeWidth="1.25"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M22 7 L31 23 L22 20 L13 23 Z"
-                  fill="rgba(148, 163, 184, 0.62)"
-                />
-              </svg>
-            </div>
+            <svg viewBox="0 0 16 28" className="h-full w-full overflow-visible">
+              <path
+                d="M8 1 C9.8 5.5 13.5 17.5 12.4 23 C11.8 26 9.8 27 8 27 C6.2 27 4.2 26 3.6 23 C2.5 17.5 6.2 5.5 8 1Z"
+                fill={color}
+                fillOpacity="0.5"
+              />
+              <path
+                d="M8 3 C9.2 8 10.7 16 10.4 20"
+                fill="none"
+                stroke="white"
+                strokeOpacity="0.28"
+                strokeLinecap="round"
+                strokeWidth="1"
+              />
+            </svg>
           </div>
       </div>
   );
