@@ -104,30 +104,34 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
               </div>
           </div>
 
-          {/* Flat ground-facing heading wedge, kept subtle so the vehicle pin stays primary. */}
+          {/* A flat, map-facing directional cone. Rotation is kept in the map plane so
+              the pin remains the hero and the heading reads like Google Maps. */}
           <div
-            className="pointer-events-none absolute left-1/2 top-[41px] z-[-1] h-7 w-4 -translate-x-1/2 transition-transform duration-300 ease-out"
+            className="pointer-events-none absolute left-1/2 top-[39px] z-0 h-9 w-9 -translate-x-1/2 transition-transform duration-300 ease-out"
             style={{
-              transform: `translateX(-50%) rotate(${vehicle.rumbo}deg) rotateX(58deg)`,
+              transform: `translateX(-50%) rotate(${vehicle.rumbo}deg)`,
               transformOrigin: '50% 0%',
-              perspective: '90px',
               filter: isSelected
-                ? 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))'
-                : 'drop-shadow(0 1px 1px rgba(0,0,0,0.2))',
+                ? 'drop-shadow(0 2px 2px rgba(0,0,0,0.24))'
+                : 'drop-shadow(0 1px 1px rgba(0,0,0,0.16))',
             }}
             aria-hidden="true"
           >
-            <svg viewBox="0 0 16 28" className="h-full w-full overflow-visible">
+            <svg viewBox="0 0 36 44" className="h-full w-full overflow-visible">
               <path
-                d="M8 1 C9.8 5.5 13.5 17.5 12.4 23 C11.8 26 9.8 27 8 27 C6.2 27 4.2 26 3.6 23 C2.5 17.5 6.2 5.5 8 1Z"
+                d="M18 2 C18.7 10 24.5 26 31 40 Q18 36.5 5 40 C11.5 26 17.3 10 18 2Z"
                 fill={color}
-                fillOpacity="0.5"
-              />
-              <path
-                d="M8 3 C9.2 8 10.7 16 10.4 20"
-                fill="none"
+                fillOpacity="0.22"
                 stroke="white"
                 strokeOpacity="0.28"
+                strokeWidth="0.8"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M18 4 C18.4 12 20.4 23 23.5 33"
+                fill="none"
+                stroke="white"
+                strokeOpacity="0.2"
                 strokeLinecap="round"
                 strokeWidth="1"
               />
