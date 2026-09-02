@@ -46,11 +46,11 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
   }
   
   return (
-      <div className='relative w-10 h-14 flex flex-col items-center'>
+      <div className='relative h-20 w-10 flex flex-col items-center'>
           {/* Main Pin */}
           <div
             className={cn(
-              'relative w-10 h-12 vehicle-pin-main transition-all duration-200',
+              'relative z-10 w-10 h-12 vehicle-pin-main transition-all duration-200',
               isSelected && 'scale-110'
             )}
           >
@@ -107,7 +107,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
           {/* Ground-facing heading indicator. Keep the original narrow SVG silhouette and
               apply the perspective in CSS so it stays attached to the pin while rotating. */}
           <div
-            className="pointer-events-none absolute left-1/2 top-[41px] z-0 h-7 w-4 -translate-x-1/2 transition-transform duration-300 ease-out"
+            className="pointer-events-none absolute left-1/2 top-[50px] z-0 h-8 w-4 -translate-x-1/2 transition-transform duration-300 ease-out"
             style={{
               transform: `translateX(-50%) rotate(${vehicle.rumbo}deg) rotateX(58deg)`,
               transformOrigin: '50% 0%',
