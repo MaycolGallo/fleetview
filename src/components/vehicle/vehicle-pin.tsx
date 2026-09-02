@@ -104,24 +104,37 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
               </div>
           </div>
 
-           {/* Heading Arrow (Standard View) */}
-          <div className="absolute bottom-[-10px] w-full h-full flex justify-center items-end">
-              <div
-                className='vehicle-pin-arrow transition-all duration-200'
-                style={{
-                    transform: `rotate(${vehicle.rumbo}deg) translateY(4px)`,
-                    filter: isSelected ? 'drop-shadow(0 0 3px rgba(0,0,0,0.5))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'
-                }}
-              >
-                  <svg 
-                    viewBox="0 0 24 24" 
-                    className="h-4 w-4 fill-black stroke-white"
-                    strokeWidth="1.5"
-                  >
-                    <path d="M12 2L4.5 20.29L5.21 21L12 18L18.79 21L19.5 20.29L12 2Z" />
-                  </svg>
+           {/* Flat, ground-facing heading indicator inspired by map navigation pins */}
+          <div
+            className="pointer-events-none absolute left-1/2 top-[42px] z-[-1] h-8 w-11 -translate-x-1/2"
+            style={{ perspective: '80px' }}
+            aria-hidden="true"
+          >
+            <div
+              className="vehicle-pin-arrow relative h-full w-full transition-transform duration-300 ease-out"
+              style={{
+                transform: `rotate(${vehicle.rumbo}deg) rotateX(62deg)`,
+                transformOrigin: 'center center',
+                filter: isSelected
+                  ? 'drop-shadow(0 2px 2px rgba(0,0,0,0.35))'
+                  : 'drop-shadow(0 1px 1px rgba(0,0,0,0.22))',
+              }}
+            >
+              <svg viewBox="0 0 44 32" className="h-full w-full overflow-visible">
+                <path
+                  d="M22 2 L39 25 C40 27 38 29 36 28 L22 23 L8 28 C6 29 4 27 5 25 Z"
+                  fill="rgba(71, 85, 105, 0.78)"
+                  stroke="rgba(255, 255, 255, 0.88)"
+                  strokeWidth="1.25"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M22 7 L31 23 L22 20 L13 23 Z"
+                  fill="rgba(148, 163, 184, 0.62)"
+                />
+              </svg>
             </div>
-        </div>
+          </div>
       </div>
   );
 });
