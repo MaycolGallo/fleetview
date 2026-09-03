@@ -117,23 +117,13 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
             }}
             aria-hidden="true"
           >
-            <svg viewBox="0 0 36 44" className="h-full w-full overflow-visible">
+            <svg viewBox="0 0 26 26" className="h-full w-full overflow-visible" fill="none" aria-hidden="true">
               <path
-                d="M18 2 C18.7 10 24.5 26 31 40 Q18 36.5 5 40 C11.5 26 17.3 10 18 2Z"
-                fill={color}
-                fillOpacity="0.22"
+                d="M13 2L22 22L13 17L4 22L13 2Z"
+                fill="hsl(var(--vehicle-heading-arrow))"
                 stroke="white"
-                strokeOpacity="0.28"
-                strokeWidth="0.8"
+                strokeWidth="2"
                 strokeLinejoin="round"
-              />
-              <path
-                d="M18 4 C18.4 12 20.4 23 23.5 33"
-                fill="none"
-                stroke="white"
-                strokeOpacity="0.2"
-                strokeLinecap="round"
-                strokeWidth="1"
               />
             </svg>
           </div>
