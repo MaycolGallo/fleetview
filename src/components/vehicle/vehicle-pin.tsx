@@ -46,7 +46,31 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
   }
   
   return (
-      <div className='relative h-20 w-10 flex flex-col items-center'>
+      <div className='relative h-20 w-10 overflow-visible flex flex-col items-center'>
+          {/* Ground-facing heading indicator. It stays in the same Leaflet icon so
+              it moves with the pin without requiring a separate map overlay. */}
+          <div
+            className="pointer-events-none absolute left-1/2 top-[39px] z-0 h-9 w-8 -translate-x-1/2"
+            style={{
+              transform: `translateX(-50%) rotate(${vehicle.rumbo}deg)`,
+              transformOrigin: '50% 0%',
+              filter: isSelected
+                ? 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))'
+                : 'drop-shadow(0 1px 1px rgba(0,0,0,0.2))',
+            }}
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 26 26" className="h-full w-full overflow-visible" fill="none" aria-hidden="true">
+              <path
+                d="M13 2L22 22L13 17L4 22L13 2Z"
+                fill="hsl(var(--vehicle-heading-arrow))"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+
           {/* Main Pin */}
           <div
             className={cn(
@@ -104,29 +128,6 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
               </div>
           </div>
 
-          {/* Original flat heading indicator: broad, translucent and attached below the pin. */}
-          <div
-            className="pointer-events-none absolute left-1/2 top-[41px] z-[-1] h-7 w-9 -translate-x-1/2 transition-transform duration-300 ease-out"
-            style={{
-              transform: `translateX(-50%) rotate(${vehicle.rumbo}deg) rotateX(58deg)`,
-              transformOrigin: '50% 0%',
-              perspective: '90px',
-              filter: isSelected
-                ? 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))'
-                : 'drop-shadow(0 1px 1px rgba(0,0,0,0.2))',
-            }}
-            aria-hidden="true"
-          >
-            <svg viewBox="0 0 26 26" className="h-full w-full overflow-visible" fill="none" aria-hidden="true">
-              <path
-                d="M13 2L22 22L13 17L4 22L13 2Z"
-                fill="hsl(var(--vehicle-heading-arrow))"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
       </div>
   );
 });
