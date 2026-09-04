@@ -50,7 +50,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
           {/* Ground-facing heading indicator. It stays in the same Leaflet icon so
               it moves with the pin without requiring a separate map overlay. */}
           <div
-            className="pointer-events-none absolute left-1/2 top-[39px] z-0 h-9 w-8 -translate-x-1/2"
+            className="pointer-events-none absolute left-1/2 top-[47px] z-0 h-8 w-7 -translate-x-1/2"
             style={{
               transform: `translateX(-50%) rotate(${vehicle.rumbo}deg)`,
               transformOrigin: '50% 0%',
@@ -62,10 +62,12 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
           >
             <svg viewBox="0 0 26 26" className="h-full w-full overflow-visible" fill="none" aria-hidden="true">
               <path
-                d="M13 2L22 22L13 17L4 22L13 2Z"
-                fill="hsl(var(--vehicle-heading-arrow))"
-                stroke="white"
-                strokeWidth="2"
+                d="M13 1L23 25L13 19L3 25L13 1Z"
+                fill={color}
+                fillOpacity="0.9"
+                stroke={color}
+                strokeOpacity="0.95"
+                strokeWidth="1"
                 strokeLinejoin="round"
               />
             </svg>
