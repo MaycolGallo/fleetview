@@ -97,7 +97,7 @@ export function useMapViewport({
     const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
     const currentPadding = !isMainMap ? PADDING_MINIMAP : (isGridActive ? mapControlPadding : PADDING_STANDARD);
 
-    const handlePanToVehicle = () => {
+    const handlePanToVehicle = async () => {
       const targetId = (mapViewport as any).vehicleId;
       
       // Determine if this map should respond to the pan request
@@ -128,7 +128,7 @@ export function useMapViewport({
     const runAction = async () => {
       switch (mapViewport.type) {
         case 'pan_to_vehicle':
-          handlePanToVehicle();
+          await handlePanToVehicle();
           break;
         case 'fit_bounds':
           await performFitBounds(map, provider, (mapViewport as any).payload, currentPadding);
