@@ -54,6 +54,9 @@ export function useMapViewport({
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
   const lastFittedBoundsRef = useRef<string>('');
+  const actionGenerationRef = useRef(0);
+  const intentionalMoveUntilRef = useRef(0);
+  const actionRunningRef = useRef(false);
 
   const {
     mapViewport,
@@ -115,23 +118,33 @@ export function useMapViewport({
       if (now - lastPanTime <= PAN_DEBOUNCE_MS) return;
       lastPanTime = now;
 
-      performPan(map, provider, (mapViewport as any).payload, 16, currentPadding);
+      await performPan(map, provider, (mapViewport as any).payload, 16, currentPadding);
     };
 
-    // Handle viewport actions by type
-    switch (mapViewport.type) {
-      case 'pan_to_vehicle':
-        handlePanToVehicle();
-        break;
-      case 'fit_bounds':
-        performFitBounds(map, provider, (mapViewport as any).payload, currentPadding);
-        break;
-      case 'fit_route':
-        performFitBounds(map, provider, (mapViewport as any).payload, PADDING_ROUTE);
-        break;
-    }
-    
-    dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
+    const generation = ++actionGenerationRef.current;
+    intentionalMoveUntilRef.current = Date.now() + 1200;
+    actionRunningRef.current = true;
+
+    const runAction = async () => {
+      switch (mapViewport.type) {
+        case 'pan_to_vehicle':
+          handlePanToVehicle();
+          break;
+        case 'fit_bounds':
+          await performFitBounds(map, provider, (mapViewport as any).payload, currentPadding);
+          break;
+        case 'fit_route':
+          await performFitBounds(map, provider, (mapViewport as any).payload, PADDING_ROUTE);
+          break;
+      }
+
+      if (generation === actionGenerationRef.current) {
+        actionRunningRef.current = false;
+        dispatch({ type: 'VIEWPORT_ACTION_COMPLETE' });
+      }
+    };
+
+    void runAction();
   }, [map, mapViewport, provider, isMainMap, miniMapId, focusedMiniMapId, visibleMiniMapIds, miniMaps, dispatch]);
 
   // Auto-Sync Logic for State Transitions
@@ -145,6 +158,11 @@ export function useMapViewport({
 
     // Cleanup helper to avoid repetition
     const cleanup = (...timers: NodeJS.Timeout[]) => () => timers.forEach(clearTimeout);
+
+    // Explicit viewport actions own the map briefly; background fitting must not override them.
+    if (actionRunningRef.current || Date.now() < intentionalMoveUntilRef.current) {
+      return cleanup(t1, t2);
+    }
 
     // Early return: don't adjust viewport during investigations or when hidden
     if (!isVisible || isIncidenciasSheetOpen || historyVehicle) {
@@ -220,7 +238,7 @@ export function useMapViewport({
   }, [map, provider, isMainMap, side, miniMapId, isSplitView, focusedMiniMapId, !!historyVehicle, isIncidenciasSheetOpen, triggerResize, selectedVehicle, vehicles, miniMaps, visibleMiniMapIds, despachoBaseRoute, isVisible, manualVehicleIds]);
 }
 
-function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number, padding: ViewportPadding) {
+async function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number, padding: ViewportPadding) {
   if (!map) return;
   switch (provider) {
     case 'google':
@@ -241,9 +259,10 @@ function performPan(map: MapInstance, provider: MapProvider, point: { lat: numbe
       if ('flyTo' in map) (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 800, padding }); 
       break;
   }
+  await waitForViewportSettled(map, provider);
 }
 
-function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat: number, lng: number }[], padding: ViewportPadding) {
+async function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat: number, lng: number }[], padding: ViewportPadding) {
   if (!map || points.length === 0) return;
   switch (provider) {
     case 'google':
@@ -277,5 +296,14 @@ function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat
         (map as MapRef).fitBounds(bounds, { padding, maxZoom: 16 });
       }
       break;
-  }
+    }
+  await waitForViewportSettled(map, provider);
 }
+
+function waitForViewportSettled(map: MapInstance, provider: MapProvider) {
+  if (!map) return Promise.resolve();
+  const duration = provider === 'mapbox' ? 850 : provider === 'leaflet' ? 450 : 500;
+  return new Promise<void>((resolve) => window.setTimeout(resolve, duration));
+}
+
+
