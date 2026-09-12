@@ -5,6 +5,13 @@ import { useState, useEffect, useRef } from 'react';
 interface Position {
   lat: number;
   lng: number;
+  heading?: number;
+}
+
+interface AnimatedPosition {
+  lat: number;
+  lng: number;
+  heading: number;
 }
 
 interface UseAnimatedPositionOptions {
@@ -19,6 +26,11 @@ interface UseAnimatedPositionOptions {
 }
 
 const easeOutCubic = (t: number): number => 1 - Math.pow(1 - t, 3);
+
+const interpolateHeading = (from: number, to: number, progress: number) => {
+  const delta = ((to - from + 540) % 360) - 180;
+  return (from + delta * progress + 360) % 360;
+};
 
 const calculateDistance = (from: Position, to: Position): number => {
   const earthRadiusKm = 6371;
@@ -49,7 +61,11 @@ export const useAnimatedPosition = (
     routeDuration = 2000,
   } = options;
 
-  const [currentPosition, setCurrentPosition] = useState<Position>(targetPosition);
+  const [currentPosition, setCurrentPosition] = useState<AnimatedPosition>({
+    lat: targetPosition.lat,
+    lng: targetPosition.lng,
+    heading: targetPosition.heading ?? 0,
+  });
   const animationRef = useRef<number | null>(null);
   const startPositionRef = useRef<Position>(targetPosition);
   const startTimeRef = useRef<number | null>(null);
@@ -72,15 +88,22 @@ export const useAnimatedPosition = (
     }
 
     if (disabled) {
+      const nextPosition = {
+        lat: targetRef.current.lat,
+        lng: targetRef.current.lng,
+        heading: targetRef.current.heading ?? currentRef.current.heading,
+      };
       startPositionRef.current = targetRef.current;
-      currentRef.current = targetRef.current;
-      setCurrentPosition(targetRef.current);
+      currentRef.current = nextPosition;
+      setCurrentPosition(nextPosition);
       return;
     }
 
     const from = currentRef.current;
     const to = targetRef.current;
-    if (from.lat === to.lat && from.lng === to.lng) return;
+    const fromHeading = currentRef.current.heading ?? 0;
+    const toHeading = targetRef.current.heading ?? fromHeading;
+    if (from.lat === to.lat && from.lng === to.lng && fromHeading === toHeading) return;
 
     const distance = calculateDistance(from, to);
     const animationDuration = mode === 'route'
@@ -98,6 +121,7 @@ export const useAnimatedPosition = (
       const nextPosition = {
         lat: from.lat + (to.lat - from.lat) * easedProgress,
         lng: from.lng + (to.lng - from.lng) * easedProgress,
+        heading: interpolateHeading(fromHeading, toHeading, easedProgress),
       };
 
       currentRef.current = nextPosition;
@@ -107,10 +131,11 @@ export const useAnimatedPosition = (
         return;
       }
 
-      currentRef.current = to;
+      const finalPosition = { lat: to.lat, lng: to.lng, heading: toHeading };
+      currentRef.current = finalPosition;
       startPositionRef.current = to;
       animationRef.current = null;
-      setCurrentPosition(to);
+      setCurrentPosition(finalPosition);
     };
 
     animationRef.current = requestAnimationFrame(animate);

@@ -45,7 +45,7 @@ export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: 
   } = useVehicleMarkerInteraction({ vehicle });
 
   const isPlaybackMarker = !!historyVehicle;
-  const targetPosition = { lat: vehicle.lat, lng: vehicle.lng };
+  const targetPosition = { lat: vehicle.lat, lng: vehicle.lng, heading: Number(vehicle.rumbo) || 0 };
   
   const animationDuration = (isPlaybackMarker && isRoutePlaying) ? playbackAnimationDuration : 1000;
   const animatedPosition = useAnimatedPosition(targetPosition, { duration: animationDuration });
@@ -70,7 +70,7 @@ export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: 
               </div>
           )}
           <VehiclePin
-              vehicle={vehicle}
+              vehicle={{ ...vehicle, rumbo: animatedPosition.heading }}
               isSelected={isSelected} 
               isHistory={isPlaybackMarker}
           />
@@ -79,7 +79,7 @@ export function LeafletVehicleMarker({ vehicle, index = 0, showPopup = false }: 
       iconSize: isPlaybackMarker ? [24, 24] : [40, 56],
       iconAnchor: isPlaybackMarker ? [12, 12] : [20, 56],
     });
-  }, [vehicle.id_vehiculo, vehicle.rumbo, vehicle.statusColor, isPlaybackMarker, speed, color]);
+  }, [vehicle.id_vehiculo, animatedPosition.heading, vehicle.statusColor, isSelected, isPlaybackMarker, speed, color]);
 
   // Handle selection lifecycle to ensure Popup opens on first click
   useEffect(() => {
