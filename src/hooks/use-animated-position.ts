@@ -145,7 +145,7 @@ export const useAnimatedPosition = (
         animationRef.current = null;
       }
     };
-  }, [targetPosition.lat, targetPosition.lng, fixedDuration, minDuration, maxDuration, easing, disabled, mode, routeDuration]);
+  }, [targetPosition.lat, targetPosition.lng, targetPosition.heading, fixedDuration, minDuration, maxDuration, easing, disabled, mode, routeDuration]);
 
   useEffect(() => () => {
     if (animationRef.current !== null) cancelAnimationFrame(animationRef.current);
