@@ -6,7 +6,7 @@
  * Orchestrates the secondary tactical displays and swaps focus between detail and overview.
  */
 
-import React, { useEffect, useTransition } from 'react';
+import React, { useEffect, useRef, useTransition } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { getMapFlags } from '@/context/fleet-selectors';
@@ -49,8 +49,16 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
     'focusedMinimap',
     parseAsString.withOptions({ history: 'push', shallow: true }),
   );
+  const skipNextFocusQuerySync = useRef(false);
 
   useEffect(() => {
+    if (skipNextFocusQuerySync.current) {
+      if (!focusedMiniMapQuery) {
+        skipNextFocusQuerySync.current = false;
+      }
+      return;
+    }
+
     const validQueryId = focusedMiniMapQuery && miniMaps.some((map) => map.id === focusedMiniMapQuery)
       ? focusedMiniMapQuery
       : null;
@@ -83,6 +91,8 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   };
 
   const handleUnfocus = () => {
+    // Prevent the effect from replaying the stale URL value before nuqs finishes updating it.
+    skipNextFocusQuerySync.current = true;
     void setFocusedMiniMapQuery(null);
     dispatch({ type: 'UNFOCUS_MINIMAP' });
   };
