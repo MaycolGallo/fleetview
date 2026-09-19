@@ -90,10 +90,12 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
     }
   };
 
-  const handleUnfocus = () => {
+  const handleUnfocus = async () => {
     restoringOverviewRef.current = true;
+    // Clear the URL first so the URL-to-state effect cannot restore the old focus.
+    await setFocusedMiniMapQuery(null);
     dispatch({ type: 'UNFOCUS_MINIMAP' });
-    void setFocusedMiniMapQuery(null);
+    restoringOverviewRef.current = false;
   };
 
   const handleFocus = (id: string) => {
@@ -136,9 +138,8 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
                     size="icon" 
                     className="absolute top-2 right-2 h-7 w-7 z-20 shadow-lg hover:scale-110 transition-transform bg-card/90 border-2 border-primary/20"
                     onClick={handleUnfocus}
-                    disabled={isPending}
                     >
-                    {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-4 w-4 text-primary" />}
+                    <RefreshCw className="h-4 w-4 text-primary" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left">Restaurar General</TooltipContent>
