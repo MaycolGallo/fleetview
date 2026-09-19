@@ -7,7 +7,7 @@
  */
 
 import React, { useEffect, useRef, useTransition } from 'react';
-import { parseAsString, useQueryState } from 'nuqs';
+import { useFocusedMinimapQuery } from '@/hooks/use-focused-minimap-query';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { getMapFlags } from '@/context/fleet-selectors';
 import { Button } from '@/components/ui/button';
@@ -45,10 +45,7 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   
   const mapFlags = getMapFlags(state);
   const [isPending, startTransition] = useTransition();
-  const [focusedMiniMapQuery, setFocusedMiniMapQuery] = useQueryState(
-    'focusedMinimap',
-    parseAsString.withOptions({ history: 'push', shallow: true }),
-  );
+  const [focusedMiniMapQuery, setFocusedMiniMapQuery] = useFocusedMinimapQuery();
   const restoringOverviewRef = useRef(false);
 
   useEffect(() => {

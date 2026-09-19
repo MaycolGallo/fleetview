@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useTransition } from 'react';
-import { parseAsString, useQueryState } from 'nuqs';
+import { useFocusedMinimapQuery } from '@/hooks/use-focused-minimap-query';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, RefreshCw, X, LayoutGrid, Loader2 } from 'lucide-react';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
@@ -16,10 +16,7 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
   const { isIncidenciasSheetOpen, isLoadingRoute, isLoadingIncidencias, focusedMiniMapId, miniMaps, historyVehicle } = state;
   const mapFlags = getMapFlags(state);
   const [isPending, startTransition] = useTransition();
-  const [, setFocusedMiniMapQuery] = useQueryState(
-    'focusedMinimap',
-    parseAsString.withOptions({ history: 'push', shallow: true }),
-  );
+  const [, setFocusedMiniMapQuery] = useFocusedMinimapQuery();
 
   const handleBack = () => {
     startTransition(() => {
