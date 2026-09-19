@@ -6,7 +6,8 @@
  * Orchestrates the secondary tactical displays and swaps focus between detail and overview.
  */
 
-import React, { useTransition } from 'react';
+import React, { useEffect, useTransition } from 'react';
+import { parseAsString, useQueryState } from 'nuqs';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import { getMapFlags } from '@/context/fleet-selectors';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,22 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   
   const mapFlags = getMapFlags(state);
   const [isPending, startTransition] = useTransition();
+  const [focusedMiniMapQuery, setFocusedMiniMapQuery] = useQueryState(
+    'focusedMinimap',
+    parseAsString.withOptions({ history: 'push', shallow: true }),
+  );
+
+  useEffect(() => {
+    const validQueryId = focusedMiniMapQuery && miniMaps.some((map) => map.id === focusedMiniMapQuery)
+      ? focusedMiniMapQuery
+      : null;
+
+    if (validQueryId && validQueryId !== focusedMiniMapId) {
+      dispatch({ type: 'FOCUS_MINIMAP', payload: validQueryId });
+    } else if (!validQueryId && focusedMiniMapId) {
+      dispatch({ type: 'UNFOCUS_MINIMAP' });
+    }
+  }, [dispatch, focusedMiniMapId, focusedMiniMapQuery, miniMaps]);
 
   // Tactical Role Reversal:
   // When focused, secondary radars hide and the General Overview enters as a mini.
@@ -66,14 +83,14 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
   };
 
   const handleUnfocus = () => {
-    // This is a small, user-blocking interaction. Dispatch synchronously so
-    // the overview returns immediately instead of waiting in a transition lane.
+    void setFocusedMiniMapQuery(null);
     dispatch({ type: 'UNFOCUS_MINIMAP' });
   };
 
   const handleFocus = (id: string) => {
+    void setFocusedMiniMapQuery(id);
     startTransition(() => {
-        dispatch({ type: 'FOCUS_MINIMAP', payload: id });
+      dispatch({ type: 'FOCUS_MINIMAP', payload: id });
     });
   };
 

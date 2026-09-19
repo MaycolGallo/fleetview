@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import React from 'react';
 import { FleetProvider } from '@/context/fleet-context';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -13,11 +14,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider delayDuration={0}>
-        <FleetProvider>
-          {children}
-        </FleetProvider>
-      </TooltipProvider>
+      <NuqsAdapter>
+        <TooltipProvider delayDuration={0}>
+          <FleetProvider>
+            {children}
+          </FleetProvider>
+        </TooltipProvider>
+      </NuqsAdapter>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
