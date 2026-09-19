@@ -90,12 +90,12 @@ export function MiniMapOverlayGrid({ apiKey }: { apiKey: string }) {
     }
   };
 
-  const handleUnfocus = async () => {
+  const handleUnfocus = () => {
+    // Change application state immediately. URL synchronization must never block
+    // the visible restore action or replay the previous query during navigation.
     restoringOverviewRef.current = true;
-    // Clear the URL first so the URL-to-state effect cannot restore the old focus.
-    await setFocusedMiniMapQuery(null);
     dispatch({ type: 'UNFOCUS_MINIMAP' });
-    restoringOverviewRef.current = false;
+    void setFocusedMiniMapQuery(null);
   };
 
   const handleFocus = (id: string) => {
