@@ -18,6 +18,7 @@ import { MapboxRoutePolylines } from './mapbox-route-polylines';
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 interface FleetMapboxMapProps {
+  apiKey?: string;
   side?: 'ida' | 'vuelta';
   miniMapId?: string;
   manualVehicleIds?: number[];

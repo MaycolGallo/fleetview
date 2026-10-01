@@ -23,12 +23,10 @@ import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { APIProvider } from '@vis.gl/react-google-maps';
+import { MapProviderRenderer } from './map-provider-registry';
 import { useRoutePlayback } from '@/hooks/use-route-playback';
 
 // Stable Dynamic Imports
-const FleetMap = dynamic(() => import('./fleet-map'), { ssr: false, loading: () => <Skeleton className="h-full w-full" /> });
-const FleetLeafletMap = dynamic(() => import('./leaflet/fleet-leaflet-map'), { ssr: false, loading: () => <Skeleton className="h-full w-full" /> });
-const FleetMapboxMap = dynamic(() => import('./mapbox/fleet-mapbox-map'), { ssr: false, loading: () => <Skeleton className="h-full w-full" /> });
 const MiniMapOverlayGrid = dynamic(() => import('./minimap/minimap-overlay-grid').then(mod => mod.MiniMapOverlayGrid), { ssr: false });
 
 /**
@@ -48,16 +46,10 @@ const TacticalMapLayer = memo(({
     isMainMap?: boolean,
     isVisible?: boolean
 }) => {
-    const mapInstance = useMemo(() => {
-        switch (provider) {
-            case 'leaflet':
-                return <FleetLeafletMap side={side} isMainMap={isMainMap} isVisible={isVisible} />;
-            case 'mapbox':
-                return <FleetMapboxMap side={side} isMainMap={isMainMap} isVisible={isVisible} />;
-            default:
-                return <FleetMap apiKey={apiKey} side={side} isMainMap={isMainMap} isVisible={isVisible} />;
-        }
-    }, [provider, side, isMainMap, apiKey, isVisible]);
+    const mapInstance = useMemo(
+      () => <MapProviderRenderer provider={provider} apiKey={apiKey} side={side} isMainMap={isMainMap} isVisible={isVisible} />,
+      [provider, side, isMainMap, apiKey, isVisible],
+    );
 
     return (
       <motion.div 

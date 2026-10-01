@@ -3,10 +3,9 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import type { MapProvider } from '@/lib/types';
-import type { MapRef } from 'react-map-gl';
-import L from 'leaflet';
+import { mapProviderRegistry } from '@/lib/map/provider-registry';
 
-type MapInstance = google.maps.Map | L.Map | MapRef | null | undefined;
+type MapInstance = unknown;
 
 // Helper: Check if a vehicle belongs to a minimap
 function isVehicleInMinimap(miniMapId: string | undefined, targetVehicleId: number, miniMaps: any[]): boolean {
@@ -74,19 +73,7 @@ export function useMapViewport({
 
   const triggerResize = useCallback(() => {
     if (!map) return;
-    switch (provider) {
-      case 'leaflet': 
-        if ('invalidateSize' in map) (map as L.Map).invalidateSize({ animate: false, noMove: true }); 
-        break;
-      case 'mapbox': 
-        if ('resize' in map) (map as MapRef).resize(); 
-        break;
-      case 'google': 
-        if (typeof google !== 'undefined' && map instanceof google.maps.Map) {
-          google.maps.event.trigger(map, 'resize');
-        }
-        break;
-    }
+    mapProviderRegistry.get(provider, map).resize();
   }, [map, provider]);
 
   // Reactive Logic for Specific Viewport Actions
@@ -240,70 +227,10 @@ export function useMapViewport({
 
 async function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number, padding: ViewportPadding) {
   if (!map) return;
-  switch (provider) {
-    case 'google':
-      if (map instanceof google.maps.Map) {
-        // Using fitBounds on a tiny box to respect lateral padding during "pan"
-        const offset = 0.0001;
-        const bounds = new google.maps.LatLngBounds(
-          { lat: point.lat - offset, lng: point.lng - offset },
-          { lat: point.lat + offset, lng: point.lng + offset }
-        );
-        map.fitBounds(bounds, padding);
-      }
-      break;
-    case 'leaflet': 
-      if ('setView' in map) (map as L.Map).setView([point.lat, point.lng], zoom, { animate: true }); 
-      break;
-    case 'mapbox': 
-      if ('flyTo' in map) (map as MapRef).flyTo({ center: [point.lng, point.lat], zoom, duration: 800, padding }); 
-      break;
-  }
-  await waitForViewportSettled(map, provider);
+  await mapProviderRegistry.get(provider, map).panTo(point, zoom, padding);
 }
 
 async function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat: number, lng: number }[], padding: ViewportPadding) {
   if (!map || points.length === 0) return;
-  switch (provider) {
-    case 'google':
-      if (map instanceof google.maps.Map) {
-        const bounds = new google.maps.LatLngBounds();
-        points.forEach(p => bounds.extend(p));
-        map.fitBounds(bounds, padding);
-      }
-      break;
-    case 'leaflet':
-      if ('fitBounds' in map) {
-        const bounds = L.latLngBounds(points.map(p => [p.lat, p.lng]));
-        (map as L.Map).fitBounds(bounds, { 
-          paddingTopLeft: [padding.left, padding.top], 
-          paddingBottomRight: [padding.right, padding.bottom], 
-          animate: true, 
-          maxZoom: 16 
-        });
-      }
-      break;
-    case 'mapbox':
-      if ('fitBounds' in map) {
-        const initial = points[0];
-        const bounds: [[number, number], [number, number]] = points.reduce(
-          (acc, p) => [
-            [Math.min(acc[0][0], p.lng), Math.min(acc[0][1], p.lat)],
-            [Math.max(acc[1][0], p.lng), Math.max(acc[1][1], p.lat)]
-          ] as [[number, number], [number, number]], 
-          [[initial.lng, initial.lat], [initial.lng, initial.lat]] as [[number, number], [number, number]]
-        );
-        (map as MapRef).fitBounds(bounds, { padding, maxZoom: 16 });
-      }
-      break;
-    }
-  await waitForViewportSettled(map, provider);
+  await mapProviderRegistry.get(provider, map).fitBounds(points, padding);
 }
-
-function waitForViewportSettled(map: MapInstance, provider: MapProvider) {
-  if (!map) return Promise.resolve();
-  const duration = provider === 'mapbox' ? 850 : provider === 'leaflet' ? 450 : 500;
-  return new Promise<void>((resolve) => window.setTimeout(resolve, duration));
-}
-
-

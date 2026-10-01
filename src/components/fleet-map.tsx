@@ -2,7 +2,7 @@
 "use client";
 
 import { Map, ColorScheme, useMap } from '@vis.gl/react-google-maps';
-import { useFleetState } from '@/context/fleet-context';
+import { useMapState } from '@/context/map-context';
 import { LIGHT_MAP_ID, DARK_MAP_ID } from '@/lib/map-styles';
 import { MapControl } from './map-control';
 import { useSearchParams } from 'next/navigation';
@@ -22,29 +22,28 @@ interface FleetMapProps {
  */
 function TrafficLayer() {
   const map = useMap();
-  const { state } = useFleetState();
+  const { showTraffic } = useMapState();
 
   useEffect(() => {
     if (!map) return;
 
     const trafficLayer = new google.maps.TrafficLayer();
-    if (state.showTraffic) {
+    if (showTraffic) {
       trafficLayer.setMap(map);
     } else {
       trafficLayer.setMap(null);
     }
 
     return () => trafficLayer.setMap(null);
-  }, [map, state.showTraffic]);
+  }, [map, showTraffic]);
 
   return null;
 }
 
 export default function FleetMap({ apiKey, side, miniMapId, manualVehicleIds, isMainMap, isVisible = true }: FleetMapProps) {
-  const { state } = useFleetState();
+  const { isMapDark, focusedMiniMapId, miniMaps, mapType } = useMapState();
   const searchParams = useSearchParams();
   const isDemoMode = searchParams.get('demo') === 'true';
-  const { isMapDark, focusedMiniMapId, miniMaps, mapType } = state;
 
   // Derive display context
   const isFocusMode = isMainMap && focusedMiniMapId;

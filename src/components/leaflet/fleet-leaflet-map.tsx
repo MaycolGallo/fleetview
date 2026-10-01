@@ -14,6 +14,7 @@ import { LeafletRoutePolylines } from './leaflet-route-polylines';
 import { useDeoverlappedPositions } from '@/hooks/use-deoverlapped-positions';
 
 interface FleetLeafletMapProps {
+  apiKey?: string;
   side?: 'ida' | 'vuelta';
   miniMapId?: string;
   manualVehicleIds?: number[];
