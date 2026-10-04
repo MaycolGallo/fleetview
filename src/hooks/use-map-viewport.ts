@@ -1,18 +1,20 @@
 'use client';
 
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback, useMemo, useRef } from 'react';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import type { MapProvider } from '@/lib/types';
 import { mapProviderRegistry } from '@/lib/map/provider-registry';
+import { createViewportActions } from '@/lib/map/viewport-actions';
+import {
+  PADDING_MINIMAP,
+  PADDING_ROUTE,
+  PADDING_STANDARD,
+  pointsKey,
+  shouldMapHandleVehicle,
+  splitRoutePoints,
+} from '@/lib/map/viewport-policy';
 
 type MapInstance = unknown;
-
-// Helper: Check if a vehicle belongs to a minimap
-function isVehicleInMinimap(miniMapId: string | undefined, targetVehicleId: number, miniMaps: any[]): boolean {
-  if (!miniMapId) return true; // Overview mini shows all vehicles
-  const minimap = miniMaps.find(m => m.id === miniMapId);
-  return minimap?.vehicleIds.includes(targetVehicleId) ?? false;
-}
 
 interface UseMapViewportProps {
   map: MapInstance;
@@ -23,19 +25,6 @@ interface UseMapViewportProps {
   manualVehicleIds?: number[];
   isVisible?: boolean;
 }
-
-interface ViewportPadding {
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-}
-
-// Tactical Padding Constants
-const PADDING_STANDARD: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 80 };
-const PADDING_ROUTE: ViewportPadding = { top: 80, bottom: 280, left: 80, right: 80 };
-const PADDING_WITH_GRID: ViewportPadding = { top: 80, bottom: 80, left: 80, right: 440 };
-const PADDING_MINIMAP: ViewportPadding = { top: 20, bottom: 20, left: 20, right: 20 };
 
 // Debounce timer for performPan to prevent rapid successive pans
 let lastPanTime = 0;
@@ -71,14 +60,22 @@ export function useMapViewport({
     mapControlPadding
   } = state;
 
+  const adapter = useMemo(
+    () => (map ? mapProviderRegistry.get(provider, map) : null),
+    [map, provider],
+  );
+  const viewportActions = useMemo(
+    () => (adapter ? createViewportActions(adapter) : null),
+    [adapter],
+  );
+
   const triggerResize = useCallback(() => {
-    if (!map) return;
-    mapProviderRegistry.get(provider, map).resize();
-  }, [map, provider]);
+    adapter?.resize();
+  }, [adapter]);
 
   // Reactive Logic for Specific Viewport Actions
   useEffect(() => {
-    if (!map) return;
+    if (!viewportActions) return;
     if (mapViewport.type === 'idle' || mapViewport.type === 'initial') return;
 
     const isGridActive = isMainMap && (visibleMiniMapIds.length > 0 || !!focusedMiniMapId);
@@ -88,24 +85,21 @@ export function useMapViewport({
       const targetId = (mapViewport as any).vehicleId;
       
       // Determine if this map should respond to the pan request
-      if (isMainMap) {
-        if (focusedMiniMapId) {
-          const shouldPan = miniMaps.find(m => m.id === focusedMiniMapId)?.vehicleIds.includes(targetId);
-          if (!shouldPan) return;
-        } else {
-          const radarIds = miniMaps.filter(m => visibleMiniMapIds.includes(m.id)).flatMap(m => m.vehicleIds);
-          if (radarIds.includes(targetId)) return;
-        }
-      } else {
-        if (!isVehicleInMinimap(miniMapId, targetId, miniMaps)) return;
-      }
+      if (!shouldMapHandleVehicle({
+        isMainMap,
+        focusedMiniMapId,
+        visibleMiniMapIds,
+        miniMapId,
+        miniMaps,
+        targetId,
+      })) return;
 
       // Debounce rapid pan requests
       const now = Date.now();
       if (now - lastPanTime <= PAN_DEBOUNCE_MS) return;
       lastPanTime = now;
 
-      await performPan(map, provider, (mapViewport as any).payload, 16, currentPadding);
+      await viewportActions.pan((mapViewport as any).payload, 16, currentPadding);
     };
 
     const generation = ++actionGenerationRef.current;
@@ -118,10 +112,10 @@ export function useMapViewport({
           await handlePanToVehicle();
           break;
         case 'fit_bounds':
-          await performFitBounds(map, provider, (mapViewport as any).payload, currentPadding);
+          await viewportActions.fit((mapViewport as any).payload, currentPadding);
           break;
         case 'fit_route':
-          await performFitBounds(map, provider, (mapViewport as any).payload, PADDING_ROUTE);
+          await viewportActions.fit((mapViewport as any).payload, PADDING_ROUTE);
           break;
       }
 
@@ -132,11 +126,11 @@ export function useMapViewport({
     };
 
     void runAction();
-  }, [map, mapViewport, provider, isMainMap, miniMapId, focusedMiniMapId, visibleMiniMapIds, miniMaps, dispatch]);
+  }, [mapViewport, viewportActions, isMainMap, miniMapId, focusedMiniMapId, visibleMiniMapIds, miniMaps, dispatch, mapControlPadding]);
 
   // Auto-Sync Logic for State Transitions
   useEffect(() => {
-    if (!map) return;
+    if (!viewportActions) return;
     
     // Resize with staggered timers
     triggerResize();
@@ -184,7 +178,7 @@ export function useMapViewport({
         .map(v => ({ lat: v.lat, lng: v.lng }));
 
       // Only fit bounds if points have actually changed
-      const boundsKey = JSON.stringify(points.sort((a, b) => a.lat - b.lat || a.lng - b.lng));
+      const boundsKey = pointsKey(points);
       if (lastFittedBoundsRef.current === boundsKey) {
         return cleanup(t1, t2);
       }
@@ -194,43 +188,23 @@ export function useMapViewport({
         case 0:
           return cleanup(t1, t2);
         case 1:
-          performPan(map, provider, points[0], 16, currentPadding);
+          void viewportActions.pan(points[0], 16, currentPadding);
           return cleanup(t1, t2);
         default:
-          performFitBounds(map, provider, points, currentPadding);
-          const t3 = setTimeout(() => performFitBounds(map, provider, points, currentPadding), 400);
+          void viewportActions.fit(points, currentPadding);
+          const t3 = setTimeout(() => void viewportActions.fit(points, currentPadding), 400);
           return cleanup(t1, t2, t3);
       }
     }
 
     // Handle split view route fitting
     if (isSplitView && !selectedVehicle && despachoBaseRoute.length > 0) {
-      const half = Math.ceil(despachoBaseRoute.length / 2);
-      const points = (() => {
-        switch (side) {
-          case 'ida':
-            return despachoBaseRoute.slice(0, half);
-          case 'vuelta':
-            return despachoBaseRoute.slice(half - 1);
-          default:
-            return [];
-        }
-      })();
+      const points = splitRoutePoints(despachoBaseRoute, side);
       if (points.length > 0) {
-        performFitBounds(map, provider, points, PADDING_STANDARD);
+        void viewportActions.fit(points, PADDING_STANDARD);
       }
     }
 
     return cleanup(t1, t2);
-  }, [map, provider, isMainMap, side, miniMapId, isSplitView, focusedMiniMapId, !!historyVehicle, isIncidenciasSheetOpen, triggerResize, selectedVehicle, vehicles, miniMaps, visibleMiniMapIds, despachoBaseRoute, isVisible, manualVehicleIds]);
-}
-
-async function performPan(map: MapInstance, provider: MapProvider, point: { lat: number, lng: number }, zoom: number, padding: ViewportPadding) {
-  if (!map) return;
-  await mapProviderRegistry.get(provider, map).panTo(point, zoom, padding);
-}
-
-async function performFitBounds(map: MapInstance, provider: MapProvider, points: { lat: number, lng: number }[], padding: ViewportPadding) {
-  if (!map || points.length === 0) return;
-  await mapProviderRegistry.get(provider, map).fitBounds(points, padding);
+  }, [viewportActions, isMainMap, side, miniMapId, isSplitView, focusedMiniMapId, !!historyVehicle, isIncidenciasSheetOpen, triggerResize, selectedVehicle, vehicles, miniMaps, visibleMiniMapIds, despachoBaseRoute, isVisible, manualVehicleIds, mapControlPadding]);
 }
