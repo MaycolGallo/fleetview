@@ -5,7 +5,6 @@ import { useMap } from 'react-leaflet';
 import L from 'leaflet';
 import {
   downloadTile,
-  openTilesDataBase,
   saveTile,
   tileLayerOffline,
 } from 'leaflet.offline';
@@ -45,11 +44,7 @@ export function LeafletOfflineLayer({ url, attribution, enabled = true }: Leafle
       );
     };
 
-    void openTilesDataBase()
-      .then(() => cacheVisibleTiles())
-      .catch(() => {
-        // IndexedDB can be unavailable in private or restricted browser contexts.
-      });
+    void cacheVisibleTiles();
     map.on('moveend zoomend', cacheVisibleTiles);
 
     return () => {
