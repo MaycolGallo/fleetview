@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useEffect } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
@@ -12,6 +12,7 @@ import { LeafletVehicleMarker } from './leaflet-vehicle-marker';
 import { useMapViewport } from '@/hooks/use-map-viewport';
 import { LeafletRoutePolylines } from './leaflet-route-polylines';
 import { useDeoverlappedPositions } from '@/hooks/use-deoverlapped-positions';
+import { LeafletOfflineLayer } from './leaflet-offline-layer';
 
 interface FleetLeafletMapProps {
   apiKey?: string;
@@ -126,7 +127,7 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
         className="w-full h-full"
         zoomControl={false}
       >
-        <TileLayer key={`${tileUrl}-${isMapDark}`} url={tileUrl} attribution={attribution} />
+        <LeafletOfflineLayer key={`${tileUrl}-${isMapDark}`} url={tileUrl} attribution={attribution} />
         
         <MapViewportSync {...props} isVisible={isVisible} />
 

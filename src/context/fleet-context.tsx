@@ -1,12 +1,13 @@
 
 'use client';
 
-import React, { createContext, useContext, useEffect, useRef, useSyncExternalStore, type Dispatch } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useSyncExternalStore } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import type { Vehicle, FleetState, MiniMapGroup, Notification, MapProvider } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
-import { fleetReducer, getInitialState, type FleetAction } from './fleet-reducer';
+import { getInitialState } from './fleet-reducer';
+import { createFleetStore, type FleetStore } from './fleet-store';
 import { fetchVehicles, fetchRouteHistory, fetchIncidencias, fetchMiniMaps } from '@/services/fleet-api';
 
 const STORAGE_KEY = 'fleet_minimaps_state_v2';
@@ -17,33 +18,8 @@ interface FleetStateContextValue {
     error: Error | null;
 }
 
-interface FleetStore {
-    getState: () => FleetState;
-    subscribe: (listener: () => void) => () => void;
-    dispatch: Dispatch<FleetAction>;
-}
-
 const FleetStateContext = createContext<FleetStore | undefined>(undefined);
-const FleetDispatchContext = createContext<Dispatch<FleetAction> | undefined>(undefined);
-
-function createFleetStore(): FleetStore {
-    let state = getInitialState();
-    const listeners = new Set<() => void>();
-
-    return {
-        getState: () => state,
-        subscribe: (listener) => {
-            listeners.add(listener);
-            return () => listeners.delete(listener);
-        },
-        dispatch: (action) => {
-            const nextState = fleetReducer(state, action);
-            if (Object.is(nextState, state)) return;
-            state = nextState;
-            listeners.forEach((listener) => listener());
-        },
-    };
-}
+const FleetDispatchContext = createContext<FleetStore['dispatch'] | undefined>(undefined);
 
 export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     const storeRef = useRef<FleetStore | null>(null);
