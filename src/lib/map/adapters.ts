@@ -1,8 +1,9 @@
-import L from 'leaflet';
+import type { Map as LeafletMap } from 'leaflet';
 import type { MapRef } from 'react-map-gl';
 import type { MapAdapter, MapPadding, MapPoint } from './ports';
 
-const settle = (duration: number) => new Promise<void>((resolve) => window.setTimeout(resolve, duration));
+const settle = (duration: number) =>
+  new Promise<void>((resolve) => globalThis.setTimeout(resolve, duration));
 
 export function createGoogleAdapter(map: google.maps.Map | null | undefined): MapAdapter<google.maps.Map> {
   return {
@@ -30,7 +31,7 @@ export function createGoogleAdapter(map: google.maps.Map | null | undefined): Ma
   };
 }
 
-export function createLeafletAdapter(map: L.Map | null | undefined): MapAdapter {
+export function createLeafletAdapter(map: LeafletMap | null | undefined): MapAdapter {
   return {
     provider: 'leaflet', map,
     panTo(point, zoom) {
@@ -39,7 +40,7 @@ export function createLeafletAdapter(map: L.Map | null | undefined): MapAdapter 
     },
     fitBounds(points, padding) {
       if (!map || points.length === 0) return Promise.resolve();
-      const bounds = L.latLngBounds(points.map((point) => [point.lat, point.lng]));
+      const bounds = points.map((point) => [point.lat, point.lng] as [number, number]);
       map.fitBounds(bounds, {
         paddingTopLeft: [padding.left, padding.top],
         paddingBottomRight: [padding.right, padding.bottom],
