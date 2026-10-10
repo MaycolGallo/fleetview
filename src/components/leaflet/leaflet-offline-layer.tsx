@@ -3,7 +3,12 @@
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { tileLayerOffline } from 'leaflet.offline';
+import {
+  downloadTile,
+  openTilesDataBase,
+  saveTile,
+  tileLayerOffline,
+} from 'leaflet.offline';
 
 interface LeafletOfflineLayerProps {
   url: string;
@@ -24,7 +29,32 @@ export function LeafletOfflineLayer({ url, attribution, enabled = true }: Leafle
     });
     layer.addTo(map);
 
+    let cancelled = false;
+    const cacheVisibleTiles = async () => {
+      const tiles = layer.getTileUrls(map.getPixelBounds(), map.getZoom());
+      await Promise.all(
+        tiles.map(async (tile) => {
+          if (cancelled) return;
+          try {
+            const blob = await downloadTile(tile.url);
+            if (!cancelled) await saveTile(tile, blob);
+          } catch {
+            // Tile caching is best effort; the online layer remains usable.
+          }
+        }),
+      );
+    };
+
+    void openTilesDataBase()
+      .then(() => cacheVisibleTiles())
+      .catch(() => {
+        // IndexedDB can be unavailable in private or restricted browser contexts.
+      });
+    map.on('moveend zoomend', cacheVisibleTiles);
+
     return () => {
+      cancelled = true;
+      map.off('moveend zoomend', cacheVisibleTiles);
       map.removeLayer(layer);
     };
   }, [attribution, enabled, map, url]);
