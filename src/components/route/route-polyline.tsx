@@ -95,6 +95,7 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
 
         if (!map) return;
         const newPolylines: google.maps.Polyline[] = [];
+    const pointMarkers: google.maps.Marker[] = [];
 
         // SCENARIO 1: Incidencias Timeline (Red path)
         if (incidenciasPath) {
@@ -140,6 +141,25 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
                 
                 polyline.addListener('click', () => dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: index }));
                 newPolylines.push(polyline);
+
+                group.records.forEach((record) => {
+                    const marker = new google.maps.Marker({
+                        position: { lat: record.lat, lng: record.lng },
+                        map,
+                        opacity: 0.9,
+                        title: `Fecha: ${new Date(record.fecha * 1000).toLocaleString()} | Velocidad: ${record.velocidad || '0'} km/h | ${record.lat.toFixed(6)}, ${record.lng.toFixed(6)}`,
+                        icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            scale: 3,
+                            fillColor: color,
+                            fillOpacity: 1,
+                            strokeColor: '#ffffff',
+                            strokeWeight: 1,
+                        },
+                        zIndex: isSelected ? 5 : 3,
+                    });
+                    pointMarkers.push(marker);
+                });
             });
             polylinesRef.current = newPolylines;
             return;
@@ -171,6 +191,7 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
                 google.maps.event.clearInstanceListeners(p);
                 p.setMap(null);
             });
+            pointMarkers.forEach((marker) => marker.setMap(null));
         };
     }, [map, displayGroups, selectedSegmentIndex, dispatch, isIncidenciasSheetOpen, incidenciasPath, despachoRoutePoints, side, historyVehicle]);
   

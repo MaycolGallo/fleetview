@@ -5,8 +5,8 @@
  * Manages Historical paths, Baseline references, and Incident timelines.
  */
 
-import React, { useMemo } from 'react';
-import { Polyline, CircleMarker } from 'react-leaflet';
+import React, { Fragment, useMemo } from 'react';
+import { Polyline, CircleMarker, Tooltip } from 'react-leaflet';
 import { useFleetState, useFleetDispatch } from '@/context/fleet-context';
 import L from 'leaflet';
 
@@ -79,7 +79,8 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
              const weight = isSelected ? 10 : 6;
              
              return (
-              <Polyline 
+              <Fragment key={`hist-segment-${idx}-${isSelected}-${playbackIndex}`}>
+                <Polyline
                 key={`hist-line-${idx}-${isSelected}-${playbackIndex}`}
                 positions={points} 
                 color={color} 
@@ -97,7 +98,28 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
                     dispatch({ type: 'SELECT_ROUTE_SEGMENT', payload: idx });
                   }
                 }}
-              />
+                />
+                {points.map((point, pointIndex) => {
+                  const record = group.records[pointIndex];
+                  if (!record) return null;
+                  return (
+                    <CircleMarker
+                      key={`hist-point-${idx}-${pointIndex}-${isSelected}`}
+                      center={point}
+                      radius={3}
+                      pathOptions={{ color: group.color, fillColor: group.color, fillOpacity: 0.95, weight: 1 }}
+                    >
+                      <Tooltip direction="top" offset={[0, -4]} opacity={0.95}>
+                        <div className="space-y-0.5 text-xs">
+                          <div><strong>Fecha:</strong> {new Date(record.fecha * 1000).toLocaleString()}</div>
+                          <div><strong>Velocidad:</strong> {record.velocidad || '0'} km/h</div>
+                          <div><strong>Coordenadas:</strong> {record.lat.toFixed(6)}, {record.lng.toFixed(6)}</div>
+                        </div>
+                      </Tooltip>
+                    </CircleMarker>
+                  );
+                })}
+              </Fragment>
             );
            }
 

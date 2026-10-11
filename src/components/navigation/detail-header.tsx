@@ -78,7 +78,9 @@ export function DetailHeader({ apiKey }: { apiKey: string }) {
               {isIncidenciasSheetOpen
                 ? 'Cerrar Incidencias'
                 : focusedMiniMapId
-                ? `Restaurar Vista General`
+                ? 'Restaurar Vista General'
+                : mapFlags.isRouteHistoryView
+                ? 'Volver a toda la flota'
                 : 'Volver'}
             </Button>
           )}
