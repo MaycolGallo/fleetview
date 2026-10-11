@@ -1,7 +1,13 @@
 import type { ComponentType } from 'react';
+import dynamic from 'next/dynamic';
 import FleetMap from './fleet-map';
-import FleetLeafletMap from './leaflet/fleet-leaflet-map';
-import FleetMapboxMap from './mapbox/fleet-mapbox-map';
+
+const FleetLeafletMap = dynamic(() => import('./leaflet/fleet-leaflet-map'), {
+  ssr: false,
+});
+const FleetMapboxMap = dynamic(() => import('./mapbox/fleet-mapbox-map'), {
+  ssr: false,
+});
 
 type MapRendererProps = {
   apiKey: string;
