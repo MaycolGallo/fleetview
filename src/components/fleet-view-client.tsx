@@ -232,7 +232,9 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
             )}
         </AnimatePresence>
 
-        {isDetailView && <DetailHeader apiKey={apiKey} />}
+        {(isDetailView || historyVehicle || mapFlags.isRouteHistoryView || isIncidenciasSheetOpen) && (
+          <DetailHeader apiKey={apiKey} />
+        )}
 
         {isMobile && !isDetailView && activePanel && (
             <Drawer 
