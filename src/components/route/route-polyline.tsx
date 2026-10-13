@@ -151,9 +151,9 @@ export function RouteSegments({ side }: RouteSegmentsProps) {
                         icon: {
                             path: google.maps.SymbolPath.CIRCLE,
                             scale: 3,
-                            fillColor: color,
-                            fillOpacity: 1,
-                            strokeColor: '#ffffff',
+fillColor: '#22d3ee',
+  fillOpacity: 1,
+  strokeColor: '#ffffff',
                             strokeWeight: 1,
                         },
                         zIndex: isSelected ? 5 : 3,

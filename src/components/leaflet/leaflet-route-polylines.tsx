@@ -107,7 +107,7 @@ export function LeafletRoutePolylines({ side }: LeafletRoutePolylinesProps) {
                       key={`hist-point-${idx}-${pointIndex}-${isSelected}`}
                       center={point}
                       radius={3}
-                      pathOptions={{ color: group.color, fillColor: group.color, fillOpacity: 0.95, weight: 1 }}
+                      pathOptions={{ color: '#22d3ee', fillColor: '#22d3ee', fillOpacity: 1, weight: 1 }}
                     >
                       <Tooltip direction="top" offset={[0, -4]} opacity={0.95}>
                         <div className="space-y-0.5 text-xs">
