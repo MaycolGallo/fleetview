@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { FleetState, MiniMapGroup, MapProvider, PanelType, MapType, RemoteActionRecord } from '@/lib/types';
+import type { FleetState, Geofence, MiniMapGroup, MapProvider, PanelType, MapType, RemoteActionRecord } from '@/lib/types';
 import { DESPACHO_BASE_ROUTE } from '@/services/fleet-api';
 
 export type FleetAction =
@@ -13,6 +13,8 @@ export type FleetAction =
   | { type: 'SET_ALL_VEHICLES_VISIBILITY'; payload: { ids: number[], visible: boolean } }
   | { type: 'SET_STATUS_FILTER'; payload: string[] }
   | { type: 'SET_ACTIVE_PANEL'; payload: PanelType }
+  | { type: 'ADD_GEOFENCE'; payload: Geofence }
+  | { type: 'REMOVE_GEOFENCE'; payload: string }
   | { type: 'START_ROUTE_LOADING'; payload: any }
   | { type: 'SET_ROUTE_HISTORY'; payload: any }
   | { type: 'HIDE_ROUTE_SHEET' }
@@ -87,6 +89,7 @@ export const getInitialState = (): FleetState => ({
   splitDirection: 'horizontal',
   wasSplitViewBeforeRoute: false,
   activePanel: 'vehicles',
+  geofences: [],
   incidencias: [],
   isLoadingIncidencias: false,
   isIncidenciasSheetOpen: false,
@@ -338,6 +341,8 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'TOGGLE_SPLIT_VIEW': return { ...state, isSplitView: !state.isSplitView };
     case 'TOGGLE_SPLIT_DIRECTION': return { ...state, splitDirection: state.splitDirection === 'horizontal' ? 'vertical' : 'horizontal' };
     case 'SET_ACTIVE_PANEL': return { ...state, activePanel: action.payload };
+  case 'ADD_GEOFENCE': return { ...state, geofences: [...state.geofences, action.payload] };
+  case 'REMOVE_GEOFENCE': return { ...state, geofences: state.geofences.filter((geofence) => geofence.id !== action.payload) };
     case 'VIEWPORT_ACTION_COMPLETE': return { ...state, mapViewport: { type: 'idle' } };
     case 'CLEAR_ALL_MINIMAPS': return { ...state, miniMaps: [], visibleMiniMapIds: [], allTrackedVehicleIds: [], focusedMiniMapId: null };
     case 'TOGGLE_MARKER_CLUSTERING': return { ...state, enableMarkerClustering: action.payload ?? !state.enableMarkerClustering };

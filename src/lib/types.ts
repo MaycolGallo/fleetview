@@ -178,7 +178,9 @@ export interface MiniMapGroup {
 export type MapProvider = 'google' | 'leaflet' | 'mapbox';
 export type MapType = 'standard' | 'satellite';
 
-export type PanelType = 'vehicles' | 'minimaps' | 'settings' | 'share' | 'stats' | null;
+export type GeofenceEvent = 'enter' | 'exit' | 'enter_first' | 'exit_first';
+export interface Geofence { id: string; name: string; shape: 'circle' | 'polygon'; center: { lat: number; lng: number } | null; radius: number | null; polygon: { lat: number; lng: number }[] | null; event: GeofenceEvent; vehicleId: number | null; enabled: boolean; }
+export type PanelType = 'vehicles' | 'minimaps' | 'geofences' | 'settings' | 'share' | 'stats' | null;
 
 export type MapFlags = {
   isMainView: boolean;
@@ -218,6 +220,7 @@ export interface FleetState {
   splitDirection: 'horizontal' | 'vertical';
   wasSplitViewBeforeRoute: boolean;
   activePanel: PanelType;
+  geofences: Geofence[];
   // Incidencias
   incidencias: Incidencia[];
   isLoadingIncidencias: boolean;

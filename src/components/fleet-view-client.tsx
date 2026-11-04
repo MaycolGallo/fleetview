@@ -17,6 +17,7 @@ import { MiniMapManagementContent } from './minimap/minimap-management-content';
 import { SettingsPanelContent } from './settings/settings-panel-content';
 import { SharePanelContent } from './sharing/share-panel-content';
 import { FleetAnalyticsContent } from './analytics/fleet-analytics-content';
+import { GeofencePanelContent } from './geofences/geofence-panel-content';
 import { PublicFleetView } from './sharing/public-fleet-view';
 import { useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -222,6 +223,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
                             {activePanel === 'settings' && <SettingsPanelContent />}
                             {activePanel === 'share' && <SharePanelContent />}
                             {activePanel === 'stats' && <FleetAnalyticsContent />}
+  {activePanel === 'geofences' && <GeofencePanelContent />}
                             </div>
                         </motion.div>
                         )}
@@ -254,6 +256,7 @@ export default function FleetViewClient({ apiKey }: { apiKey: string }) {
                     {activePanel === 'vehicles' && <VehiclePanelContent onVehicleSelect={() => closeMobilePanel()} />}
                     {activePanel === 'minimaps' && <MiniMapManagementContent />}
                     {activePanel === 'stats' && <FleetAnalyticsContent />}
+  {activePanel === 'geofences' && <GeofencePanelContent />}
                     {activePanel === 'share' && <SharePanelContent />}
                 </div>
             </DrawerContent>
