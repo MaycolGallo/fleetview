@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useMemo, useEffect } from 'react';
-import { MapContainer, useMap } from 'react-leaflet';
+import { Circle, MapContainer, Polygon, Tooltip, useMap } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
@@ -43,6 +43,15 @@ interface VehicleLayerProps {
   selectedVehicleId: number | null;
   isMainMap?: boolean;
   miniMapId?: string;
+}
+
+function GeofenceLayer() {
+  const { state } = useFleetState();
+  return <>{state.geofences.filter((geofence) => geofence.enabled).map((geofence) => geofence.shape === 'circle' && geofence.center ? (
+    <Circle key={geofence.id} center={geofence.center} radius={geofence.radius ?? 0} pathOptions={{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.12, weight: 2 }}><Tooltip>{geofence.name}</Tooltip></Circle>
+  ) : geofence.polygon ? (
+    <Polygon key={geofence.id} positions={geofence.polygon} pathOptions={{ color: '#a78bfa', fillColor: '#a78bfa', fillOpacity: 0.12, weight: 2 }}><Tooltip>{geofence.name}</Tooltip></Polygon>
+  ) : null)}</>;
 }
 
 function VehicleLayer({ vehicles, selectedVehicleId, isMainMap, miniMapId }: VehicleLayerProps) {
@@ -132,6 +141,7 @@ export default function FleetLeafletMap(props: FleetLeafletMapProps) {
         <MapViewportSync {...props} isVisible={isVisible} />
 
         <LeafletRoutePolylines side={side} />
+        <GeofenceLayer />
 
         <VehicleLayer
           vehicles={mapVehicles}

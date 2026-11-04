@@ -15,6 +15,7 @@ export type FleetAction =
   | { type: 'SET_ACTIVE_PANEL'; payload: PanelType }
   | { type: 'ADD_GEOFENCE'; payload: Geofence }
   | { type: 'REMOVE_GEOFENCE'; payload: string }
+  | { type: 'TOGGLE_GEOFENCE'; payload: string }
   | { type: 'START_ROUTE_LOADING'; payload: any }
   | { type: 'SET_ROUTE_HISTORY'; payload: any }
   | { type: 'HIDE_ROUTE_SHEET' }
@@ -89,7 +90,10 @@ export const getInitialState = (): FleetState => ({
   splitDirection: 'horizontal',
   wasSplitViewBeforeRoute: false,
   activePanel: 'vehicles',
-  geofences: [],
+  geofences: [
+    { id: 'demo-depot', name: 'Depósito Central', shape: 'circle', center: { lat: -12.046374, lng: -77.042793 }, radius: 450, polygon: null, event: 'enter', vehicleId: null, enabled: true },
+    { id: 'demo-yard', name: 'Patio de Operaciones', shape: 'polygon', center: null, radius: null, polygon: [{ lat: -12.041, lng: -77.051 }, { lat: -12.038, lng: -77.047 }, { lat: -12.043, lng: -77.043 }, { lat: -12.047, lng: -77.047 }], event: 'enter_first', vehicleId: null, enabled: true },
+  ],
   incidencias: [],
   isLoadingIncidencias: false,
   isIncidenciasSheetOpen: false,
@@ -343,6 +347,7 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     case 'SET_ACTIVE_PANEL': return { ...state, activePanel: action.payload };
   case 'ADD_GEOFENCE': return { ...state, geofences: [...state.geofences, action.payload] };
   case 'REMOVE_GEOFENCE': return { ...state, geofences: state.geofences.filter((geofence) => geofence.id !== action.payload) };
+  case 'TOGGLE_GEOFENCE': return { ...state, geofences: state.geofences.map((geofence) => geofence.id === action.payload ? { ...geofence, enabled: !geofence.enabled } : geofence) };
     case 'VIEWPORT_ACTION_COMPLETE': return { ...state, mapViewport: { type: 'idle' } };
     case 'CLEAR_ALL_MINIMAPS': return { ...state, miniMaps: [], visibleMiniMapIds: [], allTrackedVehicleIds: [], focusedMiniMapId: null };
     case 'TOGGLE_MARKER_CLUSTERING': return { ...state, enableMarkerClustering: action.payload ?? !state.enableMarkerClustering };

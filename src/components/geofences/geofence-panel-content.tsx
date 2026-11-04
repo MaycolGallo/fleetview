@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MapPinned, Plus, Trash2 } from 'lucide-react';
+import { MapPinned, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 
 export function GeofencePanelContent() {
   const { state } = useFleetState();
@@ -45,6 +45,6 @@ export function GeofencePanelContent() {
     <div className="space-y-2"><Label>Acción</Label><Select value={event} onValueChange={(value) => setEvent(value as typeof event)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="enter">Alarma al entrar</SelectItem><SelectItem value="exit">Alarma al salir</SelectItem><SelectItem value="enter_first">Autodispatch al entrar por primera vez</SelectItem><SelectItem value="exit_first">Autodispatch al salir por primera vez</SelectItem></SelectContent></Select></div>
     <div className="space-y-2"><Label>Vehículo</Label><Select value={vehicleId} onValueChange={setVehicleId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toda la flota</SelectItem>{state.vehicles.map((vehicle) => <SelectItem key={vehicle.id_vehiculo} value={String(vehicle.id_vehiculo)}>{vehicle.nombre || `Vehículo ${vehicle.id_vehiculo}`}</SelectItem>)}</SelectContent></Select></div>
     <Button onClick={create}><Plus className="mr-2 h-4 w-4" />Crear geocerca</Button>
-    <div className="space-y-2">{state.geofences.map((geofence) => <div key={geofence.id} className="flex items-center justify-between rounded-lg border p-3 text-sm"><div><p className="font-medium">{geofence.name}</p><p className="text-xs text-muted-foreground">{geofence.event.replace('_', ' ')}</p></div><Button variant="ghost" size="icon" onClick={() => dispatch({ type: 'REMOVE_GEOFENCE', payload: geofence.id })}><Trash2 className="h-4 w-4" /></Button></div>)}</div>
+    <div className="space-y-2">{state.geofences.map((geofence) => <div key={geofence.id} className="flex items-center justify-between rounded-lg border p-3 text-sm"><div><p className="font-medium">{geofence.name}</p><p className="text-xs text-muted-foreground">{geofence.event.replace('_', ' ')}</p></div><div className="flex items-center gap-1"><Button variant="ghost" size="icon" title={geofence.enabled ? 'Ocultar en el mapa' : 'Mostrar en el mapa'} onClick={() => dispatch({ type: 'TOGGLE_GEOFENCE', payload: geofence.id })}>{geofence.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}</Button><Button variant="ghost" size="icon" onClick={() => dispatch({ type: 'REMOVE_GEOFENCE', payload: geofence.id })}><Trash2 className="h-4 w-4" /></Button></div></div>)}</div>
   </div>;
 }
