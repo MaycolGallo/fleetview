@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { useState } from 'react';
 import { useFleetDispatch, useFleetState } from '@/context/fleet-context';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { MapPinned, Plus, Trash2, Eye, EyeOff } from 'lucide-react';
+
+const GeofenceMapPreview = dynamic(() => import('./geofence-map-preview').then((module) => module.GeofenceMapPreview), { ssr: false });
 
 export function GeofencePanelContent() {
   const { state } = useFleetState();
@@ -43,7 +46,7 @@ export function GeofencePanelContent() {
             <TabsContent value="polygon" className="space-y-2"><Label>Coordenadas</Label><Input value={polygon} onChange={(e) => setPolygon(e.target.value)} placeholder="lat,lng; lat,lng; lat,lng" /><p className="text-[11px] text-muted-foreground">Usa al menos 3 puntos separados por punto y coma.</p></TabsContent>
           </Tabs>
           <div className="space-y-2"><Label>Acción</Label><Select value={event} onValueChange={(value) => setEvent(value as typeof event)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="enter">Alarma al entrar</SelectItem><SelectItem value="exit">Alarma al salir</SelectItem><SelectItem value="enter_first">Autodispatch al entrar por primera vez</SelectItem><SelectItem value="exit_first">Autodispatch al salir por primera vez</SelectItem></SelectContent></Select></div>
-          <div className="space-y-2"><Label>Vista previa</Label><div className="relative h-40 overflow-hidden rounded-lg border border-border bg-slate-950"><div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(#64748b 1px, transparent 1px), linear-gradient(90deg, #64748b 1px, transparent 1px)', backgroundSize: '24px 24px' }} />{shape === 'circle' && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng)) && <div className="absolute left-1/2 top-1/2 h-24 w-24 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-amber-400 bg-amber-400/15" />} {shape === 'polygon' && <svg viewBox="0 0 100 100" className="absolute inset-5 h-[calc(100%-2.5rem)] w-[calc(100%-2.5rem)]"><polygon points="20,70 38,20 82,30 72,78 35,88" className="fill-violet-400/20 stroke-violet-300" strokeWidth="1.5" /></svg>}<span className="absolute bottom-2 left-2 rounded bg-slate-900/80 px-2 py-1 text-[10px] text-slate-300">{shape === 'circle' ? `${radius || 0} m de radio` : 'Polígono de 3+ puntos'}</span></div></div>
+          <div className="space-y-2"><Label>Vista previa en el mapa</Label><GeofenceMapPreview shape={shape} center={shape === 'circle' ? { lat: Number(lat), lng: Number(lng) } : null} radius={Number(radius) || 1} polygon={polygon.split(';').map((point) => { const [pointLat, pointLng] = point.split(',').map(Number); return { lat: pointLat, lng: pointLng }; })} /></div>
           <div className="space-y-2"><Label>Vehículo</Label><Select value={vehicleId} onValueChange={setVehicleId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Toda la flota</SelectItem>{state.vehicles.map((vehicle) => <SelectItem key={vehicle.id_vehiculo} value={String(vehicle.id_vehiculo)}>{vehicle.nombre || `Vehículo ${vehicle.id_vehiculo}`}</SelectItem>)}</SelectContent></Select></div>
           <Button className="w-full" onClick={create}>Crear geocerca</Button>
         </div>
