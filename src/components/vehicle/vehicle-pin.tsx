@@ -24,7 +24,7 @@ export const VehiclePin = React.memo(({ vehicle, isSelected, isHistory }: Vehicl
 
   return (
     <div className="relative flex h-20 w-10 flex-col items-center overflow-visible">
-      <div className="pointer-events-none absolute left-0 top-14 z-0 h-6 w-10" style={{ filter: isSelected ? 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))', transform: `rotate(${vehicle.rumbo}deg)`, transformOrigin: '20px 0' }} aria-hidden="true">
+      <div className="vehicle-heading-indicator pointer-events-none absolute left-0 top-14 z-0 h-6 w-10" style={{ filter: isSelected ? 'drop-shadow(0 2px 2px rgba(0,0,0,0.3))' : 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))', transform: `rotate(${vehicle.rumbo}deg)`, transformOrigin: '20px 0' }} aria-hidden="true">
         <svg viewBox="0 0 40 24" className="block h-full w-full" aria-hidden="true">
           <path d="M20 0L37 24L20 16L3 24L20 0Z" fill={color} fillOpacity="0.9" stroke={color} strokeWidth="1" strokeLinejoin="round" />
         </svg>
