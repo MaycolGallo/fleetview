@@ -164,19 +164,22 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
 
     case 'SIMULATE_VEHICLE_MOVE': {
       const step = action.payload;
-      return {
-        ...state,
-        vehicles: state.vehicles.map((vehicle, index) => {
-          const angle = ((vehicle.rumbo ?? index * 37) * Math.PI) / 180;
-          const distance = (0.00001 + (index % 3) * 0.000003) * step;
-          return {
-            ...vehicle,
-            lat: vehicle.lat + Math.cos(angle) * distance,
-            lng: vehicle.lng + Math.sin(angle) * distance,
-            rumbo: (vehicle.rumbo + (index % 2 === 0 ? 2 : -2) + 360) % 360,
-          };
-        }),
-      };
+      const vehicles = state.vehicles.map((vehicle, index) => {
+        const currentHeading = Number(vehicle.rumbo ?? index * 37);
+        const angle = (currentHeading * Math.PI) / 180;
+        const distance = (0.00001 + (index % 3) * 0.000003) * step;
+        return {
+          ...vehicle,
+          lat: vehicle.lat + Math.cos(angle) * distance,
+          lng: vehicle.lng + Math.sin(angle) * distance,
+          rumbo: (currentHeading + (index % 2 === 0 ? 2 : -2) + 360) % 360,
+        };
+      });
+      const selectedVehicle = state.selectedVehicle
+        ? vehicles.find((vehicle) => vehicle.id_vehiculo === state.selectedVehicle?.id_vehiculo) ?? null
+        : null;
+
+      return { ...state, vehicles, selectedVehicle };
     }
 
     case 'PAN_TO_VEHICLE': {

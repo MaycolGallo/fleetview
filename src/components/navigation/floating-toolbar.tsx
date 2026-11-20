@@ -14,27 +14,21 @@ export function FloatingToolbar() {
   const { state } = useFleetState();
   const dispatch = useFleetDispatch();
   const { activePanel } = state;
+  const [isTelemetryActive, setIsTelemetryActive] = React.useState(false);
 
   const togglePanel = (panel: PanelType) => {
     dispatch({ type: 'SET_ACTIVE_PANEL', payload: activePanel === panel ? null : panel });
   };
 
-  const simulateTelemetryUpdate = () => {
-    const positions = state.vehicles.map((vehicle, index) => {
-      const heading = ((vehicle.rumbo ?? 0) + (index % 2 === 0 ? 8 : -8) + 360) % 360;
-      const distance = 0.00008 + (index % 5) * 0.00001;
-      const radians = (heading * Math.PI) / 180;
+  React.useEffect(() => {
+    if (!isTelemetryActive) return;
 
-      return {
-        id_vehiculo: vehicle.id_vehiculo,
-        lat: vehicle.lat + Math.cos(radians) * distance,
-        lng: vehicle.lng + Math.sin(radians) * distance,
-        rumbo: heading,
-      };
-    });
+    const timer = window.setInterval(() => {
+      dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: 1 });
+    }, 1000);
 
-    dispatch({ type: 'UPDATE_VEHICLE_POSITIONS', payload: positions });
-  };
+    return () => window.clearInterval(timer);
+  }, [dispatch, isTelemetryActive]);
 
   return (
     <div className="absolute top-6 left-6 z-50 flex flex-col gap-3">
@@ -85,10 +79,9 @@ export function FloatingToolbar() {
         <div className="w-full h-px bg-border my-1" />
         <ToolbarButton
           icon={RadioTower}
-          label="Simular actualización GPS de toda la flota"
-          isActive={false}
-          disabled={state.vehicles.length === 0}
-          onClick={simulateTelemetryUpdate}
+          label={isTelemetryActive ? 'Detener actualización GPS en vivo' : 'Iniciar actualización GPS en vivo'}
+          isActive={isTelemetryActive}
+          onClick={() => setIsTelemetryActive((active) => !active)}
         />
         <NotificationsDropdown apiKey="MOCK" />
       </div>

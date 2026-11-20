@@ -24,7 +24,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     const storeRef = useRef<FleetStore | null>(null);
     if (!storeRef.current) storeRef.current = createFleetStore();
     const store = storeRef.current;
-    const state = useSyncExternalStore(store.subscribe, store.getState, store.getServerSnapshot);
+    const state = useSyncExternalStore(store.subscribe, store.getState, store.getState);
     const dispatch = store.dispatch;
     const searchParams = useSearchParams();
 
@@ -133,18 +133,6 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }, [rawVehiclesData]);
 
-    // Preview-only movement loop: feeds changing coordinates into the animation hook.
-    // Remove or gate this effect with a feature flag when real telemetry is connected.
-    useEffect(() => {
-      if (process.env.NODE_ENV !== 'development' || state.vehicles.length === 0) return;
-
-      const timer = setInterval(() => {
-        dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: 1 });
-      }, 2000);
-
-      return () => clearInterval(timer);
-    }, [state.vehicles.length]);
-
     // Simulated incident ticker
     useEffect(() => {
       if (state.vehicles.length === 0) return;
@@ -188,7 +176,7 @@ export const useFleetState = () => {
     const state = useSyncExternalStore(
         context.store.subscribe,
         context.store.getState,
-        context.store.getServerSnapshot,
+        context.store.getState,
     );
 
     return {
