@@ -86,7 +86,7 @@ export function FleetAnalyticsContent() {
         
         // Map simulated points to existing vehicle IDs
         const updates = result.map((sim, i) => ({
-            id: vehicles[i].id_vehiculo,
+            id_vehiculo: vehicles[i].id_vehiculo,
             lat: sim.latitude,
             lng: sim.longitude,
             status: sim.status === 'active' ? 'Transitando' : sim.status === 'idle' ? 'Ralenti' : 'Mantenimiento'

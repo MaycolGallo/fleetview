@@ -6,7 +6,7 @@ import { DESPACHO_BASE_ROUTE } from '@/services/fleet-api';
 
 export type FleetAction =
   | { type: 'SET_VEHICLES'; payload: any[] }
-  | { type: 'UPDATE_VEHICLE_POSITIONS'; payload: { id: number, lat: number, lng: number, status?: any }[] }
+  | { type: 'UPDATE_VEHICLE_POSITIONS'; payload: { id_vehiculo: number; lat: number; lng: number; rumbo?: number; status?: string }[] }
   | { type: 'SELECT_VEHICLE'; payload: any | null }
   | { type: 'PAN_TO_VEHICLE'; payload: any | null }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY'; payload: number }
@@ -135,6 +135,31 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
           ? { type: 'fit_bounds', payload: newBounds } 
           : state.mapViewport,
        };
+    }
+
+    case 'UPDATE_VEHICLE_POSITIONS': {
+      if (action.payload.length === 0) return state;
+
+      const positionsByVehicleId = new Map(
+        action.payload.map((position) => [position.id_vehiculo, position]),
+      );
+      const vehicles = state.vehicles.map((vehicle) => {
+        const position = positionsByVehicleId.get(vehicle.id_vehiculo);
+        return position
+          ? {
+              ...vehicle,
+              lat: position.lat,
+              lng: position.lng,
+              rumbo: position.rumbo ?? vehicle.rumbo,
+              statusName: position.status ?? vehicle.statusName,
+            }
+          : vehicle;
+      });
+      const selectedVehicle = state.selectedVehicle
+        ? vehicles.find((vehicle) => vehicle.id_vehiculo === state.selectedVehicle?.id_vehiculo) ?? null
+        : null;
+
+      return { ...state, vehicles, selectedVehicle };
     }
 
     case 'SIMULATE_VEHICLE_MOVE': {

@@ -6,7 +6,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import type { Vehicle, FleetState, MiniMapGroup, Notification, MapProvider } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
-import { getInitialState } from './fleet-reducer';
 import { createFleetStore, type FleetStore } from './fleet-store';
 import { fetchVehicles, fetchRouteHistory, fetchIncidencias, fetchMiniMaps } from '@/services/fleet-api';
 
@@ -25,7 +24,7 @@ export const FleetProvider = ({ children }: { children: React.ReactNode }) => {
     const storeRef = useRef<FleetStore | null>(null);
     if (!storeRef.current) storeRef.current = createFleetStore();
     const store = storeRef.current;
-    const state = useSyncExternalStore(store.subscribe, store.getState, getInitialState);
+    const state = useSyncExternalStore(store.subscribe, store.getState, store.getServerSnapshot);
     const dispatch = store.dispatch;
     const searchParams = useSearchParams();
 
@@ -189,7 +188,7 @@ export const useFleetState = () => {
     const state = useSyncExternalStore(
         context.store.subscribe,
         context.store.getState,
-        getInitialState,
+        context.store.getServerSnapshot,
     );
 
     return {

@@ -4,16 +4,19 @@ import type { FleetState } from '@/lib/types';
 
 export interface FleetStore {
   getState: () => FleetState;
+  getServerSnapshot: () => FleetState;
   subscribe: (listener: () => void) => () => void;
   dispatch: Dispatch<FleetAction>;
 }
 
 export function createFleetStore(): FleetStore {
-  let state = getInitialState();
+  const initialState = getInitialState();
+  let state = initialState;
   const listeners = new Set<() => void>();
 
   return {
     getState: () => state,
+    getServerSnapshot: () => initialState,
     subscribe: (listener) => {
       listeners.add(listener);
       return () => listeners.delete(listener);
