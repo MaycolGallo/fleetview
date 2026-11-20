@@ -3,10 +3,11 @@
 
 import type { FleetState, Geofence, MiniMapGroup, MapProvider, PanelType, MapType, RemoteActionRecord } from '@/lib/types';
 import { DESPACHO_BASE_ROUTE } from '@/services/fleet-api';
+import { getVehicleStatusDefinition } from '@/lib/vehicle-status';
 
 export type FleetAction =
   | { type: 'SET_VEHICLES'; payload: any[] }
-  | { type: 'UPDATE_VEHICLE_POSITIONS'; payload: { id_vehiculo: number; lat: number; lng: number; rumbo?: number; status?: string }[] }
+  | { type: 'UPDATE_VEHICLE_POSITIONS'; payload: { id_vehiculo: number; lat: number; lng: number; rumbo?: number; id_estado?: number; status?: string; statusName?: string; statusColor?: string; velocidad?: string; fecha?: number; odometro?: string; senal_gsm?: number; nivel_bateria_vehicular?: string }[] }
   | { type: 'SELECT_VEHICLE'; payload: any | null }
   | { type: 'PAN_TO_VEHICLE'; payload: any | null }
   | { type: 'TOGGLE_VEHICLE_VISIBILITY'; payload: number }
@@ -28,7 +29,7 @@ export type FleetAction =
   | { type: 'TOGGLE_SPLIT_VIEW' }
   | { type: 'TOGGLE_SPLIT_DIRECTION' }
   | { type: 'VIEWPORT_ACTION_COMPLETE' }
-  | { type: 'SIMULATE_VEHICLE_MOVE'; payload: number }
+  | { type: 'SIMULATE_VEHICLE_MOVE'; payload: { elapsedSeconds: number; timestamp: number; vehicleId?: number } }
   | { type: 'START_ROUTE_PLAYBACK' }
   | { type: 'PAUSE_ROUTE_PLAYBACK' }
   | { type: 'UPDATE_HISTORY_VEHICLE_POSITION'; payload: { lat: number, lng: number, rumbo: number, velocidad: number, animationDuration: number } }
@@ -151,7 +152,14 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
               lat: position.lat,
               lng: position.lng,
               rumbo: position.rumbo ?? vehicle.rumbo,
-              statusName: position.status ?? vehicle.statusName,
+              id_estado: position.id_estado ?? vehicle.id_estado,
+              statusName: position.statusName ?? position.status ?? vehicle.statusName,
+              statusColor: position.statusColor ?? vehicle.statusColor,
+              velocidad: position.velocidad ?? vehicle.velocidad,
+              fecha: position.fecha ?? vehicle.fecha,
+              odometro: position.odometro ?? vehicle.odometro,
+              senal_gsm: position.senal_gsm ?? vehicle.senal_gsm,
+              nivel_bateria_vehicular: position.nivel_bateria_vehicular ?? vehicle.nivel_bateria_vehicular,
             }
           : vehicle;
       });
@@ -163,23 +171,81 @@ export const fleetReducer = (state: FleetState, action: FleetAction): FleetState
     }
 
     case 'SIMULATE_VEHICLE_MOVE': {
-      const step = action.payload;
-      const vehicles = state.vehicles.map((vehicle, index) => {
-        const currentHeading = Number(vehicle.rumbo ?? index * 37);
-        const angle = (currentHeading * Math.PI) / 180;
-        const distance = (0.00001 + (index % 3) * 0.000003) * step;
+      if (state.vehicles.length === 0) return state;
+
+      const elapsedSeconds = Math.min(60, Math.max(0, action.payload.elapsedSeconds));
+      if (elapsedSeconds === 0) return state;
+
+      const simulationStep = { ...state.simulationStep };
+      let updatedVehicleCount = 0;
+      const vehicles = state.vehicles.map((vehicle) => {
+        if (action.payload.vehicleId !== undefined && vehicle.id_vehiculo !== action.payload.vehicleId) {
+          return vehicle;
+        }
+
+        updatedVehicleCount += 1;
+        const vehicleKey = String(vehicle.id_vehiculo);
+        const tick = (simulationStep[vehicleKey] ?? 0) + 1;
+        simulationStep[vehicleKey] = tick;
+
+        const vehicleId = vehicle.id_vehiculo;
+        const currentStatusId = vehicle.id_estado;
+        const restrictedStatus = [7, 8, 9].includes(currentStatusId);
+        let nextStatusId = currentStatusId;
+
+        if (!restrictedStatus) {
+          if ([3, 6].includes(currentStatusId) && tick % 90 === vehicleId % 90) {
+            nextStatusId = 4;
+          } else if ([0, 1, 2, 4, 5, 10].includes(currentStatusId) && tick % 45 === vehicleId % 45) {
+            nextStatusId = 6;
+          }
+        }
+
+        const isMoving = nextStatusId === 3 || nextStatusId === 6;
+        const previousSpeed = Number.parseFloat(vehicle.velocidad) || 0;
+        const speedChange = ((vehicleId + tick) % 5 - 2) * 1.5;
+        const speed = isMoving
+          ? Math.max(12, Math.min(110, previousSpeed > 0 ? previousSpeed + speedChange : 24 + (vehicleId % 32)))
+          : 0;
+
+        if (isMoving) nextStatusId = speed > 80 ? 3 : 6;
+        const status = getVehicleStatusDefinition(nextStatusId);
+        const heading = Number(vehicle.rumbo) || 0;
+        const nextHeading = isMoving ? (heading + ((vehicleId + tick) % 3 - 1) + 360) % 360 : heading;
+        const distanceKm = (speed * elapsedSeconds) / 3600;
+        const headingRadians = (nextHeading * Math.PI) / 180;
+        const latitudeScale = 111.32;
+        const longitudeScale = latitudeScale * Math.max(0.1, Math.cos((vehicle.lat * Math.PI) / 180));
+        const voltage = Number.parseFloat(vehicle.nivel_bateria_vehicular) || 12.6;
+        const nextVoltage = currentStatusId === 8
+          ? voltage
+          : isMoving
+            ? Math.min(14.4, voltage + elapsedSeconds * 0.01)
+            : Math.max(12, voltage - elapsedSeconds * 0.001);
+        const signalChange = tick % 15 === 0 ? (vehicleId + tick) % 2 === 0 ? 1 : -1 : 0;
+
         return {
           ...vehicle,
-          lat: vehicle.lat + Math.cos(angle) * distance,
-          lng: vehicle.lng + Math.sin(angle) * distance,
-          rumbo: (currentHeading + (index % 2 === 0 ? 2 : -2) + 360) % 360,
+          lat: vehicle.lat + (distanceKm * Math.cos(headingRadians)) / latitudeScale,
+          lng: vehicle.lng + (distanceKm * Math.sin(headingRadians)) / longitudeScale,
+          rumbo: nextHeading,
+          id_estado: status.id,
+          statusName: status.name,
+          statusColor: status.color,
+          velocidad: speed.toFixed(2),
+          fecha: action.payload.timestamp,
+          odometro: ((Number.parseFloat(vehicle.odometro) || 0) + distanceKm).toFixed(2),
+          senal_gsm: Math.max(0, Math.min(31, vehicle.senal_gsm + signalChange)),
+          nivel_bateria_vehicular: nextVoltage.toFixed(2),
         };
       });
+
+      if (updatedVehicleCount === 0) return state;
       const selectedVehicle = state.selectedVehicle
         ? vehicles.find((vehicle) => vehicle.id_vehiculo === state.selectedVehicle?.id_vehiculo) ?? null
         : null;
 
-      return { ...state, vehicles, selectedVehicle };
+      return { ...state, vehicles, selectedVehicle, simulationStep };
     }
 
     case 'PAN_TO_VEHICLE': {

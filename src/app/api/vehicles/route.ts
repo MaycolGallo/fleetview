@@ -2,6 +2,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import type { RawVehicle } from '@/lib/types';
+import { VEHICLE_STATUS_DEFINITIONS } from '@/lib/vehicle-status';
 
 // Lima, Peru bounding box
 const LIMA_BOUNDS = {
@@ -30,20 +31,6 @@ function getStableCoordinate(index: number) {
   };
 }
 
-const STATUS_DEFINITIONS = [
-    { id: 0, name: 'Libre', color: '#B0BEC5' },
-    { id: 1, name: 'SRalenti', color: '#78909C' },
-    { id: 2, name: 'Detenido y Encendido', color: '#F1C40F' },
-    { id: 3, name: 'Exceso de Velocidad', color: '#E74C3C' },
-    { id: 4, name: 'Ralenti', color: '#9E9E9E' },
-    { id: 5, name: 'Estacionado', color: '#666666' },
-    { id: 6, name: 'Transitando', color: '#00CC33' },
-    { id: 7, name: 'Bloqueado', color: '#003399' },
-    { id: 8, name: 'Batería Desconectada', color: '#FF66B0' },
-    { id: 9, name: 'Mantenimiento', color: '#8D6E63' },
-    { id: 10, name: 'Encendido Remoto', color: '#27AE60' },
-];
-
 const samplePlacas = [
   'ASG-831', 'B2H-576', 'C9A-123', 'D4F-987', 'E1G-456',
   'F8J-321', 'G5K-789', 'H3L-654', 'I7M-912', 'J2N-234',
@@ -51,7 +38,7 @@ const samplePlacas = [
 ];
 
 function generateVehicle(index: number): RawVehicle {
-  const statusDef = STATUS_DEFINITIONS[index % STATUS_DEFINITIONS.length];
+  const statusDef = VEHICLE_STATUS_DEFINITIONS[index % VEHICLE_STATUS_DEFINITIONS.length];
   
   let speed = 0;
   if (statusDef.id === 6) {

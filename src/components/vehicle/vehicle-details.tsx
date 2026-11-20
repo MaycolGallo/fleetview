@@ -49,7 +49,7 @@ function VehicleDetailsInternal() {
     
     startTransition(() => {
         const updateAction = () => {
-            dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: selectedVehicle.id_vehiculo });
+            dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: { elapsedSeconds: 1, timestamp: Math.floor(Date.now() / 1000), vehicleId: selectedVehicle.id_vehiculo } });
         };
 
         // @ts-ignore

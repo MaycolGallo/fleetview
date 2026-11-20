@@ -24,7 +24,7 @@ export function FloatingToolbar() {
     if (!isTelemetryActive) return;
 
     const timer = window.setInterval(() => {
-      dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: 1 });
+      dispatch({ type: 'SIMULATE_VEHICLE_MOVE', payload: { elapsedSeconds: 1, timestamp: Math.floor(Date.now() / 1000) } });
     }, 1000);
 
     return () => window.clearInterval(timer);

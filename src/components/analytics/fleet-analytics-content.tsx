@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { generateFleetSummary } from '@/ai/flows/fleet-summary-flow';
 import { simulateVehicleTelemetry } from '@/ai/flows/simulate-vehicle-telemetry';
 import { toast } from '@/hooks/use-toast';
+import { getVehicleStatusDefinition } from '@/lib/vehicle-status';
 
 export function FleetAnalyticsContent() {
   const { state } = useFleetState();
@@ -85,12 +86,28 @@ export function FleetAnalyticsContent() {
         const result = await simulateVehicleTelemetry({ numberOfVehicles: Math.min(10, vehicles.length) });
         
         // Map simulated points to existing vehicle IDs
-        const updates = result.map((sim, i) => ({
-            id_vehiculo: vehicles[i].id_vehiculo,
-            lat: sim.latitude,
-            lng: sim.longitude,
-            status: sim.status === 'active' ? 'Transitando' : sim.status === 'idle' ? 'Ralenti' : 'Mantenimiento'
-        }));
+        const updates = result.flatMap((sim, i) => {
+            const vehicle = vehicles[i];
+            if (!vehicle) return [];
+
+            const statusId = sim.status === 'active' ? 6 : sim.status === 'idle' ? 4 : 9;
+            const status = getVehicleStatusDefinition(statusId);
+            const latitudeDelta = sim.latitude - vehicle.lat;
+            const longitudeDelta = (sim.longitude - vehicle.lng) * Math.cos((vehicle.lat * Math.PI) / 180);
+            const heading = (Math.atan2(longitudeDelta, latitudeDelta) * 180 / Math.PI + 360) % 360;
+
+            return [{
+                id_vehiculo: vehicle.id_vehiculo,
+                lat: sim.latitude,
+                lng: sim.longitude,
+                rumbo: heading,
+                id_estado: status.id,
+                statusName: status.name,
+                statusColor: status.color,
+                velocidad: status.id === 6 ? '35.00' : '0.00',
+                fecha: Math.floor(Date.now() / 1000),
+            }];
+        });
 
         dispatch({ type: 'UPDATE_VEHICLE_POSITIONS', payload: updates });
         toast({ title: "AI Patrol Sync", description: "La flota ha sido posicionada por la IA." });
